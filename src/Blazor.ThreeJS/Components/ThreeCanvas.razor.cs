@@ -55,13 +55,14 @@ public partial class ThreeCanvas
 		}
 
 		var contextId = await module.InvokeAsync<int>("createContext", _canvasElement, null);
-		var threeContext = new ThreeContext(module, contextId);
-		_threeContext = threeContext;
 		if (_isDisposed)
 		{
-			await DisposeThreeContextAsync();
+			await DisposeModuleAsync();
 			return;
 		}
+
+		var threeContext = new ThreeContext(module, contextId);
+		_threeContext = threeContext;
 
 		await OnReady.InvokeAsync(threeContext);
 		await threeContext.FlushAsync();
@@ -70,7 +71,10 @@ public partial class ThreeCanvas
 	/// <summary>
 	/// Releases the JavaScript-side context and every three.js object it owns. Safe to call while
 	/// <see cref="OnAfterRenderAsync"/> is still awaiting: the flag it sets makes that continuation
-	/// clean up whatever it has already created instead of orphaning it.
+	/// check for disposal before it wraps the module reference in a new <see cref="ThreeContext"/>,
+	/// so it never hands a possibly-already-disposed reference off to one. The continuation cleans up
+	/// the plain module reference itself in that case, since there is no <see cref="ThreeContext"/>
+	/// yet for this call to dispose.
 	/// </summary>
 	public async ValueTask DisposeAsync()
 	{

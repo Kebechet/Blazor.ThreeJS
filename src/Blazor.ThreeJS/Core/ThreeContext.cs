@@ -95,7 +95,9 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// <summary>
 	/// Stops the render loop, disposes every JavaScript-side three.js object owned by this context,
 	/// and releases the module reference. Disposal during a Blazor Server circuit disconnect — the
-	/// standard teardown path there — is not an error and completes without throwing.
+	/// standard teardown path there — is not an error and completes without throwing. Nor is disposing
+	/// a context whose module reference was already disposed by a racing <c>ThreeCanvas</c> disposal
+	/// (see <c>ThreeCanvas.OnAfterRenderAsync</c>).
 	/// <para>
 	/// The module is released in a <c>finally</c> so that a <c>disposeContext</c> failure of any
 	/// kind still gives the reference back. Leaking it would pin the imported module for the
@@ -111,6 +113,12 @@ public sealed class ThreeContext : IAsyncDisposable
 		catch (JSDisconnectedException)
 		{
 			// The JS side is already gone; there is nothing left to dispose and nothing recoverable.
+		}
+		catch (ObjectDisposedException)
+		{
+			// The module reference was already disposed elsewhere; there is nothing left to dispose
+			// and nothing recoverable. Only this exception type and JSDisconnectedException are
+			// swallowed here — a genuine applier error still surfaces through OnError.
 		}
 		finally
 		{

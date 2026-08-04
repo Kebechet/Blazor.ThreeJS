@@ -24,6 +24,19 @@ public class ThreeContextTests
 	}
 
 	[Fact]
+	public async Task ThreeContext_DisposeWhenModuleAlreadyDisposed_DoesNotThrow()
+	{
+		// Arrange
+		var context = new ThreeContext(new AlreadyDisposedJsObjectReference(), contextId: 1);
+
+		// Act
+		var exception = await Record.ExceptionAsync(() => context.DisposeAsync().AsTask());
+
+		// Assert
+		exception.ShouldBeNull();
+	}
+
+	[Fact]
 	public async Task ThreeContext_FlushWithNoPendingOps_MakesNoInteropCall()
 	{
 		// Arrange
@@ -123,6 +136,31 @@ internal sealed class ThrowingJsObjectReference : IJSObjectReference
 	public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
 	{
 		return ValueTask.FromException<TValue>(new JSDisconnectedException("Circuit disconnected."));
+	}
+
+	public ValueTask DisposeAsync()
+	{
+		return ValueTask.CompletedTask;
+	}
+}
+
+/// <summary>
+/// Fake <see cref="IJSObjectReference"/> that fails every call with <see cref="ObjectDisposedException"/>,
+/// standing in for a module reference that was already disposed by a racing <c>ThreeCanvas</c> disposal
+/// before <see cref="ThreeContext.DisposeAsync"/> gets to use it. Real
+/// <c>Microsoft.JSInterop.Implementation.JSObjectReference</c> throws exactly this from
+/// <c>InvokeAsync</c>/<c>InvokeVoidAsync</c> once disposed, per <c>ThrowIfDisposed()</c>.
+/// </summary>
+internal sealed class AlreadyDisposedJsObjectReference : IJSObjectReference
+{
+	public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
+	{
+		return ValueTask.FromException<TValue>(new ObjectDisposedException(nameof(AlreadyDisposedJsObjectReference)));
+	}
+
+	public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+	{
+		return ValueTask.FromException<TValue>(new ObjectDisposedException(nameof(AlreadyDisposedJsObjectReference)));
 	}
 
 	public ValueTask DisposeAsync()

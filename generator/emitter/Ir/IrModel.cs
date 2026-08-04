@@ -233,7 +233,12 @@ internal sealed class IrTypeParameter
 	public IrType? Default { get; set; }
 }
 
-/// <summary>A declared interface. Only its identity is read; its members are not mirrored.</summary>
+/// <summary>
+/// A declared interface. three.js gives a class its property surface by declaration merging —
+/// <c>export interface MeshStandardMaterial extends MeshStandardMaterialProperties {}</c> next to the
+/// class of the same name — so an interface's members are part of the class's real member set, not
+/// supporting detail.
+/// </summary>
 internal sealed class IrInterface
 {
 	/// <summary>Declared interface name.</summary>
@@ -241,6 +246,18 @@ internal sealed class IrInterface
 
 	/// <summary>POSIX path of the declaring file, relative to the types package root.</summary>
 	public required string File { get; set; }
+
+	/// <summary>Interfaces this one extends. An array, because an interface may extend several.</summary>
+	public List<IrType> Extends { get; set; } = [];
+
+	/// <summary>Declared properties, including accessors.</summary>
+	public List<IrProperty> Properties { get; set; } = [];
+
+	/// <summary>Declared methods, with overloads grouped under one entry.</summary>
+	public List<IrMethod> Methods { get; set; } = [];
+
+	/// <summary>Declared type parameters, in scope for every member declared here.</summary>
+	public List<IrTypeParameter> TypeParameters { get; set; } = [];
 }
 
 /// <summary>A real TypeScript <c>enum</c> declaration.</summary>
@@ -325,6 +342,9 @@ internal sealed class IrAugmentedDeclaration
 {
 	/// <summary>Name of the augmented class or interface.</summary>
 	public required string Name { get; set; }
+
+	/// <summary>Base interfaces the augmentation merges onto the target's <c>extends</c> clause.</summary>
+	public List<IrType> Extends { get; set; } = [];
 
 	/// <summary>Properties added by the augmentation.</summary>
 	public List<IrProperty> Properties { get; set; } = [];

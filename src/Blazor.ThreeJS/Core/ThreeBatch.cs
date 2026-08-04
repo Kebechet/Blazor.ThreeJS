@@ -56,8 +56,26 @@ internal sealed class ThreeBatch
 	/// <param name="handle">Handle of the object to write to.</param>
 	/// <param name="member">Name of the property being written.</param>
 	/// <param name="value">The value to write.</param>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when <paramref name="value"/> is <see cref="ThreeValue.Unspecified"/>. See the remarks
+	/// on why that is a defect rather than a value.
+	/// </exception>
 	public void Set(int handle, string member, object? value)
 	{
+		// The not-supplied sentinel is constructor-arguments-only. It says "the caller did not pass
+		// this", which a constructor can act on by letting three.js apply its own parameter default;
+		// a property write cannot, because assigning `undefined` to a property of a retained object
+		// means setting it to undefined, not leaving it alone. A generated class that has nothing to
+		// say about a property simply does not write it. Reaching here is a generator defect, and it
+		// fails loudly rather than shipping `undefined` into a live three.js instance.
+		if (ReferenceEquals(value, ThreeValue.Unspecified))
+		{
+			throw new InvalidOperationException(
+				$"The '{nameof(ThreeValue)}.{nameof(ThreeValue.Unspecified)}' sentinel reached a {nameof(ThreeOpKind.Set)} op for member '{member}' on handle {handle}. " +
+				$"It is only meaningful in constructor arguments, where it lets three.js apply its own parameter default. " +
+				$"A property the mirror has no value for is left unwritten instead.");
+		}
+
 		var target = (handle, member);
 		if (_setIndexesByTarget.TryGetValue(target, out var existingIndex))
 		{

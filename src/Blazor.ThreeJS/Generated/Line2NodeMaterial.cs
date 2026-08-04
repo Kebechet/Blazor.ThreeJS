@@ -1,0 +1,246 @@
+// Generated from @types/three@0.185.3 by generator/emitter. Do not edit by hand.
+// Re-run `npm run emit` after changing the emitter or generator/three-api.json.
+
+using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Math;
+
+namespace Kebechet.Blazor.ThreeJS.Objects;
+
+/// <summary>
+/// This node material can be used to render lines with a size larger than one by representing them
+/// as instanced meshes. The JavaScript-side <c>THREE.Line2NodeMaterial</c>.
+/// </summary>
+public sealed class Line2NodeMaterial : NodeMaterial
+{
+	private float _dashOffset = 0f;
+	private bool _worldUnits;
+	private bool _dashed;
+	private float _scale = 1f;
+	private float _dashSize = 3f;
+	private float _gapSize = 1f;
+	private float _linewidth = 1f;
+	private bool _isDashOffsetWritten;
+	private bool _isWorldUnitsWritten;
+	private bool _isDashedWritten;
+	private bool _isScaleWritten;
+	private bool _isDashSizeWritten;
+	private bool _isGapSizeWritten;
+	private bool _isColorWritten;
+	private bool _isLinewidthWritten;
+
+	/// <summary>
+	/// Color of the material. Mirrored as an instance this object owns: mutating it records a write of
+	/// <c>color</c>.
+	/// </summary>
+	public Color Color { get; }
+
+	/// <summary>Constructs a new node material for wide line rendering.</summary>
+	public Line2NodeMaterial()
+	{
+		Color = new Color(1f, 1f, 1f);
+		Color.OnChange = () =>
+		{
+			_isColorWritten = true;
+			RecordSet("color", Color);
+		};
+	}
+
+	/// <summary>Name of the corresponding three.js constructor, <c>THREE.Line2NodeMaterial</c>.</summary>
+	protected override string ThreeTypeName
+	{
+		get { return "Line2NodeMaterial"; }
+	}
+
+	/// <summary>
+	/// The dash offset. Writing it records a <c>dashOffset</c> property write once this object is
+	/// attached; writing the value already held records nothing.
+	/// </summary>
+	public float DashOffset
+	{
+		get { return _dashOffset; }
+		set
+		{
+			if (_dashOffset == value)
+			{
+				return;
+			}
+
+			_dashOffset = value;
+			_isDashOffsetWritten = true;
+			RecordSet("dashOffset", value);
+		}
+	}
+
+	/// <summary>
+	/// The <c>worldUnits</c> property of the JavaScript-side object. Writing it records a
+	/// <c>worldUnits</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public bool WorldUnits
+	{
+		get { return _worldUnits; }
+		set
+		{
+			if (_worldUnits == value)
+			{
+				return;
+			}
+
+			_worldUnits = value;
+			_isWorldUnitsWritten = true;
+			RecordSet("worldUnits", value);
+		}
+	}
+
+	/// <summary>
+	/// The <c>dashed</c> property of the JavaScript-side object. Writing it records a <c>dashed</c>
+	/// property write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public bool Dashed
+	{
+		get { return _dashed; }
+		set
+		{
+			if (_dashed == value)
+			{
+				return;
+			}
+
+			_dashed = value;
+			_isDashedWritten = true;
+			RecordSet("dashed", value);
+		}
+	}
+
+	/// <summary>
+	/// The scale of the dashed part of a line. Writing it records a <c>scale</c> property write once
+	/// this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public float Scale
+	{
+		get { return _scale; }
+		set
+		{
+			if (_scale == value)
+			{
+				return;
+			}
+
+			_scale = value;
+			_isScaleWritten = true;
+			RecordSet("scale", value);
+		}
+	}
+
+	/// <summary>
+	/// The size of the dash. This is both the gap with the stroke. Writing it records a <c>dashSize</c>
+	/// property write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public float DashSize
+	{
+		get { return _dashSize; }
+		set
+		{
+			if (_dashSize == value)
+			{
+				return;
+			}
+
+			_dashSize = value;
+			_isDashSizeWritten = true;
+			RecordSet("dashSize", value);
+		}
+	}
+
+	/// <summary>
+	/// The size of the gap. Writing it records a <c>gapSize</c> property write once this object is
+	/// attached; writing the value already held records nothing.
+	/// </summary>
+	public float GapSize
+	{
+		get { return _gapSize; }
+		set
+		{
+			if (_gapSize == value)
+			{
+				return;
+			}
+
+			_gapSize = value;
+			_isGapSizeWritten = true;
+			RecordSet("gapSize", value);
+		}
+	}
+
+	/// <summary>
+	/// Controls line thickness or lines. Can only be used with <c>SVGRenderer</c>. WebGL and WebGPU
+	/// ignore this setting and always render line primitives with a width of one pixel. Writing it
+	/// records a <c>linewidth</c> property write once this object is attached; writing the value
+	/// already held records nothing.
+	/// </summary>
+	public float Linewidth
+	{
+		get { return _linewidth; }
+		set
+		{
+			if (_linewidth == value)
+			{
+				return;
+			}
+
+			_linewidth = value;
+			_isLinewidthWritten = true;
+			RecordSet("linewidth", value);
+		}
+	}
+
+	/// <summary>
+	/// Emits the create op for <c>THREE.Line2NodeMaterial</c>, then replays every property written
+	/// before this object was attached.
+	/// </summary>
+	/// <param name="batch">Batch to record the ops into.</param>
+	internal override void EmitCreate(ThreeBatch batch)
+	{
+		base.EmitCreate(batch);
+
+		if (_isDashOffsetWritten)
+		{
+			batch.Set(Handle, "dashOffset", ThreeValue.Encode(_dashOffset));
+		}
+
+		if (_isWorldUnitsWritten)
+		{
+			batch.Set(Handle, "worldUnits", ThreeValue.Encode(_worldUnits));
+		}
+
+		if (_isDashedWritten)
+		{
+			batch.Set(Handle, "dashed", ThreeValue.Encode(_dashed));
+		}
+
+		if (_isScaleWritten)
+		{
+			batch.Set(Handle, "scale", ThreeValue.Encode(_scale));
+		}
+
+		if (_isDashSizeWritten)
+		{
+			batch.Set(Handle, "dashSize", ThreeValue.Encode(_dashSize));
+		}
+
+		if (_isGapSizeWritten)
+		{
+			batch.Set(Handle, "gapSize", ThreeValue.Encode(_gapSize));
+		}
+
+		if (_isColorWritten)
+		{
+			batch.Set(Handle, "color", ThreeValue.Encode(Color));
+		}
+
+		if (_isLinewidthWritten)
+		{
+			batch.Set(Handle, "linewidth", ThreeValue.Encode(_linewidth));
+		}
+	}
+}

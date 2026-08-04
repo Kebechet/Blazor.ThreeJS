@@ -15,72 +15,42 @@ namespace Blazor.ThreeJS.Emitter.Map;
 internal sealed class MemberClassifier
 {
 	private readonly TypeMapper _mapper;
-	private readonly Dictionary<string, List<IrAugmentedDeclaration>> _augmentationsByTargetName;
+	private readonly ClassSurfaceResolver _surfaces;
+	private readonly MethodMapper _methods;
 
 	/// <summary>Builds a classifier.</summary>
-	/// <param name="ir">The parsed IR, read for its module augmentations.</param>
+	/// <param name="surfaces">Resolver that turns a class into the member set it owns.</param>
 	/// <param name="mapper">Type mapper.</param>
-	public MemberClassifier(IrRoot ir, TypeMapper mapper)
+	/// <param name="methods">Method mapping, shared with the emitter so the two cannot disagree.</param>
+	public MemberClassifier(ClassSurfaceResolver surfaces, TypeMapper mapper, MethodMapper methods)
 	{
 		_mapper = mapper;
-		_augmentationsByTargetName = [];
-		foreach (var augmentation in ir.ModuleAugmentations)
-		{
-			foreach (var augmented in augmentation.Augments)
-			{
-				if (!_augmentationsByTargetName.TryGetValue(augmented.Name, out var list))
-				{
-					list = [];
-					_augmentationsByTargetName[augmented.Name] = list;
-				}
-
-				list.Add(augmented);
-			}
-		}
+		_surfaces = surfaces;
+		_methods = methods;
 	}
 
 	/// <summary>
-	/// Classifies every member of one class, including members merged in by a module augmentation.
-	/// A class's real member set is its own declaration plus every <c>declare module</c> block
-	/// targeting it, and dropping those silently would put the mirror out of step with the runtime.
+	/// Classifies every member one class owns: its own declarations, everything reachable through the
+	/// interface three.js merges into it, members folded in from ancestors that have no C# mirror, and
+	/// members merged in by a <c>declare module</c> block. Members the mirrored base already carries
+	/// are not classified here — they belong to that base.
 	/// </summary>
 	/// <param name="irClass">Class to classify.</param>
-	/// <returns>One row per member, in declaration order, declared members first.</returns>
+	/// <returns>One row per member, in resolution order.</returns>
 	public IReadOnlyList<ClassifiedMember> Classify(IrClass irClass)
 	{
 		var rows = new List<ClassifiedMember>();
-		foreach (var property in irClass.Properties)
+		foreach (var member in _surfaces.Resolve(irClass).Members)
 		{
-			rows.Add(ClassifyProperty(irClass, property, MemberOrigin.Declared));
-		}
-
-		foreach (var method in irClass.Methods)
-		{
-			rows.Add(ClassifyMethod(irClass, method, MemberOrigin.Declared));
-		}
-
-		if (!_augmentationsByTargetName.TryGetValue(irClass.Name, out var augmentations))
-		{
-			return rows;
-		}
-
-		foreach (var augmented in augmentations)
-		{
-			foreach (var property in augmented.Properties)
-			{
-				rows.Add(ClassifyProperty(irClass, property, MemberOrigin.ModuleAugmentation));
-			}
-
-			foreach (var method in augmented.Methods)
-			{
-				rows.Add(ClassifyMethod(irClass, method, MemberOrigin.ModuleAugmentation));
-			}
+			rows.Add(member.Property is { } property
+				? ClassifyProperty(irClass, property, member)
+				: ClassifyMethod(irClass, member.Method!, member));
 		}
 
 		return rows;
 	}
 
-	private ClassifiedMember ClassifyProperty(IrClass irClass, IrProperty property, MemberOrigin origin)
+	private ClassifiedMember ClassifyProperty(IrClass irClass, IrProperty property, SurfaceMember member)
 	{
 		var row = new ClassifiedMember
 		{
@@ -88,7 +58,9 @@ internal sealed class MemberClassifier
 			File = irClass.File,
 			MemberName = property.Name,
 			MemberKind = ClassifiedMemberKind.Property,
-			Origin = origin,
+			Origin = member.Origin,
+			DeclaringName = member.DeclaringName,
+			Property = property,
 			Bucket = MemberBucket.Skipped
 		};
 
@@ -101,7 +73,7 @@ internal sealed class MemberClassifier
 		{
 			MemberName = property.Name,
 			NumericKind = property.NumericKind,
-			TypeParameters = irClass.TypeParameters
+			TypeParameters = member.TypeParameters
 		});
 
 		if (!mapping.IsMapped)
@@ -110,8 +82,10 @@ internal sealed class MemberClassifier
 		}
 
 		row.CSharpTypeName = mapping.CSharpTypeName;
+		row.Mapping = mapping;
 		if (!property.IsReadonly)
 		{
+			row.IsWrittenInPlace = mapping.Kind == TypeMappingKind.HandWrittenMathType;
 			row.Bucket = MemberBucket.MirroredState;
 			return row;
 		}
@@ -133,7 +107,7 @@ internal sealed class MemberClassifier
 			SkipCategory.ReadOnlyWithoutReadChannel);
 	}
 
-	private ClassifiedMember ClassifyMethod(IrClass irClass, IrMethod method, MemberOrigin origin)
+	private ClassifiedMember ClassifyMethod(IrClass irClass, IrMethod method, SurfaceMember member)
 	{
 		var row = new ClassifiedMember
 		{
@@ -141,7 +115,8 @@ internal sealed class MemberClassifier
 			File = irClass.File,
 			MemberName = method.Name,
 			MemberKind = ClassifiedMemberKind.Method,
-			Origin = origin,
+			Origin = member.Origin,
+			DeclaringName = member.DeclaringName,
 			OverloadCount = method.Overloads.Count,
 			Bucket = MemberBucket.Skipped
 		};
@@ -157,45 +132,43 @@ internal sealed class MemberClassifier
 			return Skip(row, "the method has no signature in the IR", SkipCategory.UnmappedTypeSyntax);
 		}
 
-		foreach (var parameter in signature.Parameters)
+		var mappedMethod = _methods.Map(method, member.TypeParameters, _mapper);
+		if (!mappedMethod.IsMapped)
 		{
-			if (parameter.IsRest)
-			{
-				var isPseudoOverload = parameter.Type is { Kind: "union" } union &&
-					union.Types.All(x => x.Kind == "tuple");
-
-				return Skip(
-					row,
-					isPseudoOverload
-						? $"parameter '{parameter.Name}' is a rest-union-tuple pseudo-overload (`{parameter.Type!.Text}`), which is one TypeScript signature standing for several C# overloads"
-						: $"parameter '{parameter.Name}' is a rest parameter (`{parameter.Type?.Text ?? "?"}`)",
-					SkipCategory.RestParameter);
-			}
-
-			var parameterMapping = _mapper.Map(parameter.Type, new TypeMappingContext
-			{
-				MemberName = parameter.Name,
-				NumericKind = parameter.NumericKind,
-				TypeParameters = irClass.TypeParameters
-			});
-
-			if (!parameterMapping.IsMapped)
-			{
-				return Skip(row, $"parameter '{parameter.Name}': {parameterMapping.SkipReason}", parameterMapping.SkipCategory);
-			}
+			return Skip(row, mappedMethod.RefusalReason!, mappedMethod.RefusalCategory);
 		}
 
-		if (IsFluentOrVoid(irClass, signature.ReturnType))
+		row.Method = mappedMethod;
+		if (IsVoid(signature.ReturnType))
 		{
 			row.Bucket = MemberBucket.Command;
 			return row;
+		}
+
+		if (IsSelfReturn(irClass, member.DeclaringName, signature.ReturnType))
+		{
+			// A `this`-returning method with arguments is three.js's fluent mutator (`copy(source)`), and
+			// recording it as a call op is exact. A `this`-returning method with none has nothing to
+			// mutate itself with, so the return value is the whole point of calling it — `clone()` is the
+			// case, and it allocates a JavaScript object the wire format has no way to hand back a handle
+			// for. Emitting it as a void command would silently create and discard an object.
+			if (signature.Parameters.Count > 0)
+			{
+				row.Bucket = MemberBucket.Command;
+				return row;
+			}
+
+			return Skip(
+				row,
+				"takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created",
+				SkipCategory.NoReadChannel);
 		}
 
 		var returnMapping = _mapper.Map(signature.ReturnType, new TypeMappingContext
 		{
 			MemberName = method.Name,
 			NumericKind = signature.ReturnNumericKind,
-			TypeParameters = irClass.TypeParameters
+			TypeParameters = member.TypeParameters
 		});
 
 		if (!returnMapping.IsMapped)
@@ -208,23 +181,32 @@ internal sealed class MemberClassifier
 		return row;
 	}
 
-	/// <summary>
-	/// Whether a return type means "no value comes back": <c>void</c>, or the fluent
-	/// <c>this</c> / declaring-class self-return three.js uses for chaining.
-	/// </summary>
-	private static bool IsFluentOrVoid(IrClass irClass, IrType? returnType)
+	/// <summary>Whether a return type means no value comes back at all.</summary>
+	/// <param name="returnType">Declared return type, absent on a signature with none.</param>
+	/// <returns><see langword="true"/> for <c>void</c> and <c>undefined</c>.</returns>
+	private static bool IsVoid(IrType? returnType)
 	{
-		if (returnType is null)
+		return returnType is null || returnType is { Kind: "primitive", Name: "void" or "undefined" };
+	}
+
+	/// <summary>
+	/// Whether a return type is the declaring type itself — TypeScript's polymorphic <c>this</c>, or a
+	/// reference back to the class or interface the member was read from.
+	/// </summary>
+	/// <param name="irClass">Class being classified.</param>
+	/// <param name="declaringName">Class or interface the member was declared on.</param>
+	/// <param name="returnType">Declared return type.</param>
+	/// <returns><see langword="true"/> when the method returns its own type.</returns>
+	private static bool IsSelfReturn(IrClass irClass, string declaringName, IrType? returnType)
+	{
+		if (returnType is { Kind: "primitive", Name: "this" })
 		{
 			return true;
 		}
 
-		if (returnType is { Kind: "primitive", Name: "void" or "undefined" or "this" })
-		{
-			return true;
-		}
-
-		return returnType is { Kind: "reference" } && string.Equals(returnType.Name, irClass.Name, StringComparison.Ordinal);
+		return returnType is { Kind: "reference" } &&
+			(string.Equals(returnType.Name, irClass.Name, StringComparison.Ordinal) ||
+				string.Equals(returnType.Name, declaringName, StringComparison.Ordinal));
 	}
 
 	private static string? NotInstanceApiReason(string name, bool isStatic, string? visibility, bool isAbstract, IrDoc? doc)
@@ -281,14 +263,26 @@ internal sealed class ClassifiedMember
 	/// <summary>Whether it is a property or a method.</summary>
 	public required ClassifiedMemberKind MemberKind { get; init; }
 
-	/// <summary>Whether it was declared on the class or merged in by a module augmentation.</summary>
+	/// <summary>How the member reached the class it is classified under.</summary>
 	public required MemberOrigin Origin { get; init; }
+
+	/// <summary>Class or interface the member was read from, which is not always the class it lands on.</summary>
+	public required string DeclaringName { get; init; }
 
 	/// <summary>Which of the four buckets it fell into.</summary>
 	public required MemberBucket Bucket { get; set; }
 
 	/// <summary>Resolved C# type of the state, or of the query's result.</summary>
 	public string? CSharpTypeName { get; set; }
+
+	/// <summary>The full type mapping behind <see cref="CSharpTypeName"/>, on a mapped member.</summary>
+	public TypeMapping? Mapping { get; set; }
+
+	/// <summary>The resolved signature, on a method the mapper accepted.</summary>
+	public MappedMethod? Method { get; set; }
+
+	/// <summary>The IR declaration behind a property row, read for its documentation and default.</summary>
+	public IrProperty? Property { get; init; }
 
 	/// <summary>True for state three.js exposes read-only but the applier writes into in place.</summary>
 	public bool IsWrittenInPlace { get; set; }
@@ -334,6 +328,18 @@ internal enum MemberOrigin : byte
 {
 	/// <summary>Declared on the class itself.</summary>
 	Declared,
+
+	/// <summary>
+	/// Reached through the interface three.js declaration-merges into the class, or one that interface
+	/// extends. This is where every material property lives.
+	/// </summary>
+	InterfaceInheritance,
+
+	/// <summary>
+	/// Declared on an ancestor that has no C# mirror of its own — the abstract <c>Light</c>, say — so it
+	/// is folded into this class rather than lost with the ancestor.
+	/// </summary>
+	FlattenedAncestor,
 
 	/// <summary>Merged in by a <c>declare module</c> block elsewhere in the package.</summary>
 	ModuleAugmentation

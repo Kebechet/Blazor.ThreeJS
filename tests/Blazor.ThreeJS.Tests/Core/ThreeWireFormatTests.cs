@@ -5,6 +5,10 @@ using Kebechet.Blazor.ThreeJS.Math;
 using Kebechet.Blazor.ThreeJS.Objects;
 using Shouldly;
 
+// three.js has its own `Path` — a 2D curve — and the generated mirror carries it, so the unqualified
+// name is ambiguous in any file importing both this namespace and System.IO.
+using Path = System.IO.Path;
+
 namespace Blazor.ThreeJS.Tests.Core;
 
 /// <summary>
@@ -455,7 +459,8 @@ public class ThreeWireFormatTests
 	/// <see cref="ThreeWireFormat"/> tag, an enum-valued <c>Set</c>, a <c>$ref</c>-valued
 	/// <c>Set</c> that reassigns a mesh's material after it was already attached, and the pair of
 	/// <c>PerspectiveCamera</c> creates that prove the <c>$undef</c> sentinel reaches JavaScript as a
-	/// real <c>undefined</c> — as a batch the JavaScript applier can run end to end. Kept in step with
+	/// real <c>undefined</c>, and an <c>AmbientLight</c> create carrying a tagged math value as a
+	/// constructor argument — as a batch the JavaScript applier can run end to end. Kept in step with
 	/// <c>tests/wire-format-fixture.json</c> by <c>ThreeOp_FixtureBatchSerialized_MatchesTheSharedFixtureFile</c>.
 	/// </summary>
 	/// <returns>The fixture batch, in the order the applier receives it.</returns>
@@ -503,15 +508,21 @@ public class ThreeWireFormatTests
 			// and this op supplies JSON null for fov instead of the sentinel — which the JavaScript half
 			// asserts leaves fov null. Without it, the sentinel assertions would also pass if the applier
 			// were quietly reading null as "absent".
-			new ThreeOp { Kind = ThreeOpKind.Create, Handle = 7, Type = "PerspectiveCamera", Args = [null, 2f] }
+			new ThreeOp { Kind = ThreeOpKind.Create, Handle = 7, Type = "PerspectiveCamera", Args = [null, 2f] },
+
+			// A tagged math value as a *constructor* argument rather than as a Set value. The generated
+			// AmbientLight forwards its Color straight through, where the hand-written one it replaced
+			// converted to a hex integer first, so this is the one shape in the batch that only the
+			// generated classes produce.
+			new ThreeOp { Kind = ThreeOpKind.Create, Handle = 8, Type = "AmbientLight", Args = [ThreeValue.Encode(Color.Red), 0.4f] }
 		];
 	}
 
 	/// <summary>
 	/// Stands in for the generated enums whose values do not fit in a <see cref="byte"/> — three.js's
 	/// WebGL constants are in the thousands, so the generator backs those with <see cref="ushort"/>.
-	/// Declared here rather than referencing a generated enum, which is only compiled under
-	/// <c>-p:UseGeneratedObjects=true</c>.
+	/// Declared here rather than referencing a generated enum so the encoder is pinned against the
+	/// backing type itself, not against whichever enum happens to carry it in the current snapshot.
 	/// </summary>
 	private enum GeneratedEnumBackingShape : ushort
 	{

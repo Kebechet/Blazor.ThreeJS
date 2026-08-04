@@ -1,0 +1,45 @@
+// Generated from @types/three@0.185.3 by generator/emitter. Do not edit by hand.
+// Re-run `npm run emit` after changing the emitter or generator/three-api.json.
+
+using Kebechet.Blazor.ThreeJS.Core;
+
+namespace Kebechet.Blazor.ThreeJS.Objects;
+
+/// <summary>The JavaScript-side <c>THREE.WebGLRenderTarget</c>.</summary>
+public class WebGLRenderTarget : RenderTarget
+{
+	private readonly float? _width;
+	private readonly float? _height;
+
+	/// <summary>Initializes a new <see cref="WebGLRenderTarget"/>.</summary>
+	/// <param name="width">Value forwarded to the <c>width</c> constructor argument.</param>
+	/// <param name="height">Value forwarded to the <c>height</c> constructor argument.</param>
+	public WebGLRenderTarget(float? width = null, float? height = null)
+	{
+		_width = width;
+		_height = height;
+	}
+
+	/// <summary>Name of the corresponding three.js constructor, <c>THREE.WebGLRenderTarget</c>.</summary>
+	protected override string ThreeTypeName
+	{
+		get { return "WebGLRenderTarget"; }
+	}
+
+	/// <summary>
+	/// Constructor arguments forwarded to <c>THREE.WebGLRenderTarget</c>: width, height. An argument
+	/// the caller left unspecified travels as the wire's not-supplied sentinel, or is trimmed when
+	/// nothing supplied follows it, so three.js applies its own default.
+	/// </summary>
+	protected override object?[] ConstructorArgs
+	{
+		get
+		{
+			return ThreeValue.TrimUnspecifiedTail(
+			[
+				ThreeValue.OrUnspecified(_width),
+				ThreeValue.OrUnspecified(_height)
+			]);
+		}
+	}
+}

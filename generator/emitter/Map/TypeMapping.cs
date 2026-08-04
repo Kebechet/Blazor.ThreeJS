@@ -179,6 +179,18 @@ internal enum SkipCategory : byte
 	/// <summary>Read-only in three.js, and the wire format has no read channel.</summary>
 	ReadOnlyWithoutReadChannel,
 
+	/// <summary>The member's whole point is a value coming back from JavaScript, and no op does that.</summary>
+	NoReadChannel,
+
+	/// <summary>A member the constructor already takes under the same name, so the two would collide.</summary>
+	ShadowedByConstructorParameter,
+
+	/// <summary>The package provides the class by hand, so the generator does not emit it.</summary>
+	HandWritten,
+
+	/// <summary>Its C# base requires constructor arguments the generated class has nothing to supply.</summary>
+	UnreachableBaseConstructor,
+
 	/// <summary>A rest parameter, including the rest-union-tuple pseudo-overload form.</summary>
 	RestParameter
 }

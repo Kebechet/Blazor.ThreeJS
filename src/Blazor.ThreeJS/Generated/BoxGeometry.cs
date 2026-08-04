@@ -12,7 +12,7 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// <remarks>On creation, the cuboid is centred on the origin, with each edge parallel to one of the axes.</remarks>
 /// <seealso href="https://threejs.org/docs/index.html#api/en/geometries/BoxGeometry">Official Documentation</seealso>
 /// <seealso href="https://github.com/mrdoob/three.js/blob/master/src/geometries/BoxGeometry.js">Source</seealso>
-public sealed class BoxGeometry : ThreeObject
+public sealed class BoxGeometry : BufferGeometry
 {
 	private readonly float _width;
 	private readonly float _height;

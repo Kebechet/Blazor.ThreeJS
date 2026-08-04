@@ -25,6 +25,22 @@ internal static class DocCommentEmitter
 	private static readonly Regex _whitespacePattern = new(@"\s+", RegexOptions.Compiled);
 
 	/// <summary>
+	/// A fenced block of JavaScript inside a prose summary. Dropped for the same reason
+	/// <c>@example</c> blocks are: the code is TypeScript, and reproducing it in the documentation of a
+	/// C# type would tell the reader to write something that does not compile.
+	/// </summary>
+	private static readonly Regex _fencedCodePattern = new(@"```[\s\S]*?```", RegexOptions.Compiled);
+
+	/// <summary>
+	/// A <c>{@link}</c> whose URL arrived split after its scheme. TypeScript's JSDoc parser reads
+	/// <c>{@link https://example.com Label}</c> as the name <c>https</c> followed by the text
+	/// <c>://example.com Label</c>, and the extractor rejoins the two with a space. Repairing it here
+	/// rather than in the IR keeps the snapshot a faithful record of what the parser produced; 82
+	/// markers in the current snapshot would otherwise render as text beginning <c>://</c>.
+	/// </summary>
+	private static readonly Regex _splitUrlSchemePattern = new(@"\{@link\s+(https?)\s+://", RegexOptions.Compiled);
+
+	/// <summary>
 	/// Trailing JSDoc fragments that only restate what the C# signature already says. Upstream writes
 	/// "… Optional; Expects a `Float`. Default `1`" because TypeScript cannot express any of it;
 	/// <c>float width = 1f</c> expresses all three, so carrying the text across would be noise.
@@ -95,11 +111,23 @@ internal static class DocCommentEmitter
 	/// <returns>XML-safe documentation content, whitespace collapsed onto one logical line.</returns>
 	public static string RenderInline(string text)
 	{
-		var collapsed = _whitespacePattern.Replace(text, " ").Trim();
+		var withoutFencedCode = _fencedCodePattern.Replace(text, " ");
+		var repaired = _splitUrlSchemePattern.Replace(withoutFencedCode, "{@link $1://");
+		var collapsed = _whitespacePattern.Replace(repaired, " ").Trim();
 		var escaped = XmlEscape(collapsed);
 		var linked = _linkMarkerPattern.Replace(escaped, RenderLinkMarker);
 
 		return _codeSpanPattern.Replace(linked, "<c>$1</c>");
+	}
+
+	/// <summary>Counts the fenced code blocks <see cref="RenderInline"/> drops from a piece of prose.</summary>
+	/// <param name="text">Raw JSDoc text.</param>
+	/// <returns>How many blocks were present.</returns>
+	public static int CountFencedCodeBlocks(string? text)
+	{
+		return text is null
+			? 0
+			: _fencedCodePattern.Matches(text).Count;
 	}
 
 	/// <summary>
@@ -180,7 +208,7 @@ internal static class DocCommentEmitter
 			return $"<see href=\"{target}\">{(label.Length == 0 ? target : label)}</see>";
 		}
 
-		if (!EmitterConfig.ExistingCSharpTypeNames.Contains(target))
+		if (!EmitterConfig.KnownCSharpTypeNames.Contains(target))
 		{
 			return $"<c>{(label.Length == 0 ? target : label)}</c>";
 		}

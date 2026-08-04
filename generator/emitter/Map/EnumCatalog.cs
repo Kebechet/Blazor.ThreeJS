@@ -58,11 +58,23 @@ internal sealed class EnumCatalog
 				continue;
 			}
 
+			if (EmitterConfig.ExcludedEnumNames.TryGetValue(alias.Name, out var aliasExclusion))
+			{
+				_refusalsByName[alias.Name] = aliasExclusion;
+				continue;
+			}
+
 			AddFromConstantGroup(alias, group, constantsByName);
 		}
 
 		foreach (var irEnum in ir.Enums)
 		{
+			if (EmitterConfig.ExcludedEnumNames.TryGetValue(irEnum.Name, out var exclusion))
+			{
+				_refusalsByName[irEnum.Name] = exclusion;
+				continue;
+			}
+
 			AddFromDeclaredEnum(irEnum);
 		}
 	}

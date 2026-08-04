@@ -1,0 +1,218 @@
+// Generated from @types/three@0.185.3 by generator/emitter. Do not edit by hand.
+// Re-run `npm run emit` after changing the emitter or generator/three-api.json.
+
+using Kebechet.Blazor.ThreeJS.Core;
+
+namespace Kebechet.Blazor.ThreeJS.Objects;
+
+/// <summary>The JavaScript-side <c>THREE.BlendMode</c>.</summary>
+public sealed class BlendMode : ThreeObject
+{
+	private Blending _blending;
+	private BlendingDstFactor _blendDst;
+	private BlendingEquation _blendEquation;
+	private BlendingDstFactor? _blendDstAlpha;
+	private BlendingEquation? _blendEquationAlpha;
+	private bool _premultiplyAlpha;
+	private bool _isBlendingWritten;
+	private bool _isBlendDstWritten;
+	private bool _isBlendEquationWritten;
+	private bool _isBlendDstAlphaWritten;
+	private bool _isBlendEquationAlphaWritten;
+	private bool _isPremultiplyAlphaWritten;
+
+	/// <summary>Initializes a new <see cref="BlendMode"/>.</summary>
+	/// <param name="blending">Value forwarded to the <c>blending</c> constructor argument.</param>
+	public BlendMode(Blending blending)
+	{
+		_blending = blending;
+	}
+
+	/// <summary>Name of the corresponding three.js constructor, <c>THREE.BlendMode</c>.</summary>
+	protected override string ThreeTypeName
+	{
+		get { return "BlendMode"; }
+	}
+
+	/// <summary>Constructor arguments forwarded to <c>THREE.BlendMode</c>: blending.</summary>
+	protected override object?[] ConstructorArgs
+	{
+		get { return [_blending]; }
+	}
+
+	/// <summary>
+	/// The <c>blending</c> property of the JavaScript-side object. Writing it records a <c>blending</c>
+	/// property write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public Blending Blending
+	{
+		get { return _blending; }
+		set
+		{
+			if (_blending == value)
+			{
+				return;
+			}
+
+			_blending = value;
+			_isBlendingWritten = true;
+			RecordSet("blending", value);
+		}
+	}
+
+	/// <summary>
+	/// The <c>blendDst</c> property of the JavaScript-side object. Writing it records a <c>blendDst</c>
+	/// property write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public BlendingDstFactor BlendDst
+	{
+		get { return _blendDst; }
+		set
+		{
+			if (_blendDst == value)
+			{
+				return;
+			}
+
+			_blendDst = value;
+			_isBlendDstWritten = true;
+			RecordSet("blendDst", value);
+		}
+	}
+
+	/// <summary>
+	/// The <c>blendEquation</c> property of the JavaScript-side object. Writing it records a
+	/// <c>blendEquation</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public BlendingEquation BlendEquation
+	{
+		get { return _blendEquation; }
+		set
+		{
+			if (_blendEquation == value)
+			{
+				return;
+			}
+
+			_blendEquation = value;
+			_isBlendEquationWritten = true;
+			RecordSet("blendEquation", value);
+		}
+	}
+
+	/// <summary>
+	/// The <c>blendDstAlpha</c> property of the JavaScript-side object. Writing it records a
+	/// <c>blendDstAlpha</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public BlendingDstFactor? BlendDstAlpha
+	{
+		get { return _blendDstAlpha; }
+		set
+		{
+			if (_blendDstAlpha == value)
+			{
+				return;
+			}
+
+			_blendDstAlpha = value;
+			_isBlendDstAlphaWritten = true;
+			RecordSet("blendDstAlpha", value);
+		}
+	}
+
+	/// <summary>
+	/// The <c>blendEquationAlpha</c> property of the JavaScript-side object. Writing it records a
+	/// <c>blendEquationAlpha</c> property write once this object is attached; writing the value already
+	/// held records nothing.
+	/// </summary>
+	public BlendingEquation? BlendEquationAlpha
+	{
+		get { return _blendEquationAlpha; }
+		set
+		{
+			if (_blendEquationAlpha == value)
+			{
+				return;
+			}
+
+			_blendEquationAlpha = value;
+			_isBlendEquationAlphaWritten = true;
+			RecordSet("blendEquationAlpha", value);
+		}
+	}
+
+	/// <summary>
+	/// The <c>premultiplyAlpha</c> property of the JavaScript-side object. Writing it records a
+	/// <c>premultiplyAlpha</c> property write once this object is attached; writing the value already
+	/// held records nothing.
+	/// </summary>
+	public bool PremultiplyAlpha
+	{
+		get { return _premultiplyAlpha; }
+		set
+		{
+			if (_premultiplyAlpha == value)
+			{
+				return;
+			}
+
+			_premultiplyAlpha = value;
+			_isPremultiplyAlphaWritten = true;
+			RecordSet("premultiplyAlpha", value);
+		}
+	}
+
+	/// <summary>Records a call to <c>copy</c> on the JavaScript-side object.</summary>
+	/// <param name="source">Value forwarded to the <c>source</c> argument.</param>
+	public void Copy(BlendMode source)
+	{
+		if (Batch is not null)
+		{
+			source.AttachTo(Batch);
+		}
+
+		RecordCall("copy", source);
+	}
+
+	/// <summary>
+	/// Emits the create op for <c>THREE.BlendMode</c>, then replays every property written before this
+	/// object was attached.
+	/// </summary>
+	/// <param name="batch">Batch to record the ops into.</param>
+	internal override void EmitCreate(ThreeBatch batch)
+	{
+		base.EmitCreate(batch);
+
+		if (_isBlendingWritten)
+		{
+			batch.Set(Handle, "blending", ThreeValue.Encode(_blending));
+		}
+
+		if (_isBlendDstWritten)
+		{
+			batch.Set(Handle, "blendDst", ThreeValue.Encode(_blendDst));
+		}
+
+		if (_isBlendEquationWritten)
+		{
+			batch.Set(Handle, "blendEquation", ThreeValue.Encode(_blendEquation));
+		}
+
+		if (_isBlendDstAlphaWritten)
+		{
+			batch.Set(Handle, "blendDstAlpha", ThreeValue.Encode(_blendDstAlpha));
+		}
+
+		if (_isBlendEquationAlphaWritten)
+		{
+			batch.Set(Handle, "blendEquationAlpha", ThreeValue.Encode(_blendEquationAlpha));
+		}
+
+		if (_isPremultiplyAlphaWritten)
+		{
+			batch.Set(Handle, "premultiplyAlpha", ThreeValue.Encode(_premultiplyAlpha));
+		}
+	}
+}

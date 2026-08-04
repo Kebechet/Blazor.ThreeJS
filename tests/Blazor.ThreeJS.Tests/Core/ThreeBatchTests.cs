@@ -151,6 +151,19 @@ public class ThreeBatchTests
 	}
 
 	[Fact]
+	public void ThreeBatch_SetGivenTheNotSuppliedSentinel_Throws()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+
+		// Act
+		var exception = Record.Exception(() => batch.Set(1, "roughness", ThreeValue.Unspecified));
+
+		// Assert
+		exception.ShouldBeOfType<InvalidOperationException>();
+	}
+
+	[Fact]
 	public void ThreeBatch_SetTwiceThenCall_CoalescesTheSetsBeforeTheCall()
 	{
 		// Arrange

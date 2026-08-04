@@ -37,12 +37,26 @@ internal static class EmitterConfig
 	public const string TrimUnspecifiedTailCall = "ThreeValue.TrimUnspecifiedTail";
 
 	/// <summary>
-	/// Classes the emitter is allowed to emit, keyed by the three.js export name. Deliberately an
-	/// allowlist rather than "everything in the IR": roughly a third of the 309 classes are renderer
-	/// internals, and the emitter refuses anything it cannot model exactly (see
-	/// <see cref="Emit.UnsupportedMemberException"/>) rather than guessing.
+	/// Classes the runtime provides by hand, which the generator therefore does not emit. They are
+	/// still mirrored types: a generated class derives from one, and the surface resolver subtracts
+	/// their members so the same three.js member is declared in exactly one C# type.
+	/// <para>
+	/// <c>Object3D</c> is the whole list. It carries the scene-graph machinery — parent/child
+	/// attachment, the transform, and the pre-attach state replay — which is behaviour rather than
+	/// surface, and which two plans went into hardening.
+	/// </para>
 	/// </summary>
-	public static readonly IReadOnlyList<string> EmittedClassNames = ["BoxGeometry"];
+	public static readonly IReadOnlySet<string> HandWrittenClassNames = new HashSet<string>(StringComparer.Ordinal)
+	{
+		"Object3D"
+	};
+
+	/// <summary>
+	/// Root of the scene graph. A generated class that descends from it replays its state through
+	/// <c>EmitState</c>, which <c>Object3D.AttachTo</c> calls after the create op; one that does not
+	/// has no such hook and replays from <c>EmitCreate</c> instead.
+	/// </summary>
+	public const string SceneGraphBaseTypeName = "Object3D";
 
 	/// <summary>
 	/// Source-path prefixes whose classes are never mirrored. These are the renderer's own internals:
@@ -92,53 +106,42 @@ internal static class EmitterConfig
 	public const string ColorTypeName = "Color";
 
 	/// <summary>
-	/// C# types that already exist in the package, so a <c>{@link X}</c> marker naming one can be
-	/// rewritten as a resolvable <c>&lt;see cref="X"/&gt;</c>. Anything else becomes
-	/// <c>&lt;c&gt;X&lt;/c&gt;</c> — an unresolvable cref is a CS1574 warning, and with
-	/// <c>GenerateDocumentationFile</c> on across five target frameworks that multiplies by five.
+	/// C# types the package provides by hand, which generated code may reference without generating
+	/// them.
 	/// </summary>
 	public static readonly IReadOnlySet<string> ExistingCSharpTypeNames = new HashSet<string>(StringComparer.Ordinal)
 	{
-		"AmbientLight",
-		"BoxGeometry",
 		"Color",
-		"DirectionalLight",
 		"Euler",
-		"Group",
 		"Matrix4",
-		"Mesh",
-		"MeshStandardMaterial",
 		"Object3D",
-		"PerspectiveCamera",
-		"Points",
-		"PointsMaterial",
 		"Quaternion",
-		"Scene",
-		"Side",
 		"ThreeObject",
 		"Vector3"
 	};
 
 	/// <summary>
-	/// Hand-written classes declared <c>sealed</c>, which three.js nonetheless subclasses
-	/// (<c>ArrayCamera extends PerspectiveCamera</c>, <c>BatchedMesh extends Mesh</c>,
-	/// <c>ClippingGroup extends Group</c>). Plan 1 sealed them because only leaves were needed. A
-	/// generated subclass cannot derive from one, so the projection reports them rather than pretending
-	/// they compile; unsealing them is a public-API change, not a mapping decision.
+	/// Every C# type name that will exist in the package once this run lands: the hand-written ones
+	/// above, plus every class and enum being generated. A <c>{@link X}</c> marker naming one is
+	/// rewritten as a resolvable <c>&lt;see cref="X"/&gt;</c>; anything else becomes
+	/// <c>&lt;c&gt;X&lt;/c&gt;</c>, because an unresolvable <c>cref</c> is a CS1574 warning and with
+	/// <c>GenerateDocumentationFile</c> on across five target frameworks it multiplies by five.
+	/// <para>
+	/// Mutable because it cannot be known before the emission scope has reached its fixpoint — which
+	/// classes are emittable is what decides it — and it is written exactly once, by
+	/// <see cref="RegisterGeneratedTypeNames"/>, before any file is emitted.
+	/// </para>
 	/// </summary>
-	public static readonly IReadOnlySet<string> SealedHandWrittenClassNames = new HashSet<string>(StringComparer.Ordinal)
+	public static IReadOnlySet<string> KnownCSharpTypeNames { get; private set; } = ExistingCSharpTypeNames;
+
+	/// <summary>Records the names this run will generate, so documentation crefs to them resolve.</summary>
+	/// <param name="generatedTypeNames">Class and enum names about to be emitted.</param>
+	public static void RegisterGeneratedTypeNames(IEnumerable<string> generatedTypeNames)
 	{
-		"AmbientLight",
-		"BoxGeometry",
-		"DirectionalLight",
-		"Group",
-		"Mesh",
-		"MeshStandardMaterial",
-		"PerspectiveCamera",
-		"Points",
-		"PointsMaterial",
-		"Scene"
-	};
+		var names = new HashSet<string>(ExistingCSharpTypeNames, StringComparer.Ordinal);
+		names.UnionWith(generatedTypeNames);
+		KnownCSharpTypeNames = names;
+	}
 
 	/// <summary>
 	/// Hand-written math types, which live in a different namespace from the generated classes and so
@@ -151,6 +154,28 @@ internal static class EmitterConfig
 		"Matrix4",
 		"Quaternion",
 		"Vector3"
+	};
+
+	/// <summary>
+	/// Value sets that are numeric, and therefore generatable, but are not part of the API this package
+	/// ships. Keyed by three.js name, valued by the reason, which is reproduced in the coverage report
+	/// so the exclusion is reviewable rather than silent.
+	/// </summary>
+	public static readonly IReadOnlyDictionary<string, string> ExcludedEnumNames = new Dictionary<string, string>(StringComparer.Ordinal)
+	{
+		["GPUColorWriteFlags"] = "a WebGPU construct, absent from the WebGL bundle this package ships (`THREE.GPUColorWriteFlags === undefined`). " +
+			"Consistent with the standing exclusion of the WebGPU / TSL stack; it is numeric, so nothing but this rule would have kept it out"
+	};
+
+	/// <summary>
+	/// Hand-written math types that cannot report a change. <c>Matrix4</c> hands its <c>Elements</c>
+	/// array out directly, so <c>m.Elements[0] = 1f</c> is a legal mutation nothing can observe — there
+	/// is no hook to hang a property write off. A matrix-typed property is therefore not mirrored at
+	/// all, rather than mirrored as state that silently stops tracking.
+	/// </summary>
+	public static readonly IReadOnlySet<string> MathTypeNamesWithoutChangeNotification = new HashSet<string>(StringComparer.Ordinal)
+	{
+		"Matrix4"
 	};
 
 	/// <summary>Column budget for wrapped documentation text, excluding indentation and the <c>/// </c> prefix.</summary>

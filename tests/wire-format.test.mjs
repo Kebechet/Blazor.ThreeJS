@@ -102,6 +102,14 @@ const cameraWithNullArgument = context.objects.get(7);
 assert.equal(cameraWithNullArgument.fov, null, 'a JSON null must NOT trigger the upstream default, or the sentinel would be redundant');
 assert.equal(cameraWithNullArgument.far, 2000, 'omitting a trailing argument entirely should still apply the upstream default');
 
+// A tagged math value in a constructor argument, which only the generated classes produce: the
+// hand-written AmbientLight this replaced converted its colour to a hex integer in C# first. Proving
+// the tagged form reaches THREE.AmbientLight as a real THREE.Color is what makes that change safe.
+const ambientLight = context.objects.get(8);
+assert.ok(ambientLight.isAmbientLight, 'handle 8 should be an AmbientLight');
+assert.equal(ambientLight.color.getHex(), 0xff0000, 'a $t-tagged Color constructor argument should reach three.js as a real THREE.Color');
+assert.ok(Math.abs(ambientLight.intensity - 0.4) < 1e-6, 'the intensity supplied after the tagged colour should still land in its own position');
+
 // The failure mode this whole test exists for: if the C# side ever serializes the op kind as a
 // string - a JsonStringEnumConverter reaching the interop options is all it takes - every op lands
 // in the applier's default arm. Pin that it is loud rather than silent.

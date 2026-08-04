@@ -40,26 +40,6 @@
     <InternalsVisibleTo Include="Blazor.ThreeJS.Tests" />
   </ItemGroup>
 
-  <!--
-    Generated/ is committed but not compiled by default: the generator emits BoxGeometry and the Side
-    enum, which Objects/BoxGeometry.cs and Objects/Side.cs still provide by hand, and two types of the
-    same name in the same namespace do not compile. Building with -p:UseGeneratedObjects=true swaps
-    each generated type in for its hand-written counterpart, which is how the conformance check is run:
-
-      dotnet build src/Blazor.ThreeJS.slnx -p:UseGeneratedObjects=true
-      dotnet test  src/Blazor.ThreeJS.slnx -p:UseGeneratedObjects=true
-
-    The generated type has to pass the hand-written type's tests unmodified. This scaffolding goes
-    away once the generated types replace the hand-written ones outright.
-  -->
-  <ItemGroup Condition="'$(UseGeneratedObjects)' != 'true'">
-    <Compile Remove="Generated\**\*.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(UseGeneratedObjects)' == 'true'">
-    <Compile Remove="Objects\BoxGeometry.cs" />
-    <Compile Remove="Objects\Side.cs" />
-  </ItemGroup>
-
   <ItemGroup>
     <SupportedPlatform Include="browser" />
   </ItemGroup>

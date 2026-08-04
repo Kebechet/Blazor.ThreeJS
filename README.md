@@ -14,7 +14,7 @@
 
 Blazor wrapper for three.js. Typed C# scene graph with batched interop, safe on WebAssembly, Server, and MAUI Hybrid. Ships the three.js bundle - no npm, no CDN, no manual script tags.
 
-> **Foundation release.** This version covers a static lit scene: `Scene`, `Group`, `PerspectiveCamera`, `Mesh`, `Points`, `BoxGeometry`, `MeshStandardMaterial`, `PointsMaterial`, `AmbientLight`, `DirectionalLight`, the `Side` enum, and the `Vector3` / `Euler` / `Quaternion` / `Color` / `Matrix4` math types. The rest of the three.js surface is not wrapped yet - see [Wrapping a type yourself](#wrapping-a-type-yourself) for how to reach it in the meantime.
+> **Generated from `@types/three`.** 189 of three.js's 309 classes and 32 of its constant groups are wrapped, mechanically, from the upstream type declarations - so the property names, constructor argument order and documentation are three.js's own rather than a paraphrase. The `Vector3` / `Euler` / `Quaternion` / `Color` / `Matrix4` math types and the `Object3D` scene-graph base are hand-written. What is not covered, and why, is listed per class and per member in [`generator/api-coverage.md`](generator/api-coverage.md); [Wrapping a type yourself](#wrapping-a-type-yourself) is how to reach the rest in the meantime.
 
 ## Installation
 
@@ -83,74 +83,78 @@ Reads never leave C#, and a tick that changes nothing makes no interop call.
 
 ## Wrapping a type yourself
 
-The wrapped surface is small, but you are not blocked by it: the three.js bundle this package ships
-is the complete library, and every hook needed to drive an unwrapped type is `protected`, so you can
-add the wrapper in your own project. Derive from `Object3D` for anything that belongs in the scene
-graph - a light, a camera, a helper - and it attaches, batches, and flushes like a built-in type.
+60 of three.js's classes are not wrapped - typed-array buffer attributes, abstract bases, types
+taking a DOM handle - and you are not blocked by any of them: the three.js bundle this package ships
+is the complete library, and every hook the generated types use is `protected`, so you can add the
+wrapper in your own project. Derive from `Object3D` for anything that belongs in the scene graph and
+it attaches, batches, and flushes exactly like a generated type.
 
 Four members are all it takes. `ThreeTypeName` names the export on the `THREE` namespace,
 `ConstructorArgs` supplies its constructor arguments, `RecordSet` writes a property, and `RecordCall`
-invokes a method - each recorded into the same batch as the built-in types, so your wrapper coalesces
-and flushes exactly like they do.
+invokes a method - each recorded into the same batch as the generated types, so your wrapper
+coalesces and flushes exactly like they do.
+
+`PositionalAudio` is a real example: the generator refuses it because its base class needs a
+constructor argument that a generated subclass has nothing to pass, but by hand it is straightforward.
 
 ```csharp
-using Kebechet.Blazor.ThreeJS.Math;
+using Kebechet.Blazor.ThreeJS.Core;
 using Kebechet.Blazor.ThreeJS.Objects;
 
-public sealed class SpotLight : Object3D
+public sealed class PositionalAudio : Object3D
 {
-    private readonly Color _color;
-    private readonly float _intensity;
-    private float _angle = 1.05f;
+    private readonly AudioListener _listener;
+    private float _refDistance = 1f;
 
-    public SpotLight(Color color, float intensity)
+    public PositionalAudio(AudioListener listener)
     {
-        _color = color;
-        _intensity = intensity;
+        _listener = listener;
     }
 
     protected override string ThreeTypeName
     {
-        get { return "SpotLight"; }
+        get { return "PositionalAudio"; }
     }
 
     protected override object?[] ConstructorArgs
     {
-        get { return [_color.GetHex(), _intensity]; }
+        get { return [_listener]; }
     }
 
-    public float Angle
+    public float RefDistance
     {
-        get { return _angle; }
+        get { return _refDistance; }
         set
         {
-            if (_angle == value)
+            if (_refDistance == value)
             {
                 return;
             }
 
-            _angle = value;
-            RecordSet("angle", value);
+            _refDistance = value;
+            RecordSet("refDistance", value);
         }
     }
 
-    public void LookAt(float x, float y, float z)
+    public void Play()
     {
-        RecordCall("lookAt", x, y, z);
+        RecordCall("play");
     }
 }
 ```
 
-Add it to a scene like any built-in type: `scene.Add(new SpotLight(Color.White, 2f));`.
+Add it to a scene like any generated type: `scene.Add(new PositionalAudio(listener));`. Passing a
+generated object as a constructor argument - `_listener` above - sends it as a handle reference, so
+attach it to the same context first.
 
-The guard on the setter is the same one every built-in property uses - writing a value that is
+The guard on the setter is the same one every generated property uses - writing a value that is
 already set records nothing, which is what keeps a per-frame assignment free. Property names and
 constructor argument order are three.js's own, so the
 [three.js documentation](https://threejs.org/docs/) is the reference for both.
 
-One difference from a built-in type: give a custom type its initial state through `ConstructorArgs`,
+One difference from a generated type: give a custom type its initial state through `ConstructorArgs`,
 not through a property write before it is attached. `RecordSet` only records once the object has
-reached a context, and the replay-on-attach that covers built-in properties is internal to this
+reached a context, and the replay-on-attach that covers generated properties is internal to this
 package. `Position`, `Rotation`, `Scale`, and `IsVisible` are inherited from `Object3D` and are
 replayed as usual, whenever you write them.
 
@@ -160,9 +164,11 @@ another wrapped object (sent as a handle reference), or one of the `Vector3` / `
 `NotSupportedException` at the call rather than silently shipping its serialized shape over a live
 three.js instance.
 
-What this does not yet cover is a type that is not part of the scene graph - a geometry, a material,
-a texture. Those reach the renderer only through the object that owns them, and that wiring is
-internal to this package, so a custom one cannot be attached from outside yet.
+A type outside the scene graph works the same way: derive from the generated `BufferGeometry` or
+`Material` (or from `ThreeObject` directly) and assign it to `mesh.Geometry` / `mesh.Material`, which
+attaches it to the same context before the property write that references it. The one thing a wrapper
+outside this package cannot do is attach dependencies of its own - the hook for that is internal - so
+a custom type that has to construct another wrapped object first is still out of reach.
 
 ## License
 

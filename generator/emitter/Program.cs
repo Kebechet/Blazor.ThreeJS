@@ -30,17 +30,28 @@ var ir = JsonSerializer.Deserialize<IrRoot>(File.ReadAllText(irPath), IrSerializ
 var enums = new EnumCatalog(ir);
 var mapper = new TypeMapper(ir, enums);
 var constructorMapper = new ConstructorMapper();
+var methodMapper = new MethodMapper();
 var scope = new EmissionScope(ir, mapper, constructorMapper);
-var classifier = new MemberClassifier(ir, mapper);
+var surfaces = new ClassSurfaceResolver(ir, name => scope.IsEmittable(name) || EmitterConfig.HandWrittenClassNames.Contains(name));
+var classifier = new MemberClassifier(surfaces, mapper, methodMapper);
 var coverage = new CoverageReport(ir, scope, enums, mapper, classifier);
 
-var emitter = new ClassEmitter(ir, mapper, constructorMapper, classifier);
+var emittedClassNames = coverage.EmittableClasses
+	.Select(x => x.Class.Name)
+	.ToList();
+
+// Documentation crefs are resolved against the names this run will produce, so a `{@link Material}`
+// marker on one generated class points at the generated `Material` rather than degrading to plain
+// text. Registered before the first file is emitted, because the first file may carry such a marker.
+EmitterConfig.RegisterGeneratedTypeNames(emittedClassNames.Concat(enums.Generatable.Select(x => x.Name)));
+
+var emitter = new ClassEmitter(ir, mapper, constructorMapper, classifier, scope);
 var audit = new EmissionAudit();
 var emittedFiles = new List<EmittedFile>();
 
-foreach (var className in EmitterConfig.EmittedClassNames)
+foreach (var result in coverage.EmittableClasses)
 {
-	emittedFiles.Add(emitter.Emit(emitter.GetClass(className), audit));
+	emittedFiles.Add(emitter.Emit(result.Class, audit));
 }
 
 // Every generatable enum is emitted, not only the ones a currently emittable class happens to
@@ -54,12 +65,10 @@ foreach (var generatedEnum in enums.Generatable)
 	emittedFiles.Add(enumEmitter.Emit(generatedEnum));
 }
 
-ProjectNumericsOverEmittableClasses(coverage, emitter, audit);
-
 emittedFiles.Add(new EmittedFile
 {
 	RelativePath = "generator/emitter-audit.md",
-	Contents = audit.Render(EmitterConfig.EmittedClassNames, ir.Meta?.TypesVersion ?? "unknown")
+	Contents = audit.Render(emittedClassNames, ir.Meta?.TypesVersion ?? "unknown")
 });
 
 emittedFiles.Add(new EmittedFile
@@ -92,7 +101,7 @@ if (mode == "--project")
 		return 2;
 	}
 
-	return WriteProjection(fullProjectionPath, coverage, emitter, enums);
+	return WriteProjection(fullProjectionPath, emittedFiles);
 }
 
 return mode == "--check"
@@ -100,37 +109,10 @@ return mode == "--check"
 	: Write(repositoryRoot, emittedFiles);
 
 /// <summary>
-/// Emits every class the mapper calls emittable but the allowlist has not reached yet, purely to
-/// collect its numeric typing calls. Those are the decisions the upstream JSDoc did not make for us,
-/// and they are worth reviewing before a full run rather than 190 files in. Which classes are
-/// emittable is not decided here — <c>EmissionScope</c> owns that, and <c>api-coverage.md</c> reports it.
+/// Writes the generated C# into a scratch directory rather than into the package, so the corpus can
+/// be compiled in isolation without touching what is committed.
 /// </summary>
-static void ProjectNumericsOverEmittableClasses(CoverageReport coverage, ClassEmitter emitter, EmissionAudit audit)
-{
-	foreach (var result in coverage.EmittableClasses)
-	{
-		if (EmitterConfig.EmittedClassNames.Contains(result.Class.Name))
-		{
-			continue;
-		}
-
-		var projectionAudit = new EmissionAudit(NumericAuditScope.Projected);
-		emitter.Emit(result.Class, projectionAudit);
-		audit.AdoptNumerics(projectionAudit.NumericEntries);
-	}
-}
-
-/// <summary>
-/// Writes every class and enum the mapper says is emittable into a scratch directory, so "N classes
-/// are emittable" can be checked by compiling them rather than taken on trust. Classes whose names
-/// are already hand-written are left out: they would collide with the real ones in the same
-/// namespace, and the hand-written ones are what the projection compiles against.
-/// </summary>
-static int WriteProjection(
-	string outputDirectory,
-	CoverageReport coverage,
-	ClassEmitter emitter,
-	EnumCatalog enums)
+static int WriteProjection(string outputDirectory, List<EmittedFile> emittedFiles)
 {
 	Directory.CreateDirectory(outputDirectory);
 	foreach (var staleFile in Directory.EnumerateFiles(outputDirectory, "*.cs"))
@@ -139,77 +121,61 @@ static int WriteProjection(
 	}
 
 	var written = 0;
-	var failed = 0;
-	var sealedBaseCollisions = new List<string>();
-	foreach (var result in coverage.EmittableClasses)
+	foreach (var emittedFile in emittedFiles.Where(x => x.RelativePath.EndsWith(".cs", StringComparison.Ordinal)))
 	{
-		if (EmitterConfig.ExistingCSharpTypeNames.Contains(result.Class.Name))
-		{
-			continue;
-		}
-
-		try
-		{
-			var emittedFile = emitter.Emit(result.Class, new EmissionAudit(NumericAuditScope.Projected));
-
-			// A generated class whose nearest mirrored ancestor is one of Plan 1's sealed hand-written
-			// leaves cannot compile alongside them. That is a property of the hand-written types, not of
-			// the mapping, so the projection names them instead of silently pretending they compile.
-			var baseTypeName = emitter.ResolveBaseTypeName(result.Class);
-			if (EmitterConfig.SealedHandWrittenClassNames.Contains(baseTypeName))
-			{
-				sealedBaseCollisions.Add($"{result.Class.Name} : {baseTypeName}");
-				continue;
-			}
-
-			File.WriteAllText(Path.Combine(outputDirectory, $"{result.Class.Name}.cs"), emittedFile.Contents);
-			written++;
-		}
-		catch (UnsupportedMemberException exception)
-		{
-			Console.Error.WriteLine($"PROJECTION MISMATCH {result.Class.Name}: {exception.Reason}");
-			failed++;
-		}
-	}
-
-	if (sealedBaseCollisions.Count > 0)
-	{
-		Console.WriteLine($"skipped {sealedBaseCollisions.Count} class(es) whose base is a sealed hand-written type: {string.Join(", ", sealedBaseCollisions)}");
-	}
-
-	var projectionEnumEmitter = new EnumEmitter(coverage.Ir);
-	foreach (var generatedEnum in enums.Generatable)
-	{
-		if (EmitterConfig.ExistingCSharpTypeNames.Contains(generatedEnum.Name))
-		{
-			continue;
-		}
-
-		File.WriteAllText(Path.Combine(outputDirectory, $"{generatedEnum.Name}.cs"), projectionEnumEmitter.Emit(generatedEnum).Contents);
+		File.WriteAllText(Path.Combine(outputDirectory, Path.GetFileName(emittedFile.RelativePath)), emittedFile.Contents);
 		written++;
 	}
 
 	Console.WriteLine($"projected {written} file(s) into {outputDirectory}");
-	if (failed == 0)
-	{
-		return 0;
-	}
-
-	Console.Error.WriteLine($"{failed} class(es) the scope calls emittable were refused by the emitter — the two disagree.");
-	return 1;
+	return 0;
 }
 
 static int Write(string repositoryRoot, List<EmittedFile> emittedFiles)
 {
+	foreach (var staleFile in FindStaleGeneratedFiles(repositoryRoot, emittedFiles))
+	{
+		File.Delete(Path.Combine(repositoryRoot, staleFile.Replace('/', Path.DirectorySeparatorChar)));
+		Console.WriteLine($"deleted {staleFile}");
+	}
+
 	foreach (var emittedFile in emittedFiles)
 	{
 		var absolutePath = Path.Combine(repositoryRoot, emittedFile.RelativePath.Replace('/', Path.DirectorySeparatorChar));
 		Directory.CreateDirectory(Path.GetDirectoryName(absolutePath)!);
 		File.WriteAllText(absolutePath, emittedFile.Contents, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-		Console.WriteLine($"wrote {emittedFile.RelativePath}");
 	}
 
+	Console.WriteLine($"wrote {emittedFiles.Count} file(s)");
 	return 0;
+}
+
+/// <summary>
+/// Committed generated files this run no longer produces. Without this, a class that stops being
+/// emittable — an upstream rename, a mapping rule tightened — leaves its file behind, still compiled
+/// into the package and still passing the golden check, because the check only compares the files the
+/// emitter does produce.
+/// </summary>
+/// <param name="repositoryRoot">Repository root.</param>
+/// <param name="emittedFiles">Everything this run produces.</param>
+/// <returns>Repository-relative paths to delete.</returns>
+static List<string> FindStaleGeneratedFiles(string repositoryRoot, List<EmittedFile> emittedFiles)
+{
+	var generatedDirectory = Path.Combine(repositoryRoot, "src", "Blazor.ThreeJS", "Generated");
+	if (!Directory.Exists(generatedDirectory))
+	{
+		return [];
+	}
+
+	var expected = emittedFiles
+		.Select(x => x.RelativePath)
+		.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+	return Directory.EnumerateFiles(generatedDirectory, "*.cs")
+		.Select(x => "src/Blazor.ThreeJS/Generated/" + Path.GetFileName(x))
+		.Where(x => !expected.Contains(x))
+		.OrderBy(x => x, StringComparer.Ordinal)
+		.ToList();
 }
 
 /// <summary>
@@ -219,6 +185,12 @@ static int Write(string repositoryRoot, List<EmittedFile> emittedFiles)
 static int Check(string repositoryRoot, List<EmittedFile> emittedFiles)
 {
 	var hasDrifted = false;
+	foreach (var staleFile in FindStaleGeneratedFiles(repositoryRoot, emittedFiles))
+	{
+		Console.Error.WriteLine($"STALE   {staleFile} — it is committed but the emitter no longer produces it.");
+		hasDrifted = true;
+	}
+
 	foreach (var emittedFile in emittedFiles)
 	{
 		var absolutePath = Path.Combine(repositoryRoot, emittedFile.RelativePath.Replace('/', Path.DirectorySeparatorChar));
@@ -236,7 +208,6 @@ static int Check(string repositoryRoot, List<EmittedFile> emittedFiles)
 		var regenerated = NormalizeLineEndings(emittedFile.Contents);
 		if (committed == regenerated)
 		{
-			Console.WriteLine($"ok      {emittedFile.RelativePath}");
 			continue;
 		}
 
@@ -247,6 +218,7 @@ static int Check(string repositoryRoot, List<EmittedFile> emittedFiles)
 
 	if (!hasDrifted)
 	{
+		Console.WriteLine($"ok      {emittedFiles.Count} generated file(s) match what is committed");
 		return 0;
 	}
 

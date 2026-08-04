@@ -1,0 +1,107 @@
+// Generated from @types/three@0.185.3 by generator/emitter. Do not edit by hand.
+// Re-run `npm run emit` after changing the emitter or generator/three-api.json.
+
+using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Math;
+
+namespace Kebechet.Blazor.ThreeJS.Objects;
+
+/// <summary>
+/// Create a smooth **3D**
+/// <see href="http://en.wikipedia.org/wiki/B%C3%A9zier_curve#mediaviewer/File:Bezier_curve.svg">cubic
+/// bezier curve</see>, defined by a start point, endpoint and two control points. The
+/// JavaScript-side <c>THREE.CubicBezierCurve3</c>.
+/// </summary>
+/// <seealso href="https://threejs.org/docs/index.html#api/en/extras/curves/CubicBezierCurve">Official Documentation</seealso>
+/// <seealso href="https://github.com/mrdoob/three.js/blob/master/src/extras/curves/CubicBezierCurve.js">Source</seealso>
+public sealed class CubicBezierCurve3 : ThreeObject
+{
+	private readonly Vector3? _v0;
+	private readonly Vector3? _v1;
+	private readonly Vector3? _v2;
+	private readonly Vector3? _v3;
+	private int _arcLengthDivisions = 200;
+	private bool _isArcLengthDivisionsWritten;
+
+	/// <summary>This constructor creates a new <see cref="CubicBezierCurve3"/>.</summary>
+	/// <param name="v0">The starting point. Default is <c>new THREE.Vector3()</c>.</param>
+	/// <param name="v1">The first control point. Default is <c>new THREE.Vector3()</c>.</param>
+	/// <param name="v2">The second control point. Default is <c>new THREE.Vector3()</c>.</param>
+	/// <param name="v3">The ending point. Default is <c>new THREE.Vector3()</c>.</param>
+	public CubicBezierCurve3(Vector3? v0 = null, Vector3? v1 = null, Vector3? v2 = null, Vector3? v3 = null)
+	{
+		_v0 = v0;
+		_v1 = v1;
+		_v2 = v2;
+		_v3 = v3;
+	}
+
+	/// <summary>Name of the corresponding three.js constructor, <c>THREE.CubicBezierCurve3</c>.</summary>
+	protected override string ThreeTypeName
+	{
+		get { return "CubicBezierCurve3"; }
+	}
+
+	/// <summary>
+	/// Constructor arguments forwarded to <c>THREE.CubicBezierCurve3</c>: v0, v1, v2, v3. An argument
+	/// the caller left unspecified travels as the wire's not-supplied sentinel, or is trimmed when
+	/// nothing supplied follows it, so three.js applies its own default.
+	/// </summary>
+	protected override object?[] ConstructorArgs
+	{
+		get
+		{
+			return ThreeValue.TrimUnspecifiedTail(
+			[
+				ThreeValue.OrUnspecified(_v0),
+				ThreeValue.OrUnspecified(_v1),
+				ThreeValue.OrUnspecified(_v2),
+				ThreeValue.OrUnspecified(_v3)
+			]);
+		}
+	}
+
+	/// <summary>
+	/// This value determines the amount of divisions when calculating the cumulative segment lengths of
+	/// a <c>Curve</c> via <c>.getLengths</c>. To ensure precision when using methods like
+	/// <c>.getSpacedPoints</c>, it is recommended to increase <c>.arcLengthDivisions</c> if the
+	/// <c>Curve</c> is very large. Writing it records a <c>arcLengthDivisions</c> property write once
+	/// this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public int ArcLengthDivisions
+	{
+		get { return _arcLengthDivisions; }
+		set
+		{
+			if (_arcLengthDivisions == value)
+			{
+				return;
+			}
+
+			_arcLengthDivisions = value;
+			_isArcLengthDivisionsWritten = true;
+			RecordSet("arcLengthDivisions", value);
+		}
+	}
+
+	/// <summary>Update the cumulative segment distance cache.</summary>
+	public void UpdateArcLengths()
+	{
+		RecordCall("updateArcLengths");
+	}
+
+	/// <summary>
+	/// Emits the create op for <c>THREE.CubicBezierCurve3</c>, then replays every property written
+	/// before this object was attached.
+	/// </summary>
+	/// <param name="batch">Batch to record the ops into.</param>
+	internal override void EmitCreate(ThreeBatch batch)
+	{
+		base.EmitCreate(batch);
+
+		if (_isArcLengthDivisionsWritten)
+		{
+			batch.Set(Handle, "arcLengthDivisions", ThreeValue.Encode(_arcLengthDivisions));
+		}
+	}
+}

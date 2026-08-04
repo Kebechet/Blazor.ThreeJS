@@ -17,6 +17,12 @@ internal sealed class TypeMapper
 	/// <summary>Enums this mapper resolved references to, so only what is used has to be generated.</summary>
 	public HashSet<string> RequiredEnumNames { get; } = new(StringComparer.Ordinal);
 
+	/// <summary>
+	/// Declared types of the form <c>T | T[]</c> that were narrowed to their single-value arm, so the
+	/// coverage report can state which parts of the API lost their multi-value form.
+	/// </summary>
+	public HashSet<string> MultiValueNarrowings { get; } = new(StringComparer.Ordinal);
+
 	/// <summary>Builds a mapper over one IR snapshot.</summary>
 	/// <param name="ir">The parsed IR.</param>
 	/// <param name="enums">Catalog of generatable enums.</param>
@@ -268,6 +274,18 @@ internal sealed class TypeMapper
 			.ToList();
 
 		var hasNullArm = alternatives.Count != type.Types.Count;
+
+		// `T | T[]` is not a choice between two types — it is one type, with three.js's convenience form
+		// for supplying several of it. `Material | Material[]` is what `Mesh.material` is declared as,
+		// and refusing it leaves a mesh with no material at all. The single-value arm is taken and the
+		// multi-value form is recorded as a narrowing; picking an arm of a genuinely heterogeneous union
+		// stays refused below, because there the choice would be between different things.
+		if (alternatives.Count == 2 && TryTakeSingleValueArm(alternatives) is { } singleValueArm)
+		{
+			MultiValueNarrowings.Add(type.Text);
+			alternatives = [singleValueArm];
+		}
+
 		if (alternatives.Count != 1)
 		{
 			return TypeMapping.Skipped(
@@ -287,6 +305,26 @@ internal sealed class TypeMapper
 			mapping.RequiredGeneratedTypeName,
 			isExplicitlyNullable: true,
 			numeric: mapping.Numeric);
+	}
+
+	/// <summary>
+	/// Returns the single-value arm of a <c>T | T[]</c> union, or <see langword="null"/> when the two
+	/// arms are not the same type in singular and plural form.
+	/// </summary>
+	/// <param name="alternatives">The union's two non-null arms.</param>
+	/// <returns>The scalar arm, when the union is one type spelled two ways.</returns>
+	private static IrType? TryTakeSingleValueArm(IReadOnlyList<IrType> alternatives)
+	{
+		var arrayArm = alternatives.FirstOrDefault(x => x.Kind == "array");
+		if (arrayArm?.Element is null)
+		{
+			return null;
+		}
+
+		var scalarArm = alternatives.First(x => !ReferenceEquals(x, arrayArm));
+		return string.Equals(arrayArm.Element.Text, scalarArm.Text, StringComparison.Ordinal)
+			? scalarArm
+			: null;
 	}
 }
 

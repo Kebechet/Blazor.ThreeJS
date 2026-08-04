@@ -68,11 +68,12 @@ public class PointsTests
 	}
 
 	[Fact]
-	public void Points_AttachedWithUntouchedMaterial_ReplaysColorAndSize()
+	public void Points_AttachedWithAMaterialWrittenBeforeAttach_ReplaysOnlyWhatWasWritten()
 	{
 		// Arrange
 		var batch = new ThreeBatch();
-		var material = new PointsMaterial();
+		var material = new PointsMaterial { Size = 4f };
+		material.Color.SetHex(0x3366cc);
 		var points = new Points(new BoxGeometry(), material);
 
 		// Act

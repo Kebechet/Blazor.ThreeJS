@@ -16,6 +16,7 @@ internal sealed class EmissionScope
 {
 	private readonly Dictionary<string, ClassScopeResult> _resultsByName = new(StringComparer.Ordinal);
 	private readonly Dictionary<string, ClassScopeResult> _anyResultByName = new(StringComparer.Ordinal);
+	private readonly Dictionary<string, IrClass> _classesByName;
 	private readonly List<ClassScopeResult> _results = [];
 
 	/// <summary>Every class, with the verdict reached for it, ordered by name then file.</summary>
@@ -67,6 +68,12 @@ internal sealed class EmissionScope
 			}
 		}
 
+		_classesByName = [];
+		foreach (var irClass in ir.Classes)
+		{
+			_classesByName.TryAdd(irClass.Name, irClass);
+		}
+
 		var hasChanged = true;
 		while (hasChanged)
 		{
@@ -74,19 +81,66 @@ internal sealed class EmissionScope
 			foreach (var result in _results.Where(x => x.Status == ClassScopeStatus.Emittable))
 			{
 				var constructorMapping = constructorMapper.Map(result.Class, mapper);
-				if (constructorMapping.IsMapped)
+				if (!constructorMapping.IsMapped)
 				{
-					result.Constructor = constructorMapping;
+					Block(result, constructorMapping.RefusalReason!, constructorMapping.RefusalCategory);
+					_resultsByName.Remove(result.Class.Name);
+					hasChanged = true;
 					continue;
 				}
 
-				result.Status = ClassScopeStatus.Blocked;
-				result.Reason = constructorMapping.RefusalReason;
-				result.Category = constructorMapping.RefusalCategory;
+				result.Constructor = constructorMapping;
+			}
+
+			foreach (var result in _results.Where(x => x.Status == ClassScopeStatus.Emittable))
+			{
+				if (DescribeUnreachableBaseConstructor(result.Class) is not { } reason)
+				{
+					continue;
+				}
+
+				Block(result, reason, SkipCategory.UnreachableBaseConstructor);
 				_resultsByName.Remove(result.Class.Name);
 				hasChanged = true;
 			}
 		}
+	}
+
+	/// <summary>
+	/// Why a class cannot chain to its C# base's constructor, if it cannot. A generated class only
+	/// carries its own three.js constructor arguments, so it has nothing to pass to a base that
+	/// requires some — and inventing values for them would put a base's fields in a state three.js
+	/// never produced.
+	/// </summary>
+	/// <param name="irClass">Class to test.</param>
+	/// <returns>The obstacle, or <see langword="null"/> when the base is reachable.</returns>
+	private string? DescribeUnreachableBaseConstructor(IrClass irClass)
+	{
+		var baseName = irClass.Extends?.Name;
+		while (baseName is not null)
+		{
+			if (EmitterConfig.HandWrittenClassNames.Contains(baseName))
+			{
+				return null;
+			}
+
+			if (_resultsByName.TryGetValue(baseName, out var baseResult) && baseResult.Status == ClassScopeStatus.Emittable)
+			{
+				var required = baseResult.Constructor?.Parameters.Where(x => !x.IsOptional).ToList() ?? [];
+				if (required.Count == 0)
+				{
+					return null;
+				}
+
+				return $"its C# base `{baseName}` has a constructor requiring {string.Join(", ", required.Select(x => $"`{x.ThreeName}`"))}, and a generated class carries only its own constructor arguments — it has nothing to chain with";
+			}
+
+			baseName = _classesByName.TryGetValue(baseName, out var baseClass)
+				? baseClass.Extends?.Name
+				: null;
+		}
+
+		return null;
 	}
 
 	/// <summary>Whether a class is emitted, and therefore usable as a C# type in another signature.</summary>
@@ -144,6 +198,15 @@ internal sealed class EmissionScope
 	/// </summary>
 	private static void ApplySurfaceRules(ClassScopeResult result, IrClass irClass)
 	{
+		if (EmitterConfig.HandWrittenClassNames.Contains(irClass.Name))
+		{
+			Exclude(
+				result,
+				"hand-written by the runtime. It carries scene-graph behaviour — attachment, the transform, pre-attach state replay — rather than surface, so the generated classes derive from it instead of replacing it",
+				SkipCategory.HandWritten);
+			return;
+		}
+
 		if (EmitterConfig.ExcludedSourcePrefixes.FirstOrDefault(x => irClass.File.StartsWith(x, StringComparison.Ordinal)) is { } excludedPrefix)
 		{
 			Exclude(result, $"renderer internals under `{excludedPrefix}**`; no consumer instantiates them and emitting them would inflate the coverage table", SkipCategory.UnwrappedClass);

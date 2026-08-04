@@ -71,6 +71,8 @@ internal sealed class CoverageReport
 		var builder = new StringBuilder();
 		AppendHeader(builder);
 		AppendMappingRules(builder);
+		AppendSurfaceResolution(builder);
+		AppendReplayPolicy(builder);
 		AppendClassCoverage(builder);
 		AppendMemberClassification(builder);
 		AppendSkipList(builder);
@@ -170,7 +172,7 @@ internal sealed class CoverageReport
 		AppendLine(builder);
 	}
 
-	private static void AppendMappingRules(StringBuilder builder)
+	private void AppendMappingRules(StringBuilder builder)
 	{
 		AppendLine(builder, "## How a TypeScript type becomes a C# type");
 		AppendLine(builder);
@@ -185,7 +187,7 @@ internal sealed class CoverageReport
 		AppendLine(builder, "| generated enum | a type alias unioning `typeof` of numeric constants, or a numeric TypeScript `enum` |");
 		AppendLine(builder, "| **skipped** | everything else, with the obstacle named |");
 		AppendLine(builder);
-		AppendLine(builder, "Four rules are worth stating explicitly because they are judgement calls, not mechanics:");
+		AppendLine(builder, "Six rules are worth stating explicitly because they are judgement calls, not mechanics:");
 		AppendLine(builder);
 		AppendLine(builder, "1. **`ColorRepresentation` maps to `Color`.** three.js accepts `Color | string | number` wherever a colour");
 		AppendLine(builder, "   is taken; the mirror exposes only `Color`, which reaches the browser as a real `THREE.Color` and covers");
@@ -195,11 +197,115 @@ internal sealed class CoverageReport
 		AppendLine(builder, "3. **An optional parameter whose type does not map is dropped, and everything after it with it.** Calling");
 		AppendLine(builder, "   the JavaScript constructor with fewer arguments is exactly what three.js is built for, so the emitted");
 		AppendLine(builder, "   class is a faithful subset rather than a guess. A **required** parameter that does not map blocks the");
-		AppendLine(builder, "   whole class instead. Every dropped parameter is listed below — this is the one rule that narrows the");
-		AppendLine(builder, "   public API relative to three.js.");
+		AppendLine(builder, "   whole class instead. Every dropped parameter is listed below.");
 		AppendLine(builder, "4. **`src/math/**` is out of the generated surface.** Math values are by-value types encoded inline, not");
 		AppendLine(builder, "   handle-backed objects; five are hand-written and the rest would need a representation decision first.");
+		AppendLine(builder, "5. **`T | T[]` maps to `T`.** This is not a choice between two types; it is one type plus three.js's");
+		AppendLine(builder, "   convenience form for supplying several. `Mesh.material` is declared `Material | Material[]`, and");
+		AppendLine(builder, "   refusing it would leave a mesh with no material at all. A **narrowing**: the multi-material form is");
+		AppendLine(builder, "   not exposed. A union of genuinely different types stays refused — there the choice would be real.");
+		AppendLine(builder, "6. **A method parameter is optional only when a real default can be written for it.** The `$undef`");
+		AppendLine(builder, "   sentinel is constructor-arguments-only, so a method has no way to say \"not supplied\". Optionality is");
+		AppendLine(builder, "   therefore resolved right to left: the moment a parameter cannot carry a default, every parameter");
+		AppendLine(builder, "   before it becomes required. Emitting an optional three.js parameter as a required C# one is always");
+		AppendLine(builder, "   safe; inventing a default would send a value three.js never agreed to.");
 		AppendLine(builder);
+
+		if (_mapper.MultiValueNarrowings.Count > 0)
+		{
+			AppendLine(builder, "Declared types narrowed by rule 5, each of which lost its multi-value form:");
+			AppendLine(builder);
+			foreach (var narrowed in _mapper.MultiValueNarrowings.Order(StringComparer.Ordinal))
+			{
+				AppendLine(builder, $"- `{narrowed}`");
+			}
+
+			AppendLine(builder);
+		}
+	}
+
+	/// <summary>
+	/// How a class's member set is worked out, which is not the same thing as the members its own
+	/// declaration lists. This is the single largest determinant of how much API the mirror exposes.
+	/// </summary>
+	private void AppendSurfaceResolution(StringBuilder builder)
+	{
+		var byOrigin = _members
+			.GroupBy(x => x.Origin)
+			.ToDictionary(x => x.Key, x => x.Count());
+
+		AppendLine(builder, "## How a class's member set is worked out");
+		AppendLine(builder);
+		AppendLine(builder, "three.js gives its classes their property surface through **declaration merging**: the class declaration");
+		AppendLine(builder, "carries little more than a constructor, and an `export interface X extends XProperties {}` alongside it");
+		AppendLine(builder, "supplies everything else. Reading only class-declared members produces a `MeshStandardMaterial` with no");
+		AppendLine(builder, "`color`, no `roughness` and no `side` — the largest body of mirrored state in the library, invisible.");
+		AppendLine(builder);
+		AppendLine(builder, "Three things are resolved, in this order:");
+		AppendLine(builder);
+		AppendLine(builder, "1. **Interface inheritance.** Everything reachable through the same-named interface and its `extends`");
+		AppendLine(builder, "   chain is pulled in, including any `declare module` block augmenting one of them.");
+		AppendLine(builder, "2. **Ancestor flattening.** An ancestor with no C# type of its own — the abstract `Light`, say — has its");
+		AppendLine(builder, "   members folded into the class rather than lost with it.");
+		AppendLine(builder, "3. **Base subtraction.** Members the nearest mirrored ancestor already carries are removed, because C#");
+		AppendLine(builder, "   inheritance provides them. Without this the same three.js member would be re-declared on every");
+		AppendLine(builder, "   subclass, hiding the base member each time.");
+		AppendLine(builder);
+		AppendLine(builder, "| where the member came from | members |");
+		AppendLine(builder, "|---|---|");
+		foreach (var origin in Enum.GetValues<MemberOrigin>())
+		{
+			AppendLine(builder, $"| {DescribeOrigin(origin)} | {byOrigin.GetValueOrDefault(origin)} |");
+		}
+
+		AppendLine(builder);
+		AppendLine(builder, "⚠️ **`Object3D` is hand-written, and its members are subtracted from every descendant.** It carries the");
+		AppendLine(builder, "scene-graph machinery — attachment, the transform, the pre-attach state replay — which is behaviour");
+		AppendLine(builder, "rather than surface. The consequence is that the three.js members it does *not* implement (`name`,");
+		AppendLine(builder, "`renderOrder`, `castShadow`, `frustumCulled`, `up`, `userData`…) are on no C# type at all: subtracting");
+		AppendLine(builder, "them is right, because re-declaring them on each of the ~100 descendants would be worse, but it leaves");
+		AppendLine(builder, "the single largest coverage hole in the mirror. Closing it means generating `Object3D` itself and");
+		AppendLine(builder, "layering the hand-written behaviour on top.");
+		AppendLine(builder);
+	}
+
+	/// <summary>
+	/// The replay policy, which decides what actually reaches the browser when an object is attached.
+	/// Stated here because it is a behavioural contract rather than a mapping rule, and because the
+	/// obvious alternative is actively unsafe.
+	/// </summary>
+	private static void AppendReplayPolicy(StringBuilder builder)
+	{
+		AppendLine(builder, "## What gets replayed on attach");
+		AppendLine(builder);
+		AppendLine(builder, "A generated class replays **only the properties the caller actually wrote**. Each mirrored property");
+		AppendLine(builder, "carries a flag set on first write, and `EmitCreate` / `EmitState` replay the ones that are set, so a");
+		AppendLine(builder, "value written before the object was attached is never lost and construction order never matters.");
+		AppendLine(builder);
+		AppendLine(builder, "⚠️ **Replaying every property unconditionally would corrupt objects, not just cost bytes.** The mirror");
+		AppendLine(builder, "has no read channel, so a property the caller never touched holds the emitter's *guess* at three.js's");
+		AppendLine(builder, "default — the documented one where it is expressible, and the C# zero value where it is not.");
+		AppendLine(builder, "`Material.stencilWriteMask` and `stencilFuncMask` document `0xff`, which is not a C# integer literal, so");
+		AppendLine(builder, "the field starts at `0`; replaying that on every attach would silently disable stencil writes on every");
+		AppendLine(builder, "material in the scene. Writing only what the caller wrote makes the mirror unable to be wrong about a");
+		AppendLine(builder, "value it was never told.");
+		AppendLine(builder);
+		AppendLine(builder, "A math-typed property is mirrored as an instance the object owns and watches, so mutating it in place");
+		AppendLine(builder, "(`material.Color.SetHex(…)`) counts as a write. `Matrix4` is the exception: it hands its components out");
+		AppendLine(builder, "as a mutable array, so a change to it cannot be observed, and matrix-typed properties are not mirrored.");
+		AppendLine(builder);
+	}
+
+	private static string DescribeOrigin(MemberOrigin origin)
+	{
+		return origin switch
+		{
+			MemberOrigin.Declared => "declared on the class itself",
+			MemberOrigin.InterfaceInheritance => "reached through the interface three.js merges into the class",
+			MemberOrigin.FlattenedAncestor => "folded in from an ancestor with no C# type of its own",
+			MemberOrigin.ModuleAugmentation => "merged in by a `declare module` block",
+			_ => throw new NotImplementedException($"Unhandled {nameof(MemberOrigin)} '{origin}'.")
+		};
 	}
 
 	private void AppendClassCoverage(StringBuilder builder)
@@ -277,42 +383,6 @@ internal sealed class CoverageReport
 
 		AppendLine(builder);
 		AppendLine(builder, "</details>");
-		AppendLine(builder);
-		AppendSealedBaseCollisions(builder);
-	}
-
-	/// <summary>
-	/// Emittable classes that three.js derives from one of Plan 1's hand-written leaves. They map
-	/// cleanly; they just cannot compile next to a <c>sealed</c> base. Recorded here because it is a
-	/// property of the hand-written types rather than of the mapping, and it has to be settled before
-	/// a full run can land.
-	/// </summary>
-	private void AppendSealedBaseCollisions(StringBuilder builder)
-	{
-		var collisions = EmittableClasses
-			.Where(x => x.Class.Extends?.Name is { } baseName && EmitterConfig.SealedHandWrittenClassNames.Contains(baseName))
-			.ToList();
-
-		AppendLine(builder, "### Emittable, but their base is a `sealed` hand-written class");
-		AppendLine(builder);
-		AppendLine(builder, "Plan 1 sealed the hand-written classes because only leaves were needed. three.js subclasses several");
-		AppendLine(builder, "of them, so these map cleanly but cannot compile alongside the current hand-written types. Unsealing");
-		AppendLine(builder, "them is a public-API change rather than a mapping decision.");
-		AppendLine(builder);
-		if (collisions.Count == 0)
-		{
-			AppendLine(builder, "None.");
-			AppendLine(builder);
-			return;
-		}
-
-		AppendLine(builder, "| class | sealed base |");
-		AppendLine(builder, "|---|---|");
-		foreach (var result in collisions)
-		{
-			AppendLine(builder, $"| `{result.Class.Name}` | `{result.Class.Extends!.Name}` |");
-		}
-
 		AppendLine(builder);
 	}
 
@@ -684,6 +754,10 @@ internal sealed class CoverageReport
 			SkipCategory.UnresolvedType => "the TypeScript checker could not resolve the name",
 			SkipCategory.NotInstanceApi => "static, non-public or `@internal` — not part of the mirrored instance API",
 			SkipCategory.ReadOnlyWithoutReadChannel => "read-only in three.js, and the wire format has no read op",
+			SkipCategory.NoReadChannel => "its result is the point of calling it, and no op hands a value back",
+			SkipCategory.ShadowedByConstructorParameter => "the constructor already takes it under the same name",
+			SkipCategory.HandWritten => "the package provides the class by hand, and the generated classes derive from it",
+			SkipCategory.UnreachableBaseConstructor => "its C# base requires constructor arguments the generated class has nothing to supply",
 			SkipCategory.RestParameter => "a rest parameter, including the rest-union-tuple pseudo-overload form",
 			_ => throw new NotImplementedException($"Unhandled {nameof(SkipCategory)} '{category}'.")
 		};

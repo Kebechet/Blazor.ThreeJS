@@ -1,0 +1,41 @@
+// Generated from @types/three@0.185.3 by generator/emitter. Do not edit by hand.
+// Re-run `npm run emit` after changing the emitter or generator/three-api.json.
+
+using Kebechet.Blazor.ThreeJS.Core;
+
+namespace Kebechet.Blazor.ThreeJS.Objects;
+
+/// <summary>
+/// A class for generating an octahedron geometry. The JavaScript-side
+/// <c>THREE.OctahedronGeometry</c>.
+/// </summary>
+/// <seealso href="https://threejs.org/docs/index.html#api/en/geometries/OctahedronGeometry">Official Documentation</seealso>
+/// <seealso href="https://github.com/mrdoob/three.js/blob/master/src/geometries/OctahedronGeometry.js">Source</seealso>
+public sealed class OctahedronGeometry : PolyhedronGeometry
+{
+	private readonly float _radius;
+	private readonly int _detail;
+
+	/// <summary>Create a new instance of <see cref="OctahedronGeometry"/>.</summary>
+	/// <param name="radius">Radius of the octahedron.</param>
+	/// <param name="detail">
+	/// Setting this to a value greater than zero add vertices making it no longer an octahedron.
+	/// </param>
+	public OctahedronGeometry(float radius = 1f, int detail = 0)
+	{
+		_radius = radius;
+		_detail = detail;
+	}
+
+	/// <summary>Name of the corresponding three.js constructor, <c>THREE.OctahedronGeometry</c>.</summary>
+	protected override string ThreeTypeName
+	{
+		get { return "OctahedronGeometry"; }
+	}
+
+	/// <summary>Constructor arguments forwarded to <c>THREE.OctahedronGeometry</c>: radius, detail.</summary>
+	protected override object?[] ConstructorArgs
+	{
+		get { return [_radius, _detail]; }
+	}
+}

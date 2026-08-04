@@ -7,11 +7,11 @@ namespace Blazor.ThreeJS.Tests.Objects;
 public class MeshStandardMaterialTests
 {
 	[Fact]
-	public void MeshStandardMaterial_AttachedWithUntouchedSide_ReplaysFrontSideAsANumber()
+	public void MeshStandardMaterial_AttachedWithASideWrittenBeforeAttach_ReplaysItAsANumber()
 	{
 		// Arrange
 		var batch = new ThreeBatch();
-		var material = new MeshStandardMaterial();
+		var material = new MeshStandardMaterial { Side = Side.DoubleSide };
 
 		// Act
 		material.AttachTo(batch);
@@ -19,7 +19,7 @@ public class MeshStandardMaterialTests
 
 		// Assert
 		var sideOp = ops.Single(x => x.Kind == ThreeOpKind.Set && x.Member == "side");
-		sideOp.Value.ShouldBe((int) Side.FrontSide);
+		sideOp.Value.ShouldBe((int) Side.DoubleSide);
 	}
 
 	[Fact]

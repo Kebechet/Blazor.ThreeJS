@@ -80,6 +80,23 @@ public abstract class Object3D : ThreeObject
 	}
 
 	/// <summary>
+	/// Orients this object to face the given point in world space.
+	/// <para>
+	/// three.js declares <c>lookAt</c> on <c>Object3D</c> rather than on the camera, so every object in
+	/// the graph has it. It lives here rather than in generated code because the generator erases
+	/// overloads to the first signature, which upstream is the <c>Vector3</c> one — and this component
+	/// spelling is the shape already published.
+	/// </para>
+	/// </summary>
+	/// <param name="x">X coordinate of the point to look at.</param>
+	/// <param name="y">Y coordinate of the point to look at.</param>
+	/// <param name="z">Z coordinate of the point to look at.</param>
+	public void LookAt(float x, float y, float z)
+	{
+		RecordCall("lookAt", x, y, z);
+	}
+
+	/// <summary>
 	/// Attaches this object and its entire subtree to a batch: emits the create op, replays every
 	/// property already set on this object, then attaches each child in turn. Idempotent — a second
 	/// call on an already-attached object is a no-op. Internal because the only entry point a

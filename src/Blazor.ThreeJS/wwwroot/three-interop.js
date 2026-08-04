@@ -27,6 +27,16 @@ export function createContext(canvas, dotNetRef) {
         isRunning: true
     };
 
+    applySize(context, canvas.clientWidth, canvas.clientHeight);
+
+    const resizeObserver = new ResizeObserver(entries => {
+        for (const entry of entries) {
+            applySize(context, entry.contentRect.width, entry.contentRect.height);
+        }
+    });
+    resizeObserver.observe(canvas);
+    context.resizeObserver = resizeObserver;
+
     const contextId = nextContextId++;
     contexts.set(contextId, context);
 
@@ -171,9 +181,14 @@ export function setActiveScene(contextId, sceneHandle, cameraHandle) {
     context.cameraHandle = cameraHandle;
 }
 
-export function resize(contextId, width, height) {
-    const context = contexts.get(contextId);
-    if (!context) {
+// Keeps the renderer's drawing buffer in step with the canvas element's laid-out size. CSS
+// controls the displayed size, so setSize's third argument stays false — three.js must never
+// overwrite the element's inline style and fight the consumer's own CSS. A canvas inside a
+// display:none panel, or observed before layout, reports 0x0; setSize(0, 0) would produce a
+// broken buffer and aspect = width / 0 would corrupt the projection matrix with Infinity, so
+// either dimension being 0 skips the update entirely rather than applying it.
+function applySize(context, width, height) {
+    if (width === 0 || height === 0) {
         return;
     }
 
@@ -193,6 +208,7 @@ export function disposeContext(contextId) {
 
     context.isRunning = false;
     cancelAnimationFrame(context.frameRequest);
+    context.resizeObserver.disconnect();
     for (const object of context.objects.values()) {
         if (object && typeof object.dispose === 'function') {
             object.dispose();

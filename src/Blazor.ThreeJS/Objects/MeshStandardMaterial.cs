@@ -11,6 +11,7 @@ public sealed class MeshStandardMaterial : ThreeObject
 {
 	private float _roughness = 1f;
 	private float _metalness = 0f;
+	private Side _side = Side.FrontSide;
 
 	/// <summary>Base color of the material.</summary>
 	public Color Color { get; }
@@ -73,8 +74,29 @@ public sealed class MeshStandardMaterial : ThreeObject
 	}
 
 	/// <summary>
-	/// Emits the create op plus color, roughness, and metalness, so these properties are set on the
-	/// JavaScript side even when they still hold their default value at attach time.
+	/// Gets or sets which face(s) of the mesh's triangles this material renders. Setting this
+	/// property records a property write once this material is attached to a batch — directly, or
+	/// indirectly when the owning <see cref="Mesh"/> is attached. Writing the value already held
+	/// records nothing, so reassigning unchanged state every frame costs no interop.
+	/// </summary>
+	public Side Side
+	{
+		get { return _side; }
+		set
+		{
+			if (_side == value)
+			{
+				return;
+			}
+
+			_side = value;
+			RecordSet("side", value);
+		}
+	}
+
+	/// <summary>
+	/// Emits the create op plus color, roughness, metalness, and side, so these properties are set on
+	/// the JavaScript side even when they still hold their default value at attach time.
 	/// </summary>
 	/// <param name="batch">Batch to record the create op and property writes into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
@@ -83,5 +105,6 @@ public sealed class MeshStandardMaterial : ThreeObject
 		batch.Set(Handle, "color", ThreeValue.Encode(Color));
 		batch.Set(Handle, "roughness", _roughness);
 		batch.Set(Handle, "metalness", _metalness);
+		batch.Set(Handle, "side", ThreeValue.Encode(_side));
 	}
 }

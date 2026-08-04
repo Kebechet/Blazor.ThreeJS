@@ -69,4 +69,66 @@ public class MeshTests
 		createHandlesInOrder.IndexOf(geometry.Handle).ShouldBeLessThan(createHandlesInOrder.IndexOf(mesh.Handle));
 		createHandlesInOrder.IndexOf(material.Handle).ShouldBeLessThan(createHandlesInOrder.IndexOf(mesh.Handle));
 	}
+
+	[Fact]
+	public void Mesh_MaterialSetToAFreshMaterial_EmitsItsCreateBeforeTheMaterialSetOp()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+		var mesh = new Mesh(new BoxGeometry(), new MeshStandardMaterial());
+		mesh.AttachTo(batch);
+		batch.Drain();
+		var freshMaterial = new MeshStandardMaterial();
+
+		// Act
+		mesh.Material = freshMaterial;
+		var opsList = batch.Drain().ToList();
+
+		// Assert
+		var createIndex = opsList.FindIndex(x => x.Kind == ThreeOpKind.Create && x.Handle == freshMaterial.Handle);
+		var setIndex = opsList.FindIndex(x => x.Kind == ThreeOpKind.Set && x.Handle == mesh.Handle && x.Member == "material");
+
+		createIndex.ShouldBeGreaterThanOrEqualTo(0);
+		setIndex.ShouldBeGreaterThanOrEqualTo(0);
+		createIndex.ShouldBeLessThan(setIndex);
+	}
+
+	[Fact]
+	public void Mesh_MaterialSetToAnAlreadyAttachedMaterial_DoesNotReemitItsCreateOp()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+		var sharedMaterial = new MeshStandardMaterial();
+		var otherMesh = new Mesh(new BoxGeometry(), sharedMaterial);
+		otherMesh.AttachTo(batch);
+		var mesh = new Mesh(new BoxGeometry(), new MeshStandardMaterial());
+		mesh.AttachTo(batch);
+		batch.Drain();
+
+		// Act
+		mesh.Material = sharedMaterial;
+		var ops = batch.Drain();
+
+		// Assert
+		ops.Count(x => x.Kind == ThreeOpKind.Create && x.Handle == sharedMaterial.Handle).ShouldBe(0);
+		ops.ShouldContain(x => x.Kind == ThreeOpKind.Set && x.Handle == mesh.Handle && x.Member == "material");
+	}
+
+	[Fact]
+	public void Mesh_MaterialSetToTheSameInstanceItAlreadyHolds_ProducesNoOps()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+		var material = new MeshStandardMaterial();
+		var mesh = new Mesh(new BoxGeometry(), material);
+		mesh.AttachTo(batch);
+		batch.Drain();
+
+		// Act
+		mesh.Material = material;
+		var ops = batch.Drain();
+
+		// Assert
+		ops.ShouldBeEmpty();
+	}
 }

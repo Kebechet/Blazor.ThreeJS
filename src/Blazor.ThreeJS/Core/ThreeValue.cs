@@ -14,8 +14,10 @@ internal static class ThreeValue
 	/// Converts a value into its wire representation. Math types (<see cref="Vector3"/>,
 	/// <see cref="Euler"/>, <see cref="Quaternion"/>, <see cref="Color"/>, <see cref="Matrix4"/>)
 	/// become a <see cref="TaggedValue"/>, <see cref="ThreeObject"/> instances become a
-	/// <see cref="HandleReference"/>, and primitives, <see cref="string"/> and
-	/// <see langword="null"/> pass through unchanged.
+	/// <see cref="HandleReference"/>, an <see cref="Enum"/> value is cast to its numeric backing
+	/// value so a future <c>JsonStringEnumConverter</c> reaching these options cannot silently turn
+	/// it into its member name, and primitives, <see cref="string"/> and <see langword="null"/> pass
+	/// through unchanged.
 	/// </summary>
 	/// <param name="value">The value to encode.</param>
 	/// <returns>The wire-ready representation of <paramref name="value"/>.</returns>
@@ -42,6 +44,8 @@ internal static class ThreeValue
 				return new TaggedValue { Tag = ThreeWireFormat.Matrix4Tag, Values = matrix.ToArray() };
 			case ThreeObject threeObject:
 				return new HandleReference { Handle = threeObject.Handle };
+			case Enum enumValue:
+				return Convert.ChangeType(enumValue, enumValue.GetTypeCode());
 			default:
 				if (value is string || value.GetType().IsValueType)
 				{

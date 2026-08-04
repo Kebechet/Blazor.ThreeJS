@@ -11,7 +11,7 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 public sealed class Mesh : Object3D
 {
 	private readonly ThreeObject _geometry;
-	private readonly ThreeObject _material;
+	private MeshStandardMaterial _material;
 
 	/// <summary>
 	/// Initializes a new mesh from a box geometry and a standard material.
@@ -28,6 +28,32 @@ public sealed class Mesh : Object3D
 	protected override string ThreeTypeName
 	{
 		get { return nameof(Mesh); }
+	}
+
+	/// <summary>
+	/// Gets or sets the appearance of this mesh. Setting this property attaches the incoming material
+	/// first — a no-op if it is already attached to this batch, per <see cref="ThreeObject.AttachTo"/>
+	/// — so its create op always reaches the batch before the property write that references it by
+	/// handle. Assigning the material this mesh already holds records nothing.
+	/// </summary>
+	public MeshStandardMaterial Material
+	{
+		get { return _material; }
+		set
+		{
+			if (ReferenceEquals(_material, value))
+			{
+				return;
+			}
+
+			_material = value;
+			if (Batch is not null)
+			{
+				_material.AttachTo(Batch);
+			}
+
+			RecordSet("material", _material);
+		}
 	}
 
 	/// <summary>

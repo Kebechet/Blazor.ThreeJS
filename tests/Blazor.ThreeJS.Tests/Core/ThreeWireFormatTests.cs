@@ -274,6 +274,29 @@ public class ThreeWireFormatTests
 		json.ShouldBe($$"""{"$ref":{{geometry.Handle}}}""");
 	}
 
+	[Fact]
+	public void ThreeValue_SideEnumEncoded_SerializesAsANumber()
+	{
+		// Arrange
+		var encoded = ThreeValue.Encode(Side.DoubleSide);
+
+		// Act
+		var valueKind = JsonNode.Parse(JsonSerializer.Serialize(encoded, _webOptions))!.GetValueKind();
+
+		// Assert
+		valueKind.ShouldBe(JsonValueKind.Number);
+	}
+
+	[Fact]
+	public void ThreeValue_SideEnumEncoded_MatchesItsThreeJsNumericConstant()
+	{
+		// Arrange & Act
+		var json = JsonSerializer.Serialize(ThreeValue.Encode(Side.DoubleSide), _webOptions);
+
+		// Assert
+		json.ShouldBe("2");
+	}
+
 	[Theory]
 	[InlineData(ThreeWireFormat.Vector3Tag)]
 	[InlineData(ThreeWireFormat.EulerTag)]
@@ -345,10 +368,11 @@ public class ThreeWireFormatTests
 	}
 
 	/// <summary>
-	/// Builds one op of every <see cref="ThreeOpKind"/> and one encoded value of every
-	/// <see cref="ThreeWireFormat"/> tag, as a batch the JavaScript applier can run end to end.
-	/// Kept in step with <c>tests/wire-format-fixture.json</c> by
-	/// <c>ThreeOp_FixtureBatchSerialized_MatchesTheSharedFixtureFile</c>.
+	/// Builds one op of every <see cref="ThreeOpKind"/>, one encoded value of every
+	/// <see cref="ThreeWireFormat"/> tag, an enum-valued <c>Set</c>, and a <c>$ref</c>-valued
+	/// <c>Set</c> that reassigns a mesh's material after it was already attached — as a batch the
+	/// JavaScript applier can run end to end. Kept in step with
+	/// <c>tests/wire-format-fixture.json</c> by <c>ThreeOp_FixtureBatchSerialized_MatchesTheSharedFixtureFile</c>.
 	/// </summary>
 	/// <returns>The fixture batch, in the order the applier receives it.</returns>
 	private static List<ThreeOp> BuildFixtureOps()
@@ -379,6 +403,9 @@ public class ThreeWireFormatTests
 			new ThreeOp { Kind = ThreeOpKind.Set, Handle = 3, Member = "matrix", Value = ThreeValue.Encode(new Matrix4()) },
 			new ThreeOp { Kind = ThreeOpKind.Add, Handle = 4, ChildHandle = 3 },
 			new ThreeOp { Kind = ThreeOpKind.Remove, Handle = 4, ChildHandle = 3 },
+			new ThreeOp { Kind = ThreeOpKind.Create, Handle = 5, Type = "MeshStandardMaterial", Args = [] },
+			new ThreeOp { Kind = ThreeOpKind.Set, Handle = 3, Member = "material", Value = new ThreeValue.HandleReference { Handle = 5 } },
+			new ThreeOp { Kind = ThreeOpKind.Set, Handle = 2, Member = "side", Value = ThreeValue.Encode(Side.DoubleSide) },
 			new ThreeOp { Kind = ThreeOpKind.Dispose, Handle = 1 }
 		];
 	}

@@ -13,20 +13,28 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { applyOp } from '../src/Blazor.ThreeJS/wwwroot/three-interop.js';
+import { DoubleSide } from '../src/Blazor.ThreeJS/wwwroot/three.module.js';
 
 const ops = JSON.parse(readFileSync(new URL('./wire-format-fixture.json', import.meta.url), 'utf8'));
 const context = { objects: new Map() };
 
-for (const op of ops) {
+// The material-reassignment ops (a fresh Create plus a $ref Set) are appended after the original
+// fixture sequence. The batch is applied in two passes so the first pass can pin the
+// constructor-time $ref still resolving to the original material, before the second pass rebinds
+// it — applying everything in one loop would make that constructor-time assertion false by the
+// time it runs.
+const reassignmentStartIndex = ops.findIndex(op => op.h === 5);
+const opsBeforeReassignment = ops.slice(0, reassignmentStartIndex);
+const opsFromReassignment = ops.slice(reassignmentStartIndex);
+
+for (const op of opsBeforeReassignment) {
     applyOp(context, op);
 }
 
-const geometry = context.objects.get(1);
 const material = context.objects.get(2);
 const mesh = context.objects.get(3);
 const scene = context.objects.get(4);
 
-assert.equal(geometry, undefined, 'the Dispose op should have removed handle 1 from the object table');
 assert.ok(material.isMeshStandardMaterial, 'handle 2 should be a MeshStandardMaterial');
 assert.ok(mesh.isMesh, 'handle 3 should be a Mesh');
 assert.ok(scene.isScene, 'handle 4 should be a Scene');
@@ -58,6 +66,24 @@ assert.notDeepEqual(mesh.quaternion.toArray(), [0, 0, 0, 1], 'the lookAt Call sh
 
 assert.equal(mesh.parent, null, 'the Add op followed by the Remove op should leave the mesh detached');
 assert.equal(scene.children.length, 0, 'the Remove op should have detached the mesh from the scene');
+
+for (const op of opsFromReassignment) {
+    applyOp(context, op);
+}
+
+const geometry = context.objects.get(1);
+const reassignedMaterial = context.objects.get(5);
+
+assert.equal(geometry, undefined, 'the Dispose op should have removed handle 1 from the object table');
+assert.ok(reassignedMaterial.isMeshStandardMaterial, 'handle 5 should be a freshly created MeshStandardMaterial');
+
+// The $ref Set must rebind mesh.material to the new instance, never deep-copy it, and must not
+// disturb the material the mesh no longer references.
+assert.equal(mesh.material, reassignedMaterial, 'the $ref Set value should rebind mesh.material to the newly created material');
+assert.notEqual(mesh.material, material, 'mesh.material should no longer be the original constructor-time material');
+
+// An enum Set must decode as the plain number three.js expects for Material.side, not a string.
+assert.equal(material.side, DoubleSide, 'the enum Set value should decode into material.side as THREE.DoubleSide');
 
 // The failure mode this whole test exists for: if the C# side ever serializes the op kind as a
 // string - a JsonStringEnumConverter reaching the interop options is all it takes - every op lands

@@ -46,8 +46,8 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// <summary>
 	/// Attaches an object graph to this context's <see cref="Batch"/>: emits a create op for
 	/// <paramref name="root"/> and every object already added under it, then replays any property
-	/// writes made before this call. Calling this again on an already-attached root is a no-op, the
-	/// same idempotence <see cref="Object3D.AttachTo"/> guarantees.
+	/// writes made before this call. Attaching is idempotent - calling this again on an
+	/// already-attached root is a no-op.
 	/// </summary>
 	/// <param name="root">Root of the object graph to attach, typically a <see cref="Scene"/>.</param>
 	public void Attach(Object3D root)

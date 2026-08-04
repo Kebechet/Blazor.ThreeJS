@@ -1,0 +1,89 @@
+name: Publish to NuGet
+
+on:
+  workflow_dispatch:
+
+env:
+  PROJECT_PATH: src/Blazor.ThreeJS/Blazor.ThreeJS.csproj
+  SOLUTION_PATH: src/Blazor.ThreeJS.slnx
+  PACKAGE_NAME: Kebechet.Blazor.ThreeJS
+  DOTNET_VERSION: '10.0.x'
+  BUILD_CONFIGURATION: Release
+  OUTPUT_PATH: ./nupkg
+  NUGET_SOURCE: https://api.nuget.org/v3/index.json
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Get version from csproj
+        id: version
+        run: |
+          VERSION=$(grep -oP '(?<=<Version>)[^<]+' ${{ env.PROJECT_PATH }})
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+      # GeneratePackageOnBuild means the build itself emits the .nupkg (and .snupkg) under
+      # src/<Project>/bin/<Config>/, so a separate `dotnet pack` step is redundant - and a
+      # standalone `dotnet pack` fails outright with NU5026. The artifact is verified below
+      # rather than trusted, because a multi-target Razor class library can lose its wwwroot
+      # static assets (the vendored three.js bundle this package ships) under `pack` and still
+      # publish without complaint.
+      - name: Build (produces the .nupkg via GeneratePackageOnBuild)
+        run: dotnet build ${{ env.SOLUTION_PATH }} --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
+
+      - name: Collect package
+        run: |
+          mkdir -p ${{ env.OUTPUT_PATH }}
+          cp src/*/bin/${{ env.BUILD_CONFIGURATION }}/*.nupkg ${{ env.OUTPUT_PATH }}/
+          cp src/*/bin/${{ env.BUILD_CONFIGURATION }}/*.snupkg ${{ env.OUTPUT_PATH }}/ || true
+          ls -la ${{ env.OUTPUT_PATH }}
+
+      # A package missing its static web assets loads no JS at runtime but publishes without
+      # complaint, so fail here rather than shipping it.
+      - name: Verify static web assets are packed
+        run: |
+          PKG=$(ls ${{ env.OUTPUT_PATH }}/*.nupkg | head -1)
+          unzip -l "$PKG" | grep -q "staticwebassets" || { echo "::error::staticwebassets missing from $PKG"; exit 1; }
+          unzip -l "$PKG" | grep -q "build/" || { echo "::error::build/*.props missing from $PKG"; exit 1; }
+          unzip -l "$PKG" | grep -E "staticwebassets|build/"
+
+      - name: Publish to NuGet
+        run: dotnet nuget push ${{ env.OUTPUT_PATH }}/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source ${{ env.NUGET_SOURCE }} --skip-duplicate
+
+      # --no-symbols: GitHub Packages rejects .snupkg, which push would otherwise send along.
+      - name: Publish to GitHub Packages
+        run: dotnet nuget push ${{ env.OUTPUT_PATH }}/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --skip-duplicate --no-symbols
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          body: |
+            ## ${{ env.PACKAGE_NAME }} v${{ steps.version.outputs.version }}
+
+            ### Installation
+            ```bash
+            dotnet add package ${{ env.PACKAGE_NAME }} --version ${{ steps.version.outputs.version }}
+            ```
+
+            ### Links
+            - [NuGet Package](https://www.nuget.org/packages/${{ env.PACKAGE_NAME }}/${{ steps.version.outputs.version }})
+            - [GitHub](https://github.com/Kebechet/Blazor.ThreeJS)
+          files: ${{ env.OUTPUT_PATH }}/*.nupkg
+          generate_release_notes: true

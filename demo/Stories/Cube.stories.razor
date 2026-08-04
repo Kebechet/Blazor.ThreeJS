@@ -58,12 +58,14 @@
         catch (OperationCanceledException)
         {
         }
-        catch (Exception)
+        catch (ObjectDisposedException)
         {
-            // The canvas can be torn down without this component being disposed - BlazingStory keeps
-            // the stories component alive while swapping the rendered story. Once the context is
-            // gone every flush would keep throwing, so the loop stops on the first failure rather
-            // than spinning for the lifetime of the page.
+            // BlazingStory keeps this story component alive while swapping the rendered story, so
+            // Dispose() below can run while this loop is mid-flight. Cancel() and Dispose() run
+            // back to back there; if the loop is awaiting FlushAsync when that happens, the next
+            // loop condition re-reads _animationCancellation.Token against an already-disposed
+            // source instead of observing cancellation, so this - not OperationCanceledException -
+            // is what actually stops the loop in that window.
         }
     }
 

@@ -1,0 +1,59 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  SOLUTION_PATH: src/Blazor.ThreeJS.slnx
+  DOTNET_VERSION: '10.0.x'
+  NODE_VERSION: '22.x'
+  BUILD_CONFIGURATION: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Install npm dependencies
+      run: npm ci
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+    - name: Build
+      run: dotnet build ${{ env.SOLUTION_PATH }} --no-restore --configuration ${{ env.BUILD_CONFIGURATION }}
+
+    # This is the only automated check on the C#<->JS wire contract: it drives the vendored
+    # three.js bundle directly against fixtures the C# serializer test asserts too, so a change to
+    # either side that the other does not follow fails here rather than only at runtime.
+    - name: Test the wire format
+      run: node tests/wire-format.test.mjs
+
+    - name: Test with coverage
+      run: dotnet test ${{ env.SOLUTION_PATH }} --no-build --configuration ${{ env.BUILD_CONFIGURATION }} --collect:"XPlat Code Coverage" --results-directory ./coverage
+
+    - name: Find coverage file
+      id: coverage
+      run: echo "file=$(find ./coverage -name 'coverage.cobertura.xml' | head -1)" >> $GITHUB_OUTPUT
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        files: ${{ steps.coverage.outputs.file }}
+        fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}

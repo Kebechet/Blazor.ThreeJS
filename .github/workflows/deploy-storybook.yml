@@ -1,0 +1,70 @@
+name: Deploy Storybook
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  DEMO_PATH: demo/Blazor.ThreeJS.Demo.csproj
+  DOTNET_VERSION: '10.0.x'
+  BUILD_CONFIGURATION: Release
+  # Site is served from https://<owner>.github.io/<repo>/, so the app's base href must match.
+  BASE_HREF: /Blazor.ThreeJS/
+
+# Only one deployment at a time; a newer push supersedes an in-flight one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Publish demo
+        run: dotnet publish ${{ env.DEMO_PATH }} --configuration ${{ env.BUILD_CONFIGURATION }} --output ./publish
+
+      # BlazingStory renders story canvases in an iframe, so iframe.html needs the
+      # rewritten base href too - otherwise every story loads blank on Pages.
+      - name: Rewrite base href
+        run: |
+          for file in ./publish/wwwroot/index.html ./publish/wwwroot/iframe.html; do
+            sed -i 's|<base href="/" />|<base href="${{ env.BASE_HREF }}" />|g' "$file"
+            grep -q '<base href="${{ env.BASE_HREF }}" />' "$file" || { echo "base href not rewritten in $file"; exit 1; }
+          done
+
+      # Jekyll would strip the underscore-prefixed _framework and _content directories.
+      - name: Add .nojekyll
+        run: touch ./publish/wwwroot/.nojekyll
+
+      - name: Add SPA fallback
+        run: cp ./publish/wwwroot/index.html ./publish/wwwroot/404.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./publish/wwwroot
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

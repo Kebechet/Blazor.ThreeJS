@@ -14,8 +14,11 @@ npm install
 npm run extract
 ```
 
-Output is byte-identical for the same inputs (see [Guarantees](#guarantees)). Nothing under
-`generator/` is part of `src/Blazor.ThreeJS.slnx` — it is never built or shipped with the package.
+Output is byte-identical for the same inputs (see [Guarantees](#guarantees)), which is what lets
+`npm run extract:check` re-extract in memory and fail on any difference from the committed snapshot.
+CI runs it, so a change to the extractor cannot land without the regenerated artifact beside it.
+Nothing under `generator/` is part of `src/Blazor.ThreeJS.slnx` — it is never built or shipped with
+the package.
 
 Inputs are pinned exactly (`@types/three@0.185.3`, `typescript@5.9.3`) so the artifact only moves when
 somebody means it to.
@@ -47,7 +50,8 @@ can decide what to do (see [Reference targets](#reference-targets)).
   "typeAliases":        [ /* TypeAliasEntry */ ],
   "functions":          [ /* FunctionEntry  */ ],
   "namespaces":         [ /* NamespaceEntry */ ],
-  "moduleAugmentations":[ /* AugmentationEntry */ ]
+  "moduleAugmentations":[ /* AugmentationEntry */ ],
+  "reExports":          [ /* ReExportEntry  */ ]
 }
 ```
 
@@ -68,7 +72,8 @@ takes a `MeshStandardMaterialParameters` interface; a `side` property is typed b
   "sourceRoot": "src",
   "excludedDirectories": [ { "path": "src/nodes", "files": 215, "classes": 118 } ],
   "addons": { "path": "examples/jsm", "files": 383, "classes": 383 },
-  "counts": { /* filesScanned, classes, interfaces, … */ },
+  "publicSurface": { /* the barrel graph and the shipped bundle, see below */ },
+  "counts": { /* filesScanned, classes, interfaces, reExports, numericKindMarkers, … */ },
   "duplicateClassNames": [ { "name": "PMREMGenerator", "files": ["…", "…"] } ]
 }
 ```
@@ -79,7 +84,42 @@ are **not** unique by name — key them by `name` + `file`.
 `excludedDirectories` and `addons` describe what is deliberately **not** in this snapshot, counted
 rather than asserted so the package's coverage table can state the size of each exclusion. Their
 files are parsed with a standalone `createSourceFile` purely to count class declarations; nothing
-from them enters the program, the checker, or any list below.
+from them enters the program, the checker, or any list below. A declared exclusion path that does not
+exist **throws**: counting a moved directory as zero would publish a false completeness claim in the
+README while the files it was holding back flooded the snapshot in the same run.
+
+`counts.numericKindMarkers` is the number of `Expects a `Float`` / `Expects an `Integer`` markers read
+out of the JSDoc — the sole source of the float/integer distinction, and prose rather than syntax. It
+is reproducible by grepping the snapshot for `"numericKind"` plus `"returnNumericKind"`, and it is in
+`meta` so that a DefinitelyTyped reflow silently zeroing it is a visible `243 → 0` line in the diff
+rather than a run that looks entirely normal.
+
+#### `meta.publicSurface`
+
+```jsonc
+{
+  "barrel": "src/Three.d.ts",
+  "runtimeBundle": "src/Blazor.ThreeJS/wwwroot/three.module.js",
+  "barrelFiles": 212,      // files reachable through the barrel graph
+  "valueExports": 443,     // names the barrel publishes as values
+  "typeOnlyExports": 235,  // names it publishes `type`-only
+  "runtimeExports": 441,   // names on the shipped bundle's namespace
+  "valueExportsAbsentFromRuntime": ["SRGBToLinear", "SourceJSON"],
+  "runtimeExportsAbsentFromBarrel": []
+}
+```
+
+Every `.d.ts` under `src/` uses the `export` keyword, so "does this file export it" answers yes for
+everything and says only that a sibling module could import it. What decides whether a consumer can
+reach a name is the barrel graph out of `src/Three.d.ts`, which is what `index.d.ts` re-exports and
+therefore the public surface of the WebGL build this package ships — `src/Three.WebGPU.d.ts` is the
+barrel for the build it does not. `isExported` on every entry below is resolved against that graph.
+
+The two lists are the drift between the types and the runtime, and both are floors. `@types/three`
+declares `SourceJSON` an `export class` where every other JSON shape is an `interface`, so the barrel
+publishes a value three.js has no constructor for; `isRuntimeExport` is what keeps it out of the
+generated surface. `runtimeExportsAbsentFromBarrel` being empty is the evidence that the barrel walk
+is not missing anything the bundle has.
 
 ## `ClassEntry`
 
@@ -87,7 +127,8 @@ from them enters the program, the checker, or any list below.
 {
   "name": "BoxGeometry",
   "file": "src/geometries/BoxGeometry.d.ts",   // always POSIX, relative to the @types/three package
-  "isExported": true,
+  "isExported": true,       // the public barrel re-exports it as a VALUE, not `type`-only
+  "isRuntimeExport": true,  // the shipped three.js bundle puts the name on THREE
   "exportName": "…",        // only when the export name differs from the declared name
   "isDefaultExport": true,  // only when true
   "isAbstract": true,       // only when true
@@ -337,6 +378,24 @@ them, all adding node-stack properties to existing types:
 `Object3D` both get extra members this way. All 15 pull in TSL types, so the emitter most likely skips
 them — but it has to know they exist rather than silently disagree with the runtime.
 
+## Re-exports
+
+`ReExportEntry` records every `export … from` / `export { … }` statement — 359 of them. The five barrel
+files are nothing else, so without this entry they contribute no row to the snapshot at all while
+still counting towards `filesScanned`:
+
+```jsonc
+{ "file": "src/Three.Core.d.ts", "module": "./lights/DirectionalLightShadow.js",
+  "targetOrigin": "in-scope", "targetFile": "src/lights/DirectionalLightShadow.d.ts",
+  "isTypeOnly": true,          // only when true
+  "kind": "named",             // "star" | "named" | "namespace"
+  "names": [ { "name": "DirectionalLightShadow", "localName": "…", "isValue": false } ] }
+```
+
+`isValue` is false when the name is re-exported `type`-only, or when it resolves to something that is
+only a type. Following these edges out of `src/Three.d.ts` is what produces
+[`meta.publicSurface`](#metapublicsurface).
+
 ## Guarantees
 
 - **Deterministic.** Two runs produce byte-identical output. Top-level arrays are sorted by name then
@@ -349,8 +408,8 @@ them — but it has to know they exist rather than silently disagree with the ru
 
 ## Things that will complicate the emitter
 
-1. **Unspecified numeric kinds.** Only 245 members are marked; everything else is a bare `number` and
-   needs a project-wide default decision.
+1. **Unspecified numeric kinds.** Only `meta.counts.numericKindMarkers` (243) declarations are marked;
+   everything else is a bare `number` and needs a project-wide default decision.
 2. **`origin: "lib"` types.** ~535 references to DOM/ES lib types (`HTMLCanvasElement`, `TypedArray`,
    `ArrayLike<number>`, `WebGL2RenderingContext`). They have no C# mirror.
 3. **Generics.** 44 classes are generic, most via the `EventDispatcher<TEventMap>` chain that
@@ -359,7 +418,8 @@ them — but it has to know they exist rather than silently disagree with the ru
    is one TS signature that means two C# overloads. Detect `isRest` + `union` of `tuple`.
 5. **Real overloads.** 5 classes have constructor overloads; `Triangle.getInterpolation` has 3 both as
    an instance and a static method (same name, different `isStatic`).
-6. **Duplicate class names** across files (4), and 2 classes that are not exported at all.
+6. **Duplicate class names** across files (4), and 93 classes the public barrel does not publish as a
+   value — the WebGPU / node stack plus the `LightShadow` subclasses `@types/three` exports `type`-only.
 7. **Literal-union `type` properties.** 45 classes declare `override readonly type: string | "Mesh"` —
    a widened string literal, not an enum.
 8. **`MOUSE` has duplicate enum values**, which C# permits only as explicit aliases.

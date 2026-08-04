@@ -9,11 +9,16 @@
 // a change to either side that the other does not follow fails here. applyOp is driven directly
 // instead of applyBatch: applyBatch swallows an unknown context id and returns [], which would make
 // every assertion below pass without a single op being applied.
+//
+// It closes with the other contract this bundle settles: that every generated class is a name the
+// bundle actually exports, which is what the README's coverage headline claims about them.
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { applyOp } from '../src/Blazor.ThreeJS/wwwroot/three-interop.js';
-import { DoubleSide } from '../src/Blazor.ThreeJS/wwwroot/three.module.js';
+import * as THREE from '../src/Blazor.ThreeJS/wwwroot/three.module.js';
+
+const { DoubleSide } = THREE;
 
 const ops = JSON.parse(readFileSync(new URL('./wire-format-fixture.json', import.meta.url), 'utf8'));
 const context = { objects: new Map() };
@@ -122,4 +127,20 @@ assert.throws(
     /Unknown op kind/,
     'an unrecognised op kind must throw');
 
+// The floor under the README's headline. `generator/api-coverage.json` is what that number is
+// rendered from, and what it claims is that each of those classes is a class a consumer can create -
+// which nothing upstream of here checks against the bundle that will actually be asked for it.
+// `three-interop.js` resolves a Create op as `THREE[op.t]`, so a name the bundle does not export
+// throws `Unknown three.js type` at runtime with a green build and a passing emit:check behind it.
+// The 46 classes that shipped in exactly that state were the reason this assertion exists.
+const coverage = JSON.parse(readFileSync(new URL('../generator/api-coverage.json', import.meta.url), 'utf8'));
+const generatedClassNames = coverage.classes.filter(entry => entry.status === 'emittable').map(entry => entry.name);
+assert.ok(generatedClassNames.length > 0, 'api-coverage.json should list emittable classes');
+const unconstructible = generatedClassNames.filter(name => typeof THREE[name] !== 'function');
+assert.deepEqual(
+    unconstructible,
+    [],
+    'every generated class must be a constructor on the vendored three.js namespace');
+
 console.log(`Wire contract OK - ${ops.length} ops applied against the vendored three.js.`);
+console.log(`Generated surface OK - ${generatedClassNames.length} generated classes are constructors on the vendored three.js.`);

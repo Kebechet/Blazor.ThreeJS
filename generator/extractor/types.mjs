@@ -43,7 +43,7 @@ function rightMostName(name) {
 }
 
 export function createTypeMapper(context) {
-	const { checker, classifyDeclarationFile } = context;
+	const { checker, classifyDeclarationFile, assignNumericKind } = context;
 
 	/** Resolves a named type/value reference to what it actually is and where it lives. */
 	function resolveReference(entityName) {
@@ -141,10 +141,7 @@ export function createTypeMapper(context) {
 				ir.type = type;
 			}
 			const doc = getDoc(member);
-			const numericKind = numericKindFrom(memberDocText(doc));
-			if (numericKind !== undefined) {
-				ir.numericKind = numericKind;
-			}
+			assignNumericKind(ir, "numericKind", numericKindFrom(memberDocText(doc)));
 			if (doc?.defaultValue !== undefined) {
 				ir.defaultValue = doc.defaultValue;
 			}

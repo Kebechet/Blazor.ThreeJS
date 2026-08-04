@@ -24,7 +24,6 @@ public sealed class WebGLRenderer : ThreeObject
 	private ToneMapping _toneMapping;
 	private float _toneMappingExposure = 1f;
 	private float _transmissionResolutionScale;
-	private WebGLCapabilities? _capabilities;
 	private bool _isAutoClearWritten;
 	private bool _isAutoClearColorWritten;
 	private bool _isAutoClearDepthWritten;
@@ -35,7 +34,6 @@ public sealed class WebGLRenderer : ThreeObject
 	private bool _isToneMappingWritten;
 	private bool _isToneMappingExposureWritten;
 	private bool _isTransmissionResolutionScaleWritten;
-	private bool _isCapabilitiesWritten;
 
 	/// <summary>
 	/// parameters is an optional object with properties defining the renderer's behavior. The
@@ -264,32 +262,6 @@ public sealed class WebGLRenderer : ThreeObject
 		}
 	}
 
-	/// <summary>
-	/// The <c>capabilities</c> property of the JavaScript-side object. Writing it records a
-	/// <c>capabilities</c> property write once this object is attached; writing the value already held
-	/// records nothing.
-	/// </summary>
-	public WebGLCapabilities? Capabilities
-	{
-		get { return _capabilities; }
-		set
-		{
-			if (ReferenceEquals(_capabilities, value))
-			{
-				return;
-			}
-
-			_capabilities = value;
-			_isCapabilitiesWritten = true;
-			if (Batch is not null && value is not null)
-			{
-				value.AttachTo(Batch);
-			}
-
-			RecordSet("capabilities", value);
-		}
-	}
-
 	/// <summary>Records a call to <c>forceContextLoss</c> on the JavaScript-side object.</summary>
 	public void ForceContextLoss()
 	{
@@ -440,8 +412,7 @@ public sealed class WebGLRenderer : ThreeObject
 
 	/// <summary>
 	/// Emits the create op for <c>THREE.WebGLRenderer</c>, then replays every property written before
-	/// this object was attached. A replayed value that is itself a mirrored object is attached first,
-	/// so its create op reaches the batch before the write that references it by handle.
+	/// this object was attached.
 	/// </summary>
 	/// <param name="batch">Batch to record the ops into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
@@ -496,12 +467,6 @@ public sealed class WebGLRenderer : ThreeObject
 		if (_isTransmissionResolutionScaleWritten)
 		{
 			batch.Set(Handle, "transmissionResolutionScale", ThreeValue.Encode(_transmissionResolutionScale));
-		}
-
-		if (_isCapabilitiesWritten)
-		{
-			_capabilities?.AttachTo(batch);
-			batch.Set(Handle, "capabilities", ThreeValue.Encode(_capabilities));
 		}
 	}
 }

@@ -9,7 +9,7 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// <summary>
 /// A light that gets emitted from a single point in all directions. A common use case for this is
 /// to replicate the light emitted from a bare lightbulb. This light can cast shadows - see the
-/// <see cref="PointLightShadow"/> for details. The JavaScript-side <c>THREE.PointLight</c>.
+/// <c>PointLightShadow</c> for details. The JavaScript-side <c>THREE.PointLight</c>.
 /// </summary>
 public sealed class PointLight : Object3D
 {
@@ -17,11 +17,9 @@ public sealed class PointLight : Object3D
 	private float _intensity;
 	private float _distance;
 	private float _decay;
-	private PointLightShadow? _shadow;
 	private float _power;
 	private bool _isDistanceWritten;
 	private bool _isDecayWritten;
-	private bool _isShadowWritten;
 	private bool _isPowerWritten;
 	private bool _isIntensityWritten;
 
@@ -108,31 +106,6 @@ public sealed class PointLight : Object3D
 	}
 
 	/// <summary>
-	/// This property holds the light's shadow configuration. Writing it records a <c>shadow</c>
-	/// property write once this object is attached; writing the value already held records nothing.
-	/// </summary>
-	public PointLightShadow? Shadow
-	{
-		get { return _shadow; }
-		set
-		{
-			if (ReferenceEquals(_shadow, value))
-			{
-				return;
-			}
-
-			_shadow = value;
-			_isShadowWritten = true;
-			if (Batch is not null && value is not null)
-			{
-				value.AttachTo(Batch);
-			}
-
-			RecordSet("shadow", value);
-		}
-	}
-
-	/// <summary>
 	/// The <c>power</c> property of the JavaScript-side object. Writing it records a <c>power</c>
 	/// property write once this object is attached; writing the value already held records nothing.
 	/// </summary>
@@ -184,9 +157,7 @@ public sealed class PointLight : Object3D
 	/// <summary>
 	/// Replays every property written before this object was attached, so construction order never
 	/// matters to the caller. A property the caller never wrote is left alone: three.js's own default
-	/// is the truth for it, and the mirror has never read anything back to improve on that. A replayed
-	/// value that is itself a mirrored object is attached first, so its create op reaches the batch
-	/// before the write that references it by handle.
+	/// is the truth for it, and the mirror has never read anything back to improve on that.
 	/// </summary>
 	/// <param name="batch">Batch to record the property writes into.</param>
 	internal override void EmitState(ThreeBatch batch)
@@ -201,12 +172,6 @@ public sealed class PointLight : Object3D
 		if (_isDecayWritten)
 		{
 			batch.Set(Handle, "decay", ThreeValue.Encode(_decay));
-		}
-
-		if (_isShadowWritten)
-		{
-			_shadow?.AttachTo(batch);
-			batch.Set(Handle, "shadow", ThreeValue.Encode(_shadow));
 		}
 
 		if (_isPowerWritten)

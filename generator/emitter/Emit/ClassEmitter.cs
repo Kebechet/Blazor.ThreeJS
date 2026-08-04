@@ -228,7 +228,12 @@ internal sealed class ClassEmitter
 	{
 		if (!irClass.IsExported)
 		{
-			throw UnsupportedMemberException.For(threeTypeName, "the class is never exported, so it is not reachable on the THREE namespace the applier looks names up on");
+			throw UnsupportedMemberException.For(threeTypeName, "three.js's public barrel does not re-export it as a value, so it is not reachable on the THREE namespace the applier looks names up on");
+		}
+
+		if (!irClass.IsRuntimeExport)
+		{
+			throw UnsupportedMemberException.For(threeTypeName, "the shipped three.js bundle carries no such runtime value, so constructing it would throw Unknown three.js type");
 		}
 
 		if (!CSharpIdentifier.IsValid(threeTypeName))

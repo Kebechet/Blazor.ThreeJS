@@ -364,6 +364,10 @@ internal sealed class CoverageReport
 		AppendLine(builder, $"- **Classes**: every class declaration under `{_ir.Meta?.TypesPackage}@{_ir.Meta?.TypesVersion}`'s `{_ir.Meta?.SourceRoot}/`, minus the excluded");
 		AppendLine(builder, $"  directories above, extracted into `generator/three-api.json`. three.js also exports {functionCount} top-level");
 		AppendLine(builder, "  functions, which are not classes, are not counted in the total, and are not wrapped either.");
+		AppendLine(builder, $"  `npm run extract:check` fails if that snapshot differs from what `{_ir.Meta?.TypesPackage}` says today.");
+		AppendLine(builder, $"- **Generated is a class you can construct**: every one of them is a constructor on the `{_ir.Meta?.PublicSurface?.RuntimeBundle}`");
+		AppendLine(builder, "  bundle that ships in this package, which `tests/wire-format.test.mjs` asserts name by name. A class");
+		AppendLine(builder, "  three.js declares in its types but does not put on `THREE` is **blocked**, not counted.");
 		AppendLine(builder, "- **Generated**: the files in `src/Blazor.ThreeJS/Generated/`, one per class or enum. `npm run emit:check`");
 		AppendLine(builder, "  fails if any of them differs from what the generator produces today, or if one is left behind.");
 		AppendLine(builder, "- **Public members**: `grep -c \"^\\tpublic \" src/Blazor.ThreeJS/Generated/*.cs`, summed over the class files.");
@@ -1008,7 +1012,8 @@ internal sealed class CoverageReport
 			SkipCategory.UntypedValue => "declared `any` / `unknown`, or with no type at all",
 			SkipCategory.AbstractClass => "the class is abstract, so it has no constructor to mirror",
 			SkipCategory.ConstructorOverloads => "the class declares more than one constructor",
-			SkipCategory.NotExported => "the class is never exported, so the applier cannot reach it on `THREE`",
+			SkipCategory.NotExported => "three.js's public barrel does not re-export it as a value, so the applier cannot reach it on `THREE`",
+			SkipCategory.AbsentFromShippedBundle => "the types re-export it but the shipped three.js bundle has no such runtime value to construct",
 			SkipCategory.DuplicateClassName => "two classes share a name, and a C# namespace holds one type of a given name",
 			SkipCategory.RequiredAfterOptional => "a required parameter follows an optional one, which C# forbids",
 			SkipCategory.UnerasableTypeParameter => "a type parameter with neither a default nor a constraint to erase to",

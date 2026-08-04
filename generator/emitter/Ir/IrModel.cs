@@ -57,6 +57,22 @@ internal sealed class IrMeta
 
 	/// <summary>The addon modules, which live outside <c>src/</c> and are never extracted.</summary>
 	public IrExcludedDirectory? Addons { get; set; }
+
+	/// <summary>How the extractor resolved what three.js publishes, and what the shipped bundle carries.</summary>
+	public IrPublicSurface? PublicSurface { get; set; }
+}
+
+/// <summary>
+/// The barrel graph the extractor walked and the bundle it checked the result against — the two
+/// facts behind <see cref="IrClass.IsExported"/> and <see cref="IrClass.IsRuntimeExport"/>.
+/// </summary>
+internal sealed class IrPublicSurface
+{
+	/// <summary>The barrel file the walk started from, e.g. <c>src/Three.d.ts</c>.</summary>
+	public string? Barrel { get; set; }
+
+	/// <summary>Repository-relative path of the three.js bundle the package ships and looks names up on.</summary>
+	public string? RuntimeBundle { get; set; }
 }
 
 /// <summary>
@@ -94,8 +110,20 @@ internal sealed class IrClass
 	/// <summary>POSIX path of the declaring file, relative to the types package root.</summary>
 	public required string File { get; set; }
 
-	/// <summary>False for a class declared but never exported, which the applier therefore cannot construct.</summary>
+	/// <summary>
+	/// Whether three.js's public barrel (<c>src/Three.d.ts</c>) re-exports the class as a value. False
+	/// covers both "no barrel reaches it" and "the barrel exports it <c>type</c>-only", which is how
+	/// <c>@types/three</c> spells a class three.js keeps internal.
+	/// </summary>
 	public bool IsExported { get; set; }
+
+	/// <summary>
+	/// Whether the shipped three.js bundle actually puts the name on <c>THREE</c>. The types can claim
+	/// an export the runtime does not have — <c>SourceJSON</c> is declared <c>export class</c> where
+	/// every other JSON shape is an <c>interface</c> — and <c>three-interop.js</c> resolves constructors
+	/// against the bundle, not against the types.
+	/// </summary>
+	public bool IsRuntimeExport { get; set; }
 
 	/// <summary>
 	/// Export name when it differs from <see cref="Name"/>. In the current snapshot this is always the

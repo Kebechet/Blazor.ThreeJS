@@ -9,7 +9,7 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// <summary>
 /// This light gets emitted from a single point in one direction, along a cone that increases in
 /// size the further from the light it gets. This light can cast shadows - see the
-/// <see cref="SpotLightShadow"/> for details. The JavaScript-side <c>THREE.SpotLight</c>.
+/// <c>SpotLightShadow</c> for details. The JavaScript-side <c>THREE.SpotLight</c>.
 /// </summary>
 public class SpotLight : Object3D
 {
@@ -20,14 +20,12 @@ public class SpotLight : Object3D
 	private float _penumbra;
 	private float _decay;
 	private Object3D? _target;
-	private SpotLightShadow? _shadow;
 	private float _power;
 	private bool _isTargetWritten;
 	private bool _isDistanceWritten;
 	private bool _isAngleWritten;
 	private bool _isPenumbraWritten;
 	private bool _isDecayWritten;
-	private bool _isShadowWritten;
 	private bool _isPowerWritten;
 	private bool _isIntensityWritten;
 
@@ -197,31 +195,6 @@ public class SpotLight : Object3D
 	}
 
 	/// <summary>
-	/// This property holds the light's shadow configuration. Writing it records a <c>shadow</c>
-	/// property write once this object is attached; writing the value already held records nothing.
-	/// </summary>
-	public SpotLightShadow? Shadow
-	{
-		get { return _shadow; }
-		set
-		{
-			if (ReferenceEquals(_shadow, value))
-			{
-				return;
-			}
-
-			_shadow = value;
-			_isShadowWritten = true;
-			if (Batch is not null && value is not null)
-			{
-				value.AttachTo(Batch);
-			}
-
-			RecordSet("shadow", value);
-		}
-	}
-
-	/// <summary>
 	/// The <c>power</c> property of the JavaScript-side object. Writing it records a <c>power</c>
 	/// property write once this object is attached; writing the value already held records nothing.
 	/// </summary>
@@ -306,12 +279,6 @@ public class SpotLight : Object3D
 		if (_isDecayWritten)
 		{
 			batch.Set(Handle, "decay", ThreeValue.Encode(_decay));
-		}
-
-		if (_isShadowWritten)
-		{
-			_shadow?.AttachTo(batch);
-			batch.Set(Handle, "shadow", ThreeValue.Encode(_shadow));
 		}
 
 		if (_isPowerWritten)

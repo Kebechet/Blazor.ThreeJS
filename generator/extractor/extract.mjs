@@ -27,6 +27,18 @@ const EXCLUDED_DIRECTORIES = ["nodes"];
  */
 const ADDONS_DIRECTORY = "examples/jsm";
 const DEFAULT_OUTPUT = path.join(REPO_ROOT, "generator", "three-api.json");
+/**
+ * The barrel `index.d.ts` re-exports, and therefore the public export surface of the WebGL build this
+ * package ships. `src/Three.WebGPU.d.ts` is the barrel for the build it does not, so a name reachable
+ * only from there is not a name a consumer of this package can use.
+ */
+const PUBLIC_BARREL = "Three.d.ts";
+/**
+ * The three.js bundle that ships inside the package. `three-interop.js` resolves every constructor
+ * against this module's namespace (`THREE[op.t]`), so a class absent from it cannot be created at
+ * runtime no matter what `@types/three` declares.
+ */
+const RUNTIME_BUNDLE_PATH = path.join(REPO_ROOT, "src", "Blazor.ThreeJS", "wwwroot", "three.module.js");
 
 function byText(a, b) {
 	if (a === b) {
@@ -63,10 +75,19 @@ function discoverSourceFiles(directory, acc = []) {
  * Counts the `.d.ts` files and class declarations under a directory the extractor never parses into
  * the IR. A standalone `createSourceFile` is deliberate: nothing here needs the checker, and adding
  * these files to the program would pull the excluded surface back into scope.
+ *
+ * A missing path throws rather than counting zero. These counts reach the README as a completeness
+ * claim ("the node stack is 118 classes we do not wrap"), so an upstream rename would otherwise
+ * publish `| … | 0 |` — while the 215 files that exclusion was holding back flood the IR in the same
+ * run, with a green build and a passing `emit:check`.
  */
 function countDeclarations(root) {
 	if (!fs.existsSync(root)) {
-		return { files: 0, classes: 0 };
+		throw new Error(
+			`Declared exclusion path '${toPosix(root)}' does not exist. The README states its size as a ` +
+				"completeness claim, and counting a missing directory as zero would publish a false one. " +
+				"Upstream has probably moved or renamed it: update EXCLUDED_DIRECTORIES / ADDONS_DIRECTORY.",
+		);
 	}
 	const files = discoverSourceFiles(root).sort(byText);
 	let classes = 0;
@@ -130,14 +151,30 @@ function assignIfDefined(target, key, value) {
 	}
 }
 
-function main() {
+/**
+ * The names the shipped three.js bundle actually puts on `THREE`. Read by importing the vendored
+ * module, which is the same object `three-interop.js` indexes, so this is the runtime truth rather
+ * than a second reading of the types.
+ */
+async function readRuntimeExportNames() {
+	if (!fs.existsSync(RUNTIME_BUNDLE_PATH)) {
+		throw new Error(`The vendored three.js bundle is missing at '${toPosix(RUNTIME_BUNDLE_PATH)}'.`);
+	}
+	const bundle = await import(url.pathToFileURL(RUNTIME_BUNDLE_PATH).href);
+	return new Set(Object.keys(bundle));
+}
+
+async function main() {
 	const outputIndex = process.argv.indexOf("--out");
+	const isCheck = process.argv.includes("--check");
 	const outputPath = outputIndex >= 0 ? path.resolve(process.argv[outputIndex + 1]) : DEFAULT_OUTPUT;
 
 	if (!fs.existsSync(SOURCE_ROOT)) {
 		console.error(`@types/three not found at ${SOURCE_ROOT}. Run 'npm install' first.`);
 		process.exit(1);
 	}
+
+	const runtimeExportNames = await readRuntimeExportNames();
 
 	const allFiles = discoverSourceFiles(SOURCE_ROOT).sort(byText);
 	const inScopeFiles = allFiles.filter((x) => !isExcluded(x));
@@ -172,8 +209,190 @@ function main() {
 		return { origin: "external" };
 	}
 
-	const mapper = createTypeMapper({ checker, classifyDeclarationFile });
+	let numericKindMarkers = 0;
+
+	/**
+	 * Records a numeric-kind marker on the IR and counts it. Every `Expects a \`Float\`` /
+	 * `Expects an \`Integer\`` marker the extractor reads goes through here, so the count in
+	 * `meta.counts` is exactly what a reader reproduces by grepping the snapshot for the field.
+	 */
+	function assignNumericKind(target, key, numericKind) {
+		if (numericKind === undefined) {
+			return;
+		}
+		target[key] = numericKind;
+		numericKindMarkers++;
+	}
+
+	const mapper = createTypeMapper({ checker, classifyDeclarationFile, assignNumericKind });
 	const { typeToIr, parameterToIr, typeParametersToIr } = mapper;
+
+	/** The `.d.ts` a module specifier resolves to, using the same resolution the program was built with. */
+	function moduleSourceFileOf(moduleSpecifier) {
+		const symbol = checker.getSymbolAtLocation(moduleSpecifier);
+		return (symbol?.declarations ?? []).find((x) => ts.isSourceFile(x));
+	}
+
+	/**
+	 * Whether a name reaches a **value** rather than only a type. `export type { X }` and
+	 * `export { type X }` publish a name a consumer can annotate with but never construct, and an
+	 * `interface` re-exported without the `type` keyword is the same thing said differently.
+	 */
+	function isValueName(nameNode) {
+		let symbol = checker.getSymbolAtLocation(nameNode);
+		if (symbol === undefined) {
+			return false;
+		}
+		if ((symbol.flags & ts.SymbolFlags.Alias) !== 0) {
+			try {
+				symbol = checker.getAliasedSymbol(symbol);
+			} catch {
+				/* keep the alias symbol */
+			}
+		}
+		return (symbol.flags & ts.SymbolFlags.Value) !== 0;
+	}
+
+	function declaredNameNodes(statement) {
+		if (ts.isVariableStatement(statement)) {
+			return statement.declarationList.declarations.map((x) => x.name);
+		}
+		return statement.name === undefined ? [] : [statement.name];
+	}
+
+	/**
+	 * One `export … from` / `export { … }` statement as the IR records it. The five barrel files are
+	 * nothing but these, so without them they contribute no entry at all while still counting towards
+	 * `filesScanned`.
+	 */
+	function exportDeclarationIr(statement, file) {
+		const ir = { file };
+		assignIfDefined(ir, "module", statement.moduleSpecifier?.text);
+		if (statement.moduleSpecifier !== undefined) {
+			const target = moduleSourceFileOf(statement.moduleSpecifier);
+			if (target !== undefined) {
+				const placement = classifyDeclarationFile(target.fileName);
+				ir.targetOrigin = placement.origin;
+				assignIfDefined(ir, "targetFile", placement.file);
+			}
+		}
+		if (statement.isTypeOnly) {
+			ir.isTypeOnly = true;
+		}
+		if (statement.exportClause === undefined) {
+			ir.kind = "star";
+			return ir;
+		}
+		if (ts.isNamespaceExport(statement.exportClause)) {
+			ir.kind = "namespace";
+			ir.names = [{ name: statement.exportClause.name.text, isValue: !statement.isTypeOnly }];
+			return ir;
+		}
+		ir.kind = "named";
+		ir.names = statement.exportClause.elements.map((element) => {
+			const isTypeOnly = statement.isTypeOnly || element.isTypeOnly;
+			const entry = { name: element.name.text };
+			if (element.propertyName !== undefined) {
+				entry.localName = element.propertyName.text;
+			}
+			entry.isValue = !isTypeOnly && isValueName(element.name);
+			return entry;
+		});
+		return ir;
+	}
+
+	/**
+	 * Walks the barrel graph out of the package's public entry point and returns the names three.js
+	 * publishes, split by whether the name reaches a value.
+	 *
+	 * This is what makes `isExported` mean "three.js exports this to users". Read per file, the answer
+	 * is always yes — every `.d.ts` in `src/` uses the `export` keyword — which says only that a sibling
+	 * module could import it, not that it appears on `THREE`.
+	 */
+	function resolvePublicSurface(barrelFileName) {
+		const barrel = program.getSourceFile(barrelFileName);
+		if (barrel === undefined) {
+			throw new Error(`The public barrel '${relativeToPackage(barrelFileName)}' is not in the program.`);
+		}
+
+		const valueExports = new Set();
+		const typeOnlyExports = new Set();
+		const files = new Set();
+		const visited = new Set();
+
+		function record(name, isValue) {
+			if (isValue) {
+				valueExports.add(name);
+				return;
+			}
+			typeOnlyExports.add(name);
+		}
+
+		// A file is walked once per type-only context: reaching it through `export type * from` publishes
+		// a strictly weaker set than reaching it through a plain `export * from`, and a barrel can do both.
+		function walk(sourceFile, isTypeOnlyContext) {
+			const key = `${sourceFile.fileName}|${isTypeOnlyContext}`;
+			if (visited.has(key)) {
+				return;
+			}
+			visited.add(key);
+			files.add(relativeToPackage(sourceFile.fileName));
+
+			for (const statement of sourceFile.statements) {
+				if (ts.isExportDeclaration(statement)) {
+					const isTypeOnly = isTypeOnlyContext || statement.isTypeOnly;
+					if (statement.exportClause === undefined) {
+						const target = moduleSourceFileOf(statement.moduleSpecifier);
+						if (target === undefined) {
+							throw new Error(
+								`'${relativeToPackage(sourceFile.fileName)}' re-exports ${statement.moduleSpecifier.getText()}, ` +
+									"which does not resolve. The public surface would silently lose everything behind it.",
+							);
+						}
+						walk(target, isTypeOnly);
+						continue;
+					}
+					if (ts.isNamespaceExport(statement.exportClause)) {
+						record(statement.exportClause.name.text, !isTypeOnly);
+						continue;
+					}
+					for (const element of statement.exportClause.elements) {
+						record(element.name.text, !(isTypeOnly || element.isTypeOnly) && isValueName(element.name));
+					}
+					continue;
+				}
+				if (!hasModifier(statement, ts.SyntaxKind.ExportKeyword)) {
+					continue;
+				}
+				// `export default class X` publishes `default`, not `X`, and `export * from` does not carry a
+				// default across. Only an explicit `export { default as … } from` republishes it, and that
+				// arrives through the named-export branch above under the name it is given there.
+				if (hasModifier(statement, ts.SyntaxKind.DefaultKeyword)) {
+					continue;
+				}
+				for (const nameNode of declaredNameNodes(statement)) {
+					record(nameNode.getText(), !isTypeOnlyContext && isValueName(nameNode));
+				}
+			}
+		}
+
+		walk(barrel, false);
+
+		// A name published both ways - `export * from` reaching the declaration and a sibling
+		// `export type { … }` naming it - is a value. The weaker spelling does not take it away.
+		for (const name of valueExports) {
+			typeOnlyExports.delete(name);
+		}
+
+		return {
+			barrel: relativeToPackage(barrelFileName),
+			files: [...files].sort(byText),
+			valueExports,
+			typeOnlyExports,
+		};
+	}
+
+	const publicSurface = resolvePublicSurface(path.join(SOURCE_ROOT, PUBLIC_BARREL));
 
 	const classes = [];
 	const interfaces = [];
@@ -183,7 +402,23 @@ function main() {
 	const functions = [];
 	const namespaces = [];
 	const moduleAugmentations = [];
+	const reExports = [];
 	let constantsSkippedOutOfScope = 0;
+
+	/**
+	 * Whether the public barrel publishes a **value** under this name - the question that decides
+	 * whether the applier can reach it on `THREE`. An `export type { X }` re-export publishes a name a
+	 * consumer can annotate with and never construct, which is how `@types/three` spells the three
+	 * `LightShadow` subclasses three.js keeps internal.
+	 */
+	function isPublicValue(name) {
+		return publicSurface.valueExports.has(name);
+	}
+
+	/** Whether the public barrel publishes this name at all, for declarations that are only ever types. */
+	function isPublicType(name) {
+		return publicSurface.valueExports.has(name) || publicSurface.typeOnlyExports.has(name);
+	}
 
 	/**
 	 * `@param` tags are matched by name. Some upstream docs drift from the signature
@@ -227,7 +462,7 @@ function main() {
 		const parameters = parameterIrs.map((parameterIr, index) => {
 			const documented = parameterDocs.get(index);
 			if (documented !== undefined) {
-				assignIfDefined(parameterIr, "numericKind", documented.numericKind);
+				assignNumericKind(parameterIr, "numericKind", documented.numericKind);
 				assignIfDefined(parameterIr, "defaultValue", documented.defaultValue);
 				assignIfDefined(parameterIr, "doc", documented.text);
 				assignIfDefined(parameterIr, "docSource", documented.docSource);
@@ -240,7 +475,7 @@ function main() {
 		assignIfDefined(ir, "typeParameters", typeParameters);
 		if (options.hasReturnType) {
 			assignIfDefined(ir, "returnType", typeToIr(node.type));
-			assignIfDefined(ir, "returnNumericKind", numericKindFrom(doc?.returns));
+			assignNumericKind(ir, "returnNumericKind", numericKindFrom(doc?.returns));
 		}
 		assignIfDefined(ir, "doc", doc);
 		return ir;
@@ -270,7 +505,7 @@ function main() {
 		assignIfDefined(ir, "visibility", visibilityOf(node));
 		const typeNode = ts.isSetAccessorDeclaration(node) ? node.parameters[0]?.type : node.type;
 		assignIfDefined(ir, "type", typeToIr(typeNode));
-		assignIfDefined(ir, "numericKind", numericKindFrom(memberDocText(doc)));
+		assignNumericKind(ir, "numericKind", numericKindFrom(memberDocText(doc)));
 		assignIfDefined(ir, "defaultValue", doc?.defaultValue);
 		assignIfDefined(ir, "doc", doc);
 		return ir;
@@ -391,15 +626,21 @@ function main() {
 		const exportMap = buildExportMap(sourceFile);
 
 		for (const statement of sourceFile.statements) {
+			if (ts.isExportDeclaration(statement)) {
+				reExports.push(exportDeclarationIr(statement, file));
+				continue;
+			}
+
 			const exportName = exportMap.get(statement);
-			const isExported = exportName !== undefined || hasModifier(statement, ts.SyntaxKind.ExportKeyword);
 
 			if (ts.isClassDeclaration(statement)) {
 				const members = collectMembers(statement.members);
+				const name = statement.name?.text ?? "<anonymous>";
 				const ir = {
-					name: statement.name?.text ?? "<anonymous>",
+					name,
 					file,
-					isExported,
+					isExported: isPublicValue(name),
+					isRuntimeExport: runtimeExportNames.has(name),
 				};
 				if (exportName !== undefined && exportName !== ir.name) {
 					ir.exportName = exportName;
@@ -433,7 +674,7 @@ function main() {
 
 			if (ts.isInterfaceDeclaration(statement)) {
 				const members = collectMembers(statement.members);
-				const ir = { name: statement.name.text, file, isExported };
+				const ir = { name: statement.name.text, file, isExported: isPublicType(statement.name.text) };
 				assignIfDefined(ir, "typeParameters", typeParametersToIr(statement.typeParameters));
 				const extended = (statement.heritageClauses ?? [])
 					.filter((clause) => clause.token === ts.SyntaxKind.ExtendsKeyword)
@@ -461,7 +702,7 @@ function main() {
 				const ir = {
 					name: statement.name.text,
 					file,
-					isExported,
+					isExported: isPublicValue(statement.name.text),
 					isConst: hasModifier(statement, ts.SyntaxKind.ConstKeyword),
 				};
 				assignIfDefined(ir, "doc", getDoc(statement));
@@ -482,7 +723,7 @@ function main() {
 			}
 
 			if (ts.isTypeAliasDeclaration(statement)) {
-				const ir = { name: statement.name.text, file, isExported };
+				const ir = { name: statement.name.text, file, isExported: isPublicType(statement.name.text) };
 				assignIfDefined(ir, "typeParameters", typeParametersToIr(statement.typeParameters));
 				ir.type = typeToIr(statement.type);
 				const group = constantGroupOf(ir.type);
@@ -498,7 +739,7 @@ function main() {
 				const name = statement.name?.text ?? "<anonymous>";
 				let entry = functions.find((x) => x.name === name && x.file === file);
 				if (entry === undefined) {
-					entry = { name, file, isExported, overloads: [] };
+					entry = { name, file, isExported: isPublicValue(name), overloads: [] };
 					assignIfDefined(entry, "doc", getDoc(statement));
 					functions.push(entry);
 				}
@@ -516,7 +757,7 @@ function main() {
 					const ir = {
 						name: declaration.name.getText(),
 						file,
-						isExported,
+						isExported: isPublicValue(declaration.name.getText()),
 						isConst: (statement.declarationList.flags & ts.NodeFlags.Const) !== 0,
 					};
 					assignIfDefined(ir, "type", type);
@@ -531,7 +772,7 @@ function main() {
 					moduleAugmentations.push(moduleAugmentationIr(statement, file));
 					continue;
 				}
-				const ir = { name: statement.name.getText(), file, isExported };
+				const ir = { name: statement.name.getText(), file, isExported: isPublicValue(statement.name.getText()) };
 				assignIfDefined(ir, "doc", getDoc(statement));
 				ir.members = statement.body.statements
 					.flatMap((member) => {
@@ -625,6 +866,7 @@ function main() {
 	functions.sort(sortByNameThenFile);
 	namespaces.sort(sortByNameThenFile);
 	moduleAugmentations.sort((a, b) => byText(a.targetModule, b.targetModule) || byText(a.file, b.file));
+	reExports.sort((a, b) => byText(a.file, b.file) || byText(a.module ?? "", b.module ?? "") || byText(a.kind, b.kind));
 
 	const duplicateClassNames = [];
 	const filesByClassName = new Map();
@@ -652,6 +894,16 @@ function main() {
 				...countDeclarations(path.join(SOURCE_ROOT, x)),
 			})),
 			addons: { path: ADDONS_DIRECTORY, ...countDeclarations(path.join(TYPES_PACKAGE, ADDONS_DIRECTORY)) },
+			publicSurface: {
+				barrel: publicSurface.barrel,
+				runtimeBundle: toPosix(path.relative(REPO_ROOT, RUNTIME_BUNDLE_PATH)),
+				barrelFiles: publicSurface.files.length,
+				valueExports: publicSurface.valueExports.size,
+				typeOnlyExports: publicSurface.typeOnlyExports.size,
+				runtimeExports: runtimeExportNames.size,
+				valueExportsAbsentFromRuntime: [...publicSurface.valueExports].filter((x) => !runtimeExportNames.has(x)).sort(byText),
+				runtimeExportsAbsentFromBarrel: [...runtimeExportNames].filter((x) => !publicSurface.valueExports.has(x)).sort(byText),
+			},
 			counts: {
 				filesScanned: inScopeFiles.length,
 				filesExcluded: allFiles.length - inScopeFiles.length,
@@ -664,6 +916,12 @@ function main() {
 				functions: functions.length,
 				namespaces: namespaces.length,
 				moduleAugmentations: moduleAugmentations.length,
+				reExports: reExports.length,
+				// The sole source of the float/integer distinction, and prose rather than syntax: a
+				// DefinitelyTyped reflow of `Expects a \`Float\`` costs nothing else and would silently
+				// collapse every numeric onto the project-wide `float` default. Counted so a run that
+				// finds none is a `243 -> 0` line in the IR diff instead of a normal-looking success.
+				numericKindMarkers,
 			},
 			duplicateClassNames,
 		},
@@ -675,17 +933,75 @@ function main() {
 		functions,
 		namespaces,
 		moduleAugmentations,
+		reExports,
 	};
 
-	fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-	fs.writeFileSync(outputPath, `${JSON.stringify(ir, null, 2)}\n`, "utf8");
+	// Diagnostics gate the write. TypeScript recovers from syntax it cannot parse by dropping the
+	// statement, so new syntax in a future three.js release yields a quietly truncated snapshot; a
+	// warning printed after the file is on disk is a warning nobody sees in a green CI run.
+	const syntacticDiagnostics = program.getSyntacticDiagnostics();
+	if (syntacticDiagnostics.length > 0) {
+		console.error(`${syntacticDiagnostics.length} syntactic diagnostic(s) while parsing ${typesPackageJson.name}. Nothing was written.`);
+		for (const diagnostic of syntacticDiagnostics.slice(0, 10)) {
+			const location = diagnostic.file === undefined
+				? ""
+				: `${relativeToPackage(diagnostic.file.fileName)}: `;
+			console.error(`  ${location}${ts.flattenDiagnosticMessageText(diagnostic.messageText, " ")}`);
+		}
+		process.exit(1);
+	}
 
-	const syntacticErrors = program.getSyntacticDiagnostics().length;
+	const rendered = `${JSON.stringify(ir, null, 2)}\n`;
+	if (isCheck) {
+		return check(outputPath, rendered);
+	}
+
+	fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+	fs.writeFileSync(outputPath, rendered, "utf8");
 	console.log(`wrote ${toPosix(path.relative(REPO_ROOT, outputPath))}`);
 	console.log(JSON.stringify(ir.meta.counts, null, 2));
-	if (syntacticErrors > 0) {
-		console.warn(`WARNING: ${syntacticErrors} syntactic diagnostics while parsing @types/three`);
-	}
 }
 
-main();
+/**
+ * The golden check for the extractor, mirroring `emit:check` one level upstream: re-extracts in
+ * memory and fails if the result differs from the committed snapshot. Without it nothing guards
+ * sources to IR - a change to the extractor, or to the pinned `@types/three`, could land with a
+ * stale `three-api.json` and a green build.
+ */
+function check(outputPath, rendered) {
+	const relative = toPosix(path.relative(REPO_ROOT, outputPath));
+	if (!fs.existsSync(outputPath)) {
+		console.error(`MISSING ${relative} - the extractor produces it but it is not committed.`);
+		process.exit(1);
+	}
+
+	// Line endings are normalized rather than compared: the repository has no .gitattributes and
+	// core.autocrlf is enabled on Windows, so the committed file can arrive with CRLF on one machine
+	// and LF on another without a single extracted character having changed.
+	const committed = fs.readFileSync(outputPath, "utf8").replace(/\r\n/g, "\n");
+	if (committed === rendered) {
+		console.log(`ok      ${relative} matches what the extractor produces`);
+		return;
+	}
+
+	const committedLines = committed.split("\n");
+	const renderedLines = rendered.split("\n");
+	console.error(`DRIFT   ${relative}`);
+	for (let index = 0; index < Math.max(committedLines.length, renderedLines.length); index++) {
+		const committedLine = index < committedLines.length ? committedLines[index] : "<end of file>";
+		const renderedLine = index < renderedLines.length ? renderedLines[index] : "<end of file>";
+		if (committedLine === renderedLine) {
+			continue;
+		}
+		console.error(`        first difference at line ${index + 1}:`);
+		console.error(`          committed:   ${committedLine.trim()}`);
+		console.error(`          regenerated: ${renderedLine.trim()}`);
+		break;
+	}
+	console.error("");
+	console.error("The extractor's output no longer matches the committed snapshot. Review the change, then run");
+	console.error("`npm run extract` to accept it.");
+	process.exit(1);
+}
+
+await main();

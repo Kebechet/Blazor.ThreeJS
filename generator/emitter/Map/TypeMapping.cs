@@ -155,6 +155,9 @@ internal enum SkipCategory : byte
 	/// <summary>The class is declared but never exported, so the applier cannot reach it on <c>THREE</c>.</summary>
 	NotExported,
 
+	/// <summary>The types export it, but the shipped three.js bundle has no such runtime value to construct.</summary>
+	AbsentFromShippedBundle,
+
 	/// <summary>Two classes share a name, and a C# namespace holds one type of a given name.</summary>
 	DuplicateClassName,
 

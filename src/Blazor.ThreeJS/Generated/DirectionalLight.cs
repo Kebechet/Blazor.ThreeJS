@@ -16,17 +16,14 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// applications. This means that its direction is calculated as pointing from the light's
 /// <c>Object3D#position</c> to the <c>DirectionalLight#target</c> position (as opposed to a 'Free
 /// Direct Light' that just has a rotation component). This light can cast shadows - see the
-/// <see cref="DirectionalLightShadow"/> for details. The JavaScript-side
-/// <c>THREE.DirectionalLight</c>.
+/// <c>DirectionalLightShadow</c> for details. The JavaScript-side <c>THREE.DirectionalLight</c>.
 /// </summary>
 public sealed class DirectionalLight : Object3D
 {
 	private readonly Color? _color;
 	private float _intensity;
 	private Object3D? _target;
-	private DirectionalLightShadow? _shadow;
 	private bool _isTargetWritten;
-	private bool _isShadowWritten;
 	private bool _isIntensityWritten;
 
 	/// <summary>Constructs a new directional light.</summary>
@@ -83,31 +80,6 @@ public sealed class DirectionalLight : Object3D
 	}
 
 	/// <summary>
-	/// This property holds the light's shadow configuration. Writing it records a <c>shadow</c>
-	/// property write once this object is attached; writing the value already held records nothing.
-	/// </summary>
-	public DirectionalLightShadow? Shadow
-	{
-		get { return _shadow; }
-		set
-		{
-			if (ReferenceEquals(_shadow, value))
-			{
-				return;
-			}
-
-			_shadow = value;
-			_isShadowWritten = true;
-			if (Batch is not null && value is not null)
-			{
-				value.AttachTo(Batch);
-			}
-
-			RecordSet("shadow", value);
-		}
-	}
-
-	/// <summary>
 	/// The light's intensity. Writing it records a <c>intensity</c> property write once this object is
 	/// attached; writing the value already held records nothing.
 	/// </summary>
@@ -152,12 +124,6 @@ public sealed class DirectionalLight : Object3D
 		{
 			_target?.AttachTo(batch);
 			batch.Set(Handle, "target", ThreeValue.Encode(_target));
-		}
-
-		if (_isShadowWritten)
-		{
-			_shadow?.AttachTo(batch);
-			batch.Set(Handle, "shadow", ThreeValue.Encode(_shadow));
 		}
 
 		if (_isIntensityWritten)

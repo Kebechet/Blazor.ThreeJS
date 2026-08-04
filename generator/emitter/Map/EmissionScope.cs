@@ -226,7 +226,13 @@ internal sealed class EmissionScope
 
 		if (!irClass.IsExported)
 		{
-			Block(result, "the class is never exported, so it is not reachable on the `THREE` namespace the applier looks names up on", SkipCategory.NotExported);
+			Block(result, "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on", SkipCategory.NotExported);
+			return;
+		}
+
+		if (!irClass.IsRuntimeExport)
+		{
+			Block(result, "the types re-export it but the shipped three.js bundle carries no such runtime value, so constructing it would throw `Unknown three.js type`", SkipCategory.AbsentFromShippedBundle);
 			return;
 		}
 

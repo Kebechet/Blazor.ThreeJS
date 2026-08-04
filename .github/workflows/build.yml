@@ -24,15 +24,25 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    # No npm install: the wire-format test below imports the vendored three.js bundle from wwwroot,
-    # the copy that actually ships, so only the Node runtime itself is needed here.
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
 
+    # The extractor needs the pinned @types/three and TypeScript. The wire-format test below needs
+    # neither - it drives the three.js bundle vendored into wwwroot, the copy that actually ships.
+    - name: Install the pinned type sources
+      run: npm ci
+
     - name: Restore dependencies
       run: dotnet restore ${{ env.SOLUTION_PATH }}
+
+    # The golden check one level upstream of the one below: it re-reads @types/three and fails if the
+    # result differs from the committed generator/three-api.json. Without it nothing guards sources ->
+    # IR, so a change to the extractor - or a drift in the pinned types - could land with a stale
+    # snapshot and a green build, and every figure downstream would describe the old surface.
+    - name: Check the extracted API snapshot is up to date
+      run: npm run extract:check
 
     # The golden check for the code generator: it re-emits from generator/three-api.json and fails if
     # the result differs from what is committed under src/Blazor.ThreeJS/Generated. A change to the

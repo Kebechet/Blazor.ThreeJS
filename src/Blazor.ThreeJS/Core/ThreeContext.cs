@@ -1,3 +1,4 @@
+using Kebechet.Blazor.ThreeJS.Objects;
 using Microsoft.JSInterop;
 
 namespace Kebechet.Blazor.ThreeJS.Core;
@@ -16,7 +17,7 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// Accumulates pending create/set/call/add/remove/dispose ops for this context until the next
 	/// <see cref="FlushAsync"/>.
 	/// </summary>
-	public ThreeBatch Batch { get; } = new();
+	internal ThreeBatch Batch { get; } = new();
 
 	/// <summary>
 	/// Raised when the applier rejected one or more ops while running a batch: an unknown three.js
@@ -40,6 +41,18 @@ public sealed class ThreeContext : IAsyncDisposable
 	{
 		_module = module;
 		_contextId = contextId;
+	}
+
+	/// <summary>
+	/// Attaches an object graph to this context's <see cref="Batch"/>: emits a create op for
+	/// <paramref name="root"/> and every object already added under it, then replays any property
+	/// writes made before this call. Calling this again on an already-attached root is a no-op, the
+	/// same idempotence <see cref="Object3D.AttachTo"/> guarantees.
+	/// </summary>
+	/// <param name="root">Root of the object graph to attach, typically a <see cref="Scene"/>.</param>
+	public void Attach(Object3D root)
+	{
+		root.AttachTo(Batch);
 	}
 
 	/// <summary>
@@ -87,14 +100,14 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// Silently no-ops if the circuit has already disconnected or the module reference has already
 	/// been disposed.
 	/// </summary>
-	/// <param name="sceneHandle">Handle of the scene object to render.</param>
-	/// <param name="cameraHandle">Handle of the camera to render through.</param>
-	public async Task SetActiveSceneAsync(int sceneHandle, int cameraHandle)
+	/// <param name="scene">The scene object to render.</param>
+	/// <param name="camera">The camera to render through.</param>
+	public async Task SetActiveSceneAsync(Object3D scene, Object3D camera)
 	{
 		await FlushAsync();
 		try
 		{
-			await _module.InvokeVoidAsync("setActiveScene", _contextId, sceneHandle, cameraHandle);
+			await _module.InvokeVoidAsync("setActiveScene", _contextId, scene.Handle, camera.Handle);
 		}
 		catch (JSDisconnectedException)
 		{

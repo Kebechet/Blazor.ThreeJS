@@ -13,7 +13,7 @@ public abstract class ThreeObject
 	/// <see cref="Interlocked.Increment(ref int)"/> at construction time, so creating an object
 	/// never awaits and never round-trips to JavaScript.
 	/// </summary>
-	public int Handle { get; }
+	internal int Handle { get; }
 
 	/// <summary>
 	/// Assigned when the object is attached to a context. Until then, writes are held in the
@@ -42,7 +42,7 @@ public abstract class ThreeObject
 	/// stays the single source of truth for whether the create op was already emitted.
 	/// </summary>
 	/// <param name="batch">The batch to attach this object to.</param>
-	public virtual void AttachTo(ThreeBatch batch)
+	internal virtual void AttachTo(ThreeBatch batch)
 	{
 		if (Batch is not null)
 		{

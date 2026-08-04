@@ -40,7 +40,7 @@ interop call and tells the renderer what to draw.
     private async Task BuildSceneAsync(ThreeContext threeContext)
     {
         var scene = new Scene();
-        scene.AttachTo(threeContext.Batch);
+        threeContext.Attach(scene);
 
         var camera = new PerspectiveCamera(75f, 16f / 9f, 0.1f, 1000f);
         camera.Position.Set(0f, 0f, 5f);
@@ -60,7 +60,7 @@ interop call and tells the renderer what to draw.
         mesh.Rotation.Set(0.4f, 0.8f, 0f, EulerOrder.XYZ);
         scene.Add(mesh);
 
-        await threeContext.SetActiveSceneAsync(scene.Handle, camera.Handle);
+        await threeContext.SetActiveSceneAsync(scene, camera);
     }
 }
 ```

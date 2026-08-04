@@ -9,7 +9,7 @@ namespace Kebechet.Blazor.ThreeJS.Core;
 /// be derived from type names via <c>nameof</c>, because renaming a C# type would then change the
 /// wire format invisibly.
 /// </summary>
-public static class ThreeWireFormat
+internal static class ThreeWireFormat
 {
 	/// <summary>Tag written for an encoded <see cref="Vector3"/> value.</summary>
 	public const string Vector3Tag = "Vector3";

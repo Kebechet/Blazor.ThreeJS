@@ -15,7 +15,7 @@ namespace Kebechet.Blazor.ThreeJS.Core;
 /// and the previous explicit null are equivalent to it.
 /// </para>
 /// </summary>
-public sealed class ThreeOp
+internal sealed class ThreeOp
 {
 	/// <summary>The kind of instruction, serialized as the short numeric property <c>"k"</c>.</summary>
 	[JsonPropertyName("k")]
@@ -61,7 +61,7 @@ public sealed class ThreeOp
 /// Discriminates what a <see cref="ThreeOp"/> instructs the JavaScript applier to do. The numeric
 /// values are part of the wire contract with <c>three-interop.js</c> and must not be renumbered.
 /// </summary>
-public enum ThreeOpKind : byte
+internal enum ThreeOpKind : byte
 {
 	/// <summary>Instantiate a new three.js object and register it under a handle.</summary>
 	Create = 0,

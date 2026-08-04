@@ -82,13 +82,13 @@ public abstract class Object3D : ThreeObject
 	/// <summary>
 	/// Attaches this object and its entire subtree to a batch: emits the create op, replays every
 	/// property already set on this object, then attaches each child in turn. Idempotent — a second
-	/// call on an already-attached object is a no-op. Public because a caller outside this assembly
-	/// (e.g. attaching the root <see cref="Scene"/> to a <see cref="ThreeContext"/>) needs to call it
-	/// directly. Overrides <see cref="ThreeObject.AttachTo"/> to layer transform replay and child
+	/// call on an already-attached object is a no-op. Internal because the only entry point a
+	/// consumer needs is <see cref="ThreeContext.Attach"/>, which calls this on the root object on
+	/// their behalf. Overrides <see cref="ThreeObject.AttachTo"/> to layer transform replay and child
 	/// attachment on top of the base create-op guard.
 	/// </summary>
 	/// <param name="batch">The batch to attach this object to.</param>
-	public override void AttachTo(ThreeBatch batch)
+	internal override void AttachTo(ThreeBatch batch)
 	{
 		if (Batch is not null)
 		{

@@ -5,7 +5,7 @@ namespace Kebechet.Blazor.ThreeJS.Core;
 /// burst of assignments in a single tick costs one op, which is what keeps a scene affordable over
 /// a Blazor Server circuit.
 /// </summary>
-public sealed class ThreeBatch
+internal sealed class ThreeBatch
 {
 	private readonly List<ThreeOp> _ops = [];
 	private readonly Dictionary<(int Handle, string Member), int> _setIndexesByTarget = [];

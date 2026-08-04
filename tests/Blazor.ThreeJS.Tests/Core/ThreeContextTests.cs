@@ -1,4 +1,5 @@
 using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Objects;
 using Microsoft.JSInterop;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -8,6 +9,26 @@ namespace Blazor.ThreeJS.Tests.Core;
 
 public class ThreeContextTests
 {
+	[Fact]
+	public void ThreeContext_AttachCalledWithAScene_RecordsCreateOpForTheSceneAndItsChildren()
+	{
+		// Arrange
+		var module = Substitute.For<IJSObjectReference>();
+		var context = new ThreeContext(module, contextId: 1);
+		var scene = new Scene();
+		var camera = new PerspectiveCamera();
+		scene.Add(camera);
+
+		// Act
+		context.Attach(scene);
+		var ops = context.Batch.Drain();
+
+		// Assert
+		ops.ShouldContain(x => x.Kind == ThreeOpKind.Create && x.Handle == scene.Handle && x.Type == nameof(Scene));
+		ops.ShouldContain(x => x.Kind == ThreeOpKind.Create && x.Handle == camera.Handle && x.Type == nameof(PerspectiveCamera));
+		ops.ShouldContain(x => x.Kind == ThreeOpKind.Add && x.Handle == scene.Handle && x.ChildHandle == camera.Handle);
+	}
+
 	[Fact]
 	public async Task ThreeContext_DisposeWhenCircuitDisconnected_DoesNotThrow()
 	{
@@ -109,9 +130,11 @@ public class ThreeContextTests
 	{
 		// Arrange
 		var context = new ThreeContext(new ThrowingJsObjectReference(), contextId: 1);
+		var scene = new Scene();
+		var camera = new PerspectiveCamera();
 
 		// Act
-		var exception = await Record.ExceptionAsync(() => context.SetActiveSceneAsync(1, 2));
+		var exception = await Record.ExceptionAsync(() => context.SetActiveSceneAsync(scene, camera));
 
 		// Assert
 		exception.ShouldBeNull();

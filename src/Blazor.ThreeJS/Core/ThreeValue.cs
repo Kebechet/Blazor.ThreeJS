@@ -8,7 +8,7 @@ namespace Kebechet.Blazor.ThreeJS.Core;
 /// a tagged array so the applier can write them into an existing three.js instance instead of
 /// allocating, and scene objects become a handle reference.
 /// </summary>
-public static class ThreeValue
+internal static class ThreeValue
 {
 	/// <summary>
 	/// Converts a value into its wire representation. Math types (<see cref="Vector3"/>,
@@ -60,7 +60,7 @@ public static class ThreeValue
 	/// Wire representation of a math value: a type tag plus its raw components, so the JavaScript
 	/// applier can write into an existing three.js instance in place.
 	/// </summary>
-	public sealed class TaggedValue
+	internal sealed class TaggedValue
 	{
 		/// <summary>One of the <see cref="ThreeWireFormat"/> tag constants identifying the math type.</summary>
 		[JsonPropertyName("$t")]
@@ -84,7 +84,7 @@ public static class ThreeValue
 	/// Wire representation of a reference to another mirrored object, resolved by the applier
 	/// through its own handle table rather than by re-sending the object's data.
 	/// </summary>
-	public sealed class HandleReference
+	internal sealed class HandleReference
 	{
 		/// <summary>Handle of the referenced object.</summary>
 		[JsonPropertyName("$ref")]

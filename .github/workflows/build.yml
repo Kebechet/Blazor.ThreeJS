@@ -34,6 +34,13 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore ${{ env.SOLUTION_PATH }}
 
+    # The golden check for the code generator: it re-emits from generator/three-api.json and fails if
+    # the result differs from what is committed under src/Blazor.ThreeJS/Generated. A change to the
+    # emitter that changes its output has to land together with the regenerated files, so the diff
+    # of generated code is always reviewed rather than discovered later.
+    - name: Check the generated code is up to date
+      run: npm run emit:check
+
     - name: Build
       run: dotnet build ${{ env.SOLUTION_PATH }} --no-restore --configuration ${{ env.BUILD_CONFIGURATION }}
 

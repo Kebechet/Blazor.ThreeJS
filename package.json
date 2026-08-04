@@ -8,6 +8,8 @@
     "typescript": "5.9.3"
   },
   "scripts": {
-    "extract": "node generator/extractor/extract.mjs"
+    "extract": "node generator/extractor/extract.mjs",
+    "emit": "dotnet run --project generator/emitter/Blazor.ThreeJS.Emitter.csproj -- --write",
+    "emit:check": "dotnet run --project generator/emitter/Blazor.ThreeJS.Emitter.csproj -- --check"
   }
 }

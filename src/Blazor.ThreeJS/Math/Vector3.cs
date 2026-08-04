@@ -130,7 +130,7 @@ public sealed class Vector3
 
 	public float[] ToArray()
 	{
-		return new float[] { _x, _y, _z };
+		return [_x, _y, _z];
 	}
 
 	public Vector3 FromArray(float[] values)

@@ -8,28 +8,35 @@ namespace Blazor.ThreeJS.Tests.Components;
 public class ThreeCanvasTests
 {
 	private static readonly PropertyInfo JsRuntimeProperty = typeof(ThreeCanvas)
-		.GetProperty("_jsRuntime", BindingFlags.NonPublic | BindingFlags.Instance)!;
+		.GetProperty("_jsRuntime", BindingFlags.NonPublic | BindingFlags.Instance)
+		?? throw new InvalidOperationException("ThreeCanvas no longer has an injected '_jsRuntime' property.");
 
 	private static readonly MethodInfo OnAfterRenderAsyncMethod = typeof(ThreeCanvas)
-		.GetMethod("OnAfterRenderAsync", BindingFlags.NonPublic | BindingFlags.Instance)!;
+		.GetMethod("OnAfterRenderAsync", BindingFlags.NonPublic | BindingFlags.Instance)
+		?? throw new InvalidOperationException("ThreeCanvas no longer declares a protected 'OnAfterRenderAsync' method.");
 
 	[Fact]
-	public async Task ThreeCanvas_DisposeWhileCreateContextAwaits_DoesNotThrowAndDisposesModuleOnce()
+	public async Task ThreeCanvas_DisposeWhileCreateContextAwaits_TearsDownJsContextExactlyOnce()
 	{
 		// Arrange
 		var createContextGate = new TaskCompletionSource<int>();
 		var module = new GatedCreateContextJsObjectReference(createContextGate);
 		var canvas = new ThreeCanvas();
 		JsRuntimeProperty.SetValue(canvas, new SingleModuleJsRuntime(module));
-		var onAfterRenderTask = (Task) OnAfterRenderAsyncMethod.Invoke(canvas, [true])!;
+		var onAfterRenderResult = OnAfterRenderAsyncMethod.Invoke(canvas, [true])
+			?? throw new InvalidOperationException("OnAfterRenderAsync returned null instead of a Task.");
+		var onAfterRenderTask = (Task) onAfterRenderResult;
 
 		// Act
-		await canvas.DisposeAsync();
+		var disposeTask = canvas.DisposeAsync();
 		createContextGate.SetResult(1);
-		var exception = await Record.ExceptionAsync(() => onAfterRenderTask);
+		var disposeException = await Record.ExceptionAsync(async () => await disposeTask);
+		var initializationException = await Record.ExceptionAsync(() => onAfterRenderTask);
 
 		// Assert
-		exception.ShouldBeNull();
+		disposeException.ShouldBeNull();
+		initializationException.ShouldBeNull();
+		module.DisposeContextCallCount.ShouldBe(1);
 		module.DisposeCallCount.ShouldBe(1);
 	}
 }
@@ -62,17 +69,21 @@ internal sealed class SingleModuleJsRuntime : IJSRuntime
 /// <summary>
 /// Fake <see cref="IJSObjectReference"/> standing in for the imported interop module. Its
 /// <c>createContext</c> call does not complete until the <see cref="TaskCompletionSource{TResult}"/>
-/// passed to the constructor is signalled, so a test can dispose the owning <c>ThreeCanvas</c> while
-/// that call is still in flight and then deterministically release it — reproducing the exact
-/// interleaving traced in the Plan 1.5 disposal race. NSubstitute is not used here for the same
-/// reason <c>ThrowingJsObjectReference</c> in <c>ThreeContextTests</c> is hand-written: matching real
+/// passed to the constructor is signalled, so a test can start disposing the owning <c>ThreeCanvas</c>
+/// while that call is still in flight and then deterministically release it — reproducing the exact
+/// interleaving traced in the Plan 1.5 disposal race. It also tracks <c>disposeContext</c> calls, so a
+/// test can assert the JavaScript-side context is actually torn down rather than merely that no
+/// exception escaped. NSubstitute is not used here for the same reason <c>ThrowingJsObjectReference</c>
+/// in <c>ThreeContextTests</c> is hand-written: matching real
 /// <c>Microsoft.JSInterop.Implementation.JSObjectReference</c> semantics (an in-flight call completes
-/// normally even after the reference is disposed; disposal itself is idempotent) is not something a
-/// substitute can be configured to do.
+/// normally even after the reference is disposed; only a call started after disposal throws
+/// <see cref="ObjectDisposedException"/>) is not something a substitute can be configured to do.
 /// </summary>
 internal sealed class GatedCreateContextJsObjectReference : IJSObjectReference
 {
 	private readonly TaskCompletionSource<int> _createContextGate;
+
+	public int DisposeContextCallCount { get; private set; }
 
 	public int DisposeCallCount { get; private set; }
 
@@ -88,13 +99,17 @@ internal sealed class GatedCreateContextJsObjectReference : IJSObjectReference
 			throw new ObjectDisposedException(nameof(GatedCreateContextJsObjectReference));
 		}
 
-		if (identifier != "createContext")
+		switch (identifier)
 		{
-			throw new NotSupportedException($"No fake behaviour configured for interop call '{identifier}'.");
+			case "createContext":
+				var contextId = await _createContextGate.Task;
+				return (TValue) (object) contextId;
+			case "disposeContext":
+				DisposeContextCallCount++;
+				return default!;
+			default:
+				throw new NotSupportedException($"No fake behaviour configured for interop call '{identifier}'.");
 		}
-
-		var contextId = await _createContextGate.Task;
-		return (TValue) (object) contextId;
 	}
 
 	public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)

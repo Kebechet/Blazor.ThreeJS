@@ -45,7 +45,8 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// <summary>
 	/// Drains <see cref="Batch"/> and sends the pending ops to the JavaScript applier in a single
 	/// interop call. A no-op when nothing is pending. Raises <see cref="OnError"/> if any op failed.
-	/// Silently no-ops if the circuit has already disconnected.
+	/// Silently no-ops if the circuit has already disconnected or the module reference has already
+	/// been disposed.
 	/// </summary>
 	public async Task FlushAsync()
 	{
@@ -66,14 +67,23 @@ public sealed class ThreeContext : IAsyncDisposable
 		catch (JSDisconnectedException)
 		{
 			// A disconnected circuit is not recoverable and not an application bug; nothing pending
-			// could have been delivered anyway. Only this exception type is swallowed — a genuine
-			// applier error still surfaces through OnError.
+			// could have been delivered anyway. Only this exception type and ObjectDisposedException
+			// are swallowed — a genuine applier error still surfaces through OnError.
+		}
+		catch (ObjectDisposedException)
+		{
+			// Defence in depth: ThreeCanvas now always finishes initialization before it starts
+			// tearing down, so this should not be reachable from that caller any more. It stays
+			// narrow and swallowed here anyway for any other caller holding this ThreeContext — e.g.
+			// a background loop calling FlushAsync — while disposal runs concurrently elsewhere.
+			// Nothing pending could have been delivered anyway.
 		}
 	}
 
 	/// <summary>
 	/// Flushes any pending ops, then tells the renderer which scene and camera to render each frame.
-	/// Silently no-ops if the circuit has already disconnected.
+	/// Silently no-ops if the circuit has already disconnected or the module reference has already
+	/// been disposed.
 	/// </summary>
 	/// <param name="sceneHandle">Handle of the scene object to render.</param>
 	/// <param name="cameraHandle">Handle of the camera to render through.</param>
@@ -87,8 +97,14 @@ public sealed class ThreeContext : IAsyncDisposable
 		catch (JSDisconnectedException)
 		{
 			// A disconnected circuit is not recoverable and not an application bug; nothing pending
-			// could have been delivered anyway. Only this exception type is swallowed — a genuine
-			// applier error still surfaces through OnError.
+			// could have been delivered anyway. Only this exception type and ObjectDisposedException
+			// are swallowed — a genuine applier error still surfaces through OnError.
+		}
+		catch (ObjectDisposedException)
+		{
+			// Defence in depth; see the matching catch in FlushAsync for why this should no longer
+			// be reachable from ThreeCanvas's own disposal path, but stays narrow and swallowed for
+			// any other caller racing a concurrent disposal.
 		}
 	}
 
@@ -96,8 +112,9 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// Stops the render loop, disposes every JavaScript-side three.js object owned by this context,
 	/// and releases the module reference. Disposal during a Blazor Server circuit disconnect — the
 	/// standard teardown path there — is not an error and completes without throwing. Nor is disposing
-	/// a context whose module reference was already disposed by a racing <c>ThreeCanvas</c> disposal
-	/// (see <c>ThreeCanvas.OnAfterRenderAsync</c>).
+	/// a context whose module reference was already disposed elsewhere — defence in depth for any
+	/// caller other than <c>ThreeCanvas</c>, which now always finishes its <c>InitializeAsync</c>
+	/// before tearing down and so should never hand this call an already-disposed reference.
 	/// <para>
 	/// The module is released in a <c>finally</c> so that a <c>disposeContext</c> failure of any
 	/// kind still gives the reference back. Leaking it would pin the imported module for the

@@ -42,6 +42,47 @@ internal sealed class IrMeta
 
 	/// <summary>Exact pinned version of <see cref="TypesPackage"/>.</summary>
 	public string? TypesVersion { get; set; }
+
+	/// <summary>Directory inside the types package the snapshot was taken from, e.g. <c>src</c>.</summary>
+	public string? SourceRoot { get; set; }
+
+	/// <summary>How much of each kind of declaration the snapshot holds.</summary>
+	public IrCounts? Counts { get; set; }
+
+	/// <summary>
+	/// Directories under <c>src/</c> the extractor never parsed, counted rather than asserted so the
+	/// coverage table can state how large each exclusion is.
+	/// </summary>
+	public List<IrExcludedDirectory> ExcludedDirectories { get; set; } = [];
+
+	/// <summary>The addon modules, which live outside <c>src/</c> and are never extracted.</summary>
+	public IrExcludedDirectory? Addons { get; set; }
+}
+
+/// <summary>
+/// Declaration counts for the snapshot. Only the ones a report quotes are modelled; the rest of the
+/// block is ignored by the reader, as everywhere else in this model.
+/// </summary>
+internal sealed class IrCounts
+{
+	/// <summary>
+	/// Top-level exported functions. Not classes, and not wrapped — quoted so the coverage table can
+	/// say so, because conflating the two is what once made the class total look like 374.
+	/// </summary>
+	public int Functions { get; set; }
+}
+
+/// <summary>A directory of declarations deliberately left out of the snapshot, with its size.</summary>
+internal sealed class IrExcludedDirectory
+{
+	/// <summary>POSIX path relative to the types package root.</summary>
+	public required string Path { get; set; }
+
+	/// <summary>How many <c>.d.ts</c> files it holds.</summary>
+	public int Files { get; set; }
+
+	/// <summary>How many class declarations it holds.</summary>
+	public int Classes { get; set; }
 }
 
 /// <summary>A single three.js class declaration.</summary>

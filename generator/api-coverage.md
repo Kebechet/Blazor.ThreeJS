@@ -78,11 +78,51 @@ Three things are resolved, in this order:
 
 ⚠️ **`Object3D` is hand-written, and its members are subtracted from every descendant.** It carries the
 scene-graph machinery — attachment, the transform, the pre-attach state replay — which is behaviour
-rather than surface. The consequence is that the three.js members it does *not* implement (`name`,
-`renderOrder`, `castShadow`, `frustumCulled`, `up`, `userData`…) are on no C# type at all: subtracting
-them is right, because re-declaring them on each of the ~100 descendants would be worse, but it leaves
-the single largest coverage hole in the mirror. Closing it means generating `Object3D` itself and
-layering the hand-written behaviour on top.
+rather than surface, and which the generator cannot reproduce. Subtracting its members is right, because
+re-declaring them on each of the ~100 descendants would be worse — but it means a member the hand-written
+class does not implement is on **no C# type at all**, without any skip rule below having fired.
+
+Of the 52 `Object3D` members that could be mirrored, the hand-written class implements 19
+(18 properties and 1 method). The 33 it does not:
+
+| member | bucket | type |
+|---|---|---|
+| `applyMatrix4` | Command | `—` |
+| `applyQuaternion` | Command | `—` |
+| `attach` | Command | `—` |
+| `clone` | Command | `—` |
+| `copy` | Command | `—` |
+| `onAfterRender` | Command | `—` |
+| `onAfterShadow` | Command | `—` |
+| `onBeforeRender` | Command | `—` |
+| `onBeforeShadow` | Command | `—` |
+| `rotateOnAxis` | Command | `—` |
+| `rotateOnWorldAxis` | Command | `—` |
+| `rotateX` | Command | `—` |
+| `rotateY` | Command | `—` |
+| `rotateZ` | Command | `—` |
+| `setRotationFromAxisAngle` | Command | `—` |
+| `setRotationFromEuler` | Command | `—` |
+| `setRotationFromMatrix` | Command | `—` |
+| `setRotationFromQuaternion` | Command | `—` |
+| `translateOnAxis` | Command | `—` |
+| `translateX` | Command | `—` |
+| `translateY` | Command | `—` |
+| `translateZ` | Command | `—` |
+| `updateMatrix` | Command | `—` |
+| `updateMatrixWorld` | Command | `—` |
+| `updateWorldMatrix` | Command | `—` |
+| `count` | MirroredState | `int` |
+| `matrix` | MirroredState | `Matrix4` |
+| `matrixWorld` | MirroredState | `Matrix4` |
+| `modelViewMatrix` | MirroredState | `Matrix4` |
+| `occlusionTest` | MirroredState | `bool` |
+| `parent` | MirroredState | `Object3D` |
+| `static` | MirroredState | `bool` |
+| `uuid` | MirroredState | `string` |
+
+Closing this for good means generating `Object3D` itself and layering the hand-written behaviour on
+top of the generated surface.
 
 ## What gets replayed on attach
 
@@ -422,7 +462,7 @@ three.js is reachable at all" and "how much of what we mirror is state".
 | Skipped | not mirrored; see the skip list below | 2816 | 1694 |
 | **total** | | **5402** | **3032** |
 
-⚠️ **No async query is emittable yet.** The wire format has five op kinds — create, set, call, add,
+⚠️ **No async query is emittable yet.** The wire format has six op kinds — create, set, call, add,
 remove, dispose — and none of them reads a value back. Every member in that bucket is classified and
 waiting on a read op, not on a mapping.
 

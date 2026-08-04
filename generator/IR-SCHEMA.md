@@ -66,7 +66,8 @@ takes a `MeshStandardMaterialParameters` interface; a `side` property is typed b
   "typesVersion": "0.185.3",
   "typescriptVersion": "5.9.3",
   "sourceRoot": "src",
-  "excludedDirectories": ["src/nodes"],
+  "excludedDirectories": [ { "path": "src/nodes", "files": 215, "classes": 118 } ],
+  "addons": { "path": "examples/jsm", "files": 383, "classes": 383 },
   "counts": { /* filesScanned, classes, interfaces, … */ },
   "duplicateClassNames": [ { "name": "PMREMGenerator", "files": ["…", "…"] } ]
 }
@@ -74,6 +75,11 @@ takes a `MeshStandardMaterialParameters` interface; a `side` property is typed b
 
 `duplicateClassNames` lists names declared in more than one in-scope file (4 of them). Class entries
 are **not** unique by name — key them by `name` + `file`.
+
+`excludedDirectories` and `addons` describe what is deliberately **not** in this snapshot, counted
+rather than asserted so the package's coverage table can state the size of each exclusion. Their
+files are parsed with a standalone `createSourceFile` purely to count class declarations; nothing
+from them enters the program, the checker, or any list below.
 
 ## `ClassEntry`
 

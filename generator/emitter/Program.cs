@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 using Blazor.ThreeJS.Emitter;
@@ -83,6 +84,24 @@ emittedFiles.Add(new EmittedFile
 	Contents = coverage.RenderJson()
 });
 
+// The README is both an input and an output: only the region between the coverage markers is the
+// generator's, and the prose around it is not. It is spliced last because its member counts are read
+// out of the generated files above.
+var readmePath = Path.Combine(repositoryRoot, "README.md");
+if (!TrySpliceReadmeCoverage(File.ReadAllText(readmePath), coverage.RenderReadmeSection(emittedFiles), out var splicedReadme))
+{
+	Console.Error.WriteLine($"'{readmePath}' does not carry the coverage markers.");
+	Console.Error.WriteLine($"Add a line reading '{EmitterConfig.ReadmeCoverageBeginMarker}' and one reading");
+	Console.Error.WriteLine($"'{EmitterConfig.ReadmeCoverageEndMarker}' where the generated coverage section belongs.");
+	return 2;
+}
+
+emittedFiles.Add(new EmittedFile
+{
+	RelativePath = "README.md",
+	Contents = splicedReadme
+});
+
 if (mode == "--project")
 {
 	var projectionDirectory = args.Skip(1).FirstOrDefault();
@@ -129,6 +148,37 @@ static int WriteProjection(string outputDirectory, List<EmittedFile> emittedFile
 
 	Console.WriteLine($"projected {written} file(s) into {outputDirectory}");
 	return 0;
+}
+
+/// <summary>
+/// Replaces the marked coverage region of the README with a freshly rendered one, leaving every other
+/// line untouched. The README is <c>PackageReadmeFile</c>, so this region is the coverage claim that
+/// lands on nuget.org — generated rather than hand-maintained so it cannot quietly drift into
+/// flattery, and checked by <c>--check</c> so it cannot be edited into one either.
+/// </summary>
+/// <param name="readme">The committed README.</param>
+/// <param name="section">The rendered coverage section, without the markers.</param>
+/// <param name="spliced">The README with the region replaced, or <see langword="null"/> when a marker is missing.</param>
+/// <returns><see langword="true"/> when both markers were found in order.</returns>
+static bool TrySpliceReadmeCoverage(string readme, string section, [NotNullWhen(true)] out string? spliced)
+{
+	spliced = null;
+	var beginIndex = readme.IndexOf(EmitterConfig.ReadmeCoverageBeginMarker, StringComparison.Ordinal);
+	if (beginIndex < 0)
+	{
+		return false;
+	}
+
+	var endIndex = readme.IndexOf(EmitterConfig.ReadmeCoverageEndMarker, beginIndex, StringComparison.Ordinal);
+	if (endIndex < 0)
+	{
+		return false;
+	}
+
+	var before = readme[..(beginIndex + EmitterConfig.ReadmeCoverageBeginMarker.Length)];
+	var after = readme[endIndex..];
+	spliced = $"{before}\n\n{section}\n{after}";
+	return true;
 }
 
 static int Write(string repositoryRoot, List<EmittedFile> emittedFiles)

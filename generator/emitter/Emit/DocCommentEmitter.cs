@@ -32,15 +32,6 @@ internal static class DocCommentEmitter
 	private static readonly Regex _fencedCodePattern = new(@"```[\s\S]*?```", RegexOptions.Compiled);
 
 	/// <summary>
-	/// A <c>{@link}</c> whose URL arrived split after its scheme. TypeScript's JSDoc parser reads
-	/// <c>{@link https://example.com Label}</c> as the name <c>https</c> followed by the text
-	/// <c>://example.com Label</c>, and the extractor rejoins the two with a space. Repairing it here
-	/// rather than in the IR keeps the snapshot a faithful record of what the parser produced; 82
-	/// markers in the current snapshot would otherwise render as text beginning <c>://</c>.
-	/// </summary>
-	private static readonly Regex _splitUrlSchemePattern = new(@"\{@link\s+(https?)\s+://", RegexOptions.Compiled);
-
-	/// <summary>
 	/// Trailing JSDoc fragments that only restate what the C# signature already says. Upstream writes
 	/// "… Optional; Expects a `Float`. Default `1`" because TypeScript cannot express any of it;
 	/// <c>float width = 1f</c> expresses all three, so carrying the text across would be noise.
@@ -112,8 +103,7 @@ internal static class DocCommentEmitter
 	public static string RenderInline(string text)
 	{
 		var withoutFencedCode = _fencedCodePattern.Replace(text, " ");
-		var repaired = _splitUrlSchemePattern.Replace(withoutFencedCode, "{@link $1://");
-		var collapsed = _whitespacePattern.Replace(repaired, " ").Trim();
+		var collapsed = _whitespacePattern.Replace(withoutFencedCode, " ").Trim();
 		var escaped = XmlEscape(collapsed);
 		var linked = _linkMarkerPattern.Replace(escaped, RenderLinkMarker);
 

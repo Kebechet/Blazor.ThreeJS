@@ -2,6 +2,8 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
+using Blazor.ThreeJS.Emitter.Emit;
 using Blazor.ThreeJS.Emitter.Ir;
 
 namespace Blazor.ThreeJS.Emitter.Map;
@@ -18,6 +20,18 @@ internal sealed class CoverageReport
 	private readonly EnumCatalog _enums;
 	private readonly TypeMapper _mapper;
 	private readonly List<ClassifiedMember> _members;
+
+	/// <summary>
+	/// A public member of a generated class: a <c>public</c> declaration at class-body indentation.
+	/// Counted from the emitted text rather than from the model so the README's figure is the one a
+	/// reader reproduces with <c>grep -c "^\tpublic " src/Blazor.ThreeJS/Generated/*.cs</c>.
+	/// </summary>
+	private static readonly Regex _publicMemberPattern = new(@"^\tpublic ", RegexOptions.Compiled | RegexOptions.Multiline);
+
+	/// <summary>An enum member: a name and its literal at enum-body indentation.</summary>
+	private static readonly Regex _enumMemberPattern = new(@"^\t[A-Za-z_][A-Za-z0-9_]* = ", RegexOptions.Compiled | RegexOptions.Multiline);
+
+	private static readonly Regex _enumFilePattern = new(@"^public enum ", RegexOptions.Compiled | RegexOptions.Multiline);
 
 	private static readonly JsonSerializerOptions _coverageJsonOptions = new()
 	{
@@ -78,6 +92,26 @@ internal sealed class CoverageReport
 		AppendSkipList(builder);
 		AppendEnums(builder);
 		AppendHazards(builder);
+		return builder.ToString();
+	}
+
+	/// <summary>
+	/// Renders the README's coverage section — the claim a consumer reads on nuget.org before
+	/// installing. Generated rather than written by hand for one reason: a hand-maintained coverage
+	/// claim drifts towards flattery, and this one has to survive being checked. Every figure here comes
+	/// from the same model as <c>api-coverage.md</c>, and the section ends with how to reproduce each.
+	/// </summary>
+	/// <param name="emittedFiles">Everything this run produces, read for the shipped member counts.</param>
+	/// <returns>Markdown, LF-terminated, to splice between the README's coverage markers.</returns>
+	public string RenderReadmeSection(IReadOnlyList<EmittedFile> emittedFiles)
+	{
+		var builder = new StringBuilder();
+		AppendReadmeHeadline(builder, emittedFiles);
+		AppendReadmeClassTable(builder);
+		AppendReadmeExclusions(builder);
+		AppendReadmeReadChannel(builder);
+		AppendReadmeNarrowings(builder);
+		AppendReadmeMeasurement(builder);
 		return builder.ToString();
 	}
 
@@ -157,6 +191,188 @@ internal sealed class CoverageReport
 
 		var json = JsonSerializer.Serialize(document, _coverageJsonOptions);
 		return json.ReplaceLineEndings("\n") + "\n";
+	}
+
+	private void AppendReadmeHeadline(StringBuilder builder, IReadOnlyList<EmittedFile> emittedFiles)
+	{
+		var generatedFiles = emittedFiles
+			.Where(x => x.RelativePath.EndsWith(".cs", StringComparison.Ordinal))
+			.ToList();
+
+		var publicMemberCount = generatedFiles
+			.Where(x => !_enumFilePattern.IsMatch(x.Contents))
+			.Sum(x => _publicMemberPattern.Matches(x.Contents).Count);
+
+		var enumMemberCount = generatedFiles
+			.Where(x => _enumFilePattern.IsMatch(x.Contents))
+			.Sum(x => _enumMemberPattern.Matches(x.Contents).Count);
+
+		var emittableCount = _scope.Results.Count(x => x.Status == ClassScopeStatus.Emittable);
+		AppendLine(builder, $"Generated from `{_ir.Meta?.TypesPackage}@{_ir.Meta?.TypesVersion}`: **{emittableCount} of three.js's {_scope.Results.Count} core classes** and");
+		AppendLine(builder, $"**{_enums.Generatable.Count}** of its constant groups, carrying {publicMemberCount} public members and {enumMemberCount} enum members. Property names,");
+		AppendLine(builder, "constructor argument order and documentation are three.js's own rather than a paraphrase - and so is");
+		AppendLine(builder, "everything below, which is what that same generator run measured about itself.");
+		AppendLine(builder);
+	}
+
+	private void AppendReadmeClassTable(StringBuilder builder)
+	{
+		var byStatus = _scope.Results
+			.GroupBy(x => x.Status)
+			.ToDictionary(x => x.Key, x => x.Count());
+
+		AppendLine(builder, "### Classes");
+		AppendLine(builder);
+		AppendLine(builder, "| | classes |");
+		AppendLine(builder, "|---|---|");
+		AppendLine(builder, $"| **generated** | **{byStatus.GetValueOrDefault(ClassScopeStatus.Emittable)}** |");
+		AppendLine(builder, $"| blocked on something the mirror cannot express yet | {byStatus.GetValueOrDefault(ClassScopeStatus.Blocked)} |");
+		AppendLine(builder, $"| deliberately out of the mirrored surface | {byStatus.GetValueOrDefault(ClassScopeStatus.OutOfSurface)} |");
+		AppendLine(builder, $"| **three.js core total** | **{_scope.Results.Count}** |");
+		AppendLine(builder);
+		AppendLine(builder, "The blocked ones, by what blocks them:");
+		AppendLine(builder);
+		AppendLine(builder, "| obstacle | classes |");
+		AppendLine(builder, "|---|---|");
+		var blockedByCategory = _scope.Results
+			.Where(x => x.Status == ClassScopeStatus.Blocked)
+			.GroupBy(x => x.Category)
+			.Select(x => new { Category = x.Key, Count = x.Count() })
+			.OrderByDescending(x => x.Count)
+			.ThenBy(x => x.Category.ToString(), StringComparer.Ordinal);
+
+		foreach (var group in blockedByCategory)
+		{
+			AppendLine(builder, $"| {DescribeCategory(group.Category)} | {group.Count} |");
+		}
+
+		AppendLine(builder);
+	}
+
+	/// <summary>
+	/// The two exclusions a consumer is most likely to be caught out by — the addons and the node stack
+	/// are not in the class total at all, so a percentage computed from that total would overstate the
+	/// coverage. Stated as its own table for exactly that reason.
+	/// </summary>
+	private void AppendReadmeExclusions(StringBuilder builder)
+	{
+		AppendLine(builder, "### Not wrapped, and not counted above");
+		AppendLine(builder);
+		AppendLine(builder, "These are outside the class total, because the extractor never reads them:");
+		AppendLine(builder);
+		AppendLine(builder, "| | classes | |");
+		AppendLine(builder, "|---|---|---|");
+		if (_ir.Meta?.Addons is { } addons)
+		{
+			AppendLine(builder, $"| addons (`{addons.Path}`) | {addons.Classes} | ⚠️ **no `GLTFLoader` and no `OrbitControls`**, no post-processing passes, no exporters. They ship as separate modules, and none of them is wrapped |");
+		}
+
+		foreach (var excluded in _ir.Meta?.ExcludedDirectories ?? [])
+		{
+			AppendLine(builder, $"| the TSL / WebGPU node stack (`{excluded.Path}`) | {excluded.Classes} | this package ships three.js's WebGL build, which does not include them |");
+		}
+
+		AppendLine(builder);
+		AppendLine(builder, "And inside the total, deliberately out of the mirrored surface:");
+		AppendLine(builder);
+
+		var rendererInternalCount = _scope.Results
+			.Count(x => EmitterConfig.ExcludedSourcePrefixes.Any(prefix => x.Class.File.StartsWith(prefix, StringComparison.Ordinal)));
+
+		var mathCount = _scope.Results
+			.Count(x => x.Status == ClassScopeStatus.OutOfSurface && x.Category == SkipCategory.MathValueType);
+
+		var handWrittenNames = string.Join(", ", EmitterConfig.HandWrittenClassNames.Order(StringComparer.Ordinal).Select(x => $"`{x}`"));
+		var mathTypeNames = string.Join(", ", EmitterConfig.MathTypeNames.Order(StringComparer.Ordinal).Select(x => $"`{x}`"));
+		var prefixes = string.Join(", ", EmitterConfig.ExcludedSourcePrefixes.Select(x => $"`{x}**`"));
+		var rendererTypes = string.Join(", ", EmitterConfig.ConsumerFacingRendererClassNames.Select(x => $"`{x}`"));
+
+		AppendLine(builder, "| | classes | |");
+		AppendLine(builder, "|---|---|---|");
+		AppendLine(builder, $"| renderer internals ({prefixes}) | {rendererInternalCount} | the types consumers actually name ({rendererTypes}) are outside those directories and are generated |");
+		AppendLine(builder, $"| `{EmitterConfig.MathSourcePrefix}**` value types | {mathCount} | {EmitterConfig.MathTypeNames.Count} of them ship, hand-ported ({mathTypeNames}); the other {mathCount - EmitterConfig.MathTypeNames.Count} - `Vector2`, `Box3`, `Plane`, `Ray` and the rest - do not. A math value is arithmetic rather than a signature: the generator has their members but not their behaviour, so each one waits on a hand port |");
+		AppendLine(builder, $"| {handWrittenNames} | {EmitterConfig.HandWrittenClassNames.Count} | hand-written: it carries the scene-graph machinery - attachment, the transform, pre-attach state replay - which is behaviour rather than surface |");
+		AppendLine(builder);
+	}
+
+	/// <summary>
+	/// The single most consequential limitation of the package, so it is stated in the README rather
+	/// than left to the coverage report: the wire format is write-only, and no amount of generated
+	/// surface changes that.
+	/// </summary>
+	private void AppendReadmeReadChannel(StringBuilder builder)
+	{
+		var emittableMembers = EmittableMembers().ToList();
+		var asyncQueryCount = emittableMembers.Count(x => x.Bucket == MemberBucket.AsyncQuery);
+		var readOnlyCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.ReadOnlyWithoutReadChannel);
+		var fluentCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.NoReadChannel);
+		var total = asyncQueryCount + readOnlyCount + fluentCount;
+
+		AppendLine(builder, "### ⚠️ Nothing reads back");
+		AppendLine(builder);
+		AppendLine(builder, "The wire format has six op kinds - create, set, call, add, remove, dispose - and **none of them returns a");
+		AppendLine(builder, $"value**. On the generated classes that puts {total} members out of reach:");
+		AppendLine(builder);
+		AppendLine(builder, $"- **{asyncQueryCount} methods whose result is the point of calling them.** Raycast results, bounding-box and");
+		AppendLine(builder, "  bounding-sphere computation, world position / rotation / scale, `getObjectByName` - anything that hands");
+		AppendLine(builder, "  data back from JavaScript cannot be called at all.");
+		AppendLine(builder, $"- **{readOnlyCount} read-only properties**, which C# could only guess at.");
+		AppendLine(builder, $"- **{fluentCount} methods returning a fresh object** (`clone`, `removeFromParent`), which would need a handle for");
+		AppendLine(builder, "  something JavaScript created.");
+		AppendLine(builder);
+		AppendLine(builder, "This is a property of the wire format rather than of the generator: it is the same limitation whether a");
+		AppendLine(builder, "class is generated or hand-written, and closing it needs a read op, not more coverage.");
+		AppendLine(builder);
+	}
+
+	private void AppendReadmeNarrowings(StringBuilder builder)
+	{
+		var droppedClassCount = EmittableClasses.Count(x => x.Constructor is { DroppedParameters.Count: > 0 });
+		var droppedParameterCount = EmittableClasses.Sum(x => x.Constructor?.DroppedParameters.Count ?? 0);
+		// Scoped to methods that are actually emitted. Across all 309 classes 31 methods declare several
+		// overloads, but a method that is skipped or waiting on a read op is not narrowed by taking the
+		// first signature — it is not there at all, and is already counted elsewhere.
+		var overloadedCount = EmittableMembers().Count(x => x.OverloadCount > 1 && x.Bucket == MemberBucket.Command);
+		var emittableCount = _scope.Results.Count(x => x.Status == ClassScopeStatus.Emittable);
+
+		AppendLine(builder, "### Where a generated type is narrower than three.js");
+		AppendLine(builder);
+		AppendLine(builder, $"- **{droppedClassCount} of the {emittableCount} generated classes have a narrower constructor.** {droppedParameterCount} trailing optional parameters");
+		AppendLine(builder, "  whose type does not map are dropped; calling the JavaScript constructor with fewer arguments is what");
+		AppendLine(builder, "  three.js is built for, so the result is a faithful subset rather than a guess. A **required** parameter");
+		AppendLine(builder, "  that does not map blocks the whole class instead.");
+		if (overloadedCount > 0)
+		{
+			AppendLine(builder, $"- **{overloadedCount} generated methods declare more than one overload upstream, and only the first is emitted.**");
+		}
+
+		AppendLine(builder, "- **A colour is a `Color`.** three.js also accepts a CSS string or a hex number wherever a colour is");
+		AppendLine(builder, "  taken; the hex form is covered by `Color.FromHex`, the string form is not exposed.");
+		if (_mapper.MultiValueNarrowings.Count > 0)
+		{
+			AppendLine(builder, $"- **`T | T[]` maps to `T`** in {_mapper.MultiValueNarrowings.Count} declared types, so a mesh with several materials is not expressible.");
+		}
+
+		AppendLine(builder);
+	}
+
+	private void AppendReadmeMeasurement(StringBuilder builder)
+	{
+		var functionCount = _ir.Meta?.Counts?.Functions ?? 0;
+		AppendLine(builder, "### How this was measured");
+		AppendLine(builder);
+		AppendLine(builder, $"- **Classes**: every class declaration under `{_ir.Meta?.TypesPackage}@{_ir.Meta?.TypesVersion}`'s `{_ir.Meta?.SourceRoot}/`, minus the excluded");
+		AppendLine(builder, $"  directories above, extracted into `generator/three-api.json`. three.js also exports {functionCount} top-level");
+		AppendLine(builder, "  functions, which are not classes, are not counted in the total, and are not wrapped either.");
+		AppendLine(builder, "- **Generated**: the files in `src/Blazor.ThreeJS/Generated/`, one per class or enum. `npm run emit:check`");
+		AppendLine(builder, "  fails if any of them differs from what the generator produces today, or if one is left behind.");
+		AppendLine(builder, "- **Public members**: `grep -c \"^\\tpublic \" src/Blazor.ThreeJS/Generated/*.cs`, summed over the class files.");
+		AppendLine(builder, "- **Everything else**: `generator/api-coverage.json`, written by the run that wrote this section. The");
+		AppendLine(builder, "  per-class and per-member detail behind every figure, including each blocked class and each skipped");
+		AppendLine(builder, "  member with its obstacle named, is in [`generator/api-coverage.md`](generator/api-coverage.md).");
+		AppendLine(builder);
+		AppendLine(builder, "This section is generated by `npm run emit` and rewritten in place between its markers. Editing it by");
+		AppendLine(builder, "hand is pointless: the next run overwrites it, and `npm run emit:check` fails until it matches.");
 	}
 
 	private void AppendHeader(StringBuilder builder)
@@ -259,13 +475,60 @@ internal sealed class CoverageReport
 		}
 
 		AppendLine(builder);
+		AppendHandWrittenBaseSurface(builder);
+	}
+
+	/// <summary>
+	/// What the hand-written <c>Object3D</c> covers and what it does not. Its members are subtracted
+	/// from every descendant, so anything it leaves out is on no C# type at all — the one place in this
+	/// report where a member can go missing without any of the skip rules below having fired.
+	/// </summary>
+	private void AppendHandWrittenBaseSurface(StringBuilder builder)
+	{
+		var members = _members
+			.Where(x => EmitterConfig.HandWrittenClassNames.Contains(x.ClassName))
+			.ToList();
+
+		var mirrorable = members
+			.Where(x => x.Bucket is MemberBucket.MirroredState or MemberBucket.Command)
+			.ToList();
+
+		var implemented = mirrorable
+			.Where(x => EmitterConfig.HandWrittenObject3DMemberNames.Contains(x.MemberName))
+			.ToList();
+
+		var missing = mirrorable
+			.Where(x => !EmitterConfig.HandWrittenObject3DMemberNames.Contains(x.MemberName))
+			.ToList();
+
 		AppendLine(builder, "⚠️ **`Object3D` is hand-written, and its members are subtracted from every descendant.** It carries the");
 		AppendLine(builder, "scene-graph machinery — attachment, the transform, the pre-attach state replay — which is behaviour");
-		AppendLine(builder, "rather than surface. The consequence is that the three.js members it does *not* implement (`name`,");
-		AppendLine(builder, "`renderOrder`, `castShadow`, `frustumCulled`, `up`, `userData`…) are on no C# type at all: subtracting");
-		AppendLine(builder, "them is right, because re-declaring them on each of the ~100 descendants would be worse, but it leaves");
-		AppendLine(builder, "the single largest coverage hole in the mirror. Closing it means generating `Object3D` itself and");
-		AppendLine(builder, "layering the hand-written behaviour on top.");
+		AppendLine(builder, "rather than surface, and which the generator cannot reproduce. Subtracting its members is right, because");
+		AppendLine(builder, "re-declaring them on each of the ~100 descendants would be worse — but it means a member the hand-written");
+		AppendLine(builder, "class does not implement is on **no C# type at all**, without any skip rule below having fired.");
+		AppendLine(builder);
+		var implementedProperties = Pluralize(implemented.Count(x => x.Bucket == MemberBucket.MirroredState), "property", "properties");
+		var implementedMethods = Pluralize(implemented.Count(x => x.Bucket == MemberBucket.Command), "method", "methods");
+		AppendLine(builder, $"Of the {mirrorable.Count} `Object3D` members that could be mirrored, the hand-written class implements {implemented.Count}");
+		AppendLine(builder, $"({implementedProperties} and {implementedMethods}). The {missing.Count} it does not:");
+		AppendLine(builder);
+		if (missing.Count == 0)
+		{
+			AppendLine(builder, "None.");
+			AppendLine(builder);
+			return;
+		}
+
+		AppendLine(builder, "| member | bucket | type |");
+		AppendLine(builder, "|---|---|---|");
+		foreach (var member in missing.OrderBy(x => x.Bucket.ToString(), StringComparer.Ordinal).ThenBy(x => x.MemberName, StringComparer.Ordinal))
+		{
+			AppendLine(builder, $"| `{member.MemberName}` | {member.Bucket} | `{member.CSharpTypeName ?? "—"}` |");
+		}
+
+		AppendLine(builder);
+		AppendLine(builder, "Closing this for good means generating `Object3D` itself and layering the hand-written behaviour on");
+		AppendLine(builder, "top of the generated surface.");
 		AppendLine(builder);
 	}
 
@@ -402,7 +665,7 @@ internal sealed class CoverageReport
 		AppendBucketRow(builder, MemberBucket.Skipped, "not mirrored; see the skip list below");
 		AppendLine(builder, $"| **total** | | **{_members.Count}** | **{EmittableMembers().Count()}** |");
 		AppendLine(builder);
-		AppendLine(builder, "⚠️ **No async query is emittable yet.** The wire format has five op kinds — create, set, call, add,");
+		AppendLine(builder, "⚠️ **No async query is emittable yet.** The wire format has six op kinds — create, set, call, add,");
 		AppendLine(builder, "remove, dispose — and none of them reads a value back. Every member in that bucket is classified and");
 		AppendLine(builder, "waiting on a read op, not on a mapping.");
 		AppendLine(builder);
@@ -761,6 +1024,18 @@ internal sealed class CoverageReport
 			SkipCategory.RestParameter => "a rest parameter, including the rest-union-tuple pseudo-overload form",
 			_ => throw new NotImplementedException($"Unhandled {nameof(SkipCategory)} '{category}'.")
 		};
+	}
+
+	/// <summary>Renders a count with the right noun, so a generated sentence never reads "1 methods".</summary>
+	/// <param name="count">How many.</param>
+	/// <param name="singular">Noun for one.</param>
+	/// <param name="plural">Noun for any other count, including zero.</param>
+	/// <returns>The count followed by the noun.</returns>
+	private static string Pluralize(int count, string singular, string plural)
+	{
+		return count == 1
+			? $"{count} {singular}"
+			: $"{count} {plural}";
 	}
 
 	private static void AppendLine(StringBuilder builder, string text = "")

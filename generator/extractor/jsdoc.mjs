@@ -12,6 +12,8 @@ const BRACKETED_DEFAULT = /\[\s*[A-Za-z0-9_$.[\]]+\s*=\s*([^\]]*)\]/;
 const LINK_WITH_URL = /\{@link(?:code|plain)?\s+(https?:\/\/[^\s|}]+)\s*(?:\|\s*([^}]*?))?\s*\}/g;
 const BARE_URL = /(https?:\/\/\S+)/;
 const LEADING_DASH = /^[-–—]\s+/;
+const URL_SCHEME_NAME = /^https?$/;
+const SPLIT_SCHEME_REMAINDER = /^:\/\//;
 
 /** Strips the `/**`, `*\/` and per-line ` * ` decoration from a raw comment slice. */
 function stripCommentDecoration(raw) {
@@ -38,6 +40,23 @@ function entityNameToString(name) {
 }
 
 /**
+ * Rejoins the two halves TypeScript splits a `{@link}` target into.
+ *
+ * `{@link https://example.com Label}` parses as the entity name `https` followed by the text
+ * `://example.com Label`: a URL is not an entity name, so the scheme's colon ends the name and the
+ * rest becomes link text. Joining the halves with a space would emit `{@link https ://example.com}`,
+ * whose target is the word `https` and whose label starts with `://` - which is what shipped in the
+ * snapshot for 82 markers. The scheme is therefore reattached to its own `://`, and only the
+ * remainder is separated by a space.
+ */
+function joinLinkParts(target, label) {
+	if (URL_SCHEME_NAME.test(target) && SPLIT_SCHEME_REMAINDER.test(label)) {
+		return `${target}${label}`;
+	}
+	return [target, label].filter(Boolean).join(" ");
+}
+
+/**
  * Flattens a JSDoc comment (string or node array with `{@link}` parts) to text,
  * keeping `{@link ...}` markers intact so the emitter can rewrite them as `<see cref="..."/>`.
  */
@@ -53,7 +72,7 @@ function flattenComment(comment) {
 		if (ts.isJSDocLink(part) || ts.isJSDocLinkCode(part) || ts.isJSDocLinkPlain(part)) {
 			const target = entityNameToString(part.name);
 			const label = (part.text ?? "").trim();
-			text += `{@link ${[target, label].filter(Boolean).join(" ")}}`;
+			text += `{@link ${joinLinkParts(target, label)}}`;
 			continue;
 		}
 		text += part.text;

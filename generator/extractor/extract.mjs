@@ -20,6 +20,12 @@ const TYPES_PACKAGE = path.join(REPO_ROOT, "node_modules", "@types", "three");
 const SOURCE_ROOT = path.join(TYPES_PACKAGE, "src");
 /** Directories under `src/` that are out of scope: the TSL / WebGPU node stack. */
 const EXCLUDED_DIRECTORIES = ["nodes"];
+/**
+ * The addons - `GLTFLoader`, `OrbitControls`, every post-processing pass. They live outside `src/`,
+ * ship as separate modules three.js's own bundle does not include, and are never extracted. Measured
+ * anyway, so the coverage table can state the size of the exclusion rather than assert it.
+ */
+const ADDONS_DIRECTORY = "examples/jsm";
 const DEFAULT_OUTPUT = path.join(REPO_ROOT, "generator", "three-api.json");
 
 function byText(a, b) {
@@ -51,6 +57,36 @@ function discoverSourceFiles(directory, acc = []) {
 		}
 	}
 	return acc;
+}
+
+/**
+ * Counts the `.d.ts` files and class declarations under a directory the extractor never parses into
+ * the IR. A standalone `createSourceFile` is deliberate: nothing here needs the checker, and adding
+ * these files to the program would pull the excluded surface back into scope.
+ */
+function countDeclarations(root) {
+	if (!fs.existsSync(root)) {
+		return { files: 0, classes: 0 };
+	}
+	const files = discoverSourceFiles(root).sort(byText);
+	let classes = 0;
+	for (const fileName of files) {
+		const sourceFile = ts.createSourceFile(
+			fileName,
+			fs.readFileSync(fileName, "utf8"),
+			ts.ScriptTarget.ESNext,
+			false,
+			ts.ScriptKind.TS,
+		);
+		const visit = (node) => {
+			if (ts.isClassDeclaration(node)) {
+				classes++;
+			}
+			ts.forEachChild(node, visit);
+		};
+		visit(sourceFile);
+	}
+	return { files: files.length, classes };
 }
 
 function isExcluded(fileName) {
@@ -611,7 +647,11 @@ function main() {
 			typesVersion: typesPackageJson.version,
 			typescriptVersion: ts.version,
 			sourceRoot: "src",
-			excludedDirectories: EXCLUDED_DIRECTORIES.map((x) => `src/${x}`),
+			excludedDirectories: EXCLUDED_DIRECTORIES.map((x) => ({
+				path: `src/${x}`,
+				...countDeclarations(path.join(SOURCE_ROOT, x)),
+			})),
+			addons: { path: ADDONS_DIRECTORY, ...countDeclarations(path.join(TYPES_PACKAGE, ADDONS_DIRECTORY)) },
 			counts: {
 				filesScanned: inScopeFiles.length,
 				filesExcluded: allFiles.length - inScopeFiles.length,

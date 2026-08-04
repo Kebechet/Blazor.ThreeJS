@@ -108,4 +108,49 @@ public class Vector3Tests
 		// Assert
 		changeCount.ShouldBe(1);
 	}
+
+	[Fact]
+	public void Vector3_ComponentAssignedItsExistingValue_DoesNotInvokeOnChange()
+	{
+		// Arrange
+		var vector = new Vector3(1f, 2f, 3f);
+		var changeCount = 0;
+		vector.OnChange = () => changeCount++;
+
+		// Act
+		vector.X = 1f;
+
+		// Assert
+		changeCount.ShouldBe(0);
+	}
+
+	[Fact]
+	public void Vector3_SetCalledWithItsExistingValues_DoesNotInvokeOnChange()
+	{
+		// Arrange
+		var vector = new Vector3(1f, 2f, 3f);
+		var changeCount = 0;
+		vector.OnChange = () => changeCount++;
+
+		// Act
+		vector.Set(1f, 2f, 3f);
+
+		// Assert
+		changeCount.ShouldBe(0);
+	}
+
+	[Fact]
+	public void Vector3_SetCalledWithOneChangedComponent_InvokesOnChange()
+	{
+		// Arrange
+		var vector = new Vector3(1f, 2f, 3f);
+		var changeCount = 0;
+		vector.OnChange = () => changeCount++;
+
+		// Act
+		vector.Set(1f, 2f, 4f);
+
+		// Assert
+		changeCount.ShouldBe(1);
+	}
 }

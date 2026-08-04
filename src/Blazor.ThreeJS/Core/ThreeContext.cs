@@ -19,8 +19,14 @@ public sealed class ThreeContext : IAsyncDisposable
 	public ThreeBatch Batch { get; } = new();
 
 	/// <summary>
-	/// Raised when the applier rejected one or more ops. Without this, a shader compile failure or
-	/// an unknown type name would vanish into the browser console with no C#-side signal.
+	/// Raised when the applier rejected one or more ops while running a batch: an unknown three.js
+	/// type name, an unknown handle, or a property write or method call that threw. Without this,
+	/// those failures would vanish into the browser console with no C#-side signal.
+	/// <para>
+	/// This covers the <see cref="FlushAsync"/> path only. Failures raised while <b>rendering</b> a
+	/// frame — a shader that fails to compile, a lost WebGL context — happen inside the JavaScript
+	/// render loop, which has no channel back to C#, and are not reported here.
+	/// </para>
 	/// </summary>
 	public event Action<IReadOnlyList<ThreeError>>? OnError;
 
@@ -90,17 +96,32 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// Stops the render loop, disposes every JavaScript-side three.js object owned by this context,
 	/// and releases the module reference. Disposal during a Blazor Server circuit disconnect — the
 	/// standard teardown path there — is not an error and completes without throwing.
+	/// <para>
+	/// The module is released in a <c>finally</c> so that a <c>disposeContext</c> failure of any
+	/// kind still gives the reference back. Leaking it would pin the imported module for the
+	/// lifetime of the circuit on Blazor Server.
+	/// </para>
 	/// </summary>
 	public async ValueTask DisposeAsync()
 	{
 		try
 		{
 			await _module.InvokeVoidAsync("disposeContext", _contextId);
-			await _module.DisposeAsync();
 		}
 		catch (JSDisconnectedException)
 		{
 			// The JS side is already gone; there is nothing left to dispose and nothing recoverable.
+		}
+		finally
+		{
+			try
+			{
+				await _module.DisposeAsync();
+			}
+			catch (JSDisconnectedException)
+			{
+				// The circuit died with the module reference, so there is nothing left to release.
+			}
 		}
 	}
 }

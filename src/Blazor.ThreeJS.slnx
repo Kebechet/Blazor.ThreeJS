@@ -1,5 +1,8 @@
 <Solution>
   <Project Path="Blazor.ThreeJS\Blazor.ThreeJS.csproj" />
+  <Folder Name="/demo/">
+    <Project Path="..\demo\Blazor.ThreeJS.Demo.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="..\tests\Blazor.ThreeJS.Tests\Blazor.ThreeJS.Tests.csproj" />
   </Folder>

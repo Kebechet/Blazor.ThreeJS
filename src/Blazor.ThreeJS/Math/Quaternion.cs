@@ -40,52 +40,76 @@ public sealed class Quaternion
 	}
 
 	/// <summary>
-	/// Gets or sets the X component. Setting this component triggers the <c>OnChange</c> callback.
+	/// Gets or sets the X component. Setting this component triggers the <c>OnChange</c> callback,
+	/// unless the value is unchanged.
 	/// </summary>
 	public float X
 	{
 		get { return _x; }
 		set
 		{
+			if (_x == value)
+			{
+				return;
+			}
+
 			_x = value;
 			OnChange?.Invoke();
 		}
 	}
 
 	/// <summary>
-	/// Gets or sets the Y component. Setting this component triggers the <c>OnChange</c> callback.
+	/// Gets or sets the Y component. Setting this component triggers the <c>OnChange</c> callback,
+	/// unless the value is unchanged.
 	/// </summary>
 	public float Y
 	{
 		get { return _y; }
 		set
 		{
+			if (_y == value)
+			{
+				return;
+			}
+
 			_y = value;
 			OnChange?.Invoke();
 		}
 	}
 
 	/// <summary>
-	/// Gets or sets the Z component. Setting this component triggers the <c>OnChange</c> callback.
+	/// Gets or sets the Z component. Setting this component triggers the <c>OnChange</c> callback,
+	/// unless the value is unchanged.
 	/// </summary>
 	public float Z
 	{
 		get { return _z; }
 		set
 		{
+			if (_z == value)
+			{
+				return;
+			}
+
 			_z = value;
 			OnChange?.Invoke();
 		}
 	}
 
 	/// <summary>
-	/// Gets or sets the W (scalar) component. Setting this component triggers the <c>OnChange</c> callback.
+	/// Gets or sets the W (scalar) component. Setting this component triggers the <c>OnChange</c>
+	/// callback, unless the value is unchanged.
 	/// </summary>
 	public float W
 	{
 		get { return _w; }
 		set
 		{
+			if (_w == value)
+			{
+				return;
+			}
+
 			_w = value;
 			OnChange?.Invoke();
 		}
@@ -93,7 +117,9 @@ public sealed class Quaternion
 
 	/// <summary>
 	/// Sets all four components, mutating this instance in place and triggering the <c>OnChange</c>
-	/// callback once (not per component).
+	/// callback once (not per component). Writing the values this instance already holds changes
+	/// nothing and raises nothing, so a consumer loop that reassigns unchanged state every frame
+	/// costs no interop.
 	/// </summary>
 	/// <param name="x">The new X component.</param>
 	/// <param name="y">The new Y component.</param>
@@ -102,6 +128,11 @@ public sealed class Quaternion
 	/// <returns>This instance, for method chaining.</returns>
 	public Quaternion Set(float x, float y, float z, float w)
 	{
+		if (_x == x && _y == y && _z == z && _w == w)
+		{
+			return this;
+		}
+
 		_x = x;
 		_y = y;
 		_z = z;

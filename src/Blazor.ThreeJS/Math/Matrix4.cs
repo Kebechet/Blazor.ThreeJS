@@ -130,4 +130,17 @@ public sealed class Matrix4
 
 		return this;
 	}
+
+	/// <summary>
+	/// Extracts the 16 components of this matrix into a new array, in the same <b>column-major</b>
+	/// order they are stored in. The array is a copy, so a later mutation of this matrix cannot
+	/// change a payload already handed to the wire encoder.
+	/// </summary>
+	/// <returns>A new array containing the 16 column-major components.</returns>
+	public float[] ToArray()
+	{
+		var values = new float[16];
+		Array.Copy(Elements, values, 16);
+		return values;
+	}
 }

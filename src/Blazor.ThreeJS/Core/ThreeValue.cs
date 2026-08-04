@@ -12,12 +12,18 @@ public static class ThreeValue
 {
 	/// <summary>
 	/// Converts a value into its wire representation. Math types (<see cref="Vector3"/>,
-	/// <see cref="Euler"/>, <see cref="Quaternion"/>, <see cref="Color"/>) become a
-	/// <see cref="TaggedValue"/>, <see cref="ThreeObject"/> instances become a
-	/// <see cref="HandleReference"/>, and everything else passes through unchanged.
+	/// <see cref="Euler"/>, <see cref="Quaternion"/>, <see cref="Color"/>, <see cref="Matrix4"/>)
+	/// become a <see cref="TaggedValue"/>, <see cref="ThreeObject"/> instances become a
+	/// <see cref="HandleReference"/>, and primitives, <see cref="string"/> and
+	/// <see langword="null"/> pass through unchanged.
 	/// </summary>
 	/// <param name="value">The value to encode.</param>
 	/// <returns>The wire-ready representation of <paramref name="value"/>.</returns>
+	/// <exception cref="NotSupportedException">
+	/// Thrown for a reference type with no encoding arm. Such a value has no wire contract, so
+	/// passing it through would ship its serialized public shape and the applier would assign that
+	/// plain object over a live three.js instance without raising anything.
+	/// </exception>
 	public static object? Encode(object? value)
 	{
 		switch (value)
@@ -32,10 +38,21 @@ public static class ThreeValue
 				return new TaggedValue { Tag = ThreeWireFormat.QuaternionTag, Values = quaternion.ToArray() };
 			case Color color:
 				return new TaggedValue { Tag = ThreeWireFormat.ColorTag, Values = color.ToArray() };
+			case Matrix4 matrix:
+				return new TaggedValue { Tag = ThreeWireFormat.Matrix4Tag, Values = matrix.ToArray() };
 			case ThreeObject threeObject:
 				return new HandleReference { Handle = threeObject.Handle };
 			default:
-				return value;
+				if (value is string || value.GetType().IsValueType)
+				{
+					return value;
+				}
+
+				throw new NotSupportedException(
+					$"{nameof(ThreeValue)}.{nameof(Encode)} has no encoding for '{value.GetType().FullName}'. " +
+					$"Passing it through would serialize its public shape as a plain JSON object, which the applier " +
+					$"would then assign over the three.js instance — a silent corruption with no error anywhere. " +
+					$"Add an {nameof(Encode)} arm, a {nameof(ThreeWireFormat)} tag, and a matching decode case in three-interop.js.");
 		}
 	}
 
@@ -53,8 +70,13 @@ public static class ThreeValue
 		[JsonPropertyName("v")]
 		public required float[] Values { get; init; }
 
-		/// <summary>Rotation order, only set when <see cref="Tag"/> is <see cref="ThreeWireFormat.EulerTag"/>.</summary>
+		/// <summary>
+		/// Rotation order, only set when <see cref="Tag"/> is <see cref="ThreeWireFormat.EulerTag"/>,
+		/// and omitted from the payload for every other tag. The applier already reads it
+		/// defensively (<c>value.o ?? 0</c>), so absence and an explicit null are equivalent to it.
+		/// </summary>
 		[JsonPropertyName("o")]
+		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public byte? Order { get; init; }
 	}
 

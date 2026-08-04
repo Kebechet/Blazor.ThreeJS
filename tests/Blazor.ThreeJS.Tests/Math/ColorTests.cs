@@ -59,4 +59,34 @@ public class ColorTests
 		// Assert
 		changeCount.ShouldBe(1);
 	}
+
+	[Fact]
+	public void Color_ChannelAssignedItsExistingValue_DoesNotInvokeOnChange()
+	{
+		// Arrange
+		var color = new Color(0.25f, 0.5f, 0.75f);
+		var changeCount = 0;
+		color.OnChange = () => changeCount++;
+
+		// Act
+		color.G = 0.5f;
+
+		// Assert
+		changeCount.ShouldBe(0);
+	}
+
+	[Fact]
+	public void Color_SetHexCalledWithItsExistingValue_DoesNotInvokeOnChange()
+	{
+		// Arrange
+		var color = Color.FromHex(0x3366cc);
+		var changeCount = 0;
+		color.OnChange = () => changeCount++;
+
+		// Act
+		color.SetHex(0x3366cc);
+
+		// Assert
+		changeCount.ShouldBe(0);
+	}
 }

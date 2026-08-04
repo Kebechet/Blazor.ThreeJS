@@ -45,13 +45,20 @@ export function createContext(canvas, dotNetRef) {
             return;
         }
 
-        const scene = context.objects.get(context.sceneHandle);
-        const camera = context.objects.get(context.cameraHandle);
-        if (scene && camera) {
-            renderer.render(scene, camera);
+        // Re-scheduling in a finally keeps the loop alive across a failed frame. render() can throw
+        // on a shader compile failure, a lost WebGL context, or a malformed material; if the next
+        // frame were only requested after a successful render, one such throw would stop the canvas
+        // permanently with no signal to C#, since render-time failures never reach applyBatch's
+        // error channel.
+        try {
+            const scene = context.objects.get(context.sceneHandle);
+            const camera = context.objects.get(context.cameraHandle);
+            if (scene && camera) {
+                renderer.render(scene, camera);
+            }
+        } finally {
+            context.frameRequest = requestAnimationFrame(renderLoop);
         }
-
-        context.frameRequest = requestAnimationFrame(renderLoop);
     };
 
     context.frameRequest = requestAnimationFrame(renderLoop);
@@ -76,7 +83,11 @@ export function applyBatch(contextId, ops) {
     return errors;
 }
 
-function applyOp(context, op) {
+// Exported so the wire-contract test can drive the applier directly. It only ever touches
+// `context.objects`, never the renderer, so a plain `{ objects: new Map() }` is enough to run every
+// op kind under Node against the vendored three.js — no WebGL, no canvas. Going through applyBatch
+// instead would be vacuous: an unknown context id makes it return [] without applying anything.
+export function applyOp(context, op) {
     switch (op.k) {
         case OP_CREATE: {
             const ctor = THREE[op.t];
@@ -166,6 +177,10 @@ function decode(context, value) {
             return { value: new THREE.Quaternion(value.v[0], value.v[1], value.v[2], value.v[3]), isMathValue: true };
         case 'Color':
             return { value: new THREE.Color(value.v[0], value.v[1], value.v[2]), isMathValue: true };
+        case 'Matrix4':
+            // C# already stores its elements column-major, exactly as fromArray expects, so this
+            // must not transpose.
+            return { value: new THREE.Matrix4().fromArray(value.v), isMathValue: true };
         default:
             return { value, isMathValue: false };
     }
@@ -179,6 +194,16 @@ export function setActiveScene(contextId, sceneHandle, cameraHandle) {
 
     context.sceneHandle = sceneHandle;
     context.cameraHandle = cameraHandle;
+
+    // The camera handle is only known here. createContext sized the drawing buffer while
+    // context.objects was still empty and cameraHandle was 0, so it could not derive the aspect,
+    // and whether the ResizeObserver happens to fire again once the camera is registered depends
+    // on when the host's layout settles relative to the C# round trip — a race that lands
+    // differently on WebAssembly and on Server. Re-applying the size here makes the aspect
+    // deterministic; without it the projection can keep whatever aspect the consumer guessed when
+    // constructing the camera.
+    const canvas = context.renderer.domElement;
+    applySize(context, canvas.clientWidth, canvas.clientHeight);
 }
 
 // Keeps the renderer's drawing buffer in step with the canvas element's laid-out size. CSS

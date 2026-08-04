@@ -22,4 +22,7 @@ public static class ThreeWireFormat
 
 	/// <summary>Tag written for an encoded <see cref="Color"/> value.</summary>
 	public const string ColorTag = "Color";
+
+	/// <summary>Tag written for an encoded <see cref="Matrix4"/> value.</summary>
+	public const string Matrix4Tag = "Matrix4";
 }

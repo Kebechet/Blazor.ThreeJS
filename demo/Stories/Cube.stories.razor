@@ -1,4 +1,5 @@
 @attribute [Stories("Components/ThreeCanvas")]
+@implements IDisposable
 
 <Stories TComponent="ThreeCanvas">
     <Story Name="Rotating cube">
@@ -9,6 +10,11 @@
 </Stories>
 
 @code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private const float RadiansPerFrame = 0.01f;
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+
     private async Task BuildSceneAsync(ThreeContext threeContext)
     {
         var scene = new Scene();
@@ -33,5 +39,37 @@
         scene.Add(mesh);
 
         await threeContext.SetActiveSceneAsync(scene.Handle, camera.Handle);
+
+        _ = AnimateAsync(threeContext, mesh);
+    }
+
+    private async Task AnimateAsync(ThreeContext threeContext, Mesh mesh)
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                var nextRotationY = mesh.Rotation.Y + RadiansPerFrame;
+                mesh.Rotation.Y = nextRotationY >= MathF.Tau ? nextRotationY - MathF.Tau : nextRotationY;
+                await threeContext.FlushAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception)
+        {
+            // The canvas can be torn down without this component being disposed - BlazingStory keeps
+            // the stories component alive while swapping the rendered story. Once the context is
+            // gone every flush would keep throwing, so the loop stops on the first failure rather
+            // than spinning for the lifetime of the page.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
     }
 }

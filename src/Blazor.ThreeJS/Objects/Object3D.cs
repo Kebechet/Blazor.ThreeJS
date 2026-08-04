@@ -30,13 +30,19 @@ public abstract class Object3D : ThreeObject
 
 	/// <summary>
 	/// Gets or sets whether this object is rendered. Setting this property records a property write
-	/// once <see cref="ThreeObject.Batch"/> is attached.
+	/// once <see cref="ThreeObject.Batch"/> is attached, unless the value is unchanged — writing the
+	/// value already held costs no interop, so a per-frame toggle that stays put is free.
 	/// </summary>
 	public bool IsVisible
 	{
 		get { return _isVisible; }
 		set
 		{
+			if (_isVisible == value)
+			{
+				return;
+			}
+
 			_isVisible = value;
 			RecordSet("visible", value);
 		}

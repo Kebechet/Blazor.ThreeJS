@@ -156,4 +156,49 @@ public class QuaternionTests
 		quaternion.Z.ShouldBe(0.3632374f, 0.0001f);
 		quaternion.W.ShouldBe(0.9126271f, 0.0001f);
 	}
+
+	[Fact]
+	public void Quaternion_ComponentAssignedItsExistingValue_DoesNotInvokeOnChange()
+	{
+		// Arrange
+		var quaternion = new Quaternion(0f, 0f, 0f, 1f);
+		var changeCount = 0;
+		quaternion.OnChange = () => changeCount++;
+
+		// Act
+		quaternion.W = 1f;
+
+		// Assert
+		changeCount.ShouldBe(0);
+	}
+
+	[Fact]
+	public void Quaternion_SetCalledWithItsExistingValues_DoesNotInvokeOnChange()
+	{
+		// Arrange
+		var quaternion = new Quaternion(0f, 0f, 0f, 1f);
+		var changeCount = 0;
+		quaternion.OnChange = () => changeCount++;
+
+		// Act
+		quaternion.Set(0f, 0f, 0f, 1f);
+
+		// Assert
+		changeCount.ShouldBe(0);
+	}
+
+	[Fact]
+	public void Quaternion_SetFromEulerProducingTheSameRotation_DoesNotInvokeOnChange()
+	{
+		// Arrange
+		var quaternion = new Quaternion();
+		var changeCount = 0;
+		quaternion.OnChange = () => changeCount++;
+
+		// Act
+		quaternion.SetFromEuler(new Euler(0f, 0f, 0f, EulerOrder.XYZ));
+
+		// Assert
+		changeCount.ShouldBe(0);
+	}
 }

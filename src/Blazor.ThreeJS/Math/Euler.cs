@@ -40,39 +40,57 @@ public sealed class Euler
 	}
 
 	/// <summary>
-	/// Gets or sets the rotation about the X axis, in radians. Setting this component triggers the <c>OnChange</c> callback.
+	/// Gets or sets the rotation about the X axis, in radians. Setting this component triggers the
+	/// <c>OnChange</c> callback, unless the value is unchanged.
 	/// </summary>
 	public float X
 	{
 		get { return _x; }
 		set
 		{
+			if (_x == value)
+			{
+				return;
+			}
+
 			_x = value;
 			OnChange?.Invoke();
 		}
 	}
 
 	/// <summary>
-	/// Gets or sets the rotation about the Y axis, in radians. Setting this component triggers the <c>OnChange</c> callback.
+	/// Gets or sets the rotation about the Y axis, in radians. Setting this component triggers the
+	/// <c>OnChange</c> callback, unless the value is unchanged.
 	/// </summary>
 	public float Y
 	{
 		get { return _y; }
 		set
 		{
+			if (_y == value)
+			{
+				return;
+			}
+
 			_y = value;
 			OnChange?.Invoke();
 		}
 	}
 
 	/// <summary>
-	/// Gets or sets the rotation about the Z axis, in radians. Setting this component triggers the <c>OnChange</c> callback.
+	/// Gets or sets the rotation about the Z axis, in radians. Setting this component triggers the
+	/// <c>OnChange</c> callback, unless the value is unchanged.
 	/// </summary>
 	public float Z
 	{
 		get { return _z; }
 		set
 		{
+			if (_z == value)
+			{
+				return;
+			}
+
 			_z = value;
 			OnChange?.Invoke();
 		}
@@ -81,13 +99,18 @@ public sealed class Euler
 	/// <summary>
 	/// Gets or sets the order in which the axis rotations are applied. The same X/Y/Z values produce a
 	/// different final rotation under a different order, so this is not just metadata. Setting this
-	/// property triggers the <c>OnChange</c> callback.
+	/// property triggers the <c>OnChange</c> callback, unless the value is unchanged.
 	/// </summary>
 	public EulerOrder Order
 	{
 		get { return _order; }
 		set
 		{
+			if (_order == value)
+			{
+				return;
+			}
+
 			_order = value;
 			OnChange?.Invoke();
 		}
@@ -95,7 +118,9 @@ public sealed class Euler
 
 	/// <summary>
 	/// Sets all three components and the order, mutating this instance in place and triggering the
-	/// <c>OnChange</c> callback once (not per component).
+	/// <c>OnChange</c> callback once (not per component). Writing the values this instance already
+	/// holds changes nothing and raises nothing, so a consumer loop that reassigns unchanged state
+	/// every frame costs no interop.
 	/// </summary>
 	/// <param name="x">The new rotation about the X axis, in radians.</param>
 	/// <param name="y">The new rotation about the Y axis, in radians.</param>
@@ -104,6 +129,11 @@ public sealed class Euler
 	/// <returns>This instance, for method chaining.</returns>
 	public Euler Set(float x, float y, float z, EulerOrder order)
 	{
+		if (_x == x && _y == y && _z == z && _order == order)
+		{
+			return this;
+		}
+
 		_x = x;
 		_y = y;
 		_z = z;

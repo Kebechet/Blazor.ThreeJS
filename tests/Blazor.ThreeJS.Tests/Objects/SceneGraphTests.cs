@@ -78,6 +78,93 @@ public class SceneGraphTests
 	}
 
 	[Fact]
+	public void SceneGraph_TransformRewrittenWithItsExistingValues_ProducesNoOps()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+		var mesh = new Mesh(new BoxGeometry(), new MeshStandardMaterial());
+		mesh.Position.Set(1f, 2f, 3f);
+		mesh.Rotation.Set(0.4f, 0.8f, 0f, EulerOrder.YXZ);
+		mesh.AttachTo(batch);
+		batch.Drain();
+
+		// Act
+		mesh.Position.Set(1f, 2f, 3f);
+		mesh.Position.X = 1f;
+		mesh.Rotation.Set(0.4f, 0.8f, 0f, EulerOrder.YXZ);
+		mesh.Scale.Set(1f, 1f, 1f);
+		var ops = batch.Drain();
+
+		// Assert
+		ops.ShouldBeEmpty();
+	}
+
+	[Fact]
+	public void SceneGraph_NonMathPropertiesRewrittenWithTheirExistingValues_ProducesNoOps()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+		var material = new MeshStandardMaterial { Roughness = 0.4f, Metalness = 0.2f };
+		var mesh = new Mesh(new BoxGeometry(), material);
+		mesh.IsVisible = false;
+		mesh.AttachTo(batch);
+		batch.Drain();
+
+		// Act
+		mesh.IsVisible = false;
+		material.Roughness = 0.4f;
+		material.Metalness = 0.2f;
+		var ops = batch.Drain();
+
+		// Assert
+		ops.ShouldBeEmpty();
+	}
+
+	[Fact]
+	public void SceneGraph_NonMathPropertiesActuallyChanged_ProducesOneOpEach()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+		var material = new MeshStandardMaterial { Roughness = 0.4f, Metalness = 0.2f };
+		var mesh = new Mesh(new BoxGeometry(), material);
+		mesh.IsVisible = false;
+		mesh.AttachTo(batch);
+		batch.Drain();
+
+		// Act
+		mesh.IsVisible = true;
+		material.Roughness = 0.5f;
+		material.Metalness = 0.3f;
+		var ops = batch.Drain();
+
+		// Assert
+		var setMembers = ops
+			.Where(x => x.Kind == ThreeOpKind.Set)
+			.Select(x => x.Member)
+			.ToList();
+		setMembers.ShouldBe(["visible", "roughness", "metalness"], ignoreOrder: true);
+	}
+
+	[Fact]
+	public void SceneGraph_ObjectWithAnUntouchedTransformAttached_StillReplaysItsFullState()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+		var scene = new Scene();
+
+		// Act
+		scene.AttachTo(batch);
+		var ops = batch.Drain();
+
+		// Assert
+		var setMembers = ops
+			.Where(x => x.Kind == ThreeOpKind.Set)
+			.Select(x => x.Member)
+			.ToList();
+		setMembers.ShouldBe(["position", "rotation", "scale", "visible"], ignoreOrder: true);
+	}
+
+	[Fact]
 	public void SceneGraph_TransformWrittenBeforeAttach_ReplaysRotationScaleAndVisibility()
 	{
 		// Arrange

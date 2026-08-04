@@ -82,13 +82,18 @@ public sealed class Color
 
 	/// <summary>
 	/// Gets or sets the red channel. The value is in the range 0..1, not 0..255.
-	/// Setting this channel triggers the <c>OnChange</c> callback.
+	/// Setting this channel triggers the <c>OnChange</c> callback, unless the value is unchanged.
 	/// </summary>
 	public float R
 	{
 		get { return _r; }
 		set
 		{
+			if (_r == value)
+			{
+				return;
+			}
+
 			_r = value;
 			OnChange?.Invoke();
 		}
@@ -96,13 +101,18 @@ public sealed class Color
 
 	/// <summary>
 	/// Gets or sets the green channel. The value is in the range 0..1, not 0..255.
-	/// Setting this channel triggers the <c>OnChange</c> callback.
+	/// Setting this channel triggers the <c>OnChange</c> callback, unless the value is unchanged.
 	/// </summary>
 	public float G
 	{
 		get { return _g; }
 		set
 		{
+			if (_g == value)
+			{
+				return;
+			}
+
 			_g = value;
 			OnChange?.Invoke();
 		}
@@ -110,13 +120,18 @@ public sealed class Color
 
 	/// <summary>
 	/// Gets or sets the blue channel. The value is in the range 0..1, not 0..255.
-	/// Setting this channel triggers the <c>OnChange</c> callback.
+	/// Setting this channel triggers the <c>OnChange</c> callback, unless the value is unchanged.
 	/// </summary>
 	public float B
 	{
 		get { return _b; }
 		set
 		{
+			if (_b == value)
+			{
+				return;
+			}
+
 			_b = value;
 			OnChange?.Invoke();
 		}
@@ -124,6 +139,8 @@ public sealed class Color
 
 	/// <summary>
 	/// Sets all three channels and triggers the <c>OnChange</c> callback once (not per channel).
+	/// Writing the values this color already holds changes nothing and raises nothing, so a consumer
+	/// loop that reassigns unchanged state every frame costs no interop.
 	/// </summary>
 	/// <param name="r">The new red channel, in the range 0..1.</param>
 	/// <param name="g">The new green channel, in the range 0..1.</param>
@@ -131,6 +148,11 @@ public sealed class Color
 	/// <returns>This color, for method chaining.</returns>
 	public Color Set(float r, float g, float b)
 	{
+		if (_r == r && _g == g && _b == b)
+		{
+			return this;
+		}
+
 		_r = r;
 		_g = g;
 		_b = b;

@@ -33,13 +33,19 @@ public sealed class MeshStandardMaterial : ThreeObject
 	/// <summary>
 	/// Gets or sets how rough the surface appears, from 0 (mirror-like) to 1 (fully diffuse). Setting
 	/// this property records a property write once this material is attached to a batch — directly,
-	/// or indirectly when the owning <see cref="Mesh"/> is attached.
+	/// or indirectly when the owning <see cref="Mesh"/> is attached. Writing the value already held
+	/// records nothing, so reassigning unchanged state every frame costs no interop.
 	/// </summary>
 	public float Roughness
 	{
 		get { return _roughness; }
 		set
 		{
+			if (_roughness == value)
+			{
+				return;
+			}
+
 			_roughness = value;
 			RecordSet("roughness", value);
 		}
@@ -48,13 +54,19 @@ public sealed class MeshStandardMaterial : ThreeObject
 	/// <summary>
 	/// Gets or sets how metallic the surface appears, from 0 (dielectric) to 1 (fully metallic).
 	/// Setting this property records a property write once this material is attached to a batch —
-	/// directly, or indirectly when the owning <see cref="Mesh"/> is attached.
+	/// directly, or indirectly when the owning <see cref="Mesh"/> is attached. Writing the value
+	/// already held records nothing, so reassigning unchanged state every frame costs no interop.
 	/// </summary>
 	public float Metalness
 	{
 		get { return _metalness; }
 		set
 		{
+			if (_metalness == value)
+			{
+				return;
+			}
+
 			_metalness = value;
 			RecordSet("metalness", value);
 		}

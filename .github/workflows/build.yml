@@ -44,16 +44,10 @@ jobs:
     - name: Test the wire format
       run: node tests/wire-format.test.mjs
 
-    - name: Test with coverage
-      run: dotnet test ${{ env.SOLUTION_PATH }} --no-build --configuration ${{ env.BUILD_CONFIGURATION }} --collect:"XPlat Code Coverage" --results-directory ./coverage
-
-    - name: Find coverage file
-      id: coverage
-      run: echo "file=$(find ./coverage -name 'coverage.cobertura.xml' | head -1)" >> $GITHUB_OUTPUT
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        files: ${{ steps.coverage.outputs.file }}
-        fail_ci_if_error: false
-        token: ${{ secrets.CODECOV_TOKEN }}
+    # No coverage collection here: --collect is a VSTest flag and this project's test host is
+    # Microsoft.Testing.Platform (TestingPlatformDotnetTestSupport + xunit.v3.mtp-v2), which
+    # rejects it outright. MTP has its own coverage extension (Microsoft.Testing.Extensions.
+    # CodeCoverage, --coverage), but wiring that up still needs a Codecov token this repo does not
+    # have, so coverage is deliberately left out for now rather than shipped half-configured.
+    - name: Test
+      run: dotnet test ${{ env.SOLUTION_PATH }} --no-build --configuration ${{ env.BUILD_CONFIGURATION }}

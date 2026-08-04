@@ -105,7 +105,9 @@ public sealed class WebGLCapabilities : ThreeObject
 
 	/// <summary>
 	/// Attaches the objects <c>THREE.WebGLCapabilities</c> is constructed from, so their create ops
-	/// reach the batch before the one that references them by handle, then emits this object's own.
+	/// reach the batch before the one that references them by handle, then emits this object's own. A
+	/// replayed value that is itself a mirrored object is attached first, so its create op reaches the
+	/// batch before the write that references it by handle.
 	/// </summary>
 	/// <param name="batch">Batch to record the ops into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
@@ -116,6 +118,7 @@ public sealed class WebGLCapabilities : ThreeObject
 
 		if (_isBackendWritten)
 		{
+			_backend.AttachTo(batch);
 			batch.Set(Handle, "backend", ThreeValue.Encode(_backend));
 		}
 

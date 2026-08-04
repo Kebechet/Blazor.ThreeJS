@@ -180,7 +180,9 @@ public class Loader : ThreeObject
 
 	/// <summary>
 	/// Attaches the objects <c>THREE.Loader</c> is constructed from, so their create ops reach the
-	/// batch before the one that references them by handle, then emits this object's own.
+	/// batch before the one that references them by handle, then emits this object's own. A replayed
+	/// value that is itself a mirrored object is attached first, so its create op reaches the batch
+	/// before the write that references it by handle.
 	/// </summary>
 	/// <param name="batch">Batch to record the ops into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
@@ -211,6 +213,7 @@ public class Loader : ThreeObject
 
 		if (_isManagerWritten)
 		{
+			_manager?.AttachTo(batch);
 			batch.Set(Handle, "manager", ThreeValue.Encode(_manager));
 		}
 	}

@@ -650,7 +650,8 @@ public sealed class WebGPURenderer : ThreeObject
 
 	/// <summary>
 	/// Emits the create op for <c>THREE.WebGPURenderer</c>, then replays every property written before
-	/// this object was attached.
+	/// this object was attached. A replayed value that is itself a mirrored object is attached first,
+	/// so its create op reaches the batch before the write that references it by handle.
 	/// </summary>
 	/// <param name="batch">Batch to record the ops into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
@@ -714,16 +715,19 @@ public sealed class WebGPURenderer : ThreeObject
 
 		if (_isInfoWritten)
 		{
+			_info?.AttachTo(batch);
 			batch.Set(Handle, "info", ThreeValue.Encode(_info));
 		}
 
 		if (_isLibraryWritten)
 		{
+			_library?.AttachTo(batch);
 			batch.Set(Handle, "library", ThreeValue.Encode(_library));
 		}
 
 		if (_isLightingWritten)
 		{
+			_lighting?.AttachTo(batch);
 			batch.Set(Handle, "lighting", ThreeValue.Encode(_lighting));
 		}
 
@@ -739,6 +743,7 @@ public sealed class WebGPURenderer : ThreeObject
 
 		if (_isInspectorWritten)
 		{
+			_inspector?.AttachTo(batch);
 			batch.Set(Handle, "inspector", ThreeValue.Encode(_inspector));
 		}
 

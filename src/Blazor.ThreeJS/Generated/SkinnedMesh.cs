@@ -147,7 +147,9 @@ public sealed class SkinnedMesh : Mesh
 	/// <summary>
 	/// Replays every property written before this object was attached, so construction order never
 	/// matters to the caller. A property the caller never wrote is left alone: three.js's own default
-	/// is the truth for it, and the mirror has never read anything back to improve on that.
+	/// is the truth for it, and the mirror has never read anything back to improve on that. A replayed
+	/// value that is itself a mirrored object is attached first, so its create op reaches the batch
+	/// before the write that references it by handle.
 	/// </summary>
 	/// <param name="batch">Batch to record the property writes into.</param>
 	internal override void EmitState(ThreeBatch batch)
@@ -156,6 +158,7 @@ public sealed class SkinnedMesh : Mesh
 
 		if (_isSkeletonWritten)
 		{
+			_skeleton?.AttachTo(batch);
 			batch.Set(Handle, "skeleton", ThreeValue.Encode(_skeleton));
 		}
 	}

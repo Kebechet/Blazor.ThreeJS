@@ -12,6 +12,13 @@ namespace Blazor.ThreeJS.Emitter.Emit;
 /// </summary>
 internal sealed class ClassEmitter
 {
+	/// <summary>
+	/// Appended to a replay method's summary when at least one replayed property holds another mirrored
+	/// object. Says why the replay attaches before it writes, which is otherwise the one line in the
+	/// method a reader cannot derive from the surrounding code.
+	/// </summary>
+	private const string ReplayAttachmentSentence = " A replayed value that is itself a mirrored object is attached first, so its create op reaches the batch before the write that references it by handle.";
+
 	private readonly IrRoot _ir;
 	private readonly TypeMapper _mapper;
 	private readonly ConstructorMapper _constructorMapper;
@@ -919,16 +926,21 @@ internal sealed class ClassEmitter
 
 		var isSceneGraphType = IsSceneGraphType(irClass);
 		var hasReplay = properties.Count > 0;
+		var hasReplayedReference = properties.Any(x => x.Mapping.Kind == TypeMappingKind.GeneratedWrapperClass);
 
 		if (dependencies.Count > 0 || (hasReplay && !isSceneGraphType))
 		{
-			writer.WriteLine();
-			DocCommentEmitter.WriteSummary(
-				writer,
-				dependencies.Count > 0
-					? $"Attaches the objects <c>THREE.{threeTypeName}</c> is constructed from, so their create ops reach the batch before the one that references them by handle, then emits this object's own."
-					: $"Emits the create op for <c>THREE.{threeTypeName}</c>, then replays every property written before this object was attached.");
+			var createSummary = dependencies.Count > 0
+				? $"Attaches the objects <c>THREE.{threeTypeName}</c> is constructed from, so their create ops reach the batch before the one that references them by handle, then emits this object's own."
+				: $"Emits the create op for <c>THREE.{threeTypeName}</c>, then replays every property written before this object was attached.";
 
+			if (hasReplay && !isSceneGraphType && hasReplayedReference)
+			{
+				createSummary += ReplayAttachmentSentence;
+			}
+
+			writer.WriteLine();
+			DocCommentEmitter.WriteSummary(writer, createSummary);
 			DocCommentEmitter.WriteParam(writer, "batch", "Batch to record the ops into.");
 			writer.WriteLine("internal override void EmitCreate(ThreeBatch batch)");
 			writer.WriteLine("{");
@@ -960,11 +972,14 @@ internal sealed class ClassEmitter
 			return;
 		}
 
-		writer.WriteLine();
-		DocCommentEmitter.WriteSummary(
-			writer,
-			"Replays every property written before this object was attached, so construction order never matters to the caller. A property the caller never wrote is left alone: three.js's own default is the truth for it, and the mirror has never read anything back to improve on that.");
+		var stateSummary = "Replays every property written before this object was attached, so construction order never matters to the caller. A property the caller never wrote is left alone: three.js's own default is the truth for it, and the mirror has never read anything back to improve on that.";
+		if (hasReplayedReference)
+		{
+			stateSummary += ReplayAttachmentSentence;
+		}
 
+		writer.WriteLine();
+		DocCommentEmitter.WriteSummary(writer, stateSummary);
 		DocCommentEmitter.WriteParam(writer, "batch", "Batch to record the property writes into.");
 		writer.WriteLine("internal override void EmitState(ThreeBatch batch)");
 		writer.WriteLine("{");
@@ -986,6 +1001,17 @@ internal sealed class ClassEmitter
 			var value = property.IsOwnedMathValue
 				? property.CSharpName
 				: property.FieldName;
+
+			// A replayed value that is itself a mirrored object travels as a handle reference, and the
+			// write being replayed is one the caller made before this object had a batch — so its setter
+			// had nothing to attach the value to. Attaching here rather than emitting the create op
+			// directly is what keeps a shared instance from being created twice.
+			if (property.Mapping.Kind == TypeMappingKind.GeneratedWrapperClass)
+			{
+				writer.WriteLine(property.CSharpTypeName.EndsWith('?')
+					? $"{value}?.AttachTo(batch);"
+					: $"{value}.AttachTo(batch);");
+			}
 
 			writer.WriteLine($"batch.Set(Handle, \"{property.ThreeName}\", ThreeValue.Encode({value}));");
 			writer.Outdent();

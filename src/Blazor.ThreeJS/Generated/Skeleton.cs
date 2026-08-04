@@ -130,7 +130,8 @@ public sealed class Skeleton : ThreeObject
 
 	/// <summary>
 	/// Emits the create op for <c>THREE.Skeleton</c>, then replays every property written before this
-	/// object was attached.
+	/// object was attached. A replayed value that is itself a mirrored object is attached first, so its
+	/// create op reaches the batch before the write that references it by handle.
 	/// </summary>
 	/// <param name="batch">Batch to record the ops into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
@@ -144,6 +145,7 @@ public sealed class Skeleton : ThreeObject
 
 		if (_isBoneTextureWritten)
 		{
+			_boneTexture?.AttachTo(batch);
 			batch.Set(Handle, "boneTexture", ThreeValue.Encode(_boneTexture));
 		}
 

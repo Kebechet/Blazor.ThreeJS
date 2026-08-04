@@ -366,7 +366,8 @@ public sealed class SpotLightShadow : ThreeObject
 
 	/// <summary>
 	/// Emits the create op for <c>THREE.SpotLightShadow</c>, then replays every property written before
-	/// this object was attached.
+	/// this object was attached. A replayed value that is itself a mirrored object is attached first,
+	/// so its create op reaches the batch before the write that references it by handle.
 	/// </summary>
 	/// <param name="batch">Batch to record the ops into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
@@ -385,6 +386,7 @@ public sealed class SpotLightShadow : ThreeObject
 
 		if (_isCameraWritten)
 		{
+			_camera?.AttachTo(batch);
 			batch.Set(Handle, "camera", ThreeValue.Encode(_camera));
 		}
 
@@ -420,11 +422,13 @@ public sealed class SpotLightShadow : ThreeObject
 
 		if (_isMapWritten)
 		{
+			_map?.AttachTo(batch);
 			batch.Set(Handle, "map", ThreeValue.Encode(_map));
 		}
 
 		if (_isMapPassWritten)
 		{
+			_mapPass?.AttachTo(batch);
 			batch.Set(Handle, "mapPass", ThreeValue.Encode(_mapPass));
 		}
 

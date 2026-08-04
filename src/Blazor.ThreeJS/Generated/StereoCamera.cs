@@ -140,7 +140,8 @@ public sealed class StereoCamera : ThreeObject
 
 	/// <summary>
 	/// Emits the create op for <c>THREE.StereoCamera</c>, then replays every property written before
-	/// this object was attached.
+	/// this object was attached. A replayed value that is itself a mirrored object is attached first,
+	/// so its create op reaches the batch before the write that references it by handle.
 	/// </summary>
 	/// <param name="batch">Batch to record the ops into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
@@ -159,11 +160,13 @@ public sealed class StereoCamera : ThreeObject
 
 		if (_isCameraLWritten)
 		{
+			_cameraL?.AttachTo(batch);
 			batch.Set(Handle, "cameraL", ThreeValue.Encode(_cameraL));
 		}
 
 		if (_isCameraRWritten)
 		{
+			_cameraR?.AttachTo(batch);
 			batch.Set(Handle, "cameraR", ThreeValue.Encode(_cameraR));
 		}
 	}

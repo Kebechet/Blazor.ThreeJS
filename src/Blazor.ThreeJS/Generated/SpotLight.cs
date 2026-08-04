@@ -273,7 +273,9 @@ public class SpotLight : Object3D
 	/// <summary>
 	/// Replays every property written before this object was attached, so construction order never
 	/// matters to the caller. A property the caller never wrote is left alone: three.js's own default
-	/// is the truth for it, and the mirror has never read anything back to improve on that.
+	/// is the truth for it, and the mirror has never read anything back to improve on that. A replayed
+	/// value that is itself a mirrored object is attached first, so its create op reaches the batch
+	/// before the write that references it by handle.
 	/// </summary>
 	/// <param name="batch">Batch to record the property writes into.</param>
 	internal override void EmitState(ThreeBatch batch)
@@ -282,6 +284,7 @@ public class SpotLight : Object3D
 
 		if (_isTargetWritten)
 		{
+			_target?.AttachTo(batch);
 			batch.Set(Handle, "target", ThreeValue.Encode(_target));
 		}
 
@@ -307,6 +310,7 @@ public class SpotLight : Object3D
 
 		if (_isShadowWritten)
 		{
+			_shadow?.AttachTo(batch);
 			batch.Set(Handle, "shadow", ThreeValue.Encode(_shadow));
 		}
 

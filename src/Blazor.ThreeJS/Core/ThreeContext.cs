@@ -72,10 +72,12 @@ public sealed class ThreeContext : IAsyncDisposable
 		}
 		catch (ObjectDisposedException)
 		{
-			// Defence in depth: ThreeCanvas now always finishes initialization before it starts
-			// tearing down, so this should not be reachable from that caller any more. It stays
-			// narrow and swallowed here anyway for any other caller holding this ThreeContext — e.g.
-			// a background loop calling FlushAsync — while disposal runs concurrently elsewhere.
+			// Reachable from ThreeCanvas itself: if disposal lands after ThreeContext already exists
+			// but while OnReady is still running, ThreeCanvas.DisposeAsync tears this context down
+			// immediately rather than waiting for OnReady to finish, since only the framework-owned
+			// import/createContext work is awaited before disposal proceeds. The still-running OnReady
+			// continuation can then reach this FlushAsync call after the module is already disposed.
+			// Also stays narrow and swallowed for any other caller racing a concurrent disposal.
 			// Nothing pending could have been delivered anyway.
 		}
 	}
@@ -102,9 +104,8 @@ public sealed class ThreeContext : IAsyncDisposable
 		}
 		catch (ObjectDisposedException)
 		{
-			// Defence in depth; see the matching catch in FlushAsync for why this should no longer
-			// be reachable from ThreeCanvas's own disposal path, but stays narrow and swallowed for
-			// any other caller racing a concurrent disposal.
+			// See the matching catch in FlushAsync — reachable from ThreeCanvas itself when disposal
+			// lands while OnReady is still running, not just from an unrelated caller.
 		}
 	}
 
@@ -112,9 +113,8 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// Stops the render loop, disposes every JavaScript-side three.js object owned by this context,
 	/// and releases the module reference. Disposal during a Blazor Server circuit disconnect — the
 	/// standard teardown path there — is not an error and completes without throwing. Nor is disposing
-	/// a context whose module reference was already disposed elsewhere — defence in depth for any
-	/// caller other than <c>ThreeCanvas</c>, which now always finishes its <c>InitializeAsync</c>
-	/// before tearing down and so should never hand this call an already-disposed reference.
+	/// a context whose module reference was already disposed elsewhere — defence in depth for a
+	/// consumer that disposes this context itself while <c>ThreeCanvas</c> concurrently disposes it too.
 	/// <para>
 	/// The module is released in a <c>finally</c> so that a <c>disposeContext</c> failure of any
 	/// kind still gives the reference back. Leaking it would pin the imported module for the

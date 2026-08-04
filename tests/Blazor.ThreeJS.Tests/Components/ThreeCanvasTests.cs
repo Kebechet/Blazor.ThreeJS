@@ -1,5 +1,7 @@
 using System.Reflection;
 using Kebechet.Blazor.ThreeJS.Components;
+using Kebechet.Blazor.ThreeJS.Core;
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Shouldly;
 
@@ -38,6 +40,43 @@ public class ThreeCanvasTests
 		initializationException.ShouldBeNull();
 		module.DisposeContextCallCount.ShouldBe(1);
 		module.DisposeCallCount.ShouldBe(1);
+	}
+
+	[Fact]
+	public async Task ThreeCanvas_DisposeWhileOnReadyHangs_CompletesAndTearsDownJsContextOnce()
+	{
+		// Arrange
+		var createContextGate = new TaskCompletionSource<int>();
+		createContextGate.SetResult(1);
+		var module = new GatedCreateContextJsObjectReference(createContextGate);
+		var canvas = new ThreeCanvas();
+		JsRuntimeProperty.SetValue(canvas, new SingleModuleJsRuntime(module));
+		var onReadyGate = new TaskCompletionSource();
+#pragma warning disable BL0005 // Test drives ThreeCanvas outside the normal parameter-binding pipeline, same as the _jsRuntime field above.
+		canvas.OnReady = EventCallback.Factory.Create<ThreeContext>(this, threeContext =>
+		{
+			threeContext.Batch.Set(1, "visible", true);
+			return onReadyGate.Task;
+		});
+#pragma warning restore BL0005
+		var onAfterRenderResult = OnAfterRenderAsyncMethod.Invoke(canvas, [true])
+			?? throw new InvalidOperationException("OnAfterRenderAsync returned null instead of a Task.");
+		var onAfterRenderTask = (Task) onAfterRenderResult;
+
+		// Act
+		var disposeTask = canvas.DisposeAsync().AsTask();
+		var firstCompletedTask = await Task.WhenAny(disposeTask, Task.Delay(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken));
+
+		// Assert
+		firstCompletedTask.ShouldBeSameAs(disposeTask);
+		var disposeException = await Record.ExceptionAsync(() => disposeTask);
+		disposeException.ShouldBeNull();
+		module.DisposeContextCallCount.ShouldBe(1);
+		onAfterRenderTask.IsCompleted.ShouldBeFalse();
+
+		onReadyGate.SetResult();
+		var initializationException = await Record.ExceptionAsync(() => onAfterRenderTask);
+		initializationException.ShouldBeNull();
 	}
 }
 

@@ -28,60 +28,80 @@ public partial class ThreeCanvas
 	private IJSObjectReference? _module;
 	private ThreeContext? _threeContext;
 	private Task? _initializationTask;
+	private bool _isDisposed;
 
 	/// <summary>
-	/// Starts <see cref="InitializeAsync"/> on the first render only, since the canvas element does
-	/// not exist yet during earlier lifecycle stages, and remembers the task so
-	/// <see cref="DisposeAsync"/> can wait for it to settle before tearing anything down. Returning
-	/// the same task lets the renderer's own lifecycle-exception handling see initialization failures
-	/// exactly as it would have before this method existed.
+	/// Creates the JavaScript-side context on the first render only, since the canvas element does not
+	/// exist yet during earlier lifecycle stages, then — unless disposal raced it — hands the result to
+	/// <see cref="OnReady"/> and flushes it. <see cref="_initializationTask"/> covers only
+	/// <see cref="CreateContextAsync"/>, not this method's own continuation: that keeps it bounded by
+	/// framework-owned JS interop (which reliably faults with <see cref="JSDisconnectedException"/> on
+	/// a dead circuit) rather than by arbitrary, possibly-unbounded consumer code in
+	/// <see cref="OnReady"/>, so <see cref="DisposeAsync"/> can safely await it without risking a hang.
 	/// </summary>
 	/// <param name="firstRender">Whether this is the first time the component has rendered.</param>
-	protected override Task OnAfterRenderAsync(bool firstRender)
+	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		if (!firstRender)
 		{
-			return Task.CompletedTask;
+			return;
 		}
 
-		_initializationTask = InitializeAsync();
-		return _initializationTask;
-	}
+		_initializationTask = CreateContextAsync();
+		await _initializationTask;
 
-	/// <summary>
-	/// Imports the interop module, creates the JavaScript-side context, and hands it to
-	/// <see cref="OnReady"/>. Runs to a terminal state unconditionally — it does not check for a
-	/// disposal racing it — so <see cref="DisposeAsync"/> can rely on <c>_module</c>/<c>_threeContext</c>
-	/// always reflecting a fully-settled outcome (nothing created, only the module, or a complete
-	/// <see cref="ThreeContext"/>) once this task completes, rather than a state caught mid-creation.
-	/// The module reference is stored before <c>createContext</c> runs so it is still releasable if
-	/// that call throws — it does when WebGL is unavailable or the browser's live-context limit is
-	/// reached.
-	/// </summary>
-	private async Task InitializeAsync()
-	{
-		var module = await _jsRuntime.InvokeAsync<IJSObjectReference>("import", ModulePath);
-		_module = module;
-
-		var contextId = await module.InvokeAsync<int>("createContext", _canvasElement, null);
-		var threeContext = new ThreeContext(module, contextId);
-		_threeContext = threeContext;
+		var threeContext = _threeContext;
+		if (_isDisposed || threeContext is null)
+		{
+			return;
+		}
 
 		await OnReady.InvokeAsync(threeContext);
 		await threeContext.FlushAsync();
 	}
 
 	/// <summary>
-	/// Waits for <see cref="InitializeAsync"/> to reach a terminal state — whether or not it started,
-	/// and regardless of how it ended — then releases whatever it left behind: the full
+	/// Imports the interop module and creates the JavaScript-side context, assigning
+	/// <see cref="_threeContext"/> once <c>createContext</c> returns. Deliberately does not check for
+	/// a disposal racing it and does not touch <see cref="OnReady"/> — both belong to
+	/// <see cref="OnAfterRenderAsync"/>'s continuation, which resumes after this task completes. That
+	/// split is what lets <see cref="DisposeAsync"/> await this task unconditionally: every step in it
+	/// is framework JS interop, so a dead circuit faults it rather than hanging it. The module
+	/// reference is stored before <c>createContext</c> runs so it is still releasable if that call
+	/// throws — it does when WebGL is unavailable or the browser's live-context limit is reached.
+	/// </summary>
+	private async Task CreateContextAsync()
+	{
+		var module = await _jsRuntime.InvokeAsync<IJSObjectReference>("import", ModulePath);
+		_module = module;
+
+		var contextId = await module.InvokeAsync<int>("createContext", _canvasElement, null);
+		_threeContext = new ThreeContext(module, contextId);
+	}
+
+	/// <summary>
+	/// Waits for <see cref="CreateContextAsync"/> to reach a terminal state — whether or not it
+	/// started, and regardless of how it ended — then releases whatever it left behind: the full
 	/// <see cref="ThreeContext"/> if it got that far, otherwise just the module reference, otherwise
-	/// nothing. Because teardown always runs after initialization has settled, the JavaScript-side
-	/// context — its WebGL renderer, <c>ResizeObserver</c>, and render loop — is torn down through
-	/// <c>disposeContext</c> whenever <c>createContext</c> ever returned successfully, even if
-	/// disposal was requested while that call was still in flight.
+	/// nothing. Because teardown always runs after that task has settled, the JavaScript-side context —
+	/// its WebGL renderer, <c>ResizeObserver</c>, and render loop — is torn down through
+	/// <c>disposeContext</c> whenever <c>createContext</c> ever returned successfully, even if disposal
+	/// was requested while that call was still in flight.
+	/// <para>
+	/// Setting <see cref="_isDisposed"/> first, before awaiting anything, is what lets
+	/// <see cref="OnAfterRenderAsync"/>'s continuation see disposal even if its own await of
+	/// <see cref="_initializationTask"/> happens to resume before this method's does — the flag flips
+	/// synchronously the instant this method is called, with no dependency on continuation ordering. If
+	/// disposal instead lands after <see cref="_threeContext"/> already exists and while
+	/// <see cref="OnReady"/> is still running, this method proceeds immediately: the still-running
+	/// <see cref="OnAfterRenderAsync"/> continuation may then call <c>FlushAsync</c> against a context
+	/// whose module this call just disposed, which is exactly what <see cref="ThreeContext.FlushAsync"/>'s
+	/// own <see cref="ObjectDisposedException"/> guard is for.
+	/// </para>
 	/// </summary>
 	public async ValueTask DisposeAsync()
 	{
+		_isDisposed = true;
 		if (_initializationTask is not null)
 		{
 			try

@@ -27,6 +27,16 @@ internal static class EmitterConfig
 	public const string RootBaseTypeName = "ThreeObject";
 
 	/// <summary>
+	/// Wire-encoder call that turns an argument the caller left unspecified into the <c>$undef</c>
+	/// sentinel. Written out rather than derived, because the emitter compiles separately from the
+	/// package and cannot <c>nameof</c> a runtime member.
+	/// </summary>
+	public const string OrUnspecifiedCall = "ThreeValue.OrUnspecified";
+
+	/// <summary>Wire-encoder call that drops the unsupplied tail of a constructor argument list.</summary>
+	public const string TrimUnspecifiedTailCall = "ThreeValue.TrimUnspecifiedTail";
+
+	/// <summary>
 	/// Classes the emitter is allowed to emit, keyed by the three.js export name. Deliberately an
 	/// allowlist rather than "everything in the IR": roughly a third of the 309 classes are renderer
 	/// internals, and the emitter refuses anything it cannot model exactly (see

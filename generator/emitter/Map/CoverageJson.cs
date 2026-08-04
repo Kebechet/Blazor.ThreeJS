@@ -22,7 +22,7 @@ internal sealed class CoverageJson
 	/// <summary>Member skip counts grouped by obstacle.</summary>
 	public required List<CoverageSkipCategoryJson> MemberSkipReasons { get; init; }
 
-	/// <summary>Enums a full run would generate, limited to those a mapped member actually references.</summary>
+	/// <summary>Every enum the generator emits, referenced by a mapped member or not.</summary>
 	public required List<CoverageEnumJson> GeneratedEnums { get; init; }
 
 	/// <summary>Value sets that look like enums but cannot be generated, with the reason.</summary>
@@ -117,17 +117,23 @@ internal sealed class CoverageSkipCategoryJson
 	public required int Members { get; init; }
 }
 
-/// <summary>One enum a full run would generate.</summary>
+/// <summary>One generated enum.</summary>
 internal sealed class CoverageEnumJson
 {
 	/// <summary>Enum name, matching three.js.</summary>
 	public required string Name { get; init; }
+
+	/// <summary><c>ConstantGroup</c> when inferred from loose constants, <c>DeclaredEnum</c> when three.js declares one.</summary>
+	public required string Source { get; init; }
 
 	/// <summary>Member count, aliases included.</summary>
 	public required int Members { get; init; }
 
 	/// <summary>C# backing type.</summary>
 	public required string BackingType { get; init; }
+
+	/// <summary>Whether a mapped member's type resolves to it today.</summary>
+	public required bool IsReferenced { get; init; }
 }
 
 /// <summary>One value set that cannot become a C# enum.</summary>

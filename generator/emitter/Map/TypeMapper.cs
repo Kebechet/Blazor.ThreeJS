@@ -215,15 +215,19 @@ internal sealed class TypeMapper
 			return TypeMapping.Mapped(EmitterConfig.ColorTypeName, TypeMappingKind.HandWrittenMathType);
 		}
 
-		if (EmitterConfig.ExistingCSharpTypeNames.Contains(name) && !EmitterConfig.MathTypeNames.Contains(name))
-		{
-			return TypeMapping.Mapped(name, TypeMappingKind.GeneratedEnum);
-		}
-
+		// The catalog is asked before the hand-written names, so a value set that exists in both places
+		// resolves through the generated enum and is counted as referenced. `Side` is the only one
+		// today; asking the hand-written list first would keep it out of RequiredEnumNames permanently,
+		// so the coverage table would report it unreferenced however many members came to use it.
 		if (_enums.TryGet(name, out var generatedEnum) && generatedEnum is not null)
 		{
 			RequiredEnumNames.Add(generatedEnum.Name);
 			return TypeMapping.Mapped(generatedEnum.Name, TypeMappingKind.GeneratedEnum, requiredGeneratedTypeName: generatedEnum.Name);
+		}
+
+		if (EmitterConfig.ExistingCSharpTypeNames.Contains(name) && !EmitterConfig.MathTypeNames.Contains(name))
+		{
+			return TypeMapping.Mapped(name, TypeMappingKind.GeneratedEnum);
 		}
 
 		if (_enums.GetRefusal(name) is { } refusal)

@@ -168,15 +168,36 @@ internal sealed class EnumCatalog
 			return;
 		}
 
+		if (!CSharpIdentifier.IsValid(name))
+		{
+			Refuse(name, "the name is not a usable C# identifier");
+			return;
+		}
+
 		var members = new List<GeneratedEnumMember>();
 		var canonicalByValue = new Dictionary<long, string>();
 		foreach (var (memberName, value, memberDoc) in values)
 		{
+			if (!CSharpIdentifier.IsValid(memberName))
+			{
+				Refuse(name, $"member `{memberName}` is not a usable C# identifier");
+				return;
+			}
+
+			// C# rejects a member that repeats its enclosing type's name outright, and `@`-escaping does
+			// not help — the two identifiers still compare equal.
+			if (string.Equals(memberName, name, StringComparison.Ordinal))
+			{
+				Refuse(name, $"member `{memberName}` repeats the enum's own name, which C# does not allow");
+				return;
+			}
+
 			if (canonicalByValue.TryGetValue(value, out var canonicalName))
 			{
 				members.Add(new GeneratedEnumMember
 				{
 					Name = memberName,
+					DeclarationName = CSharpIdentifier.Escape(memberName),
 					Value = value,
 					AliasOf = canonicalName,
 					Doc = memberDoc
@@ -188,21 +209,66 @@ internal sealed class EnumCatalog
 			members.Add(new GeneratedEnumMember
 			{
 				Name = memberName,
+				DeclarationName = CSharpIdentifier.Escape(memberName),
 				Value = value,
 				Doc = memberDoc
 			});
 		}
 
-		var fitsInByte = members.All(x => x.Value is >= 0 and <= 255);
 		_generatableByName[name] = new GeneratedEnum
 		{
 			Name = name,
 			File = file,
 			Doc = doc,
 			Source = source,
-			BackingTypeName = fitsInByte ? "byte" : "int",
+			BackingTypeName = ResolveBackingTypeName(members),
 			Members = members
 		};
+	}
+
+	/// <summary>
+	/// Picks the narrowest backing type that holds every value, matching the hand-written enums'
+	/// <c>: byte</c> convention wherever three.js's numbers are small enough. three.js's constants are
+	/// mostly WebGL enum values in the thousands, so most land on <c>ushort</c>; the type is reported
+	/// per enum in <c>api-coverage.md</c> rather than left to be discovered from the generated source.
+	/// </summary>
+	/// <param name="members">The enum's resolved members.</param>
+	/// <returns>The C# backing type keyword.</returns>
+	private static string ResolveBackingTypeName(IReadOnlyList<GeneratedEnumMember> members)
+	{
+		var lowest = members.Min(x => x.Value);
+		var highest = members.Max(x => x.Value);
+
+		if (lowest >= 0)
+		{
+			if (highest <= byte.MaxValue)
+			{
+				return "byte";
+			}
+
+			if (highest <= ushort.MaxValue)
+			{
+				return "ushort";
+			}
+
+			return highest <= uint.MaxValue
+				? "uint"
+				: "long";
+		}
+
+		if (lowest >= sbyte.MinValue && highest <= sbyte.MaxValue)
+		{
+			return "sbyte";
+		}
+
+		if (lowest >= short.MinValue && highest <= short.MaxValue)
+		{
+			return "short";
+		}
+
+		return lowest >= int.MinValue && highest <= int.MaxValue
+			? "int"
+			: "long";
 	}
 
 	private void Refuse(string name, string reason)
@@ -226,7 +292,7 @@ internal sealed class GeneratedEnum
 	/// <summary>Which of three.js's two closed-set shapes this came from.</summary>
 	public required EnumSource Source { get; init; }
 
-	/// <summary>Backing type, narrowed to <c>byte</c> when every value fits.</summary>
+	/// <summary>Narrowest backing type that holds every value; see <see cref="EnumCatalog"/>.</summary>
 	public required string BackingTypeName { get; init; }
 
 	/// <summary>Members in declaration order.</summary>
@@ -238,6 +304,12 @@ internal sealed class GeneratedEnumMember
 {
 	/// <summary>Member name, kept exactly as three.js spells it.</summary>
 	public required string Name { get; init; }
+
+	/// <summary>
+	/// The name as written in the declaration, <c>@</c>-escaped when three.js spells the member as a
+	/// C# keyword. <see cref="Name"/> is what documentation and a <c>cref</c> have to say.
+	/// </summary>
+	public required string DeclarationName { get; init; }
 
 	/// <summary>Numeric value three.js gives it.</summary>
 	public required long Value { get; init; }

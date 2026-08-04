@@ -3851,113 +3851,234 @@
   "generatedEnums": [
     {
       "name": "AnimationActionLoopStyles",
+      "source": "ConstantGroup",
       "members": 3,
-      "backingType": "int"
+      "backingType": "ushort",
+      "isReferenced": true
     },
     {
       "name": "AnimationBlendMode",
+      "source": "ConstantGroup",
       "members": 2,
-      "backingType": "int"
+      "backingType": "ushort",
+      "isReferenced": true
     },
     {
       "name": "AttributeGPUType",
+      "source": "ConstantGroup",
       "members": 2,
-      "backingType": "int"
+      "backingType": "ushort",
+      "isReferenced": true
     },
     {
       "name": "Blending",
+      "source": "ConstantGroup",
       "members": 7,
-      "backingType": "byte"
+      "backingType": "byte",
+      "isReferenced": true
     },
     {
       "name": "BlendingDstFactor",
+      "source": "ConstantGroup",
       "members": 14,
-      "backingType": "byte"
+      "backingType": "byte",
+      "isReferenced": true
     },
     {
       "name": "BlendingEquation",
+      "source": "ConstantGroup",
       "members": 5,
-      "backingType": "byte"
+      "backingType": "byte",
+      "isReferenced": true
+    },
+    {
+      "name": "Combine",
+      "source": "ConstantGroup",
+      "members": 3,
+      "backingType": "byte",
+      "isReferenced": false
     },
     {
       "name": "CoordinateSystem",
+      "source": "ConstantGroup",
       "members": 2,
-      "backingType": "int"
+      "backingType": "ushort",
+      "isReferenced": true
     },
     {
       "name": "CubeTextureMapping",
+      "source": "ConstantGroup",
       "members": 3,
-      "backingType": "int"
+      "backingType": "ushort",
+      "isReferenced": true
     },
     {
       "name": "CullFace",
+      "source": "ConstantGroup",
       "members": 4,
-      "backingType": "byte"
+      "backingType": "byte",
+      "isReferenced": true
     },
     {
       "name": "DepthModes",
+      "source": "ConstantGroup",
       "members": 8,
-      "backingType": "byte"
+      "backingType": "byte",
+      "isReferenced": true
+    },
+    {
+      "name": "DepthPackingStrategies",
+      "source": "ConstantGroup",
+      "members": 4,
+      "backingType": "ushort",
+      "isReferenced": false
     },
     {
       "name": "DepthTexturePixelFormat",
+      "source": "ConstantGroup",
       "members": 2,
-      "backingType": "int"
+      "backingType": "ushort",
+      "isReferenced": true
+    },
+    {
+      "name": "GPUColorWriteFlags",
+      "source": "DeclaredEnum",
+      "members": 6,
+      "backingType": "byte",
+      "isReferenced": false
+    },
+    {
+      "name": "InterpolationEndingModes",
+      "source": "ConstantGroup",
+      "members": 3,
+      "backingType": "ushort",
+      "isReferenced": false
     },
     {
       "name": "InterpolationModes",
+      "source": "ConstantGroup",
       "members": 4,
-      "backingType": "int"
+      "backingType": "ushort",
+      "isReferenced": true
+    },
+    {
+      "name": "MOUSE",
+      "source": "DeclaredEnum",
+      "members": 6,
+      "backingType": "byte",
+      "isReferenced": false
     },
     {
       "name": "MagnificationTextureFilter",
+      "source": "ConstantGroup",
       "members": 2,
-      "backingType": "int"
+      "backingType": "ushort",
+      "isReferenced": true
     },
     {
       "name": "Mapping",
+      "source": "ConstantGroup",
       "members": 3,
-      "backingType": "int"
+      "backingType": "ushort",
+      "isReferenced": true
     },
     {
       "name": "MinificationTextureFilter",
+      "source": "ConstantGroup",
       "members": 10,
-      "backingType": "int"
+      "backingType": "ushort",
+      "isReferenced": true
+    },
+    {
+      "name": "NormalMapTypes",
+      "source": "ConstantGroup",
+      "members": 2,
+      "backingType": "byte",
+      "isReferenced": false
     },
     {
       "name": "PixelFormat",
+      "source": "ConstantGroup",
       "members": 11,
-      "backingType": "int"
+      "backingType": "ushort",
+      "isReferenced": true
     },
     {
       "name": "ShadowMapType",
+      "source": "ConstantGroup",
       "members": 4,
-      "backingType": "byte"
+      "backingType": "byte",
+      "isReferenced": true
+    },
+    {
+      "name": "Side",
+      "source": "ConstantGroup",
+      "members": 3,
+      "backingType": "byte",
+      "isReferenced": false
+    },
+    {
+      "name": "StencilFunc",
+      "source": "ConstantGroup",
+      "members": 8,
+      "backingType": "ushort",
+      "isReferenced": false
+    },
+    {
+      "name": "StencilOp",
+      "source": "ConstantGroup",
+      "members": 8,
+      "backingType": "ushort",
+      "isReferenced": false
+    },
+    {
+      "name": "TOUCH",
+      "source": "DeclaredEnum",
+      "members": 4,
+      "backingType": "byte",
+      "isReferenced": false
     },
     {
       "name": "TextureComparisonFunction",
+      "source": "ConstantGroup",
       "members": 8,
-      "backingType": "int"
+      "backingType": "ushort",
+      "isReferenced": true
     },
     {
       "name": "TextureDataType",
+      "source": "ConstantGroup",
       "members": 13,
-      "backingType": "int"
+      "backingType": "ushort",
+      "isReferenced": true
     },
     {
       "name": "ToneMapping",
+      "source": "ConstantGroup",
       "members": 8,
-      "backingType": "byte"
+      "backingType": "byte",
+      "isReferenced": true
+    },
+    {
+      "name": "TrianglesDrawModes",
+      "source": "ConstantGroup",
+      "members": 3,
+      "backingType": "byte",
+      "isReferenced": false
     },
     {
       "name": "Usage",
+      "source": "ConstantGroup",
       "members": 9,
-      "backingType": "int"
+      "backingType": "ushort",
+      "isReferenced": true
     },
     {
       "name": "Wrapping",
+      "source": "ConstantGroup",
       "members": 3,
-      "backingType": "int"
+      "backingType": "ushort",
+      "isReferenced": true
     }
   ],
   "refusedEnums": [

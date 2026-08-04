@@ -85,6 +85,23 @@ assert.notEqual(mesh.material, material, 'mesh.material should no longer be the 
 // An enum Set must decode as the plain number three.js expects for Material.side, not a string.
 assert.equal(material.side, DoubleSide, 'the enum Set value should decode into material.side as THREE.DoubleSide');
 
+// The $undef sentinel, end to end. THREE.PerspectiveCamera(fov = 50, aspect = 1, near = 0.1,
+// far = 2000): the fixture supplies the sentinel for fov and near, and real values for aspect and
+// far. A parameter default only fires for undefined, so fov landing on 50 and near on 0.1 is proof
+// that the sentinel arrived as a genuine undefined and not as null, in a *middle* position that
+// trimming the argument list could never have reached.
+const cameraWithUnspecifiedArguments = context.objects.get(6);
+assert.equal(cameraWithUnspecifiedArguments.fov, 50, 'the $undef sentinel in argument 0 should let three.js apply its own fov default');
+assert.equal(cameraWithUnspecifiedArguments.near, 0.1, 'the $undef sentinel in argument 2 should let three.js apply its own near default');
+assert.equal(cameraWithUnspecifiedArguments.aspect, 2, 'the supplied aspect should still land in its own position');
+assert.equal(cameraWithUnspecifiedArguments.far, 1000, 'the supplied far should still land after two sentinels');
+
+// The control. The same constructor given JSON null for fov keeps the null, which is exactly the
+// bug the sentinel exists to fix - and is what makes the four assertions above mean something.
+const cameraWithNullArgument = context.objects.get(7);
+assert.equal(cameraWithNullArgument.fov, null, 'a JSON null must NOT trigger the upstream default, or the sentinel would be redundant');
+assert.equal(cameraWithNullArgument.far, 2000, 'omitting a trailing argument entirely should still apply the upstream default');
+
 // The failure mode this whole test exists for: if the C# side ever serializes the op kind as a
 // string - a JsonStringEnumConverter reaching the interop options is all it takes - every op lands
 // in the applier's default arm. Pin that it is loud rather than silent.

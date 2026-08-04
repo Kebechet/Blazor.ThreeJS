@@ -1,7 +1,8 @@
 import * as THREE from './three.module.js';
 
-// Wire format shared with ThreeOp.cs — the numeric kinds and the short property names
-// (k/h/t/m/a/v/c) are a contract and must be changed on both sides together.
+// Wire format shared with ThreeOp.cs — the numeric kinds, the short property names (k/h/t/m/a/v/c)
+// and the tagged-value keys ($t/$ref/$undef) are a contract and must be changed on both sides
+// together. The C# half of each literal lives in ThreeWireFormat.cs.
 const OP_CREATE = 0;
 const OP_SET = 1;
 const OP_CALL = 2;
@@ -166,6 +167,15 @@ function decode(context, value) {
 
     if (Object.prototype.hasOwnProperty.call(value, '$ref')) {
         return { value: resolveHandle(context, value.$ref), isMathValue: false };
+    }
+
+    // The "not supplied" sentinel, which only C#'s generated constructors send. It has to decode to a
+    // genuine undefined and not to null: a JavaScript parameter default applies only to undefined, so
+    // `new PerspectiveCamera(null, 2)` leaves fov null where `new PerspectiveCamera(undefined, 2)`
+    // leaves it at three.js's own 50. Trailing arguments are trimmed on the C# side instead, so this
+    // is what carries an unsupplied argument that has a supplied one after it.
+    if (Object.prototype.hasOwnProperty.call(value, '$undef')) {
+        return { value: undefined, isMathValue: false };
     }
 
     switch (value.$t) {

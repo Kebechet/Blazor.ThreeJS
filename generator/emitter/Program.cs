@@ -43,6 +43,17 @@ foreach (var className in EmitterConfig.EmittedClassNames)
 	emittedFiles.Add(emitter.Emit(emitter.GetClass(className), audit));
 }
 
+// Every generatable enum is emitted, not only the ones a currently emittable class happens to
+// reference. An enum is a leaf: it carries no handle, no wire op and no dependency on the class
+// surface, so gating it on which classes are emittable today would only churn the committed set as
+// that surface grows. What is or is not generatable is EnumCatalog's call, and api-coverage.md
+// reports both halves.
+var enumEmitter = new EnumEmitter(ir);
+foreach (var generatedEnum in enums.Generatable)
+{
+	emittedFiles.Add(enumEmitter.Emit(generatedEnum));
+}
+
 ProjectNumericsOverEmittableClasses(coverage, emitter, audit);
 
 emittedFiles.Add(new EmittedFile
@@ -81,7 +92,7 @@ if (mode == "--project")
 		return 2;
 	}
 
-	return WriteProjection(fullProjectionPath, coverage, emitter, enums, mapper);
+	return WriteProjection(fullProjectionPath, coverage, emitter, enums);
 }
 
 return mode == "--check"
@@ -119,8 +130,7 @@ static int WriteProjection(
 	string outputDirectory,
 	CoverageReport coverage,
 	ClassEmitter emitter,
-	EnumCatalog enums,
-	TypeMapper mapper)
+	EnumCatalog enums)
 {
 	Directory.CreateDirectory(outputDirectory);
 	foreach (var staleFile in Directory.EnumerateFiles(outputDirectory, "*.cs"))
@@ -167,15 +177,15 @@ static int WriteProjection(
 		Console.WriteLine($"skipped {sealedBaseCollisions.Count} class(es) whose base is a sealed hand-written type: {string.Join(", ", sealedBaseCollisions)}");
 	}
 
-	var enumEmitter = new EnumEmitter(coverage.Ir);
-	foreach (var generatedEnum in enums.Generatable.Where(x => mapper.RequiredEnumNames.Contains(x.Name)))
+	var projectionEnumEmitter = new EnumEmitter(coverage.Ir);
+	foreach (var generatedEnum in enums.Generatable)
 	{
 		if (EmitterConfig.ExistingCSharpTypeNames.Contains(generatedEnum.Name))
 		{
 			continue;
 		}
 
-		File.WriteAllText(Path.Combine(outputDirectory, $"{generatedEnum.Name}.cs"), enumEmitter.Emit(generatedEnum).Contents);
+		File.WriteAllText(Path.Combine(outputDirectory, $"{generatedEnum.Name}.cs"), projectionEnumEmitter.Emit(generatedEnum).Contents);
 		written++;
 	}
 

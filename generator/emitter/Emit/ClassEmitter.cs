@@ -331,10 +331,11 @@ internal sealed class ClassEmitter
 	/// <summary>
 	/// Writes <c>ConstructorArgs</c>, forwarding the backing fields in three.js parameter order.
 	/// <para>
-	/// When any parameter is an unspecified nullable, the trailing nulls are trimmed off instead of
-	/// being sent. A JSON <c>null</c> is not JavaScript's <c>undefined</c>: <c>f(a = 1)</c> called as
-	/// <c>f(null)</c> yields <c>null</c>, not <c>1</c>, so sending the null would overwrite three.js's
-	/// own default with it. Shortening the argument list is the only way to say "not supplied".
+	/// A parameter the caller left unspecified is forwarded as the <c>$undef</c> sentinel, which the
+	/// applier decodes to JavaScript's <c>undefined</c> so three.js applies its own default. A JSON
+	/// <c>null</c> could not: <c>f(a = 1)</c> called as <c>f(null)</c> yields <c>null</c>, not
+	/// <c>1</c>. Trailing sentinels are then trimmed, which says the same thing in fewer bytes and
+	/// keeps <c>arguments.length</c> equal to what a hand-written JavaScript call would produce.
 	/// </para>
 	/// </summary>
 	/// <param name="writer">Destination.</param>
@@ -344,7 +345,14 @@ internal sealed class ClassEmitter
 	{
 		var parameters = constructor.Parameters;
 		var parameterList = string.Join(", ", parameters.Select(x => x.ThreeName));
-		DocCommentEmitter.WriteSummary(writer, $"Constructor arguments forwarded to <c>THREE.{threeTypeName}</c>: {parameterList}.");
+		var summary = $"Constructor arguments forwarded to <c>THREE.{threeTypeName}</c>: {parameterList}.";
+		if (constructor.HasUnspecifiedNullable)
+		{
+			summary += " An argument the caller left unspecified travels as the wire's not-supplied " +
+				"sentinel, or is trimmed when nothing supplied follows it, so three.js applies its own default.";
+		}
+
+		DocCommentEmitter.WriteSummary(writer, summary);
 		writer.WriteLine("protected override object?[] ConstructorArgs");
 		writer.WriteLine("{");
 		writer.Indent();
@@ -357,19 +365,36 @@ internal sealed class ClassEmitter
 			return;
 		}
 
+		var arguments = parameters
+			.Select(x => x.IsUnspecifiedNullable
+				? $"{EmitterConfig.OrUnspecifiedCall}({x.FieldName})"
+				: x.FieldName)
+			.ToList();
+
+		var singleLine = $"get {{ return {EmitterConfig.TrimUnspecifiedTailCall}([{string.Join(", ", arguments)}]); }}";
+		if (writer.IndentColumn + singleLine.Length <= EmitterConfig.DeclarationWrapColumn)
+		{
+			writer.WriteLine(singleLine);
+			writer.Outdent();
+			writer.WriteLine("}");
+			return;
+		}
+
 		writer.WriteLine("get");
 		writer.WriteLine("{");
 		writer.Indent();
-		writer.WriteLine($"object?[] args = [{string.Join(", ", parameters.Select(x => x.FieldName))}];");
-		writer.WriteLine("var count = args.Length;");
-		writer.WriteLine("while (count > 0 && args[count - 1] is null)");
-		writer.WriteLine("{");
+		writer.WriteLine($"return {EmitterConfig.TrimUnspecifiedTailCall}(");
+		writer.WriteLine("[");
 		writer.Indent();
-		writer.WriteLine("count--;");
+		foreach (var (index, argument) in arguments.Index())
+		{
+			writer.WriteLine(index == arguments.Count - 1
+				? argument
+				: argument + ",");
+		}
+
 		writer.Outdent();
-		writer.WriteLine("}");
-		writer.WriteLine();
-		writer.WriteLine("return args[..count];");
+		writer.WriteLine("]);");
 		writer.Outdent();
 		writer.WriteLine("}");
 		writer.Outdent();

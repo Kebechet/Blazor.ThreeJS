@@ -102,8 +102,8 @@ internal sealed class ConstructorMapper
 				: null;
 
 			// An optional parameter with no expressible default still needs a C# default, and the only
-			// honest one is null: "the caller did not supply this", which ConstructorArgs then trims off
-			// rather than sending.
+			// honest one is null: "the caller did not supply this", which ConstructorArgs then forwards
+			// as the `$undef` sentinel or trims off rather than sending as a JSON null.
 			var isUnspecifiedNullable = irParameter.IsOptional && defaultLiteral is null;
 			if (isUnspecifiedNullable)
 			{
@@ -140,11 +140,11 @@ internal sealed class ConstructorMapper
 				SkipCategory.RequiredAfterOptional);
 		}
 
-		// A parameter emitted as `T? x = null` means "unspecified", and the applier turns C# null into
-		// JSON null. JSON null is not JavaScript undefined: `f(a = 1)` called as `f(null)` yields null,
-		// not 1. Trailing nulls are trimmed off the argument list, which fully solves the last
-		// parameter and every run of unspecified parameters at the end — but an unspecified parameter
-		// with any emitted parameter after it can still be sent as null in a middle position.
+		// A parameter emitted as `T? x = null` means "unspecified". Trimming the argument list covers
+		// every unspecified parameter at the end; the ones counted here have a supplied parameter after
+		// them, so trimming cannot reach them and they depend on the `$undef` sentinel arriving as a
+		// real JavaScript undefined. Counted because it measures how much of the emitted surface that
+		// one wire feature holds up.
 		var middlePositionHazards = parameters
 			.Index()
 			.Where(x => x.Item.IsUnspecifiedNullable && x.Index < parameters.Count - 1)
@@ -239,8 +239,8 @@ internal sealed class MappedConstructor
 	public IReadOnlyList<DroppedParameter> DroppedParameters { get; init; } = [];
 
 	/// <summary>
-	/// Names of unspecified-nullable parameters that are not last, where trailing-null trimming cannot
-	/// protect the upstream default.
+	/// Names of unspecified-nullable parameters that are not last, so trimming cannot reach them and
+	/// the <c>$undef</c> sentinel is what preserves three.js's own default for them.
 	/// </summary>
 	public IReadOnlyList<string> MiddlePositionUnspecifiedParameters { get; init; } = [];
 
@@ -250,7 +250,7 @@ internal sealed class MappedConstructor
 	/// <summary>Family the refusal belongs to.</summary>
 	public SkipCategory RefusalCategory { get; init; }
 
-	/// <summary>Whether any parameter is emitted as an unspecified nullable, so the args need trimming.</summary>
+	/// <summary>Whether any parameter is emitted as an unspecified nullable, so the args need the sentinel.</summary>
 	public bool HasUnspecifiedNullable
 	{
 		get { return Parameters.Any(x => x.IsUnspecifiedNullable); }

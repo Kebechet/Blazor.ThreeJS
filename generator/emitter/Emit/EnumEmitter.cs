@@ -46,22 +46,39 @@ internal sealed class EnumEmitter
 
 		foreach (var (index, member) in generatedEnum.Members.Index())
 		{
+			// A constant group's members are exported on the THREE namespace individually
+			// (`THREE.FrontSide`); a real TypeScript enum's are reached through it (`MOUSE.LEFT`), and
+			// the WebGPU ones are not on the WebGL bundle at all — hence no `THREE.` prefix there.
+			var upstreamSpelling = generatedEnum.Source == EnumSource.DeclaredEnum
+				? $"Matches <c>{generatedEnum.Name}.{member.Name}</c> in three.js."
+				: $"Matches <c>THREE.{member.Name}</c>.";
+
 			var memberSummary = member.Doc?.Summary is { Length: > 0 } rawMemberSummary
 				? DocCommentEmitter.EnsureSentenceEnd(DocCommentEmitter.RenderInline(rawMemberSummary))
-				: $"Matches <c>THREE.{member.Name}</c>.";
+				: upstreamSpelling;
 
 			if (member.AliasOf is { } aliasOf)
 			{
-				memberSummary += $" An alternative spelling three.js gives the same value as <see cref=\"{aliasOf}\"/>.";
+				// A cref only resolves against an unescaped identifier, so a member three.js happens to
+				// spell as a C# keyword is named in plain code font instead of linked. An unresolvable
+				// cref is a CS1574 warning multiplied by every target framework.
+				var aliasReference = CSharpIdentifier.Escape(aliasOf) == aliasOf
+					? $"<see cref=\"{aliasOf}\"/>"
+					: $"<c>{aliasOf}</c>";
+
+				memberSummary += $" An alternative spelling three.js gives the same value as {aliasReference}.";
 			}
 
 			DocCommentEmitter.WriteSummary(writer, memberSummary);
 
-			var value = member.AliasOf ?? member.Value.ToString(CultureInfo.InvariantCulture);
+			var value = member.AliasOf is { } aliasedName
+				? CSharpIdentifier.Escape(aliasedName)
+				: member.Value.ToString(CultureInfo.InvariantCulture);
+
 			var isLast = index == generatedEnum.Members.Count - 1;
 			writer.WriteLine(isLast
-				? $"{member.Name} = {value}"
-				: $"{member.Name} = {value},");
+				? $"{member.DeclarationName} = {value}"
+				: $"{member.DeclarationName} = {value},");
 
 			if (!isLast)
 			{

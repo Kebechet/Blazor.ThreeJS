@@ -25,4 +25,13 @@ internal static class ThreeWireFormat
 
 	/// <summary>Tag written for an encoded <see cref="Matrix4"/> value.</summary>
 	public const string Matrix4Tag = "Matrix4";
+
+	/// <summary>
+	/// Key of the "this argument was not supplied" sentinel, <c>{"$undef":true}</c>, which the applier
+	/// decodes to JavaScript's <c>undefined</c>. JSON <c>null</c> cannot say this: a JavaScript default
+	/// only applies to <c>undefined</c>, so <c>function f(a = 1) {}</c> called as <c>f(null)</c> yields
+	/// <c>null</c>, not <c>1</c>. This is the only value that lets three.js apply its own default to an
+	/// argument that has a supplied argument after it.
+	/// </summary>
+	public const string UndefinedKey = "$undef";
 }

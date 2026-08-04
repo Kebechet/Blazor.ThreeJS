@@ -221,7 +221,8 @@ internal static class DocCommentEmitter
 	}
 
 	/// <summary>
-	/// Greedy word wrap. Splits on spaces only, so an XML tag is never broken across lines.
+	/// Greedy word wrap over <see cref="TokenizeKeepingTagsWhole"/>, so an XML tag is never broken
+	/// across lines.
 	/// </summary>
 	/// <param name="content">Text to wrap.</param>
 	/// <param name="width">Maximum line length in characters.</param>
@@ -230,7 +231,7 @@ internal static class DocCommentEmitter
 	{
 		var lines = new List<string>();
 		var current = new StringBuilder();
-		foreach (var word in content.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+		foreach (var word in TokenizeKeepingTagsWhole(content))
 		{
 			if (current.Length > 0 && current.Length + 1 + word.Length > width)
 			{
@@ -252,5 +253,47 @@ internal static class DocCommentEmitter
 		}
 
 		return lines;
+	}
+
+	/// <summary>
+	/// Splits on spaces, except that a tag carrying an attribute (<c>&lt;see cref="X"/&gt;</c>,
+	/// <c>&lt;seealso href="…"&gt;</c>) is one token. Wrapping inside it would leave
+	/// <c>&lt;see</c> on one <c>///</c> line and <c>cref="X"/&gt;</c> on the next, which parses but
+	/// reads as a broken comment. Every bare <c>&lt;</c> reaching here opens a real tag:
+	/// <see cref="RenderInline"/> has already escaped the prose ones to <c>&amp;lt;</c>.
+	/// </summary>
+	/// <param name="content">Already-rendered XML content.</param>
+	/// <returns>The tokens to wrap over.</returns>
+	private static IEnumerable<string> TokenizeKeepingTagsWhole(string content)
+	{
+		var openTag = new StringBuilder();
+		foreach (var word in content.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+		{
+			if (openTag.Length > 0)
+			{
+				openTag.Append(' ');
+				openTag.Append(word);
+				if (word.Contains('>'))
+				{
+					yield return openTag.ToString();
+					openTag.Clear();
+				}
+
+				continue;
+			}
+
+			if (word.Contains('<') && !word.Contains('>'))
+			{
+				openTag.Append(word);
+				continue;
+			}
+
+			yield return word;
+		}
+
+		if (openTag.Length > 0)
+		{
+			yield return openTag.ToString();
+		}
 	}
 }

@@ -6,15 +6,24 @@ namespace Kebechet.Blazor.ThreeJS.Core;
 /// <summary>
 /// Encodes C# values into the wire form understood by <c>three-interop.js</c>. Math values become
 /// a tagged array so the applier can write them into an existing three.js instance instead of
-/// allocating, and scene objects become a handle reference.
+/// allocating, scene objects become a handle reference, and a constructor argument the caller never
+/// supplied becomes a sentinel the applier turns back into JavaScript's <c>undefined</c>.
 /// </summary>
 internal static class ThreeValue
 {
 	/// <summary>
+	/// The one "argument not supplied" sentinel. A singleton because <see cref="TrimUnspecifiedTail"/>
+	/// recognises it by reference: an unsupplied argument is a position in the list, not a value a
+	/// caller can construct or compare.
+	/// </summary>
+	public static readonly UnspecifiedValue Unspecified = new();
+
+	/// <summary>
 	/// Converts a value into its wire representation. Math types (<see cref="Vector3"/>,
 	/// <see cref="Euler"/>, <see cref="Quaternion"/>, <see cref="Color"/>, <see cref="Matrix4"/>)
 	/// become a <see cref="TaggedValue"/>, <see cref="ThreeObject"/> instances become a
-	/// <see cref="HandleReference"/>, an <see cref="Enum"/> value is cast to its numeric backing
+	/// <see cref="HandleReference"/>, <see cref="Unspecified"/> stays the sentinel the applier turns
+	/// back into <c>undefined</c>, an <see cref="Enum"/> value is cast to its numeric backing
 	/// value so a future <c>JsonStringEnumConverter</c> reaching these options cannot silently turn
 	/// it into its member name, and primitives, <see cref="string"/> and <see langword="null"/> pass
 	/// through unchanged.
@@ -47,6 +56,8 @@ internal static class ThreeValue
 				return new TaggedValue { Tag = ThreeWireFormat.Matrix4Tag, Values = matrix.ToArray() };
 			case ThreeObject threeObject:
 				return new HandleReference { Handle = threeObject.Handle };
+			case UnspecifiedValue unspecified:
+				return unspecified;
 			case Enum enumValue:
 				return Convert.ChangeType(enumValue, enumValue.GetTypeCode());
 			default:
@@ -60,6 +71,54 @@ internal static class ThreeValue
 					$"Passing it through would serialize its public shape as a plain JSON object, which the applier " +
 					$"would then assign over the three.js instance — a silent corruption with no error anywhere. " +
 					$"Add an {nameof(Encode)} arm, a {nameof(ThreeWireFormat)} tag, and a matching decode case in three-interop.js.");
+		}
+	}
+
+	/// <summary>
+	/// Substitutes <see cref="Unspecified"/> for a <see langword="null"/> that means "the caller did
+	/// not supply this constructor argument", leaving every supplied value — including a deliberate
+	/// <see langword="null"/> on a parameter three.js declares nullable — untouched.
+	/// </summary>
+	/// <param name="value">The argument as the generated class holds it.</param>
+	/// <returns>The value, or the sentinel when it was not supplied.</returns>
+	public static object? OrUnspecified(object? value)
+	{
+		return value ?? Unspecified;
+	}
+
+	/// <summary>
+	/// Drops the trailing <see cref="Unspecified"/> sentinels from a constructor argument list.
+	/// Passing the sentinel and shortening the list are the same instruction — both leave the
+	/// parameter <c>undefined</c> — so the shorter form wins for the tail, and the sentinel carries
+	/// only the unsupplied arguments that have a supplied one after them.
+	/// </summary>
+	/// <param name="args">Constructor arguments in three.js parameter order.</param>
+	/// <returns>The argument list with its unsupplied tail removed.</returns>
+	public static object?[] TrimUnspecifiedTail(object?[] args)
+	{
+		var count = args.Length;
+		while (count > 0 && ReferenceEquals(args[count - 1], Unspecified))
+		{
+			count--;
+		}
+
+		return args[..count];
+	}
+
+	/// <summary>
+	/// Wire representation of an argument the caller never supplied, which the applier decodes to
+	/// JavaScript's <c>undefined</c> so three.js applies its own parameter default.
+	/// </summary>
+	internal sealed class UnspecifiedValue
+	{
+		/// <summary>
+		/// Always <see langword="true"/>. The <see cref="ThreeWireFormat.UndefinedKey"/> key is what
+		/// identifies the sentinel; the value only makes it a well-formed JSON object.
+		/// </summary>
+		[JsonPropertyName(ThreeWireFormat.UndefinedKey)]
+		public bool IsUnspecified
+		{
+			get { return true; }
 		}
 	}
 

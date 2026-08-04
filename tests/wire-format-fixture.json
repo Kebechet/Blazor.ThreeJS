@@ -16,5 +16,7 @@
   { "k": 0, "h": 5, "t": "MeshStandardMaterial", "a": [], "v": null },
   { "k": 1, "h": 3, "m": "material", "v": { "$ref": 5 } },
   { "k": 1, "h": 2, "m": "side", "v": 2 },
-  { "k": 5, "h": 1, "v": null }
+  { "k": 5, "h": 1, "v": null },
+  { "k": 0, "h": 6, "t": "PerspectiveCamera", "a": [{ "$undef": true }, 2, { "$undef": true }, 1000], "v": null },
+  { "k": 0, "h": 7, "t": "PerspectiveCamera", "a": [null, 2], "v": null }
 ]

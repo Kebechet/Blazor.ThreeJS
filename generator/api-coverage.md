@@ -1722,42 +1722,106 @@ the README's coverage table.
 
 ## Enums
 
-three.js closes a value set in two ways: a type alias unioning `typeof` of loose `export const`s, and
-a real TypeScript `enum`. Both become one C# enum. A group is only generatable when every value is
-**numeric**, because the wire encoder sends a C# enum as its numeric backing value — a string-valued
-group would arrive as a number where three.js expects the string.
+three.js closes a value set in two ways, and both become one C# enum:
 
-33 generatable, of which 22 are actually referenced by a mapped member.
+- a real TypeScript `enum` — a direct translation, nothing is inferred;
+- loose `export const`s **grouped by a type alias** that unions `typeof` of each one. The grouping is
+  three.js's own (`type Side = typeof FrontSide | typeof BackSide | typeof DoubleSide`), read out of the
+  declaration rather than guessed from a name prefix. A constant no alias groups stays a constant: an
+  invented grouping would be worse than none.
 
-| enum | members | aliases | backing type |
-|---|---|---|---|
-| `AnimationActionLoopStyles` | 3 | 0 | `int` |
-| `AnimationBlendMode` | 2 | 0 | `int` |
-| `AttributeGPUType` | 2 | 0 | `int` |
-| `Blending` | 7 | 0 | `byte` |
-| `BlendingDstFactor` | 14 | 0 | `byte` |
-| `BlendingEquation` | 5 | 0 | `byte` |
-| `CoordinateSystem` | 2 | 0 | `int` |
-| `CubeTextureMapping` | 3 | 0 | `int` |
-| `CullFace` | 4 | 0 | `byte` |
-| `DepthModes` | 8 | 0 | `byte` |
-| `DepthTexturePixelFormat` | 2 | 0 | `int` |
-| `InterpolationModes` | 4 | 0 | `int` |
-| `MagnificationTextureFilter` | 2 | 0 | `int` |
-| `Mapping` | 3 | 0 | `int` |
-| `MinificationTextureFilter` | 10 | 4 | `int` |
-| `PixelFormat` | 11 | 0 | `int` |
-| `ShadowMapType` | 4 | 0 | `byte` |
-| `TextureComparisonFunction` | 8 | 0 | `int` |
-| `TextureDataType` | 13 | 0 | `int` |
-| `ToneMapping` | 8 | 0 | `byte` |
-| `Usage` | 9 | 0 | `int` |
-| `Wrapping` | 3 | 0 | `int` |
+A group is only generatable when every value is **numeric**, because the wire encoder sends a C# enum
+as its numeric backing value — a string-valued group would arrive as a number where three.js expects
+the string. The backing type is the narrowest that holds every value, so three.js's small flag sets stay
+`byte` and its WebGL constants land on `ushort`.
 
-Duplicate values are emitted as explicit C# aliases, which is the only form C# accepts:
+**33 generated**: 30 inferred from a constant group, 3 from a real TypeScript `enum`.
+22 are referenced by a mapped member today; the rest are emitted anyway, because an enum is a
+leaf type whose availability should not move with the class surface.
+
+| enum | source | members | aliases | backing type | referenced |
+|---|---|---|---|---|---|
+| `AnimationActionLoopStyles` | constant group | 3 | 0 | `ushort` | yes |
+| `AnimationBlendMode` | constant group | 2 | 0 | `ushort` | yes |
+| `AttributeGPUType` | constant group | 2 | 0 | `ushort` | yes |
+| `Blending` | constant group | 7 | 0 | `byte` | yes |
+| `BlendingDstFactor` | constant group | 14 | 0 | `byte` | yes |
+| `BlendingEquation` | constant group | 5 | 0 | `byte` | yes |
+| `Combine` | constant group | 3 | 0 | `byte` | no |
+| `CoordinateSystem` | constant group | 2 | 0 | `ushort` | yes |
+| `CubeTextureMapping` | constant group | 3 | 0 | `ushort` | yes |
+| `CullFace` | constant group | 4 | 0 | `byte` | yes |
+| `DepthModes` | constant group | 8 | 0 | `byte` | yes |
+| `DepthPackingStrategies` | constant group | 4 | 0 | `ushort` | no |
+| `DepthTexturePixelFormat` | constant group | 2 | 0 | `ushort` | yes |
+| `GPUColorWriteFlags` | TypeScript `enum` | 6 | 0 | `byte` | no |
+| `InterpolationEndingModes` | constant group | 3 | 0 | `ushort` | no |
+| `InterpolationModes` | constant group | 4 | 0 | `ushort` | yes |
+| `MOUSE` | TypeScript `enum` | 6 | 3 | `byte` | no |
+| `MagnificationTextureFilter` | constant group | 2 | 0 | `ushort` | yes |
+| `Mapping` | constant group | 3 | 0 | `ushort` | yes |
+| `MinificationTextureFilter` | constant group | 10 | 4 | `ushort` | yes |
+| `NormalMapTypes` | constant group | 2 | 0 | `byte` | no |
+| `PixelFormat` | constant group | 11 | 0 | `ushort` | yes |
+| `ShadowMapType` | constant group | 4 | 0 | `byte` | yes |
+| `Side` | constant group | 3 | 0 | `byte` | no |
+| `StencilFunc` | constant group | 8 | 0 | `ushort` | no |
+| `StencilOp` | constant group | 8 | 0 | `ushort` | no |
+| `TOUCH` | TypeScript `enum` | 4 | 0 | `byte` | no |
+| `TextureComparisonFunction` | constant group | 8 | 0 | `ushort` | yes |
+| `TextureDataType` | constant group | 13 | 0 | `ushort` | yes |
+| `ToneMapping` | constant group | 8 | 0 | `byte` | yes |
+| `TrianglesDrawModes` | constant group | 3 | 0 | `byte` | no |
+| `Usage` | constant group | 9 | 0 | `ushort` | yes |
+| `Wrapping` | constant group | 3 | 0 | `ushort` | yes |
+
+### Duplicate values
+
+three.js gives several members the same number — `MOUSE.LEFT` and `MOUSE.ROTATE` are both `0`, and
+`MinificationTextureFilter` carries four deprecated `MipMap` spellings of its `Mipmap` values. C# rejects
+two members declared with the same literal, so the second names the first instead. No member is dropped:
 
 - `MOUSE`: `ROTATE` = `LEFT`, `DOLLY` = `MIDDLE`, `PAN` = `RIGHT`
 - `MinificationTextureFilter`: `NearestMipMapNearestFilter` = `NearestMipmapNearestFilter`, `NearestMipMapLinearFilter` = `NearestMipmapLinearFilter`, `LinearMipMapNearestFilter` = `LinearMipmapNearestFilter`, `LinearMipMapLinearFilter` = `LinearMipmapLinearFilter`
+
+### Constants left ungrouped
+
+23 of the 226 exported constants belong to no alias, so no enum claims them. Grouping them
+would mean inventing a set three.js never declared, and an enum is a promise that its values are
+exhaustive and mutually exclusive — a promise only the upstream alias is in a position to make.
+
+Most are not value sets at all: only 4 of the 23 are a literal. The rest are namespace objects
+(`MathUtils`, `ShaderChunk`, `UniformsLib`, `Cache`), which no grouping rule would have reached.
+
+<details><summary>Every ungrouped constant (23)</summary>
+
+| constant | value | file |
+|---|---|---|
+| `AttributeType` | not a literal — a `object` type | `src/renderers/common/Constants.d.ts` |
+| `BlendColorFactor` | `211` | `src/renderers/common/Constants.d.ts` |
+| `Cache` | not a literal — a `object` type | `src/loaders/Cache.d.ts` |
+| `ColorManagement` | not a literal — a `reference` type | `src/math/ColorManagement.d.ts` |
+| `Compatibility` | not a literal — a `object` type | `src/constants.d.ts` |
+| `DEG2RAD` | not a literal — a `primitive` type | `src/math/MathUtils.d.ts` |
+| `DefaultLoadingManager` | not a literal — a `reference` type | `src/loaders/LoadingManager.d.ts` |
+| `GPU_CHUNK_BYTES` | `16` | `src/renderers/common/Constants.d.ts` |
+| `InterpolationSamplingMode` | not a literal — a `object` type | `src/constants.d.ts` |
+| `InterpolationSamplingType` | not a literal — a `object` type | `src/constants.d.ts` |
+| `MathUtils` | not a literal — a `object` type | `src/math/MathUtils.d.ts` |
+| `OneMinusBlendColorFactor` | `212` | `src/renderers/common/Constants.d.ts` |
+| `RAD2DEG` | not a literal — a `primitive` type | `src/math/MathUtils.d.ts` |
+| `REVISION` | not a literal — a `primitive` type | `src/constants.d.ts` |
+| `ReversedDepthFuncs` | not a literal — a `mapped` type | `src/utils.d.ts` |
+| `ShaderChunk` | not a literal — a `object` type | `src/renderers/shaders/ShaderChunk.d.ts` |
+| `ShaderLib` | not a literal — a `object` type | `src/renderers/shaders/ShaderLib.d.ts` |
+| `SrcAlphaSaturateFactor` | `210` | `src/constants.d.ts` |
+| `TextureUtils` | not a literal — a `object` type | `src/extras/TextureUtils.d.ts` |
+| `TimestampQuery` | not a literal — a `object` type | `src/constants.d.ts` |
+| `UniformsLib` | not a literal — a `object` type | `src/renderers/shaders/UniformsLib.d.ts` |
+| `UniformsUtils` | not a literal — a `object` type | `src/renderers/shaders/UniformsUtils.d.ts` |
+| `_colorKeywords` | not a literal — a `object` type | `src/math/Color.d.ts` |
+
+</details>
 
 ### Refused
 
@@ -1794,21 +1858,24 @@ Duplicate values are emitted as explicit C# aliases, which is the only form C# a
 | `GPUVertexFormat` | the enum is string-valued (`Uint8x2` = "uint8x2"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
 | `NormalPacking` | the group is string-valued (`NoNormalPacking` = ""); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
 
-## ⚠️ Unspecified arguments in a middle position
+## Unspecified arguments in a middle position
 
 An optional parameter whose three.js default the types do not state is emitted as `T? x = null`,
-meaning "not supplied". `ConstructorArgs` trims trailing nulls so three.js applies its own default.
+meaning "not supplied". `ConstructorArgs` trims the unsupplied **tail** off the argument list, so
+three.js applies its own default to it.
 
-Trimming only reaches the **end** of the argument list. A JSON `null` is not JavaScript's `undefined`:
-`function f(a = 1) {}` called as `f(null)` yields `null`, not `1`. So a caller who leaves an unspecified
-parameter out **and** supplies a later one sends a null into a middle position and defeats the upstream
-default. Closing that needs a wire-level "unspecified" sentinel the applier converts to `undefined`.
+Trimming only reaches the end. A JSON `null` is not JavaScript's `undefined`: `function f(a = 1) {}`
+called as `f(null)` yields `null`, not `1`. So an unspecified parameter with a supplied one after it
+cannot be trimmed and must not be sent as null either — it travels as the `$undef` sentinel
+(`ThreeWireFormat.UndefinedKey`), which `three-interop.js` decodes to a real `undefined`. The
+round trip is pinned end to end by `tests/wire-format.test.mjs` against the vendored three.js.
 
-27 emittable classes carry 59 such parameters.
+27 emittable classes carry 59 such parameters. They are the measure of how much
+of the emitted surface that one wire feature holds up.
 
 <details><summary>Every affected class</summary>
 
-| class | parameters that can be sent as null in a middle position |
+| class | parameters that depend on the `$undef` sentinel |
 |---|---|
 | `AmbientLight` | `color` |
 | `AnimationClip` | `name` |

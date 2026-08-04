@@ -326,6 +326,89 @@ public class ThreeWireFormatTests
 	}
 
 	[Fact]
+	public void ThreeValue_WideBackedEnumEncoded_KeepsItsFullNumericValue()
+	{
+		// Arrange
+		var wideValue = GeneratedEnumBackingShape.RepeatWrapping;
+
+		// Act
+		var json = JsonSerializer.Serialize(ThreeValue.Encode(wideValue), _webOptions);
+
+		// Assert
+		json.ShouldBe("1000");
+	}
+
+	[Fact]
+	public void ThreeValue_UnspecifiedEncoded_MatchesWireContract()
+	{
+		// Arrange & Act
+		var json = JsonSerializer.Serialize(ThreeValue.Encode(ThreeValue.Unspecified), _webOptions);
+
+		// Assert
+		json.ShouldBe($$"""{"{{ThreeWireFormat.UndefinedKey}}":true}""");
+	}
+
+	[Fact]
+	public void ThreeValue_UnspecifiedEncoded_StaysDistinctFromAnIntentionalNull()
+	{
+		// Arrange
+		var unspecified = JsonSerializer.Serialize(ThreeValue.Encode(ThreeValue.Unspecified), _webOptions);
+
+		// Act
+		var intentionalNull = JsonSerializer.Serialize(ThreeValue.Encode(null), _webOptions);
+
+		// Assert
+		intentionalNull.ShouldBe("null");
+		unspecified.ShouldNotBe(intentionalNull);
+	}
+
+	[Fact]
+	public void ThreeValue_OrUnspecifiedGivenNull_ReturnsTheSentinel()
+	{
+		// Arrange & Act
+		var substituted = ThreeValue.OrUnspecified(null);
+
+		// Assert
+		substituted.ShouldBeSameAs(ThreeValue.Unspecified);
+	}
+
+	[Fact]
+	public void ThreeValue_OrUnspecifiedGivenAValue_ReturnsItUnchanged()
+	{
+		// Arrange & Act
+		var substituted = ThreeValue.OrUnspecified(512f);
+
+		// Assert
+		substituted.ShouldBe(512f);
+	}
+
+	[Fact]
+	public void ThreeValue_TrimUnspecifiedTail_DropsOnlyTheTrailingRun()
+	{
+		// Arrange
+		object?[] args = [ThreeValue.Unspecified, 2f, ThreeValue.Unspecified, ThreeValue.Unspecified];
+
+		// Act
+		var trimmed = ThreeValue.TrimUnspecifiedTail(args);
+
+		// Assert
+		trimmed.ShouldBe([ThreeValue.Unspecified, 2f]);
+	}
+
+	[Fact]
+	public void ThreeValue_TrimUnspecifiedTail_KeepsATrailingIntentionalNull()
+	{
+		// Arrange
+		object?[] args = [1f, null];
+
+		// Act
+		var trimmed = ThreeValue.TrimUnspecifiedTail(args);
+
+		// Assert
+		trimmed.ShouldBe([1f, null]);
+	}
+
+	[Fact]
 	public void ThreeValue_UnhandledReferenceTypeEncoded_Throws()
 	{
 		// Arrange
@@ -369,9 +452,10 @@ public class ThreeWireFormatTests
 
 	/// <summary>
 	/// Builds one op of every <see cref="ThreeOpKind"/>, one encoded value of every
-	/// <see cref="ThreeWireFormat"/> tag, an enum-valued <c>Set</c>, and a <c>$ref</c>-valued
-	/// <c>Set</c> that reassigns a mesh's material after it was already attached — as a batch the
-	/// JavaScript applier can run end to end. Kept in step with
+	/// <see cref="ThreeWireFormat"/> tag, an enum-valued <c>Set</c>, a <c>$ref</c>-valued
+	/// <c>Set</c> that reassigns a mesh's material after it was already attached, and the pair of
+	/// <c>PerspectiveCamera</c> creates that prove the <c>$undef</c> sentinel reaches JavaScript as a
+	/// real <c>undefined</c> — as a batch the JavaScript applier can run end to end. Kept in step with
 	/// <c>tests/wire-format-fixture.json</c> by <c>ThreeOp_FixtureBatchSerialized_MatchesTheSharedFixtureFile</c>.
 	/// </summary>
 	/// <returns>The fixture batch, in the order the applier receives it.</returns>
@@ -406,7 +490,32 @@ public class ThreeWireFormatTests
 			new ThreeOp { Kind = ThreeOpKind.Create, Handle = 5, Type = "MeshStandardMaterial", Args = [] },
 			new ThreeOp { Kind = ThreeOpKind.Set, Handle = 3, Member = "material", Value = new ThreeValue.HandleReference { Handle = 5 } },
 			new ThreeOp { Kind = ThreeOpKind.Set, Handle = 2, Member = "side", Value = ThreeValue.Encode(Side.DoubleSide) },
-			new ThreeOp { Kind = ThreeOpKind.Dispose, Handle = 1 }
+			new ThreeOp { Kind = ThreeOpKind.Dispose, Handle = 1 },
+			new ThreeOp
+			{
+				Kind = ThreeOpKind.Create,
+				Handle = 6,
+				Type = "PerspectiveCamera",
+				Args = [ThreeValue.Encode(ThreeValue.Unspecified), 2f, ThreeValue.Encode(ThreeValue.Unspecified), 1000f]
+			},
+
+			// The control for the op above. THREE.PerspectiveCamera defaults fov to 50 and near to 0.1,
+			// and this op supplies JSON null for fov instead of the sentinel — which the JavaScript half
+			// asserts leaves fov null. Without it, the sentinel assertions would also pass if the applier
+			// were quietly reading null as "absent".
+			new ThreeOp { Kind = ThreeOpKind.Create, Handle = 7, Type = "PerspectiveCamera", Args = [null, 2f] }
 		];
+	}
+
+	/// <summary>
+	/// Stands in for the generated enums whose values do not fit in a <see cref="byte"/> — three.js's
+	/// WebGL constants are in the thousands, so the generator backs those with <see cref="ushort"/>.
+	/// Declared here rather than referencing a generated enum, which is only compiled under
+	/// <c>-p:UseGeneratedObjects=true</c>.
+	/// </summary>
+	private enum GeneratedEnumBackingShape : ushort
+	{
+		/// <summary>Mirrors <c>THREE.RepeatWrapping</c>, the widest shape a generated enum takes today.</summary>
+		RepeatWrapping = 1000
 	}
 }

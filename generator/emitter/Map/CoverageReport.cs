@@ -126,8 +126,14 @@ internal sealed class CoverageReport
 				.Select(x => new CoverageSkipCategoryJson { Category = x.Key.ToString(), Members = x.Value })
 				.ToList(),
 			GeneratedEnums = _enums.Generatable
-				.Where(x => _mapper.RequiredEnumNames.Contains(x.Name))
-				.Select(x => new CoverageEnumJson { Name = x.Name, Members = x.Members.Count, BackingType = x.BackingTypeName })
+				.Select(x => new CoverageEnumJson
+				{
+					Name = x.Name,
+					Source = x.Source.ToString(),
+					Members = x.Members.Count,
+					BackingType = x.BackingTypeName,
+					IsReferenced = _mapper.RequiredEnumNames.Contains(x.Name)
+				})
 				.ToList(),
 			RefusedEnums = _enums.Refusals
 				.Select(x => new CoverageRefusedEnumJson { Name = x.Key, Reason = x.Value })
@@ -404,37 +410,56 @@ internal sealed class CoverageReport
 
 	private void AppendEnums(StringBuilder builder)
 	{
-		var required = _enums.Generatable
-			.Where(x => _mapper.RequiredEnumNames.Contains(x.Name))
-			.ToList();
+		var generatable = _enums.Generatable;
+		var referencedCount = generatable.Count(x => _mapper.RequiredEnumNames.Contains(x.Name));
+		var inferredCount = generatable.Count(x => x.Source == EnumSource.ConstantGroup);
 
 		AppendLine(builder, "## Enums");
 		AppendLine(builder);
-		AppendLine(builder, "three.js closes a value set in two ways: a type alias unioning `typeof` of loose `export const`s, and");
-		AppendLine(builder, "a real TypeScript `enum`. Both become one C# enum. A group is only generatable when every value is");
-		AppendLine(builder, "**numeric**, because the wire encoder sends a C# enum as its numeric backing value — a string-valued");
-		AppendLine(builder, "group would arrive as a number where three.js expects the string.");
+		AppendLine(builder, "three.js closes a value set in two ways, and both become one C# enum:");
 		AppendLine(builder);
-		AppendLine(builder, $"{_enums.Generatable.Count} generatable, of which {required.Count} are actually referenced by a mapped member.");
+		AppendLine(builder, "- a real TypeScript `enum` — a direct translation, nothing is inferred;");
+		AppendLine(builder, "- loose `export const`s **grouped by a type alias** that unions `typeof` of each one. The grouping is");
+		AppendLine(builder, "  three.js's own (`type Side = typeof FrontSide | typeof BackSide | typeof DoubleSide`), read out of the");
+		AppendLine(builder, "  declaration rather than guessed from a name prefix. A constant no alias groups stays a constant: an");
+		AppendLine(builder, "  invented grouping would be worse than none.");
 		AppendLine(builder);
-		if (required.Count > 0)
+		AppendLine(builder, "A group is only generatable when every value is **numeric**, because the wire encoder sends a C# enum");
+		AppendLine(builder, "as its numeric backing value — a string-valued group would arrive as a number where three.js expects");
+		AppendLine(builder, "the string. The backing type is the narrowest that holds every value, so three.js's small flag sets stay");
+		AppendLine(builder, "`byte` and its WebGL constants land on `ushort`.");
+		AppendLine(builder);
+		AppendLine(builder, $"**{generatable.Count} generated**: {inferredCount} inferred from a constant group, {generatable.Count - inferredCount} from a real TypeScript `enum`.");
+		AppendLine(builder, $"{referencedCount} are referenced by a mapped member today; the rest are emitted anyway, because an enum is a");
+		AppendLine(builder, "leaf type whose availability should not move with the class surface.");
+		AppendLine(builder);
+		AppendLine(builder, "| enum | source | members | aliases | backing type | referenced |");
+		AppendLine(builder, "|---|---|---|---|---|---|");
+		foreach (var generatedEnum in generatable)
 		{
-			AppendLine(builder, "| enum | members | aliases | backing type |");
-			AppendLine(builder, "|---|---|---|---|");
-			foreach (var generatedEnum in required)
-			{
-				var aliases = generatedEnum.Members.Count(x => x.AliasOf is not null);
-				AppendLine(builder, $"| `{generatedEnum.Name}` | {generatedEnum.Members.Count} | {aliases} | `{generatedEnum.BackingTypeName}` |");
-			}
+			var aliases = generatedEnum.Members.Count(x => x.AliasOf is not null);
+			var source = generatedEnum.Source == EnumSource.ConstantGroup
+				? "constant group"
+				: "TypeScript `enum`";
 
-			AppendLine(builder);
+			var isReferenced = _mapper.RequiredEnumNames.Contains(generatedEnum.Name)
+				? "yes"
+				: "no";
+
+			AppendLine(builder, $"| `{generatedEnum.Name}` | {source} | {generatedEnum.Members.Count} | {aliases} | `{generatedEnum.BackingTypeName}` | {isReferenced} |");
 		}
 
-		var duplicateValueEnums = _enums.Generatable
+		AppendLine(builder);
+
+		var duplicateValueEnums = generatable
 			.Where(x => x.Members.Any(member => member.AliasOf is not null))
 			.ToList();
 
-		AppendLine(builder, "Duplicate values are emitted as explicit C# aliases, which is the only form C# accepts:");
+		AppendLine(builder, "### Duplicate values");
+		AppendLine(builder);
+		AppendLine(builder, "three.js gives several members the same number — `MOUSE.LEFT` and `MOUSE.ROTATE` are both `0`, and");
+		AppendLine(builder, "`MinificationTextureFilter` carries four deprecated `MipMap` spellings of its `Mipmap` values. C# rejects");
+		AppendLine(builder, "two members declared with the same literal, so the second names the first instead. No member is dropped:");
 		AppendLine(builder);
 		foreach (var generatedEnum in duplicateValueEnums)
 		{
@@ -446,6 +471,7 @@ internal sealed class CoverageReport
 		}
 
 		AppendLine(builder);
+		AppendUngroupedConstants(builder);
 		AppendLine(builder, "### Refused");
 		AppendLine(builder);
 		AppendLine(builder, "| name | why |");
@@ -458,6 +484,63 @@ internal sealed class CoverageReport
 		AppendLine(builder);
 	}
 
+	/// <summary>
+	/// Constants that no type alias groups. They stay loose constants on purpose: the only grouping
+	/// signal the generator trusts is three.js's own alias, and inventing one — by name prefix, by
+	/// value range, by declaration adjacency — would produce an enum three.js does not agree exists.
+	/// </summary>
+	/// <param name="builder">Destination.</param>
+	private void AppendUngroupedConstants(StringBuilder builder)
+	{
+		var groupedNames = _ir.TypeAliases
+			.SelectMany(x => x.ConstantGroup ?? [])
+			.ToHashSet(StringComparer.Ordinal);
+
+		var ungrouped = _ir.Constants
+			.Where(x => !groupedNames.Contains(x.Name))
+			.ToList();
+
+		var ungroupedValues = ungrouped
+			.Where(x => x.Type is { Kind: "literal" })
+			.ToList();
+
+		AppendLine(builder, "### Constants left ungrouped");
+		AppendLine(builder);
+		AppendLine(builder, $"{ungrouped.Count} of the {_ir.Constants.Count} exported constants belong to no alias, so no enum claims them. Grouping them");
+		AppendLine(builder, "would mean inventing a set three.js never declared, and an enum is a promise that its values are");
+		AppendLine(builder, "exhaustive and mutually exclusive — a promise only the upstream alias is in a position to make.");
+		AppendLine(builder);
+		AppendLine(builder, $"Most are not value sets at all: only {ungroupedValues.Count} of the {ungrouped.Count} are a literal. The rest are namespace objects");
+		AppendLine(builder, "(`MathUtils`, `ShaderChunk`, `UniformsLib`, `Cache`), which no grouping rule would have reached.");
+		AppendLine(builder);
+		if (ungrouped.Count == 0)
+		{
+			AppendLine(builder, "None.");
+			AppendLine(builder);
+			return;
+		}
+
+		AppendLine(builder, $"<details><summary>Every ungrouped constant ({ungrouped.Count})</summary>");
+		AppendLine(builder);
+		AppendLine(builder, "| constant | value | file |");
+		AppendLine(builder, "|---|---|---|");
+		foreach (var constant in ungrouped)
+		{
+			// The declared text is printed only for literals. Several of these constants are whole
+			// namespace objects whose type text runs to four thousand characters of inline members,
+			// which would drown the table without saying anything a reader needs.
+			var value = constant.Type is { Kind: "literal", Text.Length: > 0 }
+				? $"`{constant.Type.Text}`"
+				: $"not a literal — a `{constant.Type?.Kind ?? "untyped"}` type";
+
+			AppendLine(builder, $"| `{constant.Name}` | {value} | `{constant.File}` |");
+		}
+
+		AppendLine(builder);
+		AppendLine(builder, "</details>");
+		AppendLine(builder);
+	}
+
 	private void AppendHazards(StringBuilder builder)
 	{
 		var withHazards = EmittableClasses
@@ -466,17 +549,20 @@ internal sealed class CoverageReport
 
 		var hazardCount = withHazards.Sum(x => x.Constructor!.MiddlePositionUnspecifiedParameters.Count);
 
-		AppendLine(builder, "## ⚠️ Unspecified arguments in a middle position");
+		AppendLine(builder, "## Unspecified arguments in a middle position");
 		AppendLine(builder);
 		AppendLine(builder, "An optional parameter whose three.js default the types do not state is emitted as `T? x = null`,");
-		AppendLine(builder, "meaning \"not supplied\". `ConstructorArgs` trims trailing nulls so three.js applies its own default.");
+		AppendLine(builder, "meaning \"not supplied\". `ConstructorArgs` trims the unsupplied **tail** off the argument list, so");
+		AppendLine(builder, "three.js applies its own default to it.");
 		AppendLine(builder);
-		AppendLine(builder, "Trimming only reaches the **end** of the argument list. A JSON `null` is not JavaScript's `undefined`:");
-		AppendLine(builder, "`function f(a = 1) {}` called as `f(null)` yields `null`, not `1`. So a caller who leaves an unspecified");
-		AppendLine(builder, "parameter out **and** supplies a later one sends a null into a middle position and defeats the upstream");
-		AppendLine(builder, "default. Closing that needs a wire-level \"unspecified\" sentinel the applier converts to `undefined`.");
+		AppendLine(builder, "Trimming only reaches the end. A JSON `null` is not JavaScript's `undefined`: `function f(a = 1) {}`");
+		AppendLine(builder, "called as `f(null)` yields `null`, not `1`. So an unspecified parameter with a supplied one after it");
+		AppendLine(builder, "cannot be trimmed and must not be sent as null either — it travels as the `$undef` sentinel");
+		AppendLine(builder, "(`ThreeWireFormat.UndefinedKey`), which `three-interop.js` decodes to a real `undefined`. The");
+		AppendLine(builder, "round trip is pinned end to end by `tests/wire-format.test.mjs` against the vendored three.js.");
 		AppendLine(builder);
-		AppendLine(builder, $"{withHazards.Count} emittable classes carry {hazardCount} such parameters.");
+		AppendLine(builder, $"{withHazards.Count} emittable classes carry {hazardCount} such parameters. They are the measure of how much");
+		AppendLine(builder, "of the emitted surface that one wire feature holds up.");
 		AppendLine(builder);
 		if (withHazards.Count == 0)
 		{
@@ -487,7 +573,7 @@ internal sealed class CoverageReport
 
 		AppendLine(builder, "<details><summary>Every affected class</summary>");
 		AppendLine(builder);
-		AppendLine(builder, "| class | parameters that can be sent as null in a middle position |");
+		AppendLine(builder, "| class | parameters that depend on the `$undef` sentinel |");
 		AppendLine(builder, "|---|---|");
 		foreach (var result in withHazards)
 		{

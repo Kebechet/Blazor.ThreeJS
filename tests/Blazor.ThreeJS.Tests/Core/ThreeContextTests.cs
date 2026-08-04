@@ -90,4 +90,43 @@ public class ThreeContextTests
 		// Assert
 		exception.ShouldBeNull();
 	}
+
+	[Fact]
+	public async Task ThreeContext_SetActiveSceneWhenCircuitDisconnected_DoesNotThrow()
+	{
+		// Arrange
+		var context = new ThreeContext(new ThrowingJsObjectReference(), contextId: 1);
+
+		// Act
+		var exception = await Record.ExceptionAsync(() => context.SetActiveSceneAsync(1, 2));
+
+		// Assert
+		exception.ShouldBeNull();
+	}
+}
+
+/// <summary>
+/// Fake <see cref="IJSObjectReference"/> that fails every call with <see cref="JSDisconnectedException"/>.
+/// NSubstitute cannot stand in for this: the interop path under test goes through
+/// <c>InvokeVoidAsync</c>, which closes over <c>Microsoft.JSInterop.Infrastructure.IJSVoidResult</c> —
+/// a type internal to the JSInterop assembly, so a substitute cannot be configured against that
+/// generic instantiation from this test project. Implementing the interface directly sidesteps the
+/// problem, since the generic type argument never has to be named by the caller.
+/// </summary>
+internal sealed class ThrowingJsObjectReference : IJSObjectReference
+{
+	public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
+	{
+		return ValueTask.FromException<TValue>(new JSDisconnectedException("Circuit disconnected."));
+	}
+
+	public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+	{
+		return ValueTask.FromException<TValue>(new JSDisconnectedException("Circuit disconnected."));
+	}
+
+	public ValueTask DisposeAsync()
+	{
+		return ValueTask.CompletedTask;
+	}
 }

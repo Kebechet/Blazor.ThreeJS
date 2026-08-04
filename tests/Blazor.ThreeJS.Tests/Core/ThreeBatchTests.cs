@@ -90,4 +90,61 @@ public class ThreeBatchTests
 		// Assert
 		ops.Count.ShouldBe(2);
 	}
+
+	[Fact]
+	public void ThreeBatch_SetCallSetOnSameHandle_DoesNotCoalesceAcrossTheCall()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+
+		// Act
+		batch.Set(1, "position", "A");
+		batch.Call(1, "lookAt", [1f]);
+		batch.Set(1, "position", "B");
+		var ops = batch.Drain();
+
+		// Assert
+		ops.Count.ShouldBe(3);
+		ops.First().Kind.ShouldBe(ThreeOpKind.Set);
+		ops.First().Value.ShouldBe("A");
+		ops.ElementAt(1).Kind.ShouldBe(ThreeOpKind.Call);
+		ops.Last().Kind.ShouldBe(ThreeOpKind.Set);
+		ops.Last().Value.ShouldBe("B");
+	}
+
+	[Fact]
+	public void ThreeBatch_SetCallSetOnDifferentHandles_StillCoalesces()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+
+		// Act
+		batch.Set(1, "position", "A");
+		batch.Call(2, "lookAt", [1f]);
+		batch.Set(1, "position", "B");
+		var ops = batch.Drain();
+
+		// Assert
+		ops.Count.ShouldBe(2);
+		ops.Single(x => x.Kind == ThreeOpKind.Set).Value.ShouldBe("B");
+	}
+
+	[Fact]
+	public void ThreeBatch_SetTwiceThenCall_CoalescesTheSetsBeforeTheCall()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+
+		// Act
+		batch.Set(1, "position", "A");
+		batch.Set(1, "position", "B");
+		batch.Call(1, "lookAt", [1f]);
+		var ops = batch.Drain();
+
+		// Assert
+		ops.Count.ShouldBe(2);
+		ops.First().Kind.ShouldBe(ThreeOpKind.Set);
+		ops.First().Value.ShouldBe("B");
+		ops.Last().Kind.ShouldBe(ThreeOpKind.Call);
+	}
 }

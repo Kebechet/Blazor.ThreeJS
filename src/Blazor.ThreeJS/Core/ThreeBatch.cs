@@ -37,6 +37,10 @@ public sealed class ThreeBatch
 	/// Records a property write on <paramref name="handle"/>. A second call for the same
 	/// (<paramref name="handle"/>, <paramref name="member"/>) pair replaces the earlier op in
 	/// place instead of appending, so repeated writes in one tick still cost a single op.
+	/// Coalescing only holds within a run of writes: recording a <see cref="Call"/> or
+	/// <see cref="Dispose"/> on this handle acts as a barrier, because a call can observe the
+	/// object's property state at the point it runs — a <c>Set</c> recorded afterward always
+	/// appends a new op instead of overwriting a value the call may already have read.
 	/// </summary>
 	/// <param name="handle">Handle of the object to write to.</param>
 	/// <param name="member">Name of the property being written.</param>
@@ -69,12 +73,16 @@ public sealed class ThreeBatch
 	/// <summary>
 	/// Records a method invocation on <paramref name="handle"/>. Unlike <see cref="Set"/>, calls are
 	/// never coalesced — two identical calls are two ops, since a method call is not idempotent.
+	/// Also acts as a coalescing barrier for this handle: it leaves any <c>Set</c> op already
+	/// recorded untouched, but drops the coalescing entry so a <c>Set</c> recorded afterward on the
+	/// same handle appends a new op instead of overwriting a value this call may have observed.
 	/// </summary>
 	/// <param name="handle">Handle of the object to invoke the method on.</param>
 	/// <param name="member">Name of the method to invoke.</param>
 	/// <param name="args">Positional arguments to pass to the method.</param>
 	public void Call(int handle, string member, object?[] args)
 	{
+		InvalidateSetCoalescing(handle);
 		_ops.Add(new ThreeOp
 		{
 			Kind = ThreeOpKind.Call,
@@ -115,11 +123,14 @@ public sealed class ThreeBatch
 	}
 
 	/// <summary>
-	/// Records releasing an object and its JavaScript-side resources.
+	/// Records releasing an object and its JavaScript-side resources. Also acts as a coalescing
+	/// barrier for this handle, for the same reason as <see cref="Call"/>: coalescing a later
+	/// <c>Set</c> back into a pre-dispose op would be meaningless once the object is gone.
 	/// </summary>
 	/// <param name="handle">Handle of the object to dispose.</param>
 	public void Dispose(int handle)
 	{
+		InvalidateSetCoalescing(handle);
 		_ops.Add(new ThreeOp
 		{
 			Kind = ThreeOpKind.Dispose,
@@ -138,5 +149,23 @@ public sealed class ThreeBatch
 		_ops.Clear();
 		_setIndexesByTarget.Clear();
 		return drained;
+	}
+
+	/// <summary>
+	/// Drops any pending <c>Set</c> coalescing entries for <paramref name="handle"/>. Does not
+	/// touch already-recorded ops — only stops a future <c>Set</c> on this handle from overwriting
+	/// one of them.
+	/// </summary>
+	/// <param name="handle">Handle whose coalescing entries should be invalidated.</param>
+	private void InvalidateSetCoalescing(int handle)
+	{
+		var staleTargets = _setIndexesByTarget.Keys
+			.Where(x => x.Handle == handle)
+			.ToList();
+
+		foreach (var staleTarget in staleTargets)
+		{
+			_setIndexesByTarget.Remove(staleTarget);
+		}
 	}
 }

@@ -47,10 +47,10 @@ public enum ThreeOpKind : byte
 	/// <summary>Instantiate a new three.js object and register it under a handle.</summary>
 	Create = 0,
 
-	/// <summary>Write a property on an existing object. Coalesces per (handle, member) within a batch.</summary>
+	/// <summary>Write a property on an existing object. Coalesces per (handle, member) within a batch, unless a Call or Dispose on the same handle was recorded since the last Set on that handle.</summary>
 	Set = 1,
 
-	/// <summary>Invoke a method on an existing object. Never coalesces.</summary>
+	/// <summary>Invoke a method on an existing object. Never coalesces, and acts as a barrier that stops a later Set on the same handle from coalescing into an earlier one.</summary>
 	Call = 2,
 
 	/// <summary>Attach a child object to a parent object.</summary>

@@ -52,7 +52,11 @@ public abstract class ThreeObject
 	/// <param name="args">Positional arguments to pass to the method.</param>
 	protected void RecordCall(string member, params object?[] args)
 	{
-		Batch?.Call(Handle, member, args.Select(ThreeValue.Encode).ToArray());
+		var encodedArgs = args
+			.Select(ThreeValue.Encode)
+			.ToArray();
+
+		Batch?.Call(Handle, member, encodedArgs);
 	}
 
 	/// <summary>
@@ -62,7 +66,11 @@ public abstract class ThreeObject
 	/// <param name="batch">Batch to record the create op into.</param>
 	internal virtual void EmitCreate(ThreeBatch batch)
 	{
-		batch.Create(Handle, ThreeTypeName, ConstructorArgs.Select(ThreeValue.Encode).ToArray());
+		var encodedConstructorArgs = ConstructorArgs
+			.Select(ThreeValue.Encode)
+			.ToArray();
+
+		batch.Create(Handle, ThreeTypeName, encodedConstructorArgs);
 	}
 
 	/// <summary>Positional arguments to pass to the three.js constructor when this object is created.</summary>

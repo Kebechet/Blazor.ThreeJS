@@ -77,19 +77,19 @@ public abstract class Object3D : ThreeObject
 	/// Attaches this object and its entire subtree to a batch: emits the create op, replays every
 	/// property already set on this object, then attaches each child in turn. Idempotent — a second
 	/// call on an already-attached object is a no-op. Public because a caller outside this assembly
-	/// (e.g. attaching the root <see cref="Scene"/> to a <see cref="Core.ThreeContext"/>) needs to
-	/// call it directly.
+	/// (e.g. attaching the root <see cref="Scene"/> to a <see cref="ThreeContext"/>) needs to call it
+	/// directly. Overrides <see cref="ThreeObject.AttachTo"/> to layer transform replay and child
+	/// attachment on top of the base create-op guard.
 	/// </summary>
 	/// <param name="batch">The batch to attach this object to.</param>
-	public void AttachTo(ThreeBatch batch)
+	public override void AttachTo(ThreeBatch batch)
 	{
 		if (Batch is not null)
 		{
 			return;
 		}
 
-		Batch = batch;
-		EmitCreate(batch);
+		base.AttachTo(batch);
 		EmitState(batch);
 
 		foreach (var child in _children)

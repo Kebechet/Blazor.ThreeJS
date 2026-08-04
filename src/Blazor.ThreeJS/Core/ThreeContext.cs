@@ -39,6 +39,7 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// <summary>
 	/// Drains <see cref="Batch"/> and sends the pending ops to the JavaScript applier in a single
 	/// interop call. A no-op when nothing is pending. Raises <see cref="OnError"/> if any op failed.
+	/// Silently no-ops if the circuit has already disconnected.
 	/// </summary>
 	public async Task FlushAsync()
 	{
@@ -48,10 +49,19 @@ public sealed class ThreeContext : IAsyncDisposable
 		}
 
 		var ops = Batch.Drain();
-		var errors = await _module.InvokeAsync<List<ThreeError>>("applyBatch", _contextId, ops);
-		if (errors.Any())
+		try
 		{
-			OnError?.Invoke(errors);
+			var errors = await _module.InvokeAsync<List<ThreeError>>("applyBatch", _contextId, ops);
+			if (errors.Any())
+			{
+				OnError?.Invoke(errors);
+			}
+		}
+		catch (JSDisconnectedException)
+		{
+			// A disconnected circuit is not recoverable and not an application bug; nothing pending
+			// could have been delivered anyway. Only this exception type is swallowed — a genuine
+			// applier error still surfaces through OnError.
 		}
 	}
 
@@ -68,11 +78,19 @@ public sealed class ThreeContext : IAsyncDisposable
 
 	/// <summary>
 	/// Stops the render loop, disposes every JavaScript-side three.js object owned by this context,
-	/// and releases the module reference.
+	/// and releases the module reference. Disposal during a Blazor Server circuit disconnect — the
+	/// standard teardown path there — is not an error and completes without throwing.
 	/// </summary>
 	public async ValueTask DisposeAsync()
 	{
-		await _module.InvokeVoidAsync("disposeContext", _contextId);
-		await _module.DisposeAsync();
+		try
+		{
+			await _module.InvokeVoidAsync("disposeContext", _contextId);
+			await _module.DisposeAsync();
+		}
+		catch (JSDisconnectedException)
+		{
+			// The JS side is already gone; there is nothing left to dispose and nothing recoverable.
+		}
 	}
 }

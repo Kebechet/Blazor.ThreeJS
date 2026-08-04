@@ -34,6 +34,26 @@ public abstract class ThreeObject
 	}
 
 	/// <summary>
+	/// Attaches this object to a batch: assigns <see cref="Batch"/> and emits the create op.
+	/// Idempotent — calling this a second time on an already-attached object is a no-op, which is
+	/// what lets two objects (e.g. two meshes) share the same geometry or material instance without
+	/// emitting a duplicate create for it. Virtual so a subclass with its own attachment concerns
+	/// (replaying transform state, attaching children) can extend it while this attach-once guard
+	/// stays the single source of truth for whether the create op was already emitted.
+	/// </summary>
+	/// <param name="batch">The batch to attach this object to.</param>
+	public virtual void AttachTo(ThreeBatch batch)
+	{
+		if (Batch is not null)
+		{
+			return;
+		}
+
+		Batch = batch;
+		EmitCreate(batch);
+	}
+
+	/// <summary>
 	/// Records a property write on this object into <see cref="Batch"/>, encoding the value first.
 	/// A no-op while <see cref="Batch"/> is unset.
 	/// </summary>

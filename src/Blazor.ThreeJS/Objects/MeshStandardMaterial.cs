@@ -31,8 +31,9 @@ public sealed class MeshStandardMaterial : ThreeObject
 	}
 
 	/// <summary>
-	/// Gets or sets how rough the surface appears, from 0 (mirror-like) to 1 (fully diffuse).
-	/// Setting this property records a property write once <see cref="ThreeObject.Batch"/> is attached.
+	/// Gets or sets how rough the surface appears, from 0 (mirror-like) to 1 (fully diffuse). Setting
+	/// this property records a property write once this material is attached to a batch — directly,
+	/// or indirectly when the owning <see cref="Mesh"/> is attached.
 	/// </summary>
 	public float Roughness
 	{
@@ -46,7 +47,8 @@ public sealed class MeshStandardMaterial : ThreeObject
 
 	/// <summary>
 	/// Gets or sets how metallic the surface appears, from 0 (dielectric) to 1 (fully metallic).
-	/// Setting this property records a property write once <see cref="ThreeObject.Batch"/> is attached.
+	/// Setting this property records a property write once this material is attached to a batch —
+	/// directly, or indirectly when the owning <see cref="Mesh"/> is attached.
 	/// </summary>
 	public float Metalness
 	{

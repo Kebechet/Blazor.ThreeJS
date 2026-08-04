@@ -31,14 +31,18 @@ public sealed class Mesh : Object3D
 	}
 
 	/// <summary>
-	/// Emits the geometry's and material's own create ops first, then this mesh's create op
-	/// referencing both by handle, so the applier never constructs a mesh before its dependencies exist.
+	/// Attaches the geometry and material first, then emits this mesh's create op referencing both
+	/// by handle, so the applier never constructs a mesh before its dependencies exist. Attaching
+	/// rather than just emitting is what lets the geometry or material be shared with another mesh:
+	/// <see cref="ThreeObject.AttachTo"/> is idempotent, so a dependency already attached by an
+	/// earlier mesh is not created twice, and either dependency keeps recording further property
+	/// writes after this point instead of silently discarding them.
 	/// </summary>
 	/// <param name="batch">Batch to record the create ops into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
 	{
-		_geometry.EmitCreate(batch);
-		_material.EmitCreate(batch);
+		_geometry.AttachTo(batch);
+		_material.AttachTo(batch);
 		batch.Create(Handle, ThreeTypeName, [ThreeValue.Encode(_geometry), ThreeValue.Encode(_material)]);
 	}
 }

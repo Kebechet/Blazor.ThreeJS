@@ -14,6 +14,24 @@ internal sealed class IrRoot
 
 	/// <summary>Every class in scope. Not unique by name — key by <c>Name</c> plus <c>File</c>.</summary>
 	public List<IrClass> Classes { get; set; } = [];
+
+	/// <summary>Declared interfaces, most of them the <c>*Parameters</c> / <c>*Options</c> bags a constructor takes.</summary>
+	public List<IrInterface> Interfaces { get; set; } = [];
+
+	/// <summary>Real TypeScript <c>enum</c> declarations, as opposed to the loose constants below.</summary>
+	public List<IrEnum> Enums { get; set; } = [];
+
+	/// <summary>Loose <c>export const X: &lt;literal&gt;</c> declarations, the raw material of the generated enums.</summary>
+	public List<IrConstant> Constants { get; set; } = [];
+
+	/// <summary>Type aliases; the ones carrying a <c>constantGroup</c> are what turns loose constants into enums.</summary>
+	public List<IrTypeAlias> TypeAliases { get; set; } = [];
+
+	/// <summary>
+	/// <c>declare module "…"</c> declaration merging. A class's real member set is its own entry plus
+	/// any augmentation targeting it, so these are merged rather than ignored.
+	/// </summary>
+	public List<IrModuleAugmentation> ModuleAugmentations { get; set; } = [];
 }
 
 /// <summary>Provenance block of the IR.</summary>
@@ -48,6 +66,13 @@ internal sealed class IrClass
 	/// <summary>True when the class cannot be instantiated directly.</summary>
 	public bool IsAbstract { get; set; }
 
+	/// <summary>
+	/// Declared type parameters. Erased for v1: a reference to one resolves to its default, failing
+	/// that its constraint, so <c>Mesh&lt;TGeometry&gt;</c> maps as if it were <c>Mesh</c> taking a
+	/// <c>BufferGeometry</c>.
+	/// </summary>
+	public List<IrTypeParameter> TypeParameters { get; set; } = [];
+
 	/// <summary>Base class, absent for a root class.</summary>
 	public IrType? Extends { get; set; }
 
@@ -72,6 +97,9 @@ internal sealed class IrSignature
 
 	/// <summary>Return type; absent on a constructor.</summary>
 	public IrType? ReturnType { get; set; }
+
+	/// <summary><c>float</c> or <c>integer</c> when the <c>@returns</c> text says so; absent means unspecified.</summary>
+	public string? ReturnNumericKind { get; set; }
 
 	/// <summary>JSDoc attached to this signature.</summary>
 	public IrDoc? Doc { get; set; }
@@ -126,6 +154,15 @@ internal sealed class IrProperty
 	/// <summary><c>float</c> or <c>integer</c> when the JSDoc says so; absent means unspecified.</summary>
 	public string? NumericKind { get; set; }
 
+	/// <summary>Documented default, verbatim from the JSDoc, as source text.</summary>
+	public string? DefaultValue { get; set; }
+
+	/// <summary>True when the property is declared <c>?</c>.</summary>
+	public bool IsOptional { get; set; }
+
+	/// <summary>True for an abstract member, which has no implementation to mirror.</summary>
+	public bool IsAbstract { get; set; }
+
 	/// <summary>JSDoc attached to the property.</summary>
 	public IrDoc? Doc { get; set; }
 }
@@ -141,6 +178,9 @@ internal sealed class IrMethod
 
 	/// <summary><c>protected</c> or <c>private</c>; absent means public.</summary>
 	public string? Visibility { get; set; }
+
+	/// <summary>True for an abstract member, which has no implementation to mirror.</summary>
+	public bool IsAbstract { get; set; }
 
 	/// <summary>Overloads in declaration order.</summary>
 	public List<IrSignature> Overloads { get; set; } = [];
@@ -158,14 +198,139 @@ internal sealed class IrType
 	/// <summary>Name of a <c>primitive</c> or <c>reference</c> node.</summary>
 	public string? Name { get; set; }
 
+	/// <summary><c>string</c>, <c>number</c>, <c>boolean</c> or <c>other</c> on a <c>literal</c> node.</summary>
+	public string? LiteralKind { get; set; }
+
+	/// <summary>Value of a <c>literal</c> node.</summary>
+	public System.Text.Json.JsonElement? Value { get; set; }
+
 	/// <summary>Element type of an <c>array</c>, <c>optional</c> or <c>rest</c> node.</summary>
 	public IrType? Element { get; set; }
 
 	/// <summary>Members of a <c>union</c> or <c>intersection</c> node.</summary>
 	public List<IrType> Types { get; set; } = [];
 
+	/// <summary>Members of a <c>tuple</c> node.</summary>
+	public List<IrType> Elements { get; set; } = [];
+
+	/// <summary>Type arguments of a <c>reference</c> node, e.g. the <c>Vector3</c> in <c>Curve&lt;Vector3&gt;</c>.</summary>
+	public List<IrType> TypeArguments { get; set; } = [];
+
 	/// <summary>What a <c>reference</c> name resolves to, and where it lives.</summary>
 	public IrTypeTarget? Target { get; set; }
+}
+
+/// <summary>One declared type parameter of a class, interface or signature.</summary>
+internal sealed class IrTypeParameter
+{
+	/// <summary>Parameter name, e.g. <c>TGeometry</c>.</summary>
+	public required string Name { get; set; }
+
+	/// <summary>The <c>extends</c> bound, when one is declared.</summary>
+	public IrType? Constraint { get; set; }
+
+	/// <summary>The <c>=</c> default, when one is declared. Preferred over the constraint when erasing.</summary>
+	public IrType? Default { get; set; }
+}
+
+/// <summary>A declared interface. Only its identity is read; its members are not mirrored.</summary>
+internal sealed class IrInterface
+{
+	/// <summary>Declared interface name.</summary>
+	public required string Name { get; set; }
+
+	/// <summary>POSIX path of the declaring file, relative to the types package root.</summary>
+	public required string File { get; set; }
+}
+
+/// <summary>A real TypeScript <c>enum</c> declaration.</summary>
+internal sealed class IrEnum
+{
+	/// <summary>Declared enum name.</summary>
+	public required string Name { get; set; }
+
+	/// <summary>POSIX path of the declaring file, relative to the types package root.</summary>
+	public required string File { get; set; }
+
+	/// <summary>Members in declaration order.</summary>
+	public List<IrEnumMember> Members { get; set; } = [];
+}
+
+/// <summary>One member of a real TypeScript <c>enum</c>.</summary>
+internal sealed class IrEnumMember
+{
+	/// <summary>Member name.</summary>
+	public required string Name { get; set; }
+
+	/// <summary>Checker-computed constant value: a number or a string.</summary>
+	public System.Text.Json.JsonElement? Value { get; set; }
+
+	/// <summary>JSDoc attached to the member.</summary>
+	public IrDoc? Doc { get; set; }
+}
+
+/// <summary>A loose <c>export const X: &lt;literal&gt;</c> declaration.</summary>
+internal sealed class IrConstant
+{
+	/// <summary>Constant name, e.g. <c>FrontSide</c>.</summary>
+	public required string Name { get; set; }
+
+	/// <summary>POSIX path of the declaring file, relative to the types package root.</summary>
+	public required string File { get; set; }
+
+	/// <summary>Declared type, normally a literal node carrying the value.</summary>
+	public IrType? Type { get; set; }
+
+	/// <summary>JSDoc attached to the constant.</summary>
+	public IrDoc? Doc { get; set; }
+}
+
+/// <summary>A type alias. The ones with a <see cref="ConstantGroup"/> are the enum candidates.</summary>
+internal sealed class IrTypeAlias
+{
+	/// <summary>Alias name, e.g. <c>Side</c>.</summary>
+	public required string Name { get; set; }
+
+	/// <summary>POSIX path of the declaring file, relative to the types package root.</summary>
+	public required string File { get; set; }
+
+	/// <summary>
+	/// Names of the in-scope constants the alias unions, present only when every member of the union
+	/// is a <c>typeof</c> of one. This is the grouping signal for turning loose constants into enums.
+	/// </summary>
+	public List<string>? ConstantGroup { get; set; }
+
+	/// <summary>The aliased type.</summary>
+	public IrType? Type { get; set; }
+
+	/// <summary>JSDoc attached to the alias.</summary>
+	public IrDoc? Doc { get; set; }
+}
+
+/// <summary>One <c>declare module "…" { … }</c> block.</summary>
+internal sealed class IrModuleAugmentation
+{
+	/// <summary>File the augmentation is declared in.</summary>
+	public required string File { get; set; }
+
+	/// <summary>Where the augmented declaration lives, when the target resolved in scope.</summary>
+	public string? TargetFile { get; set; }
+
+	/// <summary>Declarations this block merges members into.</summary>
+	public List<IrAugmentedDeclaration> Augments { get; set; } = [];
+}
+
+/// <summary>One declaration a module augmentation merges members into.</summary>
+internal sealed class IrAugmentedDeclaration
+{
+	/// <summary>Name of the augmented class or interface.</summary>
+	public required string Name { get; set; }
+
+	/// <summary>Properties added by the augmentation.</summary>
+	public List<IrProperty> Properties { get; set; } = [];
+
+	/// <summary>Methods added by the augmentation.</summary>
+	public List<IrMethod> Methods { get; set; } = [];
 }
 
 /// <summary>Resolution result for a <c>reference</c> type node.</summary>

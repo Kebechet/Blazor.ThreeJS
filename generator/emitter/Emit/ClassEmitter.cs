@@ -1,6 +1,5 @@
-using System.Globalization;
-using System.Text.RegularExpressions;
 using Blazor.ThreeJS.Emitter.Ir;
+using Blazor.ThreeJS.Emitter.Map;
 
 namespace Blazor.ThreeJS.Emitter.Emit;
 
@@ -11,17 +10,24 @@ namespace Blazor.ThreeJS.Emitter.Emit;
 /// </summary>
 internal sealed class ClassEmitter
 {
-	private static readonly Regex _identifierPattern = new("^[A-Za-z_][A-Za-z0-9_]*$", RegexOptions.Compiled);
-
 	private readonly IrRoot _ir;
+	private readonly TypeMapper _mapper;
+	private readonly ConstructorMapper _constructorMapper;
+	private readonly MemberClassifier _classifier;
 	private readonly Dictionary<string, IrClass> _classesByName;
 	private readonly HashSet<string> _baseClassNames;
 
 	/// <summary>Builds an emitter over one IR snapshot.</summary>
 	/// <param name="ir">The parsed IR.</param>
-	public ClassEmitter(IrRoot ir)
+	/// <param name="mapper">Type mapper, already attached to the emission scope.</param>
+	/// <param name="constructorMapper">Constructor mapping, shared with the emission scope.</param>
+	/// <param name="classifier">Member classifier, so the audit and the coverage report cannot disagree.</param>
+	public ClassEmitter(IrRoot ir, TypeMapper mapper, ConstructorMapper constructorMapper, MemberClassifier classifier)
 	{
 		_ir = ir;
+		_mapper = mapper;
+		_constructorMapper = constructorMapper;
+		_classifier = classifier;
 		_classesByName = [];
 		foreach (var irClass in ir.Classes)
 		{
@@ -60,13 +66,23 @@ internal sealed class ClassEmitter
 	public EmittedFile Emit(IrClass irClass, EmissionAudit audit)
 	{
 		var threeTypeName = ResolveThreeTypeName(irClass);
-		var constructorParameters = ResolveConstructorParameters(irClass, threeTypeName, audit);
+		var constructor = ResolveConstructor(irClass, threeTypeName, audit);
+		var constructorParameters = constructor.Parameters;
 		var baseTypeName = ResolveBaseTypeName(irClass);
 
 		var writer = new CSharpWriter();
 		WriteFileHeader(writer);
 		writer.WriteLine();
 		writer.WriteLine($"using {EmitterConfig.CoreNamespace};");
+
+		// The hand-written math types live in their own namespace, so referencing one pulls in a second
+		// using. Emitted only when it is actually needed: an unused using is a warning under
+		// TreatWarningsAsErrors on a consumer that turns IDE0005 on.
+		if (constructorParameters.Any(x => x.Mapping.Kind == TypeMappingKind.HandWrittenMathType))
+		{
+			writer.WriteLine($"using {EmitterConfig.MathNamespace};");
+		}
+
 		writer.WriteLine();
 		writer.WriteLine($"namespace {EmitterConfig.GeneratedNamespace};");
 		writer.WriteLine();
@@ -98,7 +114,7 @@ internal sealed class ClassEmitter
 		if (constructorParameters.Count > 0)
 		{
 			writer.WriteLine();
-			WriteConstructorArgs(writer, threeTypeName, constructorParameters);
+			WriteConstructorArgs(writer, threeTypeName, constructor);
 		}
 
 		writer.Outdent();
@@ -121,7 +137,7 @@ internal sealed class ClassEmitter
 	/// </summary>
 	/// <param name="irClass">Class being emitted.</param>
 	/// <returns>C# base type name.</returns>
-	private string ResolveBaseTypeName(IrClass irClass)
+	public string ResolveBaseTypeName(IrClass irClass)
 	{
 		var currentBaseName = irClass.Extends?.Name;
 		while (currentBaseName is not null)
@@ -140,22 +156,23 @@ internal sealed class ClassEmitter
 	}
 
 	/// <summary>
-	/// Maps the three.js constructor signature onto C# parameters, refusing anything that would need
-	/// a guess.
+	/// Resolves the constructor through the shared <see cref="ConstructorMapper"/> and records every
+	/// numeric call and every dropped parameter, turning a refusal into the emitter's own exception so
+	/// the caller sees one failure mode.
 	/// </summary>
 	/// <param name="irClass">Class being emitted.</param>
 	/// <param name="threeTypeName">Export name, used in refusal messages.</param>
-	/// <param name="audit">Collector for numeric inferences.</param>
-	/// <returns>The resolved parameters, in three.js order.</returns>
+	/// <param name="audit">Collector for numeric inferences and dropped parameters.</param>
+	/// <returns>The resolved constructor.</returns>
 	/// <exception cref="UnsupportedMemberException">Thrown for a signature the emitter cannot mirror.</exception>
-	private static List<EmittedParameter> ResolveConstructorParameters(IrClass irClass, string threeTypeName, EmissionAudit audit)
+	private MappedConstructor ResolveConstructor(IrClass irClass, string threeTypeName, EmissionAudit audit)
 	{
 		if (!irClass.IsExported)
 		{
 			throw UnsupportedMemberException.For(threeTypeName, "the class is never exported, so it is not reachable on the THREE namespace the applier looks names up on");
 		}
 
-		if (!_identifierPattern.IsMatch(threeTypeName))
+		if (!CSharpIdentifier.IsValid(threeTypeName))
 		{
 			throw UnsupportedMemberException.For(threeTypeName, "the export name is not a usable C# identifier");
 		}
@@ -165,99 +182,26 @@ internal sealed class ClassEmitter
 			throw UnsupportedMemberException.For(threeTypeName, "the class is abstract, so it has no constructor to mirror");
 		}
 
-		if (irClass.Constructors.Count > 1)
+		var constructor = _constructorMapper.Map(irClass, _mapper);
+		if (!constructor.IsMapped)
 		{
-			throw UnsupportedMemberException.For(threeTypeName, $"{irClass.Constructors.Count} constructor overloads; C# overload emission is not implemented");
+			throw UnsupportedMemberException.For(threeTypeName, constructor.RefusalReason!);
 		}
 
-		if (irClass.Constructors.Count == 0)
+		foreach (var parameter in constructor.Parameters)
 		{
-			return [];
+			if (parameter.Mapping.Numeric is { } numeric)
+			{
+				audit.RecordNumeric(threeTypeName, irClass.File, parameter.ThreeName, numeric);
+			}
 		}
 
-		var parameters = new List<EmittedParameter>();
-		var hasSeenOptional = false;
-		foreach (var irParameter in irClass.Constructors[0].Parameters)
+		foreach (var droppedParameter in constructor.DroppedParameters)
 		{
-			if (irParameter.IsRest)
-			{
-				throw UnsupportedMemberException.For(threeTypeName, $"parameter '{irParameter.Name}' is a rest parameter");
-			}
-
-			if (irParameter.Type is not { Kind: "primitive", Name: "number" })
-			{
-				var typeText = irParameter.Type?.Text ?? "<missing>";
-				throw UnsupportedMemberException.For(threeTypeName, $"parameter '{irParameter.Name}' is typed '{typeText}', and only 'number' is mapped so far");
-			}
-
-			var resolution = NumericKindResolver.Resolve(irParameter.Name, irParameter.NumericKind);
-			audit.RecordNumeric(threeTypeName, irClass.File, irParameter.Name, resolution);
-
-			string? defaultLiteral = null;
-			if (irParameter.IsOptional)
-			{
-				if (irParameter.DefaultValue is null)
-				{
-					throw UnsupportedMemberException.For(
-						threeTypeName,
-						$"parameter '{irParameter.Name}' is optional but undocumented, so three.js's own default is unknown; " +
-						$"emitting a C# default would send a concrete value where JavaScript expects 'undefined'");
-				}
-
-				defaultLiteral = RenderDefaultLiteral(threeTypeName, irParameter.Name, irParameter.DefaultValue, resolution.CSharpTypeName);
-				hasSeenOptional = true;
-			}
-			else if (hasSeenOptional)
-			{
-				throw UnsupportedMemberException.For(threeTypeName, $"required parameter '{irParameter.Name}' follows an optional one, which C# forbids");
-			}
-
-			parameters.Add(new EmittedParameter
-			{
-				Name = ToCamelCase(irParameter.Name),
-				FieldName = "_" + ToCamelCase(irParameter.Name),
-				ThreeName = irParameter.Name,
-				CSharpTypeName = resolution.CSharpTypeName,
-				DefaultLiteral = defaultLiteral,
-				Documentation = irParameter.Doc
-			});
+			audit.RecordSkippedMember(threeTypeName, $"constructor parameter {droppedParameter.Name}", droppedParameter.Reason);
 		}
 
-		return parameters;
-	}
-
-	/// <summary>
-	/// Converts a documented JavaScript default into a C# literal of the resolved type. A default the
-	/// emitter cannot parse (<c>Math.PI</c>, an object literal) is a refusal rather than a guess.
-	/// </summary>
-	/// <param name="threeTypeName">Class being emitted, for the refusal message.</param>
-	/// <param name="parameterName">Parameter being defaulted.</param>
-	/// <param name="documentedDefault">Verbatim default text from the JSDoc.</param>
-	/// <param name="cSharpTypeName">Resolved C# type.</param>
-	/// <returns>The C# literal.</returns>
-	/// <exception cref="UnsupportedMemberException">Thrown when the default is not a plain number.</exception>
-	private static string RenderDefaultLiteral(string threeTypeName, string parameterName, string documentedDefault, string cSharpTypeName)
-	{
-		var text = documentedDefault.Trim().Trim('`');
-		switch (cSharpTypeName)
-		{
-			case NumericKindResolver.IntegerTypeName:
-				if (!long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var integerValue))
-				{
-					throw UnsupportedMemberException.For(threeTypeName, $"parameter '{parameterName}' documents the default '{documentedDefault}', which is not an integer literal");
-				}
-
-				return integerValue.ToString(CultureInfo.InvariantCulture);
-			case NumericKindResolver.FloatTypeName:
-				if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var floatValue))
-				{
-					throw UnsupportedMemberException.For(threeTypeName, $"parameter '{parameterName}' documents the default '{documentedDefault}', which is not a numeric literal");
-				}
-
-				return floatValue.ToString("R", CultureInfo.InvariantCulture) + "f";
-			default:
-				throw new NotImplementedException($"Unhandled C# numeric type '{cSharpTypeName}'.");
-		}
+		return constructor;
 	}
 
 	/// <summary>Writes the provenance header. See <see cref="WriteFileHeader"/> for why it is not an auto-generated marker.</summary>
@@ -312,7 +256,7 @@ internal sealed class ClassEmitter
 	/// <param name="irClass">Class being emitted.</param>
 	/// <param name="threeTypeName">Export name.</param>
 	/// <param name="parameters">Resolved parameters.</param>
-	private static void WriteConstructor(CSharpWriter writer, IrClass irClass, string threeTypeName, List<EmittedParameter> parameters)
+	private static void WriteConstructor(CSharpWriter writer, IrClass irClass, string threeTypeName, IReadOnlyList<MappedParameter> parameters)
 	{
 		var constructorSummary = irClass.Constructors.FirstOrDefault()?.Doc?.Summary is { Length: > 0 } rawSummary
 			? DocCommentEmitter.EnsureSentenceEnd(DocCommentEmitter.RenderInline(rawSummary))
@@ -331,8 +275,8 @@ internal sealed class ClassEmitter
 
 		var declaredParameters = parameters
 			.Select(x => x.DefaultLiteral is null
-				? $"{x.CSharpTypeName} {x.Name}"
-				: $"{x.CSharpTypeName} {x.Name} = {x.DefaultLiteral}")
+				? $"{x.CSharpTypeName} {x.DeclarationName}"
+				: $"{x.CSharpTypeName} {x.DeclarationName} = {x.DefaultLiteral}")
 			.ToList();
 
 		var singleLine = $"public {threeTypeName}({string.Join(", ", declaredParameters)})";
@@ -359,7 +303,7 @@ internal sealed class ClassEmitter
 		writer.Indent();
 		foreach (var parameter in parameters)
 		{
-			writer.WriteLine($"{parameter.FieldName} = {parameter.Name};");
+			writer.WriteLine($"{parameter.FieldName} = {parameter.DeclarationName};");
 		}
 
 		writer.Outdent();
@@ -384,18 +328,50 @@ internal sealed class ClassEmitter
 		writer.WriteLine("}");
 	}
 
-	/// <summary>Writes <c>ConstructorArgs</c>, forwarding the backing fields in three.js parameter order.</summary>
+	/// <summary>
+	/// Writes <c>ConstructorArgs</c>, forwarding the backing fields in three.js parameter order.
+	/// <para>
+	/// When any parameter is an unspecified nullable, the trailing nulls are trimmed off instead of
+	/// being sent. A JSON <c>null</c> is not JavaScript's <c>undefined</c>: <c>f(a = 1)</c> called as
+	/// <c>f(null)</c> yields <c>null</c>, not <c>1</c>, so sending the null would overwrite three.js's
+	/// own default with it. Shortening the argument list is the only way to say "not supplied".
+	/// </para>
+	/// </summary>
 	/// <param name="writer">Destination.</param>
 	/// <param name="threeTypeName">Export name.</param>
-	/// <param name="parameters">Resolved parameters.</param>
-	private static void WriteConstructorArgs(CSharpWriter writer, string threeTypeName, List<EmittedParameter> parameters)
+	/// <param name="constructor">Resolved constructor.</param>
+	private static void WriteConstructorArgs(CSharpWriter writer, string threeTypeName, MappedConstructor constructor)
 	{
+		var parameters = constructor.Parameters;
 		var parameterList = string.Join(", ", parameters.Select(x => x.ThreeName));
 		DocCommentEmitter.WriteSummary(writer, $"Constructor arguments forwarded to <c>THREE.{threeTypeName}</c>: {parameterList}.");
 		writer.WriteLine("protected override object?[] ConstructorArgs");
 		writer.WriteLine("{");
 		writer.Indent();
-		writer.WriteLine($"get {{ return [{string.Join(", ", parameters.Select(x => x.FieldName))}]; }}");
+
+		if (!constructor.HasUnspecifiedNullable)
+		{
+			writer.WriteLine($"get {{ return [{string.Join(", ", parameters.Select(x => x.FieldName))}]; }}");
+			writer.Outdent();
+			writer.WriteLine("}");
+			return;
+		}
+
+		writer.WriteLine("get");
+		writer.WriteLine("{");
+		writer.Indent();
+		writer.WriteLine($"object?[] args = [{string.Join(", ", parameters.Select(x => x.FieldName))}];");
+		writer.WriteLine("var count = args.Length;");
+		writer.WriteLine("while (count > 0 && args[count - 1] is null)");
+		writer.WriteLine("{");
+		writer.Indent();
+		writer.WriteLine("count--;");
+		writer.Outdent();
+		writer.WriteLine("}");
+		writer.WriteLine();
+		writer.WriteLine("return args[..count];");
+		writer.Outdent();
+		writer.WriteLine("}");
 		writer.Outdent();
 		writer.WriteLine("}");
 	}
@@ -406,32 +382,22 @@ internal sealed class ClassEmitter
 	/// </summary>
 	/// <param name="irClass">Class being emitted.</param>
 	/// <param name="audit">Collector.</param>
-	private static void RecordSkippedMembers(IrClass irClass, EmissionAudit audit)
+	private void RecordSkippedMembers(IrClass irClass, EmissionAudit audit)
 	{
-		var threeTypeName = irClass.ExportName ?? irClass.Name;
-		foreach (var property in irClass.Properties)
+		var threeTypeName = ResolveThreeTypeName(irClass);
+		foreach (var member in _classifier.Classify(irClass))
 		{
-			var reason = property switch
+			var kind = member.MemberKind == ClassifiedMemberKind.Property ? "property" : "method";
+			var reason = member.Bucket switch
 			{
-				{ IsStatic: true } => "static",
-				{ IsReadonly: true } => "read-only in three.js, and reads never leave C#",
-				{ Visibility: not null } => $"visibility '{property.Visibility}'",
-				_ => "settable property emission is not implemented yet"
+				MemberBucket.Skipped => member.SkipReason!,
+				MemberBucket.MirroredState => "classified as mirrored state; property emission lands in a later task",
+				MemberBucket.Command => "classified as a command; method emission lands in a later task",
+				MemberBucket.AsyncQuery => "classified as an async query; the wire format has no read op yet",
+				_ => throw new NotImplementedException($"Unhandled {nameof(MemberBucket)} '{member.Bucket}'.")
 			};
 
-			audit.RecordSkippedMember(threeTypeName, $"property {property.Name}", reason);
-		}
-
-		foreach (var method in irClass.Methods)
-		{
-			var reason = method switch
-			{
-				{ IsStatic: true } => "static",
-				{ Visibility: not null } => $"visibility '{method.Visibility}'",
-				_ => "method emission is not implemented yet"
-			};
-
-			audit.RecordSkippedMember(threeTypeName, $"method {method.Name}", reason);
+			audit.RecordSkippedMember(threeTypeName, $"{kind} {member.MemberName}", reason);
 		}
 	}
 
@@ -453,40 +419,6 @@ internal sealed class ClassEmitter
 		return irClass.Name;
 	}
 
-	/// <summary>Lower-cases the first character so a three.js parameter name reads as a C# parameter.</summary>
-	/// <param name="name">Three.js parameter name.</param>
-	/// <returns>The camelCased name.</returns>
-	private static string ToCamelCase(string name)
-	{
-		if (name.Length == 0 || char.IsLower(name[0]))
-		{
-			return name;
-		}
-
-		return char.ToLowerInvariant(name[0]) + name[1..];
-	}
-}
-
-/// <summary>One constructor parameter, resolved from the IR into C# terms.</summary>
-internal sealed class EmittedParameter
-{
-	/// <summary>C# parameter name.</summary>
-	public required string Name { get; init; }
-
-	/// <summary>Backing field name, underscore-prefixed.</summary>
-	public required string FieldName { get; init; }
-
-	/// <summary>Original three.js parameter name, used in documentation.</summary>
-	public required string ThreeName { get; init; }
-
-	/// <summary>Resolved C# type.</summary>
-	public required string CSharpTypeName { get; init; }
-
-	/// <summary>C# default literal, or <see langword="null"/> for a required parameter.</summary>
-	public string? DefaultLiteral { get; init; }
-
-	/// <summary>Raw JSDoc text for this parameter.</summary>
-	public string? Documentation { get; init; }
 }
 
 /// <summary>A generated file and where it belongs in the repository.</summary>

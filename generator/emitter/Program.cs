@@ -3,13 +3,16 @@ using System.Text.Json;
 using Blazor.ThreeJS.Emitter;
 using Blazor.ThreeJS.Emitter.Emit;
 using Blazor.ThreeJS.Emitter.Ir;
+using Blazor.ThreeJS.Emitter.Map;
 
 var mode = args.FirstOrDefault() ?? "--write";
-if (mode is not ("--write" or "--check"))
+if (mode is not ("--write" or "--check" or "--project"))
 {
-	Console.Error.WriteLine("Usage: dotnet run --project generator/emitter -- [--write|--check]");
-	Console.Error.WriteLine("  --write  regenerate the committed output (default)");
-	Console.Error.WriteLine("  --check  regenerate in memory and fail if it differs from the committed output");
+	Console.Error.WriteLine("Usage: dotnet run --project generator/emitter -- [--write|--check|--project <dir>]");
+	Console.Error.WriteLine("  --write        regenerate the committed output (default)");
+	Console.Error.WriteLine("  --check        regenerate in memory and fail if it differs from the committed output");
+	Console.Error.WriteLine("  --project DIR  write every emittable class and enum to DIR, so the claim that they");
+	Console.Error.WriteLine("                 are emittable can be checked by compiling them. Never writes into the repository.");
 	return 2;
 }
 
@@ -24,7 +27,14 @@ if (!File.Exists(irPath))
 var ir = JsonSerializer.Deserialize<IrRoot>(File.ReadAllText(irPath), IrSerialization.Options)
 	?? throw new InvalidOperationException($"'{irPath}' did not deserialize into an IR root.");
 
-var emitter = new ClassEmitter(ir);
+var enums = new EnumCatalog(ir);
+var mapper = new TypeMapper(ir, enums);
+var constructorMapper = new ConstructorMapper();
+var scope = new EmissionScope(ir, mapper, constructorMapper);
+var classifier = new MemberClassifier(ir, mapper);
+var coverage = new CoverageReport(ir, scope, enums, mapper, classifier);
+
+var emitter = new ClassEmitter(ir, mapper, constructorMapper, classifier);
 var audit = new EmissionAudit();
 var emittedFiles = new List<EmittedFile>();
 
@@ -33,7 +43,7 @@ foreach (var className in EmitterConfig.EmittedClassNames)
 	emittedFiles.Add(emitter.Emit(emitter.GetClass(className), audit));
 }
 
-ProjectRefusalsOverWholeIr(ir, emitter, audit);
+ProjectNumericsOverEmittableClasses(coverage, emitter, audit);
 
 emittedFiles.Add(new EmittedFile
 {
@@ -41,36 +51,142 @@ emittedFiles.Add(new EmittedFile
 	Contents = audit.Render(EmitterConfig.EmittedClassNames, ir.Meta?.TypesVersion ?? "unknown")
 });
 
+emittedFiles.Add(new EmittedFile
+{
+	RelativePath = "generator/api-coverage.md",
+	Contents = coverage.RenderMarkdown()
+});
+
+emittedFiles.Add(new EmittedFile
+{
+	RelativePath = "generator/api-coverage.json",
+	Contents = coverage.RenderJson()
+});
+
+if (mode == "--project")
+{
+	var projectionDirectory = args.Skip(1).FirstOrDefault();
+	if (projectionDirectory is null)
+	{
+		Console.Error.WriteLine("--project needs an output directory.");
+		return 2;
+	}
+
+	// The projection is a throwaway corpus of roughly 200 files. Writing it into the repository would
+	// look exactly like a full run having landed, so the guard is enforced rather than documented.
+	var fullProjectionPath = Path.GetFullPath(projectionDirectory);
+	if (fullProjectionPath.StartsWith(Path.GetFullPath(repositoryRoot), StringComparison.OrdinalIgnoreCase))
+	{
+		Console.Error.WriteLine($"--project refuses to write inside the repository ('{fullProjectionPath}'). Point it at a scratch directory.");
+		return 2;
+	}
+
+	return WriteProjection(fullProjectionPath, coverage, emitter, enums, mapper);
+}
+
 return mode == "--check"
 	? Check(repositoryRoot, emittedFiles)
 	: Write(repositoryRoot, emittedFiles);
 
 /// <summary>
-/// Runs every class in the IR through the same constructor mapping, without emitting, so the audit
-/// can report what the full run is still blocked on instead of discovering it 309 files in.
+/// Emits every class the mapper calls emittable but the allowlist has not reached yet, purely to
+/// collect its numeric typing calls. Those are the decisions the upstream JSDoc did not make for us,
+/// and they are worth reviewing before a full run rather than 190 files in. Which classes are
+/// emittable is not decided here — <c>EmissionScope</c> owns that, and <c>api-coverage.md</c> reports it.
 /// </summary>
-static void ProjectRefusalsOverWholeIr(IrRoot ir, ClassEmitter emitter, EmissionAudit audit)
+static void ProjectNumericsOverEmittableClasses(CoverageReport coverage, ClassEmitter emitter, EmissionAudit audit)
 {
-	foreach (var irClass in ir.Classes)
+	foreach (var result in coverage.EmittableClasses)
 	{
-		if (EmitterConfig.EmittedClassNames.Contains(irClass.Name))
+		if (EmitterConfig.EmittedClassNames.Contains(result.Class.Name))
 		{
 			continue;
 		}
 
 		var projectionAudit = new EmissionAudit(NumericAuditScope.Projected);
-		try
+		emitter.Emit(result.Class, projectionAudit);
+		audit.AdoptNumerics(projectionAudit.NumericEntries);
+	}
+}
+
+/// <summary>
+/// Writes every class and enum the mapper says is emittable into a scratch directory, so "N classes
+/// are emittable" can be checked by compiling them rather than taken on trust. Classes whose names
+/// are already hand-written are left out: they would collide with the real ones in the same
+/// namespace, and the hand-written ones are what the projection compiles against.
+/// </summary>
+static int WriteProjection(
+	string outputDirectory,
+	CoverageReport coverage,
+	ClassEmitter emitter,
+	EnumCatalog enums,
+	TypeMapper mapper)
+{
+	Directory.CreateDirectory(outputDirectory);
+	foreach (var staleFile in Directory.EnumerateFiles(outputDirectory, "*.cs"))
+	{
+		File.Delete(staleFile);
+	}
+
+	var written = 0;
+	var failed = 0;
+	var sealedBaseCollisions = new List<string>();
+	foreach (var result in coverage.EmittableClasses)
+	{
+		if (EmitterConfig.ExistingCSharpTypeNames.Contains(result.Class.Name))
 		{
-			emitter.Emit(irClass, projectionAudit);
-		}
-		catch (UnsupportedMemberException exception)
-		{
-			audit.RecordRefusedClass(irClass.Name, irClass.File, exception.Reason);
 			continue;
 		}
 
-		audit.AdoptNumerics(projectionAudit.NumericEntries);
+		try
+		{
+			var emittedFile = emitter.Emit(result.Class, new EmissionAudit(NumericAuditScope.Projected));
+
+			// A generated class whose nearest mirrored ancestor is one of Plan 1's sealed hand-written
+			// leaves cannot compile alongside them. That is a property of the hand-written types, not of
+			// the mapping, so the projection names them instead of silently pretending they compile.
+			var baseTypeName = emitter.ResolveBaseTypeName(result.Class);
+			if (EmitterConfig.SealedHandWrittenClassNames.Contains(baseTypeName))
+			{
+				sealedBaseCollisions.Add($"{result.Class.Name} : {baseTypeName}");
+				continue;
+			}
+
+			File.WriteAllText(Path.Combine(outputDirectory, $"{result.Class.Name}.cs"), emittedFile.Contents);
+			written++;
+		}
+		catch (UnsupportedMemberException exception)
+		{
+			Console.Error.WriteLine($"PROJECTION MISMATCH {result.Class.Name}: {exception.Reason}");
+			failed++;
+		}
 	}
+
+	if (sealedBaseCollisions.Count > 0)
+	{
+		Console.WriteLine($"skipped {sealedBaseCollisions.Count} class(es) whose base is a sealed hand-written type: {string.Join(", ", sealedBaseCollisions)}");
+	}
+
+	var enumEmitter = new EnumEmitter(coverage.Ir);
+	foreach (var generatedEnum in enums.Generatable.Where(x => mapper.RequiredEnumNames.Contains(x.Name)))
+	{
+		if (EmitterConfig.ExistingCSharpTypeNames.Contains(generatedEnum.Name))
+		{
+			continue;
+		}
+
+		File.WriteAllText(Path.Combine(outputDirectory, $"{generatedEnum.Name}.cs"), enumEmitter.Emit(generatedEnum).Contents);
+		written++;
+	}
+
+	Console.WriteLine($"projected {written} file(s) into {outputDirectory}");
+	if (failed == 0)
+	{
+		return 0;
+	}
+
+	Console.Error.WriteLine($"{failed} class(es) the scope calls emittable were refused by the emitter — the two disagree.");
+	return 1;
 }
 
 static int Write(string repositoryRoot, List<EmittedFile> emittedFiles)

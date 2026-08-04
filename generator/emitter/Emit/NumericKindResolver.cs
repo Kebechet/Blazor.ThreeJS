@@ -48,19 +48,21 @@ internal static class NumericKindResolver
 
 	/// <summary>
 	/// Whether a name is an unambiguous integer indicator. Deliberately narrow — the override only
-	/// fires on suffixes that cannot describe a continuous quantity. Note the match is case-sensitive,
-	/// so a parameter named exactly <c>segments</c> is not caught by the <c>Segments</c> suffix.
+	/// fires on suffixes that cannot describe a continuous quantity. The match is case-insensitive:
+	/// three.js spells the same concept both ways (<c>widthSegments</c> but also a bare
+	/// <c>segments</c> on <c>CircleGeometry</c> and <c>RingGeometry</c>), and a case-sensitive suffix
+	/// would type one as <c>int</c> and the other as <c>float</c>.
 	/// </summary>
 	/// <param name="memberName">Name to test.</param>
 	/// <returns><see langword="true"/> when the name indicates a whole number.</returns>
 	private static bool HasIntegerName(string memberName)
 	{
-		if (_integerExactNames.Contains(memberName, StringComparer.Ordinal))
+		if (_integerExactNames.Contains(memberName, StringComparer.OrdinalIgnoreCase))
 		{
 			return true;
 		}
 
-		return _integerNameSuffixes.Any(x => memberName.EndsWith(x, StringComparison.Ordinal));
+		return _integerNameSuffixes.Any(x => memberName.EndsWith(x, StringComparison.OrdinalIgnoreCase));
 	}
 }
 

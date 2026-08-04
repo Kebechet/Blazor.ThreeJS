@@ -12,7 +12,6 @@ internal sealed class EmissionAudit
 {
 	private readonly List<NumericAuditEntry> _numericEntries = [];
 	private readonly List<SkippedMemberEntry> _skippedMembers = [];
-	private readonly List<RefusedClassEntry> _refusedClasses = [];
 	private readonly NumericAuditScope _scope;
 
 	/// <summary>Numeric decisions recorded so far, so a projection run can hand its rows to the main audit.</summary>
@@ -69,20 +68,6 @@ internal sealed class EmissionAudit
 		});
 	}
 
-	/// <summary>Records a class the emitter declined to emit.</summary>
-	/// <param name="className">Three.js class name.</param>
-	/// <param name="file">Declaring file, relative to the types package root.</param>
-	/// <param name="reason">What could not be mirrored exactly.</param>
-	public void RecordRefusedClass(string className, string file, string reason)
-	{
-		_refusedClasses.Add(new RefusedClassEntry
-		{
-			ClassName = className,
-			File = file,
-			Reason = reason
-		});
-	}
-
 	/// <summary>
 	/// Renders the audit. Rows are sorted so the file only moves when a decision actually changes.
 	/// </summary>
@@ -99,11 +84,13 @@ internal sealed class EmissionAudit
 		AppendLine(builder);
 		AppendLine(builder, $"Emitted classes: {string.Join(", ", emittedClassNames.Select(x => $"`{x}`"))}.");
 		AppendLine(builder);
+		AppendLine(builder, "Which classes can be emitted at all, and what happens to every member three.js declares, lives in");
+		AppendLine(builder, "`generator/api-coverage.md`. This file covers only the decisions behind the code that is emitted.");
+		AppendLine(builder);
 
 		AppendNumericPolicy(builder);
 		AppendNumericSection(builder);
 		AppendSkippedSection(builder);
-		AppendRefusedSection(builder);
 
 		return builder.ToString();
 	}
@@ -117,8 +104,8 @@ internal sealed class EmissionAudit
 		AppendLine(builder);
 		AppendLine(builder, "1. **documented** — the JSDoc says ``Expects a `Float` `` or ``Expects a `Integer` ``. Taken as written.");
 		AppendLine(builder, "2. **name heuristic** — unspecified, but the name ends in `Segments`, `Count` or `Index`, or is exactly");
-		AppendLine(builder, "   `count` / `index`. Overridden to `int`. The match is case-sensitive, so a parameter named exactly");
-		AppendLine(builder, "   `segments` is **not** caught and falls through to the default below.");
+		AppendLine(builder, "   `count` / `index`. Overridden to `int`. The match is case-insensitive, so a bare `segments`");
+		AppendLine(builder, "   (`CircleGeometry`, `RingGeometry`) is caught as well as `widthSegments`.");
 		AppendLine(builder, "3. **default** — unspecified and not an integer name, so `float`, because three.js is a graphics library");
 		AppendLine(builder, "   and WebGL is float32 throughout.");
 		AppendLine(builder);
@@ -222,107 +209,6 @@ internal sealed class EmissionAudit
 		AppendLine(builder);
 	}
 
-	private void AppendRefusedSection(StringBuilder builder)
-	{
-		AppendLine(builder, "## Classes the emitter would refuse today");
-		AppendLine(builder);
-		AppendLine(builder, "A projection over every class in the IR, run through the same constructor mapping. Nothing here is");
-		AppendLine(builder, "emitted; it is the backlog the full run has to clear, and the reason each entry is blocked.");
-		AppendLine(builder);
-		if (_refusedClasses.Count == 0)
-		{
-			AppendLine(builder, "None.");
-			AppendLine(builder);
-			return;
-		}
-
-		var byReason = _refusedClasses
-			.GroupBy(x => SummarizeReason(x.Reason), StringComparer.Ordinal)
-			.OrderByDescending(x => x.Count())
-			.ThenBy(x => x.Key, StringComparer.Ordinal)
-			.ToList();
-
-		AppendLine(builder, $"{_refusedClasses.Count} of the IR's classes are blocked, by cause:");
-		AppendLine(builder);
-		AppendLine(builder, "| cause | classes |");
-		AppendLine(builder, "|---|---|");
-		foreach (var group in byReason)
-		{
-			AppendLine(builder, $"| {group.Key} | {group.Count()} |");
-		}
-
-		AppendLine(builder);
-		AppendLine(builder, "<details><summary>Every blocked class</summary>");
-		AppendLine(builder);
-		AppendLine(builder, "| class | why | file |");
-		AppendLine(builder, "|---|---|---|");
-		var sorted = _refusedClasses
-			.OrderBy(x => x.ClassName, StringComparer.Ordinal)
-			.ThenBy(x => x.File, StringComparer.Ordinal);
-
-		foreach (var entry in sorted)
-		{
-			AppendLine(builder, $"| `{entry.ClassName}` | {entry.Reason} | `{entry.File}` |");
-		}
-
-		AppendLine(builder);
-		AppendLine(builder, "</details>");
-		AppendLine(builder);
-	}
-
-	/// <summary>Collapses a per-member refusal message into the class of problem it represents.</summary>
-	/// <param name="reason">Full refusal text.</param>
-	/// <returns>A grouping key.</returns>
-	private static string SummarizeReason(string reason)
-	{
-		if (reason.Contains("never exported", StringComparison.Ordinal))
-		{
-			return "not exported from the module";
-		}
-
-		if (reason.Contains("not a usable C# identifier", StringComparison.Ordinal))
-		{
-			return "export name is not a C# identifier";
-		}
-
-		if (reason.Contains("is abstract", StringComparison.Ordinal))
-		{
-			return "abstract class";
-		}
-
-		if (reason.Contains("constructor overloads", StringComparison.Ordinal))
-		{
-			return "constructor overloads";
-		}
-
-		if (reason.Contains("rest parameter", StringComparison.Ordinal))
-		{
-			return "rest parameter";
-		}
-
-		if (reason.Contains("optional but undocumented", StringComparison.Ordinal))
-		{
-			return "optional parameter with no documented default";
-		}
-
-		if (reason.Contains("documents the default", StringComparison.Ordinal))
-		{
-			return "default value is an expression, not a literal";
-		}
-
-		if (reason.Contains("follows an optional one", StringComparison.Ordinal))
-		{
-			return "required parameter after an optional one";
-		}
-
-		if (reason.Contains("only 'number' is mapped", StringComparison.Ordinal))
-		{
-			return "constructor parameter of a non-numeric type";
-		}
-
-		return "other";
-	}
-
 	private static string DescribeBasis(NumericBasis basis)
 	{
 		return basis switch
@@ -384,15 +270,3 @@ internal sealed class SkippedMemberEntry
 	public required string Reason { get; init; }
 }
 
-/// <summary>One class the emitter declined to emit.</summary>
-internal sealed class RefusedClassEntry
-{
-	/// <summary>Three.js class name.</summary>
-	public required string ClassName { get; init; }
-
-	/// <summary>Declaring file, relative to the types package root.</summary>
-	public required string File { get; init; }
-
-	/// <summary>What could not be mirrored exactly.</summary>
-	public required string Reason { get; init; }
-}

@@ -35,6 +35,53 @@ internal static class EmitterConfig
 	public static readonly IReadOnlyList<string> EmittedClassNames = ["BoxGeometry"];
 
 	/// <summary>
+	/// Source-path prefixes whose classes are never mirrored. These are the renderer's own internals:
+	/// in scope by the literal "everything in <c>src/</c> outside <c>src/nodes/</c>" rule, but nothing
+	/// a consumer instantiates, and emitting them would put roughly a hundred classes of plumbing into
+	/// the coverage table as if they were API.
+	/// <para>
+	/// The consumer-facing renderer types are not under either prefix — <c>WebGLRenderer</c> and every
+	/// <c>WebGL*RenderTarget</c> live directly in <c>src/renderers/</c> — so they survive this rule.
+	/// <see cref="ConsumerFacingRendererClassNames"/> pins that, so a future upstream file move shows
+	/// up as a failed expectation rather than as a silently smaller API.
+	/// </para>
+	/// </summary>
+	public static readonly IReadOnlyList<string> ExcludedSourcePrefixes = ["src/renderers/webgl/", "src/renderers/webxr/"];
+
+	/// <summary>
+	/// Renderer types that must stay mirrored despite <see cref="ExcludedSourcePrefixes"/>. Checked
+	/// rather than special-cased: if one of these ever moves under an excluded prefix, the coverage
+	/// report says so.
+	/// </summary>
+	public static readonly IReadOnlyList<string> ConsumerFacingRendererClassNames =
+	[
+		"WebGL3DRenderTarget",
+		"WebGLArrayRenderTarget",
+		"WebGLCubeRenderTarget",
+		"WebGLRenderTarget",
+		"WebGLRenderer"
+	];
+
+	/// <summary>
+	/// Source prefix of three.js's math types. Everything under it is a by-value type, encoded inline
+	/// on the wire rather than referenced by handle, so it is out of the generated surface entirely:
+	/// five are hand-written (<see cref="MathTypeNames"/>) and giving the rest a C# representation is
+	/// a public-API decision rather than a mapping one.
+	/// </summary>
+	public const string MathSourcePrefix = "src/math/";
+
+	/// <summary>
+	/// The alias three.js uses wherever a colour may be given as a <c>Color</c>, a CSS string or a hex
+	/// number. The mirror exposes only <c>Color</c>, which covers the other two through
+	/// <c>Color.FromHex</c> and reaches the browser as a real <c>THREE.Color</c>. This is the single
+	/// most common non-numeric constructor parameter in the snapshot.
+	/// </summary>
+	public const string ColorRepresentationAliasName = "ColorRepresentation";
+
+	/// <summary>Name of the hand-written colour type.</summary>
+	public const string ColorTypeName = "Color";
+
+	/// <summary>
 	/// C# types that already exist in the package, so a <c>{@link X}</c> marker naming one can be
 	/// rewritten as a resolvable <c>&lt;see cref="X"/&gt;</c>. Anything else becomes
 	/// <c>&lt;c&gt;X&lt;/c&gt;</c> — an unresolvable cref is a CS1574 warning, and with
@@ -60,6 +107,27 @@ internal static class EmitterConfig
 		"Side",
 		"ThreeObject",
 		"Vector3"
+	};
+
+	/// <summary>
+	/// Hand-written classes declared <c>sealed</c>, which three.js nonetheless subclasses
+	/// (<c>ArrayCamera extends PerspectiveCamera</c>, <c>BatchedMesh extends Mesh</c>,
+	/// <c>ClippingGroup extends Group</c>). Plan 1 sealed them because only leaves were needed. A
+	/// generated subclass cannot derive from one, so the projection reports them rather than pretending
+	/// they compile; unsealing them is a public-API change, not a mapping decision.
+	/// </summary>
+	public static readonly IReadOnlySet<string> SealedHandWrittenClassNames = new HashSet<string>(StringComparer.Ordinal)
+	{
+		"AmbientLight",
+		"BoxGeometry",
+		"DirectionalLight",
+		"Group",
+		"Mesh",
+		"MeshStandardMaterial",
+		"PerspectiveCamera",
+		"Points",
+		"PointsMaterial",
+		"Scene"
 	};
 
 	/// <summary>

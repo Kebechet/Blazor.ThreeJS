@@ -5,6 +5,9 @@ Re-run `npm run emit` to refresh. Every row is a decision the IR did not make fo
 
 Emitted classes: `BoxGeometry`.
 
+Which classes can be emitted at all, and what happens to every member three.js declares, lives in
+`generator/api-coverage.md`. This file covers only the decisions behind the code that is emitted.
+
 ## How a `number` becomes a C# type
 
 TypeScript erases integers and floats to `number`. The IR carries a kind only where the upstream
@@ -12,8 +15,8 @@ JSDoc states one, so the rest is decided here, in this order:
 
 1. **documented** — the JSDoc says ``Expects a `Float` `` or ``Expects a `Integer` ``. Taken as written.
 2. **name heuristic** — unspecified, but the name ends in `Segments`, `Count` or `Index`, or is exactly
-   `count` / `index`. Overridden to `int`. The match is case-sensitive, so a parameter named exactly
-   `segments` is **not** caught and falls through to the default below.
+   `count` / `index`. Overridden to `int`. The match is case-insensitive, so a bare `segments`
+   (`CircleGeometry`, `RingGeometry`) is caught as well as `widthSegments`.
 3. **default** — unspecified and not an integer name, so `float`, because three.js is a graphics library
    and WebGL is float32 throughout.
 
@@ -27,20 +30,58 @@ not after.
 
 | basis | generated | projected |
 |---|---|---|
-| documented `Float` | 3 | 7 |
-| documented `Integer` | 3 | 10 |
-| **heuristic override to `int`** | 0 | 0 |
-| **defaulted to `float`** | 0 | 21 |
+| documented `Float` | 3 | 33 |
+| documented `Integer` | 3 | 21 |
+| **heuristic override to `int`** | 0 | 7 |
+| **defaulted to `float`** | 0 | 89 |
 
-### Inferred — review these (21)
+### Inferred — review these (96)
 
 Every numeric the upstream JSDoc did not type, and what the emitter decided instead.
 
 | class | member | C# type | basis | scope | file |
 |---|---|---|---|---|---|
+| `AmbientLight` | `intensity` | `float` | **defaulted to `float`** | projected | `src/lights/AmbientLight.d.ts` |
+| `AnimationClip` | `duration` | `float` | **defaulted to `float`** | projected | `src/animation/AnimationClip.d.ts` |
+| `ArcCurve` | `aEndAngle` | `float` | **defaulted to `float`** | projected | `src/extras/curves/ArcCurve.d.ts` |
+| `ArcCurve` | `aRadius` | `float` | **defaulted to `float`** | projected | `src/extras/curves/ArcCurve.d.ts` |
+| `ArcCurve` | `aStartAngle` | `float` | **defaulted to `float`** | projected | `src/extras/curves/ArcCurve.d.ts` |
+| `ArrowHelper` | `headLength` | `float` | **defaulted to `float`** | projected | `src/helpers/ArrowHelper.d.ts` |
+| `ArrowHelper` | `headWidth` | `float` | **defaulted to `float`** | projected | `src/helpers/ArrowHelper.d.ts` |
+| `ArrowHelper` | `length` | `float` | **defaulted to `float`** | projected | `src/helpers/ArrowHelper.d.ts` |
+| `AudioAnalyser` | `fftSize` | `float` | **defaulted to `float`** | projected | `src/audio/AudioAnalyser.d.ts` |
 | `AxesHelper` | `size` | `float` | **defaulted to `float`** | projected | `src/helpers/AxesHelper.d.ts` |
+| `BatchedMesh` | `maxIndexCount` | `int` | **heuristic override to `int`** | projected | `src/objects/BatchedMesh.d.ts` |
+| `BatchedMesh` | `maxInstanceCount` | `int` | **heuristic override to `int`** | projected | `src/objects/BatchedMesh.d.ts` |
+| `BatchedMesh` | `maxVertexCount` | `int` | **heuristic override to `int`** | projected | `src/objects/BatchedMesh.d.ts` |
+| `CapsuleGeometry` | `heightSegments` | `int` | **heuristic override to `int`** | projected | `src/geometries/CapsuleGeometry.d.ts` |
+| `CubeDepthTexture` | `anisotropy` | `float` | **defaulted to `float`** | projected | `src/textures/CubeDepthTexture.d.ts` |
+| `CubeDepthTexture` | `size` | `float` | **defaulted to `float`** | projected | `src/textures/CubeDepthTexture.d.ts` |
+| `CubeRenderTarget` | `size` | `float` | **defaulted to `float`** | projected | `src/renderers/common/CubeRenderTarget.d.ts` |
+| `CylinderGeometry` | `height` | `float` | **defaulted to `float`** | projected | `src/geometries/CylinderGeometry.d.ts` |
+| `CylinderGeometry` | `radialSegments` | `int` | **heuristic override to `int`** | projected | `src/geometries/CylinderGeometry.d.ts` |
+| `CylinderGeometry` | `radiusBottom` | `float` | **defaulted to `float`** | projected | `src/geometries/CylinderGeometry.d.ts` |
+| `CylinderGeometry` | `radiusTop` | `float` | **defaulted to `float`** | projected | `src/geometries/CylinderGeometry.d.ts` |
+| `CylinderGeometry` | `thetaLength` | `float` | **defaulted to `float`** | projected | `src/geometries/CylinderGeometry.d.ts` |
+| `CylinderGeometry` | `thetaStart` | `float` | **defaulted to `float`** | projected | `src/geometries/CylinderGeometry.d.ts` |
+| `DepthTexture` | `anisotropy` | `float` | **defaulted to `float`** | projected | `src/textures/DepthTexture.d.ts` |
+| `DepthTexture` | `depth` | `float` | **defaulted to `float`** | projected | `src/textures/DepthTexture.d.ts` |
+| `DepthTexture` | `height` | `float` | **defaulted to `float`** | projected | `src/textures/DepthTexture.d.ts` |
+| `DepthTexture` | `width` | `float` | **defaulted to `float`** | projected | `src/textures/DepthTexture.d.ts` |
+| `DirectionalLight` | `intensity` | `float` | **defaulted to `float`** | projected | `src/lights/DirectionalLight.d.ts` |
+| `DirectionalLightHelper` | `size` | `float` | **defaulted to `float`** | projected | `src/helpers/DirectionalLightHelper.d.ts` |
+| `EllipseCurve` | `aEndAngle` | `float` | **defaulted to `float`** | projected | `src/extras/curves/EllipseCurve.d.ts` |
+| `EllipseCurve` | `aRotation` | `float` | **defaulted to `float`** | projected | `src/extras/curves/EllipseCurve.d.ts` |
+| `EllipseCurve` | `aStartAngle` | `float` | **defaulted to `float`** | projected | `src/extras/curves/EllipseCurve.d.ts` |
+| `Fog` | `far` | `float` | **defaulted to `float`** | projected | `src/scenes/Fog.d.ts` |
+| `Fog` | `near` | `float` | **defaulted to `float`** | projected | `src/scenes/Fog.d.ts` |
+| `FogExp2` | `density` | `float` | **defaulted to `float`** | projected | `src/scenes/FogExp2.d.ts` |
 | `FramebufferTexture` | `height` | `float` | **defaulted to `float`** | projected | `src/textures/FramebufferTexture.d.ts` |
 | `FramebufferTexture` | `width` | `float` | **defaulted to `float`** | projected | `src/textures/FramebufferTexture.d.ts` |
+| `GridHelper` | `divisions` | `float` | **defaulted to `float`** | projected | `src/helpers/GridHelper.d.ts` |
+| `GridHelper` | `size` | `float` | **defaulted to `float`** | projected | `src/helpers/GridHelper.d.ts` |
+| `HemisphereLight` | `intensity` | `float` | **defaulted to `float`** | projected | `src/lights/HemisphereLight.d.ts` |
+| `HemisphereLightHelper` | `size` | `float` | **defaulted to `float`** | projected | `src/helpers/HemisphereLightHelper.d.ts` |
 | `OrthographicCamera` | `bottom` | `float` | **defaulted to `float`** | projected | `src/cameras/OrthographicCamera.d.ts` |
 | `OrthographicCamera` | `far` | `float` | **defaulted to `float`** | projected | `src/cameras/OrthographicCamera.d.ts` |
 | `OrthographicCamera` | `left` | `float` | **defaulted to `float`** | projected | `src/cameras/OrthographicCamera.d.ts` |
@@ -51,27 +92,86 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `PerspectiveCamera` | `far` | `float` | **defaulted to `float`** | projected | `src/cameras/PerspectiveCamera.d.ts` |
 | `PerspectiveCamera` | `fov` | `float` | **defaulted to `float`** | projected | `src/cameras/PerspectiveCamera.d.ts` |
 | `PerspectiveCamera` | `near` | `float` | **defaulted to `float`** | projected | `src/cameras/PerspectiveCamera.d.ts` |
+| `PointLight` | `decay` | `float` | **defaulted to `float`** | projected | `src/lights/PointLight.d.ts` |
+| `PointLight` | `distance` | `float` | **defaulted to `float`** | projected | `src/lights/PointLight.d.ts` |
+| `PointLight` | `intensity` | `float` | **defaulted to `float`** | projected | `src/lights/PointLight.d.ts` |
+| `PointLightHelper` | `sphereSize` | `float` | **defaulted to `float`** | projected | `src/helpers/PointLightHelper.d.ts` |
+| `PolarGridHelper` | `divisions` | `float` | **defaulted to `float`** | projected | `src/helpers/PolarGridHelper.d.ts` |
+| `PolarGridHelper` | `radius` | `float` | **defaulted to `float`** | projected | `src/helpers/PolarGridHelper.d.ts` |
+| `PolarGridHelper` | `rings` | `float` | **defaulted to `float`** | projected | `src/helpers/PolarGridHelper.d.ts` |
+| `PolarGridHelper` | `sectors` | `float` | **defaulted to `float`** | projected | `src/helpers/PolarGridHelper.d.ts` |
 | `ReadbackBuffer` | `maxByteLength` | `float` | **defaulted to `float`** | projected | `src/renderers/common/ReadbackBuffer.d.ts` |
+| `RectAreaLight` | `height` | `float` | **defaulted to `float`** | projected | `src/lights/RectAreaLight.d.ts` |
+| `RectAreaLight` | `intensity` | `float` | **defaulted to `float`** | projected | `src/lights/RectAreaLight.d.ts` |
+| `RectAreaLight` | `width` | `float` | **defaulted to `float`** | projected | `src/lights/RectAreaLight.d.ts` |
+| `RenderTarget` | `height` | `float` | **defaulted to `float`** | projected | `src/core/RenderTarget.d.ts` |
+| `RenderTarget` | `width` | `float` | **defaulted to `float`** | projected | `src/core/RenderTarget.d.ts` |
+| `RenderTarget3D` | `depth` | `float` | **defaulted to `float`** | projected | `src/core/RenderTarget3D.d.ts` |
+| `RenderTarget3D` | `height` | `float` | **defaulted to `float`** | projected | `src/core/RenderTarget3D.d.ts` |
+| `RenderTarget3D` | `width` | `float` | **defaulted to `float`** | projected | `src/core/RenderTarget3D.d.ts` |
+| `SpotLight` | `angle` | `float` | **defaulted to `float`** | projected | `src/lights/SpotLight.d.ts` |
+| `SpotLight` | `decay` | `float` | **defaulted to `float`** | projected | `src/lights/SpotLight.d.ts` |
+| `SpotLight` | `distance` | `float` | **defaulted to `float`** | projected | `src/lights/SpotLight.d.ts` |
+| `SpotLight` | `intensity` | `float` | **defaulted to `float`** | projected | `src/lights/SpotLight.d.ts` |
+| `SpotLight` | `penumbra` | `float` | **defaulted to `float`** | projected | `src/lights/SpotLight.d.ts` |
 | `Storage3DTexture` | `depth` | `float` | **defaulted to `float`** | projected | `src/renderers/common/Storage3DTexture.d.ts` |
-| `Storage3DTexture` | `depth` | `float` | **defaulted to `float`** | projected | `src/renderers/common/StorageArrayTexture.d.ts` |
 | `Storage3DTexture` | `height` | `float` | **defaulted to `float`** | projected | `src/renderers/common/Storage3DTexture.d.ts` |
-| `Storage3DTexture` | `height` | `float` | **defaulted to `float`** | projected | `src/renderers/common/StorageArrayTexture.d.ts` |
 | `Storage3DTexture` | `width` | `float` | **defaulted to `float`** | projected | `src/renderers/common/Storage3DTexture.d.ts` |
-| `Storage3DTexture` | `width` | `float` | **defaulted to `float`** | projected | `src/renderers/common/StorageArrayTexture.d.ts` |
+| `StorageTexture` | `height` | `float` | **defaulted to `float`** | projected | `src/renderers/common/StorageTexture.d.ts` |
+| `StorageTexture` | `width` | `float` | **defaulted to `float`** | projected | `src/renderers/common/StorageTexture.d.ts` |
+| `TorusGeometry` | `arc` | `float` | **defaulted to `float`** | projected | `src/geometries/TorusGeometry.d.ts` |
+| `TorusGeometry` | `radialSegments` | `int` | **heuristic override to `int`** | projected | `src/geometries/TorusGeometry.d.ts` |
+| `TorusGeometry` | `radius` | `float` | **defaulted to `float`** | projected | `src/geometries/TorusGeometry.d.ts` |
+| `TorusGeometry` | `thetaLength` | `float` | **defaulted to `float`** | projected | `src/geometries/TorusGeometry.d.ts` |
+| `TorusGeometry` | `thetaStart` | `float` | **defaulted to `float`** | projected | `src/geometries/TorusGeometry.d.ts` |
+| `TorusGeometry` | `tube` | `float` | **defaulted to `float`** | projected | `src/geometries/TorusGeometry.d.ts` |
+| `TorusGeometry` | `tubularSegments` | `int` | **heuristic override to `int`** | projected | `src/geometries/TorusGeometry.d.ts` |
 | `TorusKnotGeometry` | `radius` | `float` | **defaulted to `float`** | projected | `src/geometries/TorusKnotGeometry.d.ts` |
+| `VideoFrameTexture` | `anisotropy` | `float` | **defaulted to `float`** | projected | `src/textures/VideoFrameTexture.d.ts` |
+| `WebGL3DRenderTarget` | `depth` | `float` | **defaulted to `float`** | projected | `src/renderers/WebGL3DRenderTarget.d.ts` |
+| `WebGL3DRenderTarget` | `height` | `float` | **defaulted to `float`** | projected | `src/renderers/WebGL3DRenderTarget.d.ts` |
+| `WebGL3DRenderTarget` | `width` | `float` | **defaulted to `float`** | projected | `src/renderers/WebGL3DRenderTarget.d.ts` |
+| `WebGLArrayRenderTarget` | `depth` | `float` | **defaulted to `float`** | projected | `src/renderers/WebGLArrayRenderTarget.d.ts` |
+| `WebGLArrayRenderTarget` | `height` | `float` | **defaulted to `float`** | projected | `src/renderers/WebGLArrayRenderTarget.d.ts` |
+| `WebGLArrayRenderTarget` | `width` | `float` | **defaulted to `float`** | projected | `src/renderers/WebGLArrayRenderTarget.d.ts` |
+| `WebGLCubeRenderTarget` | `size` | `float` | **defaulted to `float`** | projected | `src/renderers/WebGLCubeRenderTarget.d.ts` |
+| `WebGLRenderTarget` | `height` | `float` | **defaulted to `float`** | projected | `src/renderers/WebGLRenderTarget.d.ts` |
+| `WebGLRenderTarget` | `width` | `float` | **defaulted to `float`** | projected | `src/renderers/WebGLRenderTarget.d.ts` |
 
-### Documented upstream — taken as written (23)
+### Documented upstream — taken as written (60)
 
 | class | member | C# type | basis | scope | file |
 |---|---|---|---|---|---|
+| `ArcCurve` | `aX` | `float` | documented `Float` | projected | `src/extras/curves/ArcCurve.d.ts` |
+| `ArcCurve` | `aY` | `float` | documented `Float` | projected | `src/extras/curves/ArcCurve.d.ts` |
 | `BoxGeometry` | `depth` | `float` | documented `Float` | generated | `src/geometries/BoxGeometry.d.ts` |
 | `BoxGeometry` | `depthSegments` | `int` | documented `Integer` | generated | `src/geometries/BoxGeometry.d.ts` |
 | `BoxGeometry` | `height` | `float` | documented `Float` | generated | `src/geometries/BoxGeometry.d.ts` |
 | `BoxGeometry` | `heightSegments` | `int` | documented `Integer` | generated | `src/geometries/BoxGeometry.d.ts` |
 | `BoxGeometry` | `width` | `float` | documented `Float` | generated | `src/geometries/BoxGeometry.d.ts` |
 | `BoxGeometry` | `widthSegments` | `int` | documented `Integer` | generated | `src/geometries/BoxGeometry.d.ts` |
+| `CapsuleGeometry` | `capSegments` | `int` | documented `Integer` | projected | `src/geometries/CapsuleGeometry.d.ts` |
+| `CapsuleGeometry` | `height` | `float` | documented `Float` | projected | `src/geometries/CapsuleGeometry.d.ts` |
+| `CapsuleGeometry` | `radialSegments` | `int` | documented `Integer` | projected | `src/geometries/CapsuleGeometry.d.ts` |
+| `CapsuleGeometry` | `radius` | `float` | documented `Float` | projected | `src/geometries/CapsuleGeometry.d.ts` |
+| `CircleGeometry` | `radius` | `float` | documented `Float` | projected | `src/geometries/CircleGeometry.d.ts` |
+| `CircleGeometry` | `segments` | `int` | documented `Integer` | projected | `src/geometries/CircleGeometry.d.ts` |
+| `CircleGeometry` | `thetaLength` | `float` | documented `Float` | projected | `src/geometries/CircleGeometry.d.ts` |
+| `CircleGeometry` | `thetaStart` | `float` | documented `Float` | projected | `src/geometries/CircleGeometry.d.ts` |
+| `ConeGeometry` | `height` | `float` | documented `Float` | projected | `src/geometries/ConeGeometry.d.ts` |
+| `ConeGeometry` | `heightSegments` | `int` | documented `Integer` | projected | `src/geometries/ConeGeometry.d.ts` |
+| `ConeGeometry` | `radialSegments` | `int` | documented `Integer` | projected | `src/geometries/ConeGeometry.d.ts` |
+| `ConeGeometry` | `radius` | `float` | documented `Float` | projected | `src/geometries/ConeGeometry.d.ts` |
+| `ConeGeometry` | `thetaLength` | `float` | documented `Float` | projected | `src/geometries/ConeGeometry.d.ts` |
+| `ConeGeometry` | `thetaStart` | `float` | documented `Float` | projected | `src/geometries/ConeGeometry.d.ts` |
+| `CylinderGeometry` | `heightSegments` | `int` | documented `Integer` | projected | `src/geometries/CylinderGeometry.d.ts` |
 | `DodecahedronGeometry` | `detail` | `int` | documented `Integer` | projected | `src/geometries/DodecahedronGeometry.d.ts` |
 | `DodecahedronGeometry` | `radius` | `float` | documented `Float` | projected | `src/geometries/DodecahedronGeometry.d.ts` |
+| `EdgesGeometry` | `thresholdAngle` | `int` | documented `Integer` | projected | `src/geometries/EdgesGeometry.d.ts` |
+| `EllipseCurve` | `aX` | `float` | documented `Float` | projected | `src/extras/curves/EllipseCurve.d.ts` |
+| `EllipseCurve` | `aY` | `float` | documented `Float` | projected | `src/extras/curves/EllipseCurve.d.ts` |
+| `EllipseCurve` | `xRadius` | `float` | documented `Float` | projected | `src/extras/curves/EllipseCurve.d.ts` |
+| `EllipseCurve` | `yRadius` | `float` | documented `Float` | projected | `src/extras/curves/EllipseCurve.d.ts` |
 | `IcosahedronGeometry` | `detail` | `int` | documented `Integer` | projected | `src/geometries/IcosahedronGeometry.d.ts` |
 | `IcosahedronGeometry` | `radius` | `float` | documented `Float` | projected | `src/geometries/IcosahedronGeometry.d.ts` |
 | `OctahedronGeometry` | `detail` | `int` | documented `Integer` | projected | `src/geometries/OctahedronGeometry.d.ts` |
@@ -80,6 +180,21 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `PlaneGeometry` | `heightSegments` | `int` | documented `Integer` | projected | `src/geometries/PlaneGeometry.d.ts` |
 | `PlaneGeometry` | `width` | `float` | documented `Float` | projected | `src/geometries/PlaneGeometry.d.ts` |
 | `PlaneGeometry` | `widthSegments` | `int` | documented `Integer` | projected | `src/geometries/PlaneGeometry.d.ts` |
+| `Raycaster` | `far` | `float` | documented `Float` | projected | `src/core/Raycaster.d.ts` |
+| `Raycaster` | `near` | `float` | documented `Float` | projected | `src/core/Raycaster.d.ts` |
+| `RingGeometry` | `innerRadius` | `float` | documented `Float` | projected | `src/geometries/RingGeometry.d.ts` |
+| `RingGeometry` | `outerRadius` | `float` | documented `Float` | projected | `src/geometries/RingGeometry.d.ts` |
+| `RingGeometry` | `phiSegments` | `int` | documented `Integer` | projected | `src/geometries/RingGeometry.d.ts` |
+| `RingGeometry` | `thetaLength` | `float` | documented `Float` | projected | `src/geometries/RingGeometry.d.ts` |
+| `RingGeometry` | `thetaSegments` | `int` | documented `Integer` | projected | `src/geometries/RingGeometry.d.ts` |
+| `RingGeometry` | `thetaStart` | `float` | documented `Float` | projected | `src/geometries/RingGeometry.d.ts` |
+| `SphereGeometry` | `heightSegments` | `int` | documented `Integer` | projected | `src/geometries/SphereGeometry.d.ts` |
+| `SphereGeometry` | `phiLength` | `float` | documented `Float` | projected | `src/geometries/SphereGeometry.d.ts` |
+| `SphereGeometry` | `phiStart` | `float` | documented `Float` | projected | `src/geometries/SphereGeometry.d.ts` |
+| `SphereGeometry` | `radius` | `float` | documented `Float` | projected | `src/geometries/SphereGeometry.d.ts` |
+| `SphereGeometry` | `thetaLength` | `float` | documented `Float` | projected | `src/geometries/SphereGeometry.d.ts` |
+| `SphereGeometry` | `thetaStart` | `float` | documented `Float` | projected | `src/geometries/SphereGeometry.d.ts` |
+| `SphereGeometry` | `widthSegments` | `int` | documented `Integer` | projected | `src/geometries/SphereGeometry.d.ts` |
 | `TetrahedronGeometry` | `detail` | `int` | documented `Integer` | projected | `src/geometries/TetrahedronGeometry.d.ts` |
 | `TetrahedronGeometry` | `radius` | `float` | documented `Float` | projected | `src/geometries/TetrahedronGeometry.d.ts` |
 | `TorusKnotGeometry` | `p` | `int` | documented `Integer` | projected | `src/geometries/TorusKnotGeometry.d.ts` |
@@ -93,266 +208,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | class | member | why |
 |---|---|---|
 | `BoxGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `BoxGeometry` | `method fromJSON` | static |
-| `BoxGeometry` | `property parameters` | read-only in three.js, and reads never leave C# |
-| `BoxGeometry` | `property type` | read-only in three.js, and reads never leave C# |
-
-## Classes the emitter would refuse today
-
-A projection over every class in the IR, run through the same constructor mapping. Nothing here is
-emitted; it is the backlog the full run has to clear, and the reason each entry is blocked.
-
-235 of the IR's classes are blocked, by cause:
-
-| cause | classes |
-|---|---|
-| constructor parameter of a non-numeric type | 198 |
-| optional parameter with no documented default | 17 |
-| abstract class | 8 |
-| constructor overloads | 5 |
-| default value is an expression, not a literal | 4 |
-| not exported from the module | 2 |
-| rest parameter | 1 |
-
-<details><summary>Every blocked class</summary>
-
-| class | why | file |
-|---|---|---|
-| `AmbientLight` | parameter 'color' is typed 'ColorRepresentation', and only 'number' is mapped so far | `src/lights/AmbientLight.d.ts` |
-| `AnimationAction` | parameter 'mixer' is typed 'AnimationMixer', and only 'number' is mapped so far | `src/animation/AnimationAction.d.ts` |
-| `AnimationClip` | parameter 'name' is typed 'string', and only 'number' is mapped so far | `src/animation/AnimationClip.d.ts` |
-| `AnimationLoader` | parameter 'manager' is typed 'LoadingManager', and only 'number' is mapped so far | `src/loaders/AnimationLoader.d.ts` |
-| `AnimationMixer` | parameter 'root' is typed 'Object3D | AnimationObjectGroup', and only 'number' is mapped so far | `src/animation/AnimationMixer.d.ts` |
-| `AnimationObjectGroup` | parameter 'args' is a rest parameter | `src/animation/AnimationObjectGroup.d.ts` |
-| `ArcCurve` | parameter 'aRadius' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/extras/curves/ArcCurve.d.ts` |
-| `ArrayCamera` | parameter 'array' is typed 'PerspectiveCamera[]', and only 'number' is mapped so far | `src/cameras/ArrayCamera.d.ts` |
-| `ArrowHelper` | parameter 'dir' is typed 'Vector3', and only 'number' is mapped so far | `src/helpers/ArrowHelper.d.ts` |
-| `Audio` | parameter 'listener' is typed 'AudioListener', and only 'number' is mapped so far | `src/audio/Audio.d.ts` |
-| `AudioAnalyser` | parameter 'audio' is typed 'Audio<AudioNode>', and only 'number' is mapped so far | `src/audio/AudioAnalyser.d.ts` |
-| `AudioLoader` | parameter 'manager' is typed 'LoadingManager', and only 'number' is mapped so far | `src/loaders/AudioLoader.d.ts` |
-| `Backend` | the class is abstract, so it has no constructor to mirror | `src/renderers/common/Backend.d.ts` |
-| `BatchedMesh` | parameter 'maxIndexCount' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/objects/BatchedMesh.d.ts` |
-| `BlendMode` | parameter 'blending' is typed 'Blending', and only 'number' is mapped so far | `src/renderers/common/BlendMode.d.ts` |
-| `BooleanKeyframeTrack` | parameter 'name' is typed 'string', and only 'number' is mapped so far | `src/animation/tracks/BooleanKeyframeTrack.d.ts` |
-| `Box2` | parameter 'min' is typed 'Vector2', and only 'number' is mapped so far | `src/math/Box2.d.ts` |
-| `Box3` | parameter 'min' is typed 'Vector3', and only 'number' is mapped so far | `src/math/Box3.d.ts` |
-| `Box3Helper` | parameter 'box' is typed 'Box3', and only 'number' is mapped so far | `src/helpers/Box3Helper.d.ts` |
-| `BoxHelper` | parameter 'object' is typed 'Object3D', and only 'number' is mapped so far | `src/helpers/BoxHelper.d.ts` |
-| `BufferAttribute` | parameter 'array' is typed 'TypedArray', and only 'number' is mapped so far | `src/core/BufferAttribute.d.ts` |
-| `BufferGeometryLoader` | parameter 'manager' is typed 'LoadingManager', and only 'number' is mapped so far | `src/loaders/BufferGeometryLoader.d.ts` |
-| `CameraHelper` | parameter 'camera' is typed 'Camera', and only 'number' is mapped so far | `src/helpers/CameraHelper.d.ts` |
-| `CanvasTarget` | parameter 'domElement' is typed 'HTMLCanvasElement | OffscreenCanvas', and only 'number' is mapped so far | `src/renderers/common/CanvasTarget.d.ts` |
-| `CanvasTexture` | parameter 'canvas' is typed 'TCanvas', and only 'number' is mapped so far | `src/textures/CanvasTexture.d.ts` |
-| `CapsuleGeometry` | parameter 'heightSegments' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/geometries/CapsuleGeometry.d.ts` |
-| `CatmullRomCurve3` | parameter 'points' is typed 'Vector3[]', and only 'number' is mapped so far | `src/extras/curves/CatmullRomCurve3.d.ts` |
-| `CircleGeometry` | parameter 'thetaLength' documents the default 'Math.PI * 2', which is not a numeric literal | `src/geometries/CircleGeometry.d.ts` |
-| `ClippingContext` | parameter 'parentContext' is typed 'ClippingContext | null', and only 'number' is mapped so far | `src/renderers/common/ClippingContext.d.ts` |
-| `Clock` | parameter 'autoStart' is typed 'boolean', and only 'number' is mapped so far | `src/core/Clock.d.ts` |
-| `Color` | 2 constructor overloads; C# overload emission is not implemented | `src/math/Color.d.ts` |
-| `ColorKeyframeTrack` | parameter 'name' is typed 'string', and only 'number' is mapped so far | `src/animation/tracks/ColorKeyframeTrack.d.ts` |
-| `Composite` | the class is never exported, so it is not reachable on the THREE namespace the applier looks names up on | `src/animation/PropertyBinding.d.ts` |
-| `CompressedArrayTexture` | parameter 'mipmaps' is typed 'CompressedTextureMipmap[]', and only 'number' is mapped so far | `src/textures/CompressedArrayTexture.d.ts` |
-| `CompressedCubeTexture` | parameter 'images' is typed 'CompressedTextureImageData[]', and only 'number' is mapped so far | `src/textures/CompressedCubeTexture.d.ts` |
-| `CompressedTexture` | parameter 'mipmaps' is typed 'CompressedTextureMipmap[]', and only 'number' is mapped so far | `src/textures/CompressedTexture.d.ts` |
-| `CompressedTextureLoader` | parameter 'manager' is typed 'LoadingManager', and only 'number' is mapped so far | `src/loaders/CompressedTextureLoader.d.ts` |
-| `ConeGeometry` | parameter 'openEnded' is typed 'boolean', and only 'number' is mapped so far | `src/geometries/ConeGeometry.d.ts` |
-| `Controls` | the class is abstract, so it has no constructor to mirror | `src/extras/Controls.d.ts` |
-| `CubeCamera` | parameter 'renderTarget' is typed 'WebGLCubeRenderTarget | CubeRenderTarget', and only 'number' is mapped so far | `src/cameras/CubeCamera.d.ts` |
-| `CubeDepthTexture` | parameter 'type' is typed 'TextureDataType', and only 'number' is mapped so far | `src/textures/CubeDepthTexture.d.ts` |
-| `CubeRenderTarget` | parameter 'options' is typed 'RenderTargetOptions', and only 'number' is mapped so far | `src/renderers/common/CubeRenderTarget.d.ts` |
-| `CubeTexture` | parameter 'images' is typed 'TImage[]', and only 'number' is mapped so far | `src/textures/CubeTexture.d.ts` |
-| `CubeTextureLoader` | parameter 'manager' is typed 'LoadingManager', and only 'number' is mapped so far | `src/loaders/CubeTextureLoader.d.ts` |
-| `CubicBezierCurve` | parameter 'v0' is typed 'Vector2', and only 'number' is mapped so far | `src/extras/curves/CubicBezierCurve.d.ts` |
-| `CubicBezierCurve3` | parameter 'v0' is typed 'Vector3', and only 'number' is mapped so far | `src/extras/curves/CubicBezierCurve3.d.ts` |
-| `Curve` | the class is abstract, so it has no constructor to mirror | `src/extras/core/Curve.d.ts` |
-| `CylinderGeometry` | parameter 'openEnded' is typed 'boolean', and only 'number' is mapped so far | `src/geometries/CylinderGeometry.d.ts` |
-| `Cylindrical` | parameter 'radius' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/math/Cylindrical.d.ts` |
-| `Data3DTexture` | parameter 'data' is typed 'TypedArray | null', and only 'number' is mapped so far | `src/textures/Data3DTexture.d.ts` |
-| `DataArrayTexture` | parameter 'data' is typed 'TypedArray | null', and only 'number' is mapped so far | `src/textures/DataArrayTexture.d.ts` |
-| `DataTexture` | parameter 'data' is typed 'TypedArray | null', and only 'number' is mapped so far | `src/textures/DataTexture.d.ts` |
-| `DataTextureLoader` | the class is abstract, so it has no constructor to mirror | `src/loaders/DataTextureLoader.d.ts` |
-| `DepthTexture` | parameter 'width' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/textures/DepthTexture.d.ts` |
-| `DirectionalLight` | parameter 'color' is typed 'ColorRepresentation', and only 'number' is mapped so far | `src/lights/DirectionalLight.d.ts` |
-| `DirectionalLightHelper` | parameter 'light' is typed 'DirectionalLight', and only 'number' is mapped so far | `src/helpers/DirectionalLightHelper.d.ts` |
-| `EdgesGeometry` | parameter 'geometry' is typed 'TBufferGeometry | null', and only 'number' is mapped so far | `src/geometries/EdgesGeometry.d.ts` |
-| `EllipseCurve` | parameter 'aEndAngle' documents the default '2 x Math.PI', which is not a numeric literal | `src/extras/curves/EllipseCurve.d.ts` |
-| `Euler` | parameter 'x' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/math/Euler.d.ts` |
-| `ExternalTexture` | parameter 'sourceTexture' is typed 'WebGLTexture | GPUTexture | null', and only 'number' is mapped so far | `src/textures/ExternalTexture.d.ts` |
-| `ExtrudeGeometry` | parameter 'shapes' is typed 'Shape | Shape[]', and only 'number' is mapped so far | `src/geometries/ExtrudeGeometry.d.ts` |
-| `FileLoader` | parameter 'manager' is typed 'LoadingManager', and only 'number' is mapped so far | `src/loaders/FileLoader.d.ts` |
-| `Float16BufferAttribute` | parameter 'array' is typed 'Iterable<number> | ArrayLike<number> | ArrayBuffer | number', and only 'number' is mapped so far | `src/core/BufferAttribute.d.ts` |
-| `Float32BufferAttribute` | parameter 'array' is typed 'Iterable<number> | ArrayLike<number> | ArrayBuffer | number', and only 'number' is mapped so far | `src/core/BufferAttribute.d.ts` |
-| `Fog` | parameter 'color' is typed 'ColorRepresentation', and only 'number' is mapped so far | `src/scenes/Fog.d.ts` |
-| `FogExp2` | parameter 'color' is typed 'ColorRepresentation', and only 'number' is mapped so far | `src/scenes/FogExp2.d.ts` |
-| `Frustum` | parameter 'p0' is typed 'Plane', and only 'number' is mapped so far | `src/math/Frustum.d.ts` |
-| `GLBufferAttribute` | parameter 'buffer' is typed 'WebGLBuffer', and only 'number' is mapped so far | `src/core/GLBufferAttribute.d.ts` |
-| `GLSLNodeBuilder` | parameter 'object' is typed 'Object3D', and only 'number' is mapped so far | `src/renderers/webgl-fallback/nodes/GLSLNodeBuilder.d.ts` |
-| `GridHelper` | parameter 'color1' is typed 'ColorRepresentation', and only 'number' is mapped so far | `src/helpers/GridHelper.d.ts` |
-| `HTMLTexture` | parameter 'image' is typed 'HTMLElement', and only 'number' is mapped so far | `src/textures/HTMLTexture.d.ts` |
-| `HemisphereLight` | parameter 'skyColor' is typed 'ColorRepresentation', and only 'number' is mapped so far | `src/lights/HemisphereLight.d.ts` |
-| `HemisphereLightHelper` | parameter 'light' is typed 'HemisphereLight', and only 'number' is mapped so far | `src/helpers/HemisphereLightHelper.d.ts` |
-| `ImageBitmapLoader` | parameter 'manager' is typed 'LoadingManager', and only 'number' is mapped so far | `src/loaders/ImageBitmapLoader.d.ts` |
-| `ImageLoader` | parameter 'manager' is typed 'LoadingManager', and only 'number' is mapped so far | `src/loaders/ImageLoader.d.ts` |
-| `IndirectStorageBufferAttribute` | parameter 'array' is typed 'TypedArray', and only 'number' is mapped so far | `src/renderers/common/IndirectStorageBufferAttribute.d.ts` |
-| `InstancedBufferAttribute` | parameter 'array' is typed 'TypedArray', and only 'number' is mapped so far | `src/core/InstancedBufferAttribute.d.ts` |
-| `InstancedInterleavedBuffer` | parameter 'array' is typed 'TypedArray', and only 'number' is mapped so far | `src/core/InstancedInterleavedBuffer.d.ts` |
-| `InstancedMesh` | parameter 'geometry' is typed 'TGeometry | undefined', and only 'number' is mapped so far | `src/objects/InstancedMesh.d.ts` |
-| `Int16BufferAttribute` | parameter 'array' is typed 'Iterable<number> | ArrayLike<number> | ArrayBuffer | number', and only 'number' is mapped so far | `src/core/BufferAttribute.d.ts` |
-| `Int32BufferAttribute` | parameter 'array' is typed 'Iterable<number> | ArrayLike<number> | ArrayBuffer | number', and only 'number' is mapped so far | `src/core/BufferAttribute.d.ts` |
-| `Int8BufferAttribute` | parameter 'array' is typed 'Iterable<number> | ArrayLike<number> | ArrayBuffer | number', and only 'number' is mapped so far | `src/core/BufferAttribute.d.ts` |
-| `InterleavedBuffer` | parameter 'array' is typed 'TypedArray', and only 'number' is mapped so far | `src/core/InterleavedBuffer.d.ts` |
-| `InterleavedBufferAttribute` | parameter 'interleavedBuffer' is typed 'InterleavedBuffer', and only 'number' is mapped so far | `src/core/InterleavedBufferAttribute.d.ts` |
-| `Interpolant` | the class is abstract, so it has no constructor to mirror | `src/math/Interpolant.d.ts` |
-| `KeyframeTrack` | parameter 'name' is typed 'string', and only 'number' is mapped so far | `src/animation/KeyframeTrack.d.ts` |
-| `LatheGeometry` | parameter 'points' is typed 'Vector2[]', and only 'number' is mapped so far | `src/geometries/LatheGeometry.d.ts` |
-| `Light` | the class is abstract, so it has no constructor to mirror | `src/lights/Light.d.ts` |
-| `LightProbe` | parameter 'sh' is typed 'SphericalHarmonics3', and only 'number' is mapped so far | `src/lights/LightProbe.d.ts` |
-| `LightShadow` | the class is abstract, so it has no constructor to mirror | `src/lights/LightShadow.d.ts` |
-| `Line` | parameter 'geometry' is typed 'TGeometry', and only 'number' is mapped so far | `src/objects/Line.d.ts` |
-| `Line2NodeMaterial` | parameter 'parameters' is typed 'Line2NodeMaterialParameters', and only 'number' is mapped so far | `src/materials/nodes/Line2NodeMaterial.d.ts` |
-| `Line3` | parameter 'start' is typed 'Vector3', and only 'number' is mapped so far | `src/math/Line3.d.ts` |
-| `LineBasicMaterial` | parameter 'parameters' is typed 'LineBasicMaterialParameters', and only 'number' is mapped so far | `src/materials/LineBasicMaterial.d.ts` |
-| `LineBasicNodeMaterial` | parameter 'parameters' is typed 'LineBasicNodeMaterialParameters', and only 'number' is mapped so far | `src/materials/nodes/LineBasicNodeMaterial.d.ts` |
-| `LineCurve` | parameter 'v1' is typed 'Vector2', and only 'number' is mapped so far | `src/extras/curves/LineCurve.d.ts` |
-| `LineCurve3` | parameter 'v1' is typed 'Vector3', and only 'number' is mapped so far | `src/extras/curves/LineCurve3.d.ts` |
-| `LineDashedMaterial` | parameter 'parameters' is typed 'LineDashedMaterialParameters', and only 'number' is mapped so far | `src/materials/LineDashedMaterial.d.ts` |
-| `LineDashedNodeMaterial` | parameter 'parameters' is typed 'LineDashedNodeMaterialParameters', and only 'number' is mapped so far | `src/materials/nodes/LineDashedNodeMaterial.d.ts` |
-| `LineLoop` | parameter 'geometry' is typed 'TGeometry', and only 'number' is mapped so far | `src/objects/LineLoop.d.ts` |
-| `LineSegments` | parameter 'geometry' is typed 'TGeometry', and only 'number' is mapped so far | `src/objects/LineSegments.d.ts` |
-| `Loader` | parameter 'manager' is typed 'LoadingManager', and only 'number' is mapped so far | `src/loaders/Loader.d.ts` |
-| `LoadingManager` | parameter 'onLoad' is typed '() => void', and only 'number' is mapped so far | `src/loaders/LoadingManager.d.ts` |
-| `MaterialLoader` | parameter 'manager' is typed 'LoadingManager', and only 'number' is mapped so far | `src/loaders/MaterialLoader.d.ts` |
-| `Matrix2` | 2 constructor overloads; C# overload emission is not implemented | `src/math/Matrix2.d.ts` |
-| `Matrix3` | 2 constructor overloads; C# overload emission is not implemented | `src/math/Matrix3.d.ts` |
-| `Matrix4` | 2 constructor overloads; C# overload emission is not implemented | `src/math/Matrix4.d.ts` |
-| `Mesh` | parameter 'geometry' is typed 'TGeometry', and only 'number' is mapped so far | `src/objects/Mesh.d.ts` |
-| `MeshBasicMaterial` | parameter 'parameters' is typed 'MeshBasicMaterialParameters', and only 'number' is mapped so far | `src/materials/MeshBasicMaterial.d.ts` |
-| `MeshBasicNodeMaterial` | parameter 'parameters' is typed 'MeshBasicNodeMaterialParameters', and only 'number' is mapped so far | `src/materials/nodes/MeshBasicNodeMaterial.d.ts` |
-| `MeshDepthMaterial` | parameter 'parameters' is typed 'MeshDepthMaterialParameters', and only 'number' is mapped so far | `src/materials/MeshDepthMaterial.d.ts` |
-| `MeshDistanceMaterial` | parameter 'parameters' is typed 'MeshDistanceMaterialParameters', and only 'number' is mapped so far | `src/materials/MeshDistanceMaterial.d.ts` |
-| `MeshLambertMaterial` | parameter 'parameters' is typed 'MeshLambertMaterialParameters', and only 'number' is mapped so far | `src/materials/MeshLambertMaterial.d.ts` |
-| `MeshLambertNodeMaterial` | parameter 'parameters' is typed 'MeshLambertNodeMaterialParameters', and only 'number' is mapped so far | `src/materials/nodes/MeshLambertNodeMaterial.d.ts` |
-| `MeshMatcapMaterial` | parameter 'parameters' is typed 'MeshMatcapMaterialParameters', and only 'number' is mapped so far | `src/materials/MeshMatcapMaterial.d.ts` |
-| `MeshMatcapNodeMaterial` | parameter 'parameters' is typed 'MeshMatcapNodeMaterialParameters', and only 'number' is mapped so far | `src/materials/nodes/MeshMatcapNodeMaterial.d.ts` |
-| `MeshNormalMaterial` | parameter 'parameters' is typed 'MeshNormalMaterialParameters', and only 'number' is mapped so far | `src/materials/MeshNormalMaterial.d.ts` |
-| `MeshNormalNodeMaterial` | parameter 'parameters' is typed 'MeshNormalNodeMaterialParameters', and only 'number' is mapped so far | `src/materials/nodes/MeshNormalNodeMaterial.d.ts` |
-| `MeshPhongMaterial` | parameter 'parameters' is typed 'MeshPhongMaterialParameters', and only 'number' is mapped so far | `src/materials/MeshPhongMaterial.d.ts` |
-| `MeshPhongNodeMaterial` | parameter 'parameters' is typed 'MeshPhongNodeMaterialParameters', and only 'number' is mapped so far | `src/materials/nodes/MeshPhongNodeMaterial.d.ts` |
-| `MeshPhysicalMaterial` | parameter 'parameters' is typed 'MeshPhysicalMaterialParameters', and only 'number' is mapped so far | `src/materials/MeshPhysicalMaterial.d.ts` |
-| `MeshPhysicalNodeMaterial` | parameter 'parameters' is typed 'MeshPhysicalNodeMaterialParameters', and only 'number' is mapped so far | `src/materials/nodes/MeshPhysicalNodeMaterial.d.ts` |
-| `MeshSSSNodeMaterial` | parameter 'parameters' is typed 'MeshSSSNodeMaterialParameters', and only 'number' is mapped so far | `src/materials/nodes/MeshSSSNodeMaterial.d.ts` |
-| `MeshStandardMaterial` | parameter 'parameters' is typed 'MeshStandardMaterialParameters', and only 'number' is mapped so far | `src/materials/MeshStandardMaterial.d.ts` |
-| `MeshStandardNodeMaterial` | parameter 'parameters' is typed 'MeshStandardNodeMaterialParameters', and only 'number' is mapped so far | `src/materials/nodes/MeshStandardNodeMaterial.d.ts` |
-| `MeshToonMaterial` | parameter 'parameters' is typed 'MeshToonMaterialParameters', and only 'number' is mapped so far | `src/materials/MeshToonMaterial.d.ts` |
-| `MeshToonNodeMaterial` | parameter 'parameters' is typed 'MeshToonNodeMaterialParameters', and only 'number' is mapped so far | `src/materials/nodes/MeshToonNodeMaterial.d.ts` |
-| `NodeLoader` | parameter 'manager' is typed 'LoadingManager', and only 'number' is mapped so far | `src/loaders/nodes/NodeLoader.d.ts` |
-| `NodeMaterialObserver` | parameter 'builder' is typed 'NodeBuilder', and only 'number' is mapped so far | `src/materials/nodes/manager/NodeMaterialObserver.d.ts` |
-| `NodeObjectLoader` | parameter 'manager' is typed 'LoadingManager', and only 'number' is mapped so far | `src/loaders/nodes/NodeObjectLoader.d.ts` |
-| `NumberKeyframeTrack` | parameter 'name' is typed 'string', and only 'number' is mapped so far | `src/animation/tracks/NumberKeyframeTrack.d.ts` |
-| `ObjectLoader` | parameter 'manager' is typed 'LoadingManager', and only 'number' is mapped so far | `src/loaders/ObjectLoader.d.ts` |
-| `PMREMGenerator` | parameter 'renderer' is typed 'WebGLRenderer', and only 'number' is mapped so far | `src/extras/PMREMGenerator.d.ts` |
-| `PMREMGenerator` | parameter 'renderer' is typed 'Renderer', and only 'number' is mapped so far | `src/renderers/common/extras/PMREMGenerator.d.ts` |
-| `Path` | parameter 'points' is typed 'Vector2[]', and only 'number' is mapped so far | `src/extras/core/Path.d.ts` |
-| `Plane` | parameter 'normal' is typed 'Vector3', and only 'number' is mapped so far | `src/math/Plane.d.ts` |
-| `PlaneHelper` | parameter 'plane' is typed 'Plane', and only 'number' is mapped so far | `src/helpers/PlaneHelper.d.ts` |
-| `PointLight` | parameter 'color' is typed 'ColorRepresentation', and only 'number' is mapped so far | `src/lights/PointLight.d.ts` |
-| `PointLightHelper` | parameter 'light' is typed 'PointLight', and only 'number' is mapped so far | `src/helpers/PointLightHelper.d.ts` |
-| `Points` | parameter 'geometry' is typed 'TGeometry', and only 'number' is mapped so far | `src/objects/Points.d.ts` |
-| `PointsMaterial` | parameter 'parameters' is typed 'PointsMaterialParameters', and only 'number' is mapped so far | `src/materials/PointsMaterial.d.ts` |
-| `PointsNodeMaterial` | parameter 'parameters' is typed 'PointsNodeMaterialParameters', and only 'number' is mapped so far | `src/materials/nodes/PointsNodeMaterial.d.ts` |
-| `PolarGridHelper` | parameter 'color1' is typed 'ColorRepresentation', and only 'number' is mapped so far | `src/helpers/PolarGridHelper.d.ts` |
-| `PolyhedronGeometry` | parameter 'vertices' is typed 'number[]', and only 'number' is mapped so far | `src/geometries/PolyhedronGeometry.d.ts` |
-| `PostProcessing` | parameter 'renderer' is typed 'Renderer', and only 'number' is mapped so far | `src/renderers/common/PostProcessing.d.ts` |
-| `PropertyBinding` | parameter 'rootNode' is typed 'Object3D | Skeleton', and only 'number' is mapped so far | `src/animation/PropertyBinding.d.ts` |
-| `PropertyMixer` | parameter 'binding' is typed 'PropertyBinding', and only 'number' is mapped so far | `src/animation/PropertyMixer.d.ts` |
-| `QuadMesh` | parameter 'material' is typed 'Material | null', and only 'number' is mapped so far | `src/renderers/common/QuadMesh.d.ts` |
-| `QuadraticBezierCurve` | parameter 'v0' is typed 'Vector2', and only 'number' is mapped so far | `src/extras/curves/QuadraticBezierCurve.d.ts` |
-| `QuadraticBezierCurve3` | parameter 'v0' is typed 'Vector3', and only 'number' is mapped so far | `src/extras/curves/QuadraticBezierCurve3.d.ts` |
-| `Quaternion` | parameter 'x' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/math/Quaternion.d.ts` |
-| `QuaternionKeyframeTrack` | parameter 'name' is typed 'string', and only 'number' is mapped so far | `src/animation/tracks/QuaternionKeyframeTrack.d.ts` |
-| `Ray` | parameter 'origin' is typed 'Vector3', and only 'number' is mapped so far | `src/math/Ray.d.ts` |
-| `Raycaster` | parameter 'origin' is typed 'Vector3', and only 'number' is mapped so far | `src/core/Raycaster.d.ts` |
-| `RectAreaLight` | parameter 'color' is typed 'ColorRepresentation', and only 'number' is mapped so far | `src/lights/RectAreaLight.d.ts` |
-| `RenderPipeline` | parameter 'renderer' is typed 'Renderer', and only 'number' is mapped so far | `src/renderers/common/RenderPipeline.d.ts` |
-| `RenderTarget` | parameter 'width' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/core/RenderTarget.d.ts` |
-| `RenderTarget3D` | parameter 'width' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/core/RenderTarget3D.d.ts` |
-| `Renderer` | parameter 'backend' is typed 'Backend', and only 'number' is mapped so far | `src/renderers/common/Renderer.d.ts` |
-| `RingGeometry` | parameter 'thetaLength' documents the default 'Math.PI * 2', which is not a numeric literal | `src/geometries/RingGeometry.d.ts` |
-| `SSSLightingModel` | the class is never exported, so it is not reachable on the THREE namespace the applier looks names up on | `src/materials/nodes/MeshSSSNodeMaterial.d.ts` |
-| `ShaderMaterial` | parameter 'parameters' is typed 'ShaderMaterialParameters', and only 'number' is mapped so far | `src/materials/ShaderMaterial.d.ts` |
-| `ShadowMaterial` | parameter 'parameters' is typed 'ShadowMaterialParameters', and only 'number' is mapped so far | `src/materials/ShadowMaterial.d.ts` |
-| `ShadowNodeMaterial` | parameter 'parameters' is typed 'ShadowNodeMaterialParameters', and only 'number' is mapped so far | `src/materials/nodes/ShadowNodeMaterial.d.ts` |
-| `Shape` | parameter 'points' is typed 'Vector2[]', and only 'number' is mapped so far | `src/extras/core/Shape.d.ts` |
-| `ShapeGeometry` | parameter 'shapes' is typed 'Shape | Shape[]', and only 'number' is mapped so far | `src/geometries/ShapeGeometry.d.ts` |
-| `Skeleton` | parameter 'bones' is typed 'Bone[]', and only 'number' is mapped so far | `src/objects/Skeleton.d.ts` |
-| `SkeletonHelper` | parameter 'object' is typed 'Object3D', and only 'number' is mapped so far | `src/helpers/SkeletonHelper.d.ts` |
-| `SkinnedMesh` | parameter 'geometry' is typed 'TGeometry', and only 'number' is mapped so far | `src/objects/SkinnedMesh.d.ts` |
-| `Source` | parameter 'data' is typed 'TData', and only 'number' is mapped so far | `src/textures/Source.d.ts` |
-| `Sphere` | parameter 'center' is typed 'Vector3', and only 'number' is mapped so far | `src/math/Sphere.d.ts` |
-| `SphereGeometry` | parameter 'phiLength' documents the default 'Math.PI * 2', which is not a numeric literal | `src/geometries/SphereGeometry.d.ts` |
-| `Spherical` | parameter 'radius' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/math/Spherical.d.ts` |
-| `SplineCurve` | parameter 'points' is typed 'Vector2[]', and only 'number' is mapped so far | `src/extras/curves/SplineCurve.d.ts` |
-| `SpotLight` | parameter 'color' is typed 'ColorRepresentation', and only 'number' is mapped so far | `src/lights/SpotLight.d.ts` |
-| `SpotLightHelper` | parameter 'light' is typed 'SpotLight', and only 'number' is mapped so far | `src/helpers/SpotLightHelper.d.ts` |
-| `Sprite` | parameter 'material' is typed 'SpriteMaterial', and only 'number' is mapped so far | `src/objects/Sprite.d.ts` |
-| `SpriteMaterial` | parameter 'parameters' is typed 'SpriteMaterialParameters', and only 'number' is mapped so far | `src/materials/SpriteMaterial.d.ts` |
-| `SpriteNodeMaterial` | parameter 'parameters' is typed 'SpriteNodeMaterialParameters', and only 'number' is mapped so far | `src/materials/nodes/SpriteNodeMaterial.d.ts` |
-| `StorageBufferAttribute` | parameter 'array' is typed 'TypedArray | number', and only 'number' is mapped so far | `src/renderers/common/StorageBufferAttribute.d.ts` |
-| `StorageInstancedBufferAttribute` | parameter 'array' is typed 'TypedArray | number', and only 'number' is mapped so far | `src/renderers/common/StorageInstancedBufferAttribute.d.ts` |
-| `StorageTexture` | parameter 'width' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/renderers/common/StorageTexture.d.ts` |
-| `StringKeyframeTrack` | parameter 'name' is typed 'string', and only 'number' is mapped so far | `src/animation/tracks/StringKeyframeTrack.d.ts` |
-| `Texture` | 2 constructor overloads; C# overload emission is not implemented | `src/textures/Texture.d.ts` |
-| `TextureLoader` | parameter 'manager' is typed 'LoadingManager', and only 'number' is mapped so far | `src/loaders/TextureLoader.d.ts` |
-| `TimestampQueryPool` | the class is abstract, so it has no constructor to mirror | `src/renderers/common/TimestampQueryPool.d.ts` |
-| `TorusGeometry` | parameter 'arc' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/geometries/TorusGeometry.d.ts` |
-| `Triangle` | parameter 'a' is typed 'Vector3', and only 'number' is mapped so far | `src/math/Triangle.d.ts` |
-| `TubeGeometry` | parameter 'path' is typed 'Curve<Vector3>', and only 'number' is mapped so far | `src/geometries/TubeGeometry.d.ts` |
-| `Uint16BufferAttribute` | parameter 'array' is typed 'Iterable<number> | ArrayLike<number> | ArrayBuffer | number', and only 'number' is mapped so far | `src/core/BufferAttribute.d.ts` |
-| `Uint32BufferAttribute` | parameter 'array' is typed 'Iterable<number> | ArrayLike<number> | ArrayBuffer | number', and only 'number' is mapped so far | `src/core/BufferAttribute.d.ts` |
-| `Uint8BufferAttribute` | parameter 'array' is typed 'Iterable<number> | ArrayLike<number> | ArrayBuffer | number', and only 'number' is mapped so far | `src/core/BufferAttribute.d.ts` |
-| `Uint8ClampedBufferAttribute` | parameter 'array' is typed 'Iterable<number> | ArrayLike<number> | ArrayBuffer | number', and only 'number' is mapped so far | `src/core/BufferAttribute.d.ts` |
-| `Uniform` | parameter 'value' is typed 'T', and only 'number' is mapped so far | `src/core/Uniform.d.ts` |
-| `Vector2` | parameter 'x' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/math/Vector2.d.ts` |
-| `Vector3` | parameter 'x' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/math/Vector3.d.ts` |
-| `Vector4` | parameter 'x' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/math/Vector4.d.ts` |
-| `VectorKeyframeTrack` | parameter 'name' is typed 'string', and only 'number' is mapped so far | `src/animation/tracks/VectorKeyframeTrack.d.ts` |
-| `VideoFrameTexture` | parameter 'mapping' is typed 'Mapping', and only 'number' is mapped so far | `src/textures/VideoFrameTexture.d.ts` |
-| `VideoTexture` | parameter 'video' is typed 'TVideo', and only 'number' is mapped so far | `src/textures/VideoTexture.d.ts` |
-| `VolumeNodeMaterial` | parameter 'parameters' is typed 'VolumeNodeMaterialParameters', and only 'number' is mapped so far | `src/materials/nodes/VolumeNodeMaterial.d.ts` |
-| `WGSLNodeBuilder` | parameter 'object' is typed 'Object3D', and only 'number' is mapped so far | `src/renderers/webgpu/nodes/WGSLNodeBuilder.d.ts` |
-| `WebGL3DRenderTarget` | parameter 'options' is typed 'RenderTargetOptions', and only 'number' is mapped so far | `src/renderers/WebGL3DRenderTarget.d.ts` |
-| `WebGLArrayRenderTarget` | parameter 'options' is typed 'RenderTargetOptions', and only 'number' is mapped so far | `src/renderers/WebGLArrayRenderTarget.d.ts` |
-| `WebGLAttributes` | parameter 'gl' is typed 'WebGLRenderingContext | WebGL2RenderingContext', and only 'number' is mapped so far | `src/renderers/webgl/WebGLAttributes.d.ts` |
-| `WebGLBackend` | parameter 'parameters' is typed 'WebGLBackendParameters', and only 'number' is mapped so far | `src/renderers/webgl-fallback/WebGLBackend.d.ts` |
-| `WebGLBindingStates` | parameter 'gl' is typed 'WebGLRenderingContext', and only 'number' is mapped so far | `src/renderers/webgl/WebGLBindingStates.d.ts` |
-| `WebGLBufferRenderer` | parameter 'gl' is typed 'WebGLRenderingContext', and only 'number' is mapped so far | `src/renderers/webgl/WebGLBufferRenderer.d.ts` |
-| `WebGLCapabilities` | parameter 'backend' is typed 'WebGLBackend', and only 'number' is mapped so far | `src/renderers/webgl-fallback/utils/WebGLCapabilities.d.ts` |
-| `WebGLCapabilities` | parameter 'gl' is typed 'WebGLRenderingContext', and only 'number' is mapped so far | `src/renderers/webgl/WebGLCapabilities.d.ts` |
-| `WebGLClipping` | parameter 'properties' is typed 'WebGLProperties', and only 'number' is mapped so far | `src/renderers/webgl/WebGLClipping.d.ts` |
-| `WebGLCubeRenderTarget` | parameter 'size' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/renderers/WebGLCubeRenderTarget.d.ts` |
-| `WebGLExtensions` | parameter 'gl' is typed 'WebGLRenderingContext', and only 'number' is mapped so far | `src/renderers/webgl/WebGLExtensions.d.ts` |
-| `WebGLGeometries` | parameter 'gl' is typed 'WebGLRenderingContext', and only 'number' is mapped so far | `src/renderers/webgl/WebGLGeometries.d.ts` |
-| `WebGLIndexedBufferRenderer` | parameter 'gl' is typed 'WebGLRenderingContext', and only 'number' is mapped so far | `src/renderers/webgl/WebGLIndexedBufferRenderer.d.ts` |
-| `WebGLInfo` | parameter 'gl' is typed 'WebGLRenderingContext', and only 'number' is mapped so far | `src/renderers/webgl/WebGLInfo.d.ts` |
-| `WebGLLights` | parameter 'extensions' is typed 'WebGLExtensions', and only 'number' is mapped so far | `src/renderers/webgl/WebGLLights.d.ts` |
-| `WebGLObjects` | parameter 'gl' is typed 'WebGLRenderingContext', and only 'number' is mapped so far | `src/renderers/webgl/WebGLObjects.d.ts` |
-| `WebGLProgram` | parameter 'renderer' is typed 'WebGLRenderer', and only 'number' is mapped so far | `src/renderers/webgl/WebGLProgram.d.ts` |
-| `WebGLPrograms` | parameter 'renderer' is typed 'WebGLRenderer', and only 'number' is mapped so far | `src/renderers/webgl/WebGLPrograms.d.ts` |
-| `WebGLRenderList` | parameter 'properties' is typed 'WebGLProperties', and only 'number' is mapped so far | `src/renderers/webgl/WebGLRenderLists.d.ts` |
-| `WebGLRenderLists` | parameter 'properties' is typed 'WebGLProperties', and only 'number' is mapped so far | `src/renderers/webgl/WebGLRenderLists.d.ts` |
-| `WebGLRenderTarget` | parameter 'width' is optional but undocumented, so three.js's own default is unknown; emitting a C# default would send a concrete value where JavaScript expects 'undefined' | `src/renderers/WebGLRenderTarget.d.ts` |
-| `WebGLRenderer` | parameter 'parameters' is typed 'WebGLRendererParameters', and only 'number' is mapped so far | `src/renderers/WebGLRenderer.d.ts` |
-| `WebGLShadowMap` | parameter '_renderer' is typed 'WebGLRenderer', and only 'number' is mapped so far | `src/renderers/webgl/WebGLShadowMap.d.ts` |
-| `WebGLState` | parameter 'gl' is typed 'WebGLRenderingContext', and only 'number' is mapped so far | `src/renderers/webgl/WebGLState.d.ts` |
-| `WebGLTextures` | parameter 'gl' is typed 'WebGLRenderingContext', and only 'number' is mapped so far | `src/renderers/webgl/WebGLTextures.d.ts` |
-| `WebGLUniforms` | parameter 'gl' is typed 'WebGLRenderingContext', and only 'number' is mapped so far | `src/renderers/webgl/WebGLUniforms.d.ts` |
-| `WebGLUtils` | parameter 'gl' is typed 'WebGLRenderingContext | WebGL2RenderingContext', and only 'number' is mapped so far | `src/renderers/webgl/WebGLUtils.d.ts` |
-| `WebGPUBackend` | parameter 'parameters' is typed 'WebGPUBackendParameters', and only 'number' is mapped so far | `src/renderers/webgpu/WebGPUBackend.d.ts` |
-| `WebGPURenderer` | parameter 'parameters' is typed 'WebGPURendererParameters', and only 'number' is mapped so far | `src/renderers/webgpu/WebGPURenderer.Nodes.d.ts` |
-| `WebGPURenderer` | parameter 'parameters' is typed 'WebGPURendererParameters', and only 'number' is mapped so far | `src/renderers/webgpu/WebGPURenderer.d.ts` |
-| `WebXRManager` | parameter 'renderer' is typed 'WebGLRenderer', and only 'number' is mapped so far | `src/renderers/webxr/WebXRManager.d.ts` |
-| `WireframeGeometry` | parameter 'geometry' is typed 'TBufferGeometry', and only 'number' is mapped so far | `src/geometries/WireframeGeometry.d.ts` |
-| `XRManager` | parameter 'renderer' is typed 'Renderer', and only 'number' is mapped so far | `src/renderers/common/XRManager.d.ts` |
-
-</details>
+| `BoxGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `BoxGeometry` | `property parameters` | `{ readonly width: number; readonly height: number; readonly depth: number; readonly widthSegments: number; readonly heightSegments: number; readonly depthSegments: number; }` is an anonymous object literal type with no named C# equivalent |
+| `BoxGeometry` | `property type` | `string | "BoxGeometry"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 

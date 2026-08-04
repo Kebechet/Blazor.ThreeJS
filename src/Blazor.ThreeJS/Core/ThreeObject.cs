@@ -35,15 +35,20 @@ public abstract class ThreeObject
 
 	/// <summary>
 	/// Attaches this object to a batch: assigns <see cref="Batch"/> and emits the create op.
-	/// Idempotent — calling this a second time on an already-attached object is a no-op, which is
-	/// what lets two objects (e.g. two meshes) share the same geometry or material instance without
-	/// emitting a duplicate create for it. Virtual so a subclass with its own attachment concerns
-	/// (replaying transform state, attaching children) can extend it while this attach-once guard
-	/// stays the single source of truth for whether the create op was already emitted.
+	/// Idempotent — calling this a second time with the same batch is a no-op, which is what lets two
+	/// objects (e.g. two meshes) share the same geometry or material instance without emitting a
+	/// duplicate create for it. Virtual so a subclass with its own attachment concerns (replaying
+	/// transform state, attaching children) can extend it while this attach-once guard stays the
+	/// single source of truth for whether the create op was already emitted.
 	/// </summary>
 	/// <param name="batch">The batch to attach this object to.</param>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when this object is already attached to a different batch. See
+	/// <see cref="ThrowIfAttachedToAnotherBatch"/>.
+	/// </exception>
 	internal virtual void AttachTo(ThreeBatch batch)
 	{
+		ThrowIfAttachedToAnotherBatch(batch);
 		if (Batch is not null)
 		{
 			return;
@@ -51,6 +56,27 @@ public abstract class ThreeObject
 
 		Batch = batch;
 		EmitCreate(batch);
+	}
+
+	/// <summary>
+	/// Rejects an attempt to attach this object to a second batch. An object records its writes into
+	/// exactly one batch, so sharing it between two contexts would emit a handle reference into a
+	/// context that never created the object — an unknown-handle failure in the browser with no
+	/// C#-side signal. Failing at the call site instead names the object and the mistake.
+	/// </summary>
+	/// <param name="batch">The batch this object is being attached to.</param>
+	/// <exception cref="InvalidOperationException">Thrown when this object is already attached to a different batch.</exception>
+	private protected void ThrowIfAttachedToAnotherBatch(ThreeBatch batch)
+	{
+		if (Batch is null || ReferenceEquals(Batch, batch))
+		{
+			return;
+		}
+
+		throw new InvalidOperationException(
+			$"'{GetType().Name}' (handle {Handle}) is already attached to another {nameof(ThreeContext)} and cannot be attached to a second one. " +
+			$"Handles are per-context, so the other context would receive a reference to an object it never created. " +
+			$"Build one object graph per {nameof(ThreeContext)}.");
 	}
 
 	/// <summary>
@@ -82,6 +108,11 @@ public abstract class ThreeObject
 	/// <summary>
 	/// Emits the create op plus every property this object currently holds. Called on attach, and
 	/// again after a WebGL context loss to rebuild the scene from the C# mirror.
+	/// <para>
+	/// An override records every value through <see cref="ThreeValue.Encode"/>, including primitives
+	/// that round-trip unchanged. One unconditional rule costs nothing and leaves no per-property
+	/// judgement call about which values need encoding.
+	/// </para>
 	/// </summary>
 	/// <param name="batch">Batch to record the create op into.</param>
 	internal virtual void EmitCreate(ThreeBatch batch)

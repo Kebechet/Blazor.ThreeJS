@@ -24,13 +24,12 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
+    # No npm install: the wire-format test below imports the vendored three.js bundle from wwwroot,
+    # the copy that actually ships, so only the Node runtime itself is needed here.
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
-
-    - name: Install npm dependencies
-      run: npm ci
 
     - name: Restore dependencies
       run: dotnet restore ${{ env.SOLUTION_PATH }}

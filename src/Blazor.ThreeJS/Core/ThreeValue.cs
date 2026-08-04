@@ -35,6 +35,9 @@ internal static class ThreeValue
 			case Vector3 vector:
 				return new TaggedValue { Tag = ThreeWireFormat.Vector3Tag, Values = vector.ToArray() };
 			case Euler euler:
+				// The hand-cast here and the generic Enum arm below only agree because EulerOrder is
+				// byte-backed like TaggedValue.Order. Widening EulerOrder's backing type without
+				// widening Order would truncate the value on this path while the Enum arm kept it.
 				return new TaggedValue { Tag = ThreeWireFormat.EulerTag, Values = euler.ToArray(), Order = (byte) euler.Order };
 			case Quaternion quaternion:
 				return new TaggedValue { Tag = ThreeWireFormat.QuaternionTag, Values = quaternion.ToArray() };

@@ -59,6 +59,6 @@ public sealed class PointsMaterial : ThreeObject
 	{
 		base.EmitCreate(batch);
 		batch.Set(Handle, "color", ThreeValue.Encode(Color));
-		batch.Set(Handle, "size", _size);
+		batch.Set(Handle, "size", ThreeValue.Encode(_size));
 	}
 }

@@ -94,6 +94,36 @@ public class MeshTests
 	}
 
 	[Fact]
+	public void Mesh_MaterialReassignedTwiceBeforeFlush_KeepsEachCreateBeforeTheSetReferencingIt()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+		var mesh = new Mesh(new BoxGeometry(), new MeshStandardMaterial());
+		mesh.AttachTo(batch);
+		batch.Drain();
+
+		// Act
+		mesh.Material = new MeshStandardMaterial();
+		mesh.Material = new MeshStandardMaterial();
+		var opsList = batch.Drain().ToList();
+
+		// Assert
+		var materialSetOps = opsList
+			.Where(x => x.Kind == ThreeOpKind.Set && x.Handle == mesh.Handle && x.Member == "material")
+			.ToList();
+
+		materialSetOps.Count.ShouldBe(2);
+		foreach (var materialSetOp in materialSetOps)
+		{
+			var referencedHandle = materialSetOp.Value.ShouldBeOfType<ThreeValue.HandleReference>().Handle;
+			var createIndex = opsList.FindIndex(x => x.Kind == ThreeOpKind.Create && x.Handle == referencedHandle);
+
+			createIndex.ShouldBeGreaterThanOrEqualTo(0);
+			createIndex.ShouldBeLessThan(opsList.IndexOf(materialSetOp));
+		}
+	}
+
+	[Fact]
 	public void Mesh_MaterialSetToAnAlreadyAttachedMaterial_DoesNotReemitItsCreateOp()
 	{
 		// Arrange

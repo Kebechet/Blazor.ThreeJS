@@ -5,7 +5,7 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// numeric constants exactly. <see cref="Core.ThreeValue.Encode"/> encodes this enum as its numeric
 /// backing value rather than its member name, which is what three.js expects on the wire.
 /// </summary>
-public enum Side
+public enum Side : byte
 {
 	/// <summary>Render only the front face of each triangle. Matches <c>THREE.FrontSide</c>.</summary>
 	FrontSide = 0,

@@ -88,8 +88,13 @@ public abstract class Object3D : ThreeObject
 	/// attachment on top of the base create-op guard.
 	/// </summary>
 	/// <param name="batch">The batch to attach this object to.</param>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when this object is already attached to a different batch. The check is repeated here
+	/// rather than left to the base implementation, because this override returns before reaching it.
+	/// </exception>
 	internal override void AttachTo(ThreeBatch batch)
 	{
+		ThrowIfAttachedToAnotherBatch(batch);
 		if (Batch is not null)
 		{
 			return;
@@ -115,6 +120,6 @@ public abstract class Object3D : ThreeObject
 		batch.Set(Handle, "position", ThreeValue.Encode(Position));
 		batch.Set(Handle, "rotation", ThreeValue.Encode(Rotation));
 		batch.Set(Handle, "scale", ThreeValue.Encode(Scale));
-		batch.Set(Handle, "visible", _isVisible);
+		batch.Set(Handle, "visible", ThreeValue.Encode(_isVisible));
 	}
 }

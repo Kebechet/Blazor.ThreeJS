@@ -8,6 +8,7 @@ env:
   SOLUTION_PATH: src/Blazor.ThreeJS.slnx
   PACKAGE_NAME: Kebechet.Blazor.ThreeJS
   DOTNET_VERSION: '10.0.x'
+  NODE_VERSION: '22.x'
   BUILD_CONFIGURATION: Release
   OUTPUT_PATH: ./nupkg
   NUGET_SOURCE: https://api.nuget.org/v3/index.json
@@ -27,6 +28,12 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      # Needed by the wire-format test below, which runs on plain Node against the vendored three.js.
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
       - name: Get version from csproj
         id: version
         run: |
@@ -45,6 +52,14 @@ jobs:
       # publish without complaint.
       - name: Build (produces the .nupkg via GeneratePackageOnBuild)
         run: dotnet build ${{ env.SOLUTION_PATH }} --configuration ${{ env.BUILD_CONFIGURATION }} --no-restore
+
+      # workflow_dispatch can target any ref, so the suite runs here too rather than trusting that
+      # whatever is being published already went through the Build workflow.
+      - name: Test
+        run: dotnet test ${{ env.SOLUTION_PATH }} --no-build --configuration ${{ env.BUILD_CONFIGURATION }}
+
+      - name: Test the wire format
+        run: node tests/wire-format.test.mjs
 
       - name: Collect package
         run: |

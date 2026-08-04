@@ -130,6 +130,27 @@ public class ThreeBatchTests
 	}
 
 	[Fact]
+	public void ThreeBatch_SetCreateSetOnSameTarget_AppendsInsteadOfRewritingTheEarlierSet()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+
+		// Act
+		batch.Set(1, "material", "A");
+		batch.Create(2, "MeshStandardMaterial", []);
+		batch.Set(1, "material", "B");
+		var ops = batch.Drain();
+
+		// Assert
+		ops.Count.ShouldBe(3);
+		ops.First().Kind.ShouldBe(ThreeOpKind.Set);
+		ops.First().Value.ShouldBe("A");
+		ops.ElementAt(1).Kind.ShouldBe(ThreeOpKind.Create);
+		ops.Last().Kind.ShouldBe(ThreeOpKind.Set);
+		ops.Last().Value.ShouldBe("B");
+	}
+
+	[Fact]
 	public void ThreeBatch_SetTwiceThenCall_CoalescesTheSetsBeforeTheCall()
 	{
 		// Arrange

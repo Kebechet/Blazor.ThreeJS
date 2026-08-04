@@ -4,13 +4,12 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 
 /// <summary>
 /// A renderable object combining geometry and a material, the JavaScript-side <c>THREE.Mesh</c>.
-/// Typed against the concrete <see cref="BoxGeometry"/> and <see cref="MeshStandardMaterial"/> for
-/// this vertical slice; the generator in Plan 2 widens this to the <c>BufferGeometry</c>/<c>Material</c>
-/// base types once they exist.
+/// Typed against <see cref="BoxGeometry"/> and <see cref="MeshStandardMaterial"/>, the geometry and
+/// material types this release wraps.
 /// </summary>
 public sealed class Mesh : Object3D
 {
-	private readonly ThreeObject _geometry;
+	private readonly BoxGeometry _geometry;
 	private MeshStandardMaterial _material;
 
 	/// <summary>

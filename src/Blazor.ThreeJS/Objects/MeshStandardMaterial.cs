@@ -103,8 +103,8 @@ public sealed class MeshStandardMaterial : ThreeObject
 	{
 		base.EmitCreate(batch);
 		batch.Set(Handle, "color", ThreeValue.Encode(Color));
-		batch.Set(Handle, "roughness", _roughness);
-		batch.Set(Handle, "metalness", _metalness);
+		batch.Set(Handle, "roughness", ThreeValue.Encode(_roughness));
+		batch.Set(Handle, "metalness", ThreeValue.Encode(_metalness));
 		batch.Set(Handle, "side", ThreeValue.Encode(_side));
 	}
 }

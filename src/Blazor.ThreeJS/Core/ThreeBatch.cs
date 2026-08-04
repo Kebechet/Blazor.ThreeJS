@@ -17,13 +17,22 @@ internal sealed class ThreeBatch
 	}
 
 	/// <summary>
-	/// Records an instantiation of a new three.js object under <paramref name="handle"/>.
+	/// Records an instantiation of a new three.js object under <paramref name="handle"/>. Also acts as
+	/// a coalescing barrier for <b>every</b> handle, not just this one: a create invalidates every
+	/// pending <c>Set</c> slot, because rewriting one afterwards could point it at a handle created
+	/// later in the batch, and the applier rejects such an op with an unknown-handle error.
+	/// <para>
+	/// This costs nothing in steady state — an animation batch contains no create ops at all, so
+	/// per-frame coalescing is untouched. Only a batch that mixes creates with property writes gives
+	/// up some coalescing, and it gives it up for at most one extra <c>Set</c> op.
+	/// </para>
 	/// </summary>
 	/// <param name="handle">Handle the created object is registered under.</param>
 	/// <param name="type">Name of the three.js type to instantiate.</param>
 	/// <param name="args">Positional constructor arguments.</param>
 	public void Create(int handle, string type, object?[] args)
 	{
+		_setIndexesByTarget.Clear();
 		_ops.Add(new ThreeOp
 		{
 			Kind = ThreeOpKind.Create,
@@ -40,7 +49,9 @@ internal sealed class ThreeBatch
 	/// Coalescing only holds within a run of writes: recording a <see cref="Call"/> or
 	/// <see cref="Dispose"/> on this handle acts as a barrier, because a call can observe the
 	/// object's property state at the point it runs — a <c>Set</c> recorded afterward always
-	/// appends a new op instead of overwriting a value the call may already have read.
+	/// appends a new op instead of overwriting a value the call may already have read. A
+	/// <see cref="Create"/> is a barrier too, for every handle at once, so a rewritten value can
+	/// never reference an object created later in the batch.
 	/// </summary>
 	/// <param name="handle">Handle of the object to write to.</param>
 	/// <param name="member">Name of the property being written.</param>

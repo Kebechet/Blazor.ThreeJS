@@ -4,13 +4,13 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 
 /// <summary>
 /// A renderable object that draws each vertex of its geometry as a point, the JavaScript-side
-/// <c>THREE.Points</c>. Proves the geometry/material dependency-before-owner ordering seen on
-/// <see cref="Mesh"/> is not specific to that type.
+/// <c>THREE.Points</c>. Like <see cref="Mesh"/>, it owns a geometry and a material, and both are
+/// created on the JavaScript side before the points object that references them.
 /// </summary>
 public sealed class Points : Object3D
 {
-	private readonly ThreeObject _geometry;
-	private readonly ThreeObject _material;
+	private readonly BoxGeometry _geometry;
+	private readonly PointsMaterial _material;
 
 	/// <summary>
 	/// Initializes a new points object from a geometry and a points material.

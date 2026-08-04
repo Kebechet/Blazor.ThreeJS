@@ -67,13 +67,23 @@ public sealed class ThreeContext : IAsyncDisposable
 
 	/// <summary>
 	/// Flushes any pending ops, then tells the renderer which scene and camera to render each frame.
+	/// Silently no-ops if the circuit has already disconnected.
 	/// </summary>
 	/// <param name="sceneHandle">Handle of the scene object to render.</param>
 	/// <param name="cameraHandle">Handle of the camera to render through.</param>
 	public async Task SetActiveSceneAsync(int sceneHandle, int cameraHandle)
 	{
 		await FlushAsync();
-		await _module.InvokeVoidAsync("setActiveScene", _contextId, sceneHandle, cameraHandle);
+		try
+		{
+			await _module.InvokeVoidAsync("setActiveScene", _contextId, sceneHandle, cameraHandle);
+		}
+		catch (JSDisconnectedException)
+		{
+			// A disconnected circuit is not recoverable and not an application bug; nothing pending
+			// could have been delivered anyway. Only this exception type is swallowed — a genuine
+			// applier error still surfaces through OnError.
+		}
 	}
 
 	/// <summary>

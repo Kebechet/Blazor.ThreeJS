@@ -46,13 +46,13 @@ public abstract class Object3D : ThreeObject
 	private Action<ThreePointerEvent>? _onClick;
 
 	/// <summary>Position relative to the parent object.</summary>
-	public Vector3 Position { get; }
+	public Vector3 Position { get; } = new();
 
 	/// <summary>Rotation relative to the parent object, expressed as Euler angles.</summary>
-	public Euler Rotation { get; }
+	public Euler Rotation { get; } = new();
 
 	/// <summary>Scale relative to the parent object.</summary>
-	public Vector3 Scale { get; }
+	public Vector3 Scale { get; } = new(1f, 1f, 1f);
 
 	/// <summary>
 	/// Object's local rotation as a quaternion. three.js keeps this and <see cref="Rotation"/> in step
@@ -60,13 +60,13 @@ public abstract class Object3D : ThreeObject
 	/// three.js already holds, which is what triggers that. Mirrored as an instance this object owns:
 	/// mutating it records a write of <c>quaternion</c>.
 	/// </summary>
-	public Quaternion Quaternion { get; }
+	public Quaternion Quaternion { get; } = new();
 
 	/// <summary>
 	/// The object's up direction, used by <see cref="LookAt"/> to decide the orientation of the result.
 	/// Mirrored as an instance this object owns: mutating it records a write of <c>up</c>.
 	/// </summary>
-	public Vector3 Up { get; }
+	public Vector3 Up { get; } = new(0f, 1f, 0f);
 
 	/// <summary>
 	/// The pivot point for rotation and scale transformations. When set, rotation and scale are applied
@@ -78,7 +78,7 @@ public abstract class Object3D : ThreeObject
 	/// Mutating it is what gives the three.js object a pivot; there is no way back to <c>null</c>.
 	/// </para>
 	/// </summary>
-	public Vector3 Pivot { get; }
+	public Vector3 Pivot { get; } = new();
 
 	/// <summary>Child objects attached via <see cref="Add"/>.</summary>
 	public IReadOnlyList<Object3D> Children
@@ -407,13 +407,28 @@ public abstract class Object3D : ThreeObject
 	/// </summary>
 	protected Object3D()
 	{
-		Position = new Vector3();
-		Rotation = new Euler();
-		Scale = new Vector3(1f, 1f, 1f);
-		Quaternion = new Quaternion();
-		Up = new Vector3(0f, 1f, 0f);
-		Pivot = new Vector3();
+		WireTransformChangeTracking();
+	}
 
+	/// <summary>
+	/// Initializes the transform exactly as the parameterless constructor does, for an object the
+	/// browser created and minted a handle for. See <see cref="ThreeObject(int)"/> for why minting is
+	/// not part of the surface a consumer can reach.
+	/// </summary>
+	/// <param name="handle">The negative handle the JavaScript side registered the object under.</param>
+	private protected Object3D(int handle)
+		: base(handle)
+	{
+		WireTransformChangeTracking();
+	}
+
+	/// <summary>
+	/// Points each transform component's <c>OnChange</c> callback at the property write it stands for,
+	/// so writing <c>mesh.Position.X</c> records a <c>position</c> write without the owner watching
+	/// each component.
+	/// </summary>
+	private void WireTransformChangeTracking()
+	{
 		Position.OnChange = () => RecordSet("position", Position);
 		Rotation.OnChange = () => RecordSet("rotation", Rotation);
 		Scale.OnChange = () => RecordSet("scale", Scale);

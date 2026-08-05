@@ -24,6 +24,14 @@ const POINTER_EVENT_NAME = 'click';
 
 const EULER_ORDERS = ['XYZ', 'YXZ', 'ZXY', 'ZYX', 'YZX', 'XZY'];
 
+// The two addons this module wraps. They live outside the three.js bundle, ship as their own static
+// assets under wwwroot/addons, and are imported dynamically: a consumer who never loads a model
+// never fetches 115 KB of loader, and a canvas with no controls never fetches the controls either.
+// The paths are relative to this module, which is what makes them resolve identically from the
+// package's own `_content/` folder and from the demo.
+const GLTF_LOADER_MODULE = './addons/loaders/GLTFLoader.js';
+const ORBIT_CONTROLS_MODULE = './addons/controls/OrbitControls.js';
+
 const contexts = new Map();
 let nextContextId = 1;
 
@@ -64,6 +72,15 @@ export function createContext(canvas, dotNetRef) {
         // permanently with no signal to C#, since render-time failures never reach applyBatch's
         // error channel.
         try {
+            // Controls run entirely on this side of the boundary, every frame, with no interop at
+            // all: they read the pointer from the DOM and write straight into the camera three.js
+            // already holds. Round-tripping that through C# would put one message per frame on a
+            // Blazor Server circuit for something the browser can do alone. The cost when no
+            // controls are attached is this one truthy test.
+            if (context.controls) {
+                context.controls.update();
+            }
+
             const scene = context.objects.get(context.sceneHandle);
             const camera = context.objects.get(context.cameraHandle);
             if (scene && camera) {
@@ -161,6 +178,11 @@ export function applyOp(context, op) {
             if (target && typeof target.dispose === 'function') {
                 target.dispose();
             }
+
+            // A loaded root owns geometries, materials and textures that C# never created and has no
+            // handle for, so nothing else would ever release them. Disposing the root releases the
+            // whole graph it brought in, and retires every handle minted for it.
+            releaseLoadedGraph(context, op.h);
 
             context.objects.delete(op.h);
 
@@ -419,6 +441,199 @@ export function dispatchPointerHit(context, ndcX, ndcY) {
     return hit;
 }
 
+// ---------------------------------------------------------------------------------------------
+// Handles the browser mints.
+//
+// Every other object in this module was created by an op C# sent, under a handle C# allocated. The
+// two addons below break that: a glTF scene graph and an OrbitControls instance are built here, by
+// JavaScript, and C# has to be able to name them afterwards.
+//
+// The two allocators are kept apart by sign rather than by agreement. C# allocates upwards from 1
+// (Interlocked.Increment) and this one allocates downwards from -1, so no negotiation, no reserved
+// block and no round trip is needed for them never to collide - and a handle's sign says outright
+// which side made the object. ThreeObject rejects a positive handle offered as browser-minted and a
+// non-positive one produced by its own allocator, so the partition is enforced on both sides rather
+// than assumed.
+// ---------------------------------------------------------------------------------------------
+
+function mintHandle(context) {
+    context.nextMintedHandle = (context.nextMintedHandle ?? 0) - 1;
+    return context.nextMintedHandle;
+}
+
+// Loads a glTF or GLB file and registers the graph it produced, so C# can hold the result.
+//
+// What comes back is one row per mirrored node: the root always, plus every named descendant.
+// Unnamed nodes are left unmirrored on purpose - a name is glTF's own way of addressing a node, and
+// an index into a traversal changes the moment the artist re-exports, so mirroring the unnamed ones
+// would hand C# an identifier that silently stops meaning the same thing.
+//
+// Each row carries the node's transform read off the object the loader built, encoded exactly as a
+// read op encodes one, so the C# mirror starts out holding the loader's own values rather than
+// three.js's constructor defaults.
+export async function loadGltf(contextId, url) {
+    const context = contexts.get(contextId);
+    if (!context) {
+        throw new Error(`Unknown context '${contextId}'`);
+    }
+
+    return loadGltfInto(context, url);
+}
+
+// Exported for the same reason runOps is: the wire-contract test drives it against a plain
+// `{ objects: new Map() }` and a real HTTP URL, so the fetch, the parse and the minting are all the
+// real thing. Going through loadGltf would be impossible there — createContext needs a WebGL
+// renderer, which Node has not got, so no context id would ever resolve.
+export async function loadGltfInto(context, url) {
+    const { GLTFLoader } = await import(GLTF_LOADER_MODULE);
+    const gltf = await new GLTFLoader().loadAsync(url);
+    return registerLoadedGraph(context, gltf.scene);
+}
+
+// Mints a handle for the loaded root and for each of its named descendants, and describes them.
+function registerLoadedGraph(context, root) {
+    const handles = [];
+    const nodes = [describeLoadedNode(context, root, handles)];
+    root.traverse(object => {
+        if (object === root || !object.name) {
+            return;
+        }
+
+        nodes.push(describeLoadedNode(context, object, handles));
+    });
+
+    if (!context.loadedGraphs) {
+        context.loadedGraphs = new Map();
+    }
+
+    context.loadedGraphs.set(nodes[0].h, { root, handles });
+    return { n: nodes };
+}
+
+function describeLoadedNode(context, object, handles) {
+    const handle = mintHandle(context);
+    context.objects.set(handle, object);
+    handles.push(handle);
+    return {
+        h: handle,
+        n: object.name,
+        t: object.type,
+        p: encode(object.position),
+        r: encode(object.rotation),
+        s: encode(object.scale),
+        v: object.visible === true
+    };
+}
+
+// Releases everything one loaded graph brought in, if `handle` names a loaded root: the GPU
+// resources hanging off it, and the handles minted for its nodes.
+//
+// The geometries, materials and textures are the part nothing else covers. A Mesh has no `dispose`,
+// so the generic arm in the dispose op never reaches them, and C# never created them so no dispose
+// op will ever name them either. Materials are walked property by property rather than by a list of
+// map names, so a texture slot three.js adds in a later release is still released.
+function releaseLoadedGraph(context, handle) {
+    const graph = context.loadedGraphs?.get(handle);
+    if (!graph) {
+        return;
+    }
+
+    const released = new Set();
+    graph.root.traverse(object => {
+        releaseOnce(released, object.geometry);
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        for (const material of materials) {
+            releaseMaterial(released, material);
+        }
+    });
+
+    for (const nodeHandle of graph.handles) {
+        context.objects.delete(nodeHandle);
+        setPointerTarget(context, nodeHandle, null);
+    }
+
+    context.loadedGraphs.delete(handle);
+}
+
+function releaseMaterial(released, material) {
+    if (!material || released.has(material)) {
+        return;
+    }
+
+    for (const value of Object.values(material)) {
+        if (value && value.isTexture) {
+            releaseOnce(released, value);
+        }
+    }
+
+    releaseOnce(released, material);
+}
+
+function releaseOnce(released, resource) {
+    if (!resource || released.has(resource) || typeof resource.dispose !== 'function') {
+        return;
+    }
+
+    released.add(resource);
+    resource.dispose();
+}
+
+// Attaches OrbitControls to the camera at `cameraHandle` and to this context's canvas, and mints a
+// handle for the controls so C# can write their properties through ordinary Set ops.
+//
+// Replacing an existing set is a detach followed by an attach rather than two live sets fighting
+// over the same camera: two OrbitControls on one canvas both consume the same pointer events.
+export async function attachOrbitControls(contextId, cameraHandle) {
+    const context = contexts.get(contextId);
+    if (!context) {
+        throw new Error(`Unknown context '${contextId}'`);
+    }
+
+    return attachOrbitControlsTo(context, cameraHandle);
+}
+
+// Exported for the same reason loadGltfInto is: the wire-contract test drives the real addon against
+// a recording stand-in for the canvas, which is what makes "every listener it registered comes back
+// off on detach" an assertion rather than a claim.
+export async function attachOrbitControlsTo(context, cameraHandle) {
+    const camera = resolveHandle(context, cameraHandle);
+    const { OrbitControls } = await import(ORBIT_CONTROLS_MODULE);
+    detachControls(context);
+
+    const controls = new OrbitControls(camera, context.renderer.domElement);
+    const handle = mintHandle(context);
+    context.objects.set(handle, controls);
+    context.controls = controls;
+    context.controlsHandle = handle;
+    return handle;
+}
+
+export function detachOrbitControls(contextId) {
+    const context = contexts.get(contextId);
+    if (!context) {
+        return;
+    }
+
+    detachControls(context);
+}
+
+// Takes the controls off the canvas. `dispose` is what removes the pointer, wheel, context-menu and
+// key listeners OrbitControls registered - on the canvas and on its owning document - so skipping it
+// would leave the canvas driving a camera nothing renders any more.
+//
+// Exported for the same reason applyOp is: the wire-contract test drives attach and detach against
+// the vendored addon to prove the listeners really come back off.
+export function detachControls(context) {
+    if (!context.controls) {
+        return;
+    }
+
+    context.controls.dispose();
+    context.objects.delete(context.controlsHandle);
+    context.controls = null;
+    context.controlsHandle = 0;
+}
+
 export function setActiveScene(contextId, sceneHandle, cameraHandle) {
     const context = contexts.get(contextId);
     if (!context) {
@@ -469,12 +684,23 @@ export function disposeContext(contextId) {
     context.resizeObserver.disconnect();
 
     // Before the renderer goes, since removing the listener needs its canvas. Emptying the map is
-    // what takes the listener off it, through the same path an opt-out uses.
+    // what takes the listener off it, through the same path an opt-out uses. OrbitControls registers
+    // listeners of its own, on the canvas and on its owning document, and comes off the same way.
     if (context.pointerTargets) {
         context.pointerTargets.clear();
     }
 
     syncPointerListener(context);
+    detachControls(context);
+
+    // Loaded graphs first: their geometries, materials and textures hang off objects the loop below
+    // cannot reach, because a Mesh has no dispose and only the nodes C# asked to mirror are in the
+    // object table at all.
+    if (context.loadedGraphs) {
+        for (const rootHandle of Array.from(context.loadedGraphs.keys())) {
+            releaseLoadedGraph(context, rootHandle);
+        }
+    }
 
     for (const object of context.objects.values()) {
         if (object && typeof object.dispose === 'function') {

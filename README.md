@@ -14,7 +14,7 @@
 
 Blazor wrapper for three.js. Typed C# scene graph with batched interop, safe on WebAssembly, Server, and MAUI Hybrid. Ships the three.js bundle - no npm, no CDN, no manual script tags.
 
-> **Generated from `@types/three`.** Most of three.js's class surface is wrapped mechanically from the upstream type declarations, so the property names, constructor argument order and documentation are three.js's own rather than a paraphrase. The `Vector3` / `Euler` / `Quaternion` / `Color` / `Matrix4` math types and the `Object3D` scene-graph base are hand-written. [Coverage](#coverage) is exactly how much is wrapped, what is not, and how those numbers were arrived at; [Wrapping a type yourself](#wrapping-a-type-yourself) is how to reach the rest in the meantime.
+> **Generated from `@types/three`.** Most of three.js's class surface is wrapped mechanically from the upstream type declarations, so the property names, constructor argument order and documentation are three.js's own rather than a paraphrase. The `Vector3` / `Euler` / `Quaternion` / `Color` / `Matrix4` math types, the `Object3D` scene-graph base and the two addon wrappers (`GLTFLoader`, `OrbitControls`) are hand-written. [Coverage](#coverage) is exactly how much is wrapped, what is not, and how those numbers were arrived at; [Wrapping a type yourself](#wrapping-a-type-yourself) is how to reach the rest in the meantime.
 
 ## Installation
 
@@ -113,6 +113,85 @@ one this package can bound. A click is deliberate and rare, so it has no such ce
 with no subscriber has no click listener on the canvas either, so it costs nothing whether the
 pointer moves or not.
 
+### Loading a glTF model
+
+`GLTFLoader` wraps three.js's own addon. The browser fetches and parses the file - that is the only
+place it can happen, since parsing glTF means building buffers, geometries, materials and textures,
+and none of those have a wire form. What comes back to C# is a description of the graph, so the
+objects the browser made can be named from here.
+
+```csharp
+var model = await new GLTFLoader(threeContext).LoadAsync("models/figure.gltf");
+scene.Add(model.Scene);
+
+var head = model.FindNode("Head");
+if (head is not null)
+{
+    head.Position.Z += 0.35f;
+    head.OnClick += _ => Console.WriteLine("clicked the head");
+}
+
+await threeContext.FlushAsync();
+```
+
+`model.Scene` is the loaded root; `model.Nodes` is every **named** node beneath it. Nothing else is
+mirrored, and that is the trade: a name is glTF's own way of addressing a node, while an unnamed one
+can only be identified by its place in a traversal, which changes the next time the artist exports.
+So the cost of a load is set by how much of the file its author chose to name rather than by how much
+geometry it holds - and everything unmirrored still renders, it just cannot be addressed from C#.
+
+**What a loaded object knows.** `head.Position` returns the position the **loader** gave it, not
+zero: the transform of every mirrored node is read off the object in the browser and seeded into the
+mirror at load time, so it is accurate the moment you receive it and mirrored normally from then on.
+What the mirror was never told - the geometry, the material, the textures - has no C# object at all.
+`Children` is empty on every loaded node too, including the root, because C# did not build that graph
+and rebuilding it with `Add` would re-parent nodes three.js has already placed. Use `FindNode`.
+
+**Handles.** These objects were created by the browser, so the browser allocates their handles: C#
+counts up from 1 and JavaScript counts down from -1, which is why the two never collide without
+having to agree on anything. Disposing the loaded root releases the whole graph it brought in -
+geometries, materials and textures included, which nothing else would ever free.
+
+Compressed-mesh and compressed-texture extensions (`KHR_draco_mesh_compression`,
+`KHR_texture_basisu`) are not wired up; a file using one fails the load rather than quietly arriving
+without its geometry.
+
+### Orbiting the camera
+
+```csharp
+var controls = await OrbitControls.AttachAsync(threeContext, camera);
+controls.IsDampingEnabled = true;
+controls.MinDistance = 1.5f;
+controls.MaxDistance = 8f;
+controls.Target.Set(0f, 0.2f, 0f);
+await threeContext.FlushAsync();
+```
+
+Drag to orbit, scroll to zoom, right-drag to pan. The controls run entirely in the browser and move
+the camera every frame **with no interop at all**, which is the only way this can work: a drag is one
+message per frame, and on a Blazor Server circuit that is a message every 16 ms for as long as the
+user holds the mouse down.
+
+**⚠️ That makes `camera.Position` stale, on purpose.** While controls are attached the camera's
+transform belongs to JavaScript, and the C# mirror goes on reporting the last value C# wrote to it -
+the one you passed before attaching. This is the one place in the package where the mirror is
+knowingly not authoritative, and it is not papered over: nothing reads the camera back per frame,
+because that is exactly the traffic the controls exist to avoid. Ask when you need to know:
+
+```csharp
+var cameraPosition = await controls.GetCameraPositionAsync();
+var distance = await controls.GetDistanceAsync();
+```
+
+Each costs one interop call, at a moment you choose. `GetPolarAngleAsync` and
+`GetAzimuthalAngleAsync` answer the same way. Writing `camera.Position` while controls are attached
+still reaches three.js; the controls simply move the camera again on the next frame, so detach first
+if you mean to place it yourself.
+
+`DetachAsync` removes the DOM listeners three.js registered and spends the instance - further writes
+to it record nothing rather than addressing a handle the browser has retired. Disposing the context
+detaches too.
+
 ### `Path` and `Timer` collide with the BCL
 
 three.js has a `Path` (a 2D curve) and a `Timer`, and so does .NET. Both wrapped types live in
@@ -173,7 +252,7 @@ These are outside the class total, because the extractor never reads them:
 
 | | classes | |
 |---|---|---|
-| addons (`examples/jsm`) | 383 | ⚠️ **no `GLTFLoader` and no `OrbitControls`**, no post-processing passes, no exporters. They ship as separate modules, and none of them is wrapped |
+| addons (`examples/jsm`) | 383 | **2 wrapped by hand**: `GLTFLoader`, `OrbitControls`, each vendored as its own static asset beside the bundle. The other 381 are not - no post-processing passes, no exporters, no other loaders or controls. The generator reads none of them either way, which is why they sit outside the class total |
 | the TSL / WebGPU node stack (`src/nodes`) | 118 | this package ships three.js's WebGL build, which does not include them |
 
 And inside the total, deliberately out of the mirrored surface:
@@ -199,7 +278,10 @@ It does **not** carry handles, and that is what still puts members out of reach:
 
 - **49 methods returning a three.js object** - `clone`, `getObjectByName`, `getRenderTarget`,
   `createMaterialFromType`. No op mints a handle for an object the browser created, and serializing one
-  as a plain object would hand C# a plausible bag of numbers instead of a value.
+  as a plain object would hand C# a plausible bag of numbers instead of a value. `GLTFLoader` is the one
+  thing in the package that does mint handles for browser-made objects, and it is deliberately not an op:
+  the loader reports the graph it built and C# mirrors the nodes it names. Nothing generalises that to an
+  arbitrary method return, which would have to describe an object nobody asked it to describe.
 - **38 methods returning or taking an array** - which is why **`Raycaster.intersectObjects` is still not
   callable**: it answers with `Intersection[]`, and the wire has no array encoding in either direction.
 - **99 read-only properties**. The read op invokes a method, so a property has nothing to route

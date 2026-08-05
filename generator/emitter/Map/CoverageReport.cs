@@ -264,7 +264,9 @@ internal sealed class CoverageReport
 		AppendLine(builder, "|---|---|---|");
 		if (_ir.Meta?.Addons is { } addons)
 		{
-			AppendLine(builder, $"| addons (`{addons.Path}`) | {addons.Classes} | ⚠️ **no `GLTFLoader` and no `OrbitControls`**, no post-processing passes, no exporters. They ship as separate modules, and none of them is wrapped |");
+			var handWrittenAddons = string.Join(", ", EmitterConfig.HandWrittenAddonClassNames.Select(x => $"`{x}`"));
+			var unwrappedAddonCount = addons.Classes - EmitterConfig.HandWrittenAddonClassNames.Count;
+			AppendLine(builder, $"| addons (`{addons.Path}`) | {addons.Classes} | **{EmitterConfig.HandWrittenAddonClassNames.Count} wrapped by hand**: {handWrittenAddons}, each vendored as its own static asset beside the bundle. The other {unwrappedAddonCount} are not - no post-processing passes, no exporters, no other loaders or controls. The generator reads none of them either way, which is why they sit outside the class total |");
 		}
 
 		foreach (var excluded in _ir.Meta?.ExcludedDirectories ?? [])
@@ -326,7 +328,10 @@ internal sealed class CoverageReport
 		AppendLine(builder);
 		AppendLine(builder, $"- **{noHandleCount} methods returning a three.js object** - `clone`, `getObjectByName`, `getRenderTarget`,");
 		AppendLine(builder, "  `createMaterialFromType`. No op mints a handle for an object the browser created, and serializing one");
-		AppendLine(builder, "  as a plain object would hand C# a plausible bag of numbers instead of a value.");
+		AppendLine(builder, "  as a plain object would hand C# a plausible bag of numbers instead of a value. `GLTFLoader` is the one");
+		AppendLine(builder, "  thing in the package that does mint handles for browser-made objects, and it is deliberately not an op:");
+		AppendLine(builder, "  the loader reports the graph it built and C# mirrors the nodes it names. Nothing generalises that to an");
+		AppendLine(builder, "  arbitrary method return, which would have to describe an object nobody asked it to describe.");
 		if (collectionCount > 0)
 		{
 			AppendLine(builder, $"- **{collectionCount} methods returning or taking an array** - which is why **`Raycaster.intersectObjects` is still not");

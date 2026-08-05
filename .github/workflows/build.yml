@@ -51,6 +51,13 @@ jobs:
     - name: Check the generated code is up to date
       run: npm run emit:check
 
+    # The addons are hand-vendored out of node_modules/three/examples/jsm, so nothing else would
+    # notice a three.js bump leaving them behind. This re-derives them and fails if the committed
+    # copies differ - and it re-walks their imports, so an addon that grows a new sibling dependency
+    # fails here rather than as ERR_MODULE_NOT_FOUND in a consumer's browser.
+    - name: Check the vendored addons are up to date
+      run: npm run vendor:check
+
     - name: Build
       run: dotnet build ${{ env.SOLUTION_PATH }} --no-restore --configuration ${{ env.BUILD_CONFIGURATION }}
 

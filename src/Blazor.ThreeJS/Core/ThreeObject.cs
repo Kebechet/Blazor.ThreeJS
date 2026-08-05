@@ -19,6 +19,13 @@ public abstract class ThreeObject
 	/// Handle identifying this object on the JavaScript side. Allocated monotonically in C# via
 	/// <see cref="Interlocked.Increment(ref int)"/> at construction time, so creating an object
 	/// never awaits and never round-trips to JavaScript.
+	/// <para>
+	/// Positive for an object C# created, negative for one the browser did. The two allocators share
+	/// one handle space and never negotiate over it: this one counts up from 1 and the JavaScript one
+	/// counts down from -1, so they cannot collide without a reserved block, a round trip, or an
+	/// agreement either side could drift from. Both directions are enforced rather than assumed - see
+	/// <see cref="ThrowIfNotMirrorAllocated"/> and <see cref="ThrowIfNotBrowserMinted"/>.
+	/// </para>
 	/// </summary>
 	internal int Handle { get; }
 
@@ -37,7 +44,73 @@ public abstract class ThreeObject
 	/// </summary>
 	protected ThreeObject()
 	{
-		Handle = Interlocked.Increment(ref _nextHandle);
+		Handle = ThrowIfNotMirrorAllocated(Interlocked.Increment(ref _nextHandle));
+	}
+
+	/// <summary>
+	/// Adopts a handle the browser minted for an object it created itself — a node of a loaded glTF
+	/// graph, or an <c>OrbitControls</c> instance. No create op is ever emitted for such an object:
+	/// it already exists, and the mirror's job is to name it, not to build it.
+	/// <para>
+	/// Not <see langword="protected"/>: a handle is only meaningful against the JavaScript object
+	/// table it came from, so minting one is this assembly's business. A consumer deriving their own
+	/// wrapper goes through the parameterless constructor and gets a C#-allocated handle with a
+	/// create op behind it.
+	/// </para>
+	/// </summary>
+	/// <param name="handle">The negative handle the JavaScript side registered the object under.</param>
+	/// <exception cref="ArgumentOutOfRangeException">
+	/// Thrown when <paramref name="handle"/> is not negative, which would put it in the half of the
+	/// space this class's own allocator owns.
+	/// </exception>
+	private protected ThreeObject(int handle)
+	{
+		Handle = ThrowIfNotBrowserMinted(handle);
+	}
+
+	/// <summary>
+	/// Checks a handle this class allocated is still in its own half of the space. Only reachable by
+	/// exhausting <see cref="int"/>: <see cref="Interlocked.Increment(ref int)"/> wraps to
+	/// <see cref="int.MinValue"/> rather than throwing, and a handle that wrapped would collide with a
+	/// browser-minted one and silently address the wrong object. A long-lived Blazor Server process is
+	/// where that is reachable at all, since the counter is static and never reset.
+	/// </summary>
+	/// <param name="handle">The freshly allocated handle.</param>
+	/// <returns><paramref name="handle"/>, when it is valid.</returns>
+	/// <exception cref="InvalidOperationException">Thrown when the allocator has wrapped.</exception>
+	internal static int ThrowIfNotMirrorAllocated(int handle)
+	{
+		if (handle > 0)
+		{
+			return handle;
+		}
+
+		throw new InvalidOperationException(
+			$"The {nameof(ThreeObject)} handle allocator has run out of positive handles (it produced {handle}). " +
+			$"Handles are allocated once per mirrored object for the life of the process and never reused, and negative ones " +
+			$"belong to objects the browser created, so continuing would address one of those instead.");
+	}
+
+	/// <summary>
+	/// Checks a handle offered as browser-minted really is one. A positive value here would mean the
+	/// JavaScript side allocated out of the mirror's half of the space, which no amount of later
+	/// checking could recover from — two objects would answer to the same handle.
+	/// </summary>
+	/// <param name="handle">The handle the JavaScript side reported.</param>
+	/// <returns><paramref name="handle"/>, when it is valid.</returns>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown when the handle is not negative.</exception>
+	internal static int ThrowIfNotBrowserMinted(int handle)
+	{
+		if (handle < 0)
+		{
+			return handle;
+		}
+
+		throw new ArgumentOutOfRangeException(
+			nameof(handle),
+			handle,
+			$"A handle the browser minted must be negative. Positive handles are allocated by {nameof(ThreeObject)} for objects C# created, " +
+			$"so accepting this one would let two objects answer to the same handle.");
 	}
 
 	/// <summary>

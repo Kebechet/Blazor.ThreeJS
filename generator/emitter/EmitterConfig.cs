@@ -96,6 +96,18 @@ internal static class EmitterConfig
 	};
 
 	/// <summary>
+	/// Addons the package wraps by hand. They live in <c>examples/jsm</c>, which the extractor never
+	/// reads, so nothing in the IR knows about them - and the coverage table would otherwise go on
+	/// saying that none of the addons is wrapped, which stopped being true the moment these shipped.
+	/// <para>
+	/// Each name is the export the vendored addon module actually carries, which
+	/// <c>tests/wire-format.test.mjs</c> pins by importing and constructing both against the vendored
+	/// files. A rename upstream fails there rather than only making this table wrong.
+	/// </para>
+	/// </summary>
+	public static readonly IReadOnlyList<string> HandWrittenAddonClassNames = ["GLTFLoader", "OrbitControls"];
+
+	/// <summary>
 	/// Root of the scene graph. A generated class that descends from it replays its state through
 	/// <c>EmitState</c>, which <c>Object3D.AttachTo</c> calls after the create op; one that does not
 	/// has no such hook and replays from <c>EmitCreate</c> instead.

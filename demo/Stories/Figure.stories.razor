@@ -1,0 +1,100 @@
+@* Its own path in the sidebar rather than "Components/ThreeCanvas": BlazingStory keys the story tree
+   by this string, so two files declaring the same one leave only whichever registers last. *@
+@attribute [Stories("Addons/GLTFLoader and OrbitControls")]
+@inject NavigationManager _navigationManager
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Load and orbit a model">
+        <Template>
+            <p>
+                A glTF figure loaded by the browser and driven from C#. Drag to orbit, scroll to zoom,
+                right-drag to pan. Click a body part to pop it out and click it again to put it back:
+                the browser built those meshes, C# never saw their geometry, and it can still move them.
+            </p>
+            <ThreeCanvas Style="width: 100%; height: 420px;" OnReady="BuildFigureSceneAsync" />
+            <p>Last part clicked: <strong>@_lastClickedPartName</strong></p>
+            <p>
+                <button @onclick="ReadCameraPositionAsync">Where is the camera?</button>
+                @_cameraReadout
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    // Public domain (CC0), committed under demo/wwwroot/models. Resolved against the app's base href
+    // so the same story works locally and under the /Blazor.ThreeJS/ path on GitHub Pages.
+    private const string ModelUrl = "models/figure.gltf";
+    private const float PopOutDistance = 0.35f;
+
+    private ThreeContext? _threeContext;
+    private PerspectiveCamera? _camera;
+    private OrbitControls? _orbitControls;
+    private string _lastClickedPartName = "nothing yet";
+    private string _cameraReadout = "not asked yet";
+
+    private async Task BuildFigureSceneAsync(ThreeContext threeContext)
+    {
+        _threeContext = threeContext;
+
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 0.4f, 3.4f);
+        _camera = camera;
+
+        scene.Add(new AmbientLight(Color.White, 0.9f));
+
+        var keyLight = new DirectionalLight(Color.White, 2f);
+        keyLight.Position.Set(3f, 5f, 4f);
+        scene.Add(keyLight);
+
+        var fillLight = new DirectionalLight(Color.White, 0.7f);
+        fillLight.Position.Set(-4f, 1f, -3f);
+        scene.Add(fillLight);
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        var model = await new GLTFLoader(threeContext).LoadAsync(_navigationManager.ToAbsoluteUri(ModelUrl).ToString());
+        scene.Add(model.Scene);
+
+        foreach (var bodyPart in model.Nodes.Where(x => x.ThreeType == "Mesh"))
+        {
+            var restingZ = bodyPart.Position.Z;
+            bodyPart.OnClick += _ =>
+            {
+                bodyPart.Position.Z = bodyPart.Position.Z == restingZ ? restingZ + PopOutDistance : restingZ;
+                _lastClickedPartName = bodyPart.Name;
+                StateHasChanged();
+            };
+        }
+
+        _orbitControls = await OrbitControls.AttachAsync(threeContext, camera);
+        _orbitControls.IsDampingEnabled = true;
+        _orbitControls.MinDistance = 1.5f;
+        _orbitControls.MaxDistance = 8f;
+        _orbitControls.Target.Set(0f, 0.2f, 0f);
+
+        await threeContext.FlushAsync();
+    }
+
+    // The camera's mirror goes stale the moment the controls start driving it, and this is the honest
+    // way to see that: what C# last wrote next to what the browser actually has, one interop call, at
+    // a moment the user picked. Orbit first, then press the button.
+    private async Task ReadCameraPositionAsync()
+    {
+        if (_orbitControls is null || _camera is null || _threeContext is null)
+        {
+            return;
+        }
+
+        var browserPosition = await _orbitControls.GetCameraPositionAsync();
+        _cameraReadout = $"mirror says {Format(_camera.Position)}, browser says {Format(browserPosition)}";
+    }
+
+    private static string Format(Vector3 position)
+    {
+        return $"({position.X:0.00}, {position.Y:0.00}, {position.Z:0.00})";
+    }
+}

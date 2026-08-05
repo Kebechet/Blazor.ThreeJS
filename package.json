@@ -11,6 +11,8 @@
     "extract": "node generator/extractor/extract.mjs",
     "extract:check": "node generator/extractor/extract.mjs --check",
     "emit": "dotnet run --project generator/emitter/Blazor.ThreeJS.Emitter.csproj -- --write",
-    "emit:check": "dotnet run --project generator/emitter/Blazor.ThreeJS.Emitter.csproj -- --check"
+    "emit:check": "dotnet run --project generator/emitter/Blazor.ThreeJS.Emitter.csproj -- --check",
+    "vendor": "node generator/vendor-addons.mjs",
+    "vendor:check": "node generator/vendor-addons.mjs --check"
   }
 }

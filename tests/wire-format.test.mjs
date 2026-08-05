@@ -15,9 +15,32 @@
 // exports, which is what the README's coverage headline claims about them.
 
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { applyOp, dispatchPointerHit, runOps } from '../src/Blazor.ThreeJS/wwwroot/three-interop.js';
+import { createReadStream, readFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import { fileURLToPath } from 'node:url';
+
+import {
+    applyOp,
+    attachOrbitControlsTo,
+    detachControls,
+    dispatchPointerHit,
+    loadGltfInto,
+    runOps
+} from '../src/Blazor.ThreeJS/wwwroot/three-interop.js';
 import * as THREE from '../src/Blazor.ThreeJS/wwwroot/three.module.js';
+
+// A browser global three.js's FileLoader reports download progress through, and which Node has not
+// got. A gap in the test host rather than in anything this package ships: every browser it targets
+// has had ProgressEvent for twenty years. Only reached when a response body is read, which is why
+// assigning it after the imports is soon enough.
+globalThis.ProgressEvent ??= class ProgressEvent extends Event {
+    constructor(type, init = {}) {
+        super(type);
+        this.lengthComputable = init.lengthComputable ?? false;
+        this.loaded = init.loaded ?? 0;
+        this.total = init.total ?? 0;
+    }
+};
 
 const { DoubleSide } = THREE;
 
@@ -25,6 +48,7 @@ const { DoubleSide } = THREE;
 const OP_CREATE = 0;
 const OP_SET = 1;
 const OP_CALL = 2;
+const OP_ADD = 3;
 const OP_DISPOSE = 5;
 const OP_READ = 6;
 const OP_PICK = 7;
@@ -392,6 +416,197 @@ const unreachableContext = {
 applyOp(unreachableContext, { k: OP_PICK, h: NEAR_MESH_HANDLE, v: true });
 assert.deepEqual(unreachableCanvas.registrations, [], 'a context with no .NET reference must register no listener');
 
+// ---------------------------------------------------------------------------------------------
+// The addons: GLTFLoader and OrbitControls, driven as vendored modules against the vendored bundle.
+//
+// This is the only place either one is proved to *resolve*. They live in `examples/jsm`, which the
+// three.js bundle does not include, so each ships as its own static asset with its bare `three`
+// imports rewritten - and an ES module that imports a sibling it cannot find builds green, passes
+// every C# test, and fails in the browser the first time a consumer loads a model. A mocked test
+// would prove the plumbing and miss exactly that. `generator/vendor-addons.mjs --check` guards the
+// import closure statically; this guards it by running it.
+//
+// The model is the demo's own `figure.gltf`, served over a real HTTP server on a free port, so the
+// fetch, the parse and the handle minting are all the real thing - and the file the demo ships is
+// proved to be a file that loads.
+// ---------------------------------------------------------------------------------------------
+
+const modelPath = fileURLToPath(new URL('../demo/wwwroot/models/figure.gltf', import.meta.url));
+const modelServer = createServer((request, response) => {
+    response.writeHead(200, { 'Content-Type': 'model/gltf+json' });
+    createReadStream(modelPath).pipe(response);
+});
+
+await new Promise(resolve => modelServer.listen(0, '127.0.0.1', resolve));
+const modelUrl = `http://127.0.0.1:${modelServer.address().port}/figure.gltf`;
+
+const loadingContext = { objects: new Map() };
+const loadResponse = await loadGltfInto(loadingContext, modelUrl);
+const loadedNodes = loadResponse.n;
+
+assert.ok(loadedNodes.length > 1, 'the loaded graph should report a root and its named descendants');
+
+// Handle minting, and the property the whole design rests on: the browser allocates downwards from
+// -1 and C# upwards from 1, so neither allocator can ever produce a handle the other already used.
+// ThreeObject rejects a non-negative handle offered as browser-minted, which is the same rule from
+// the other side.
+const mintedHandles = loadedNodes.map(node => node.h);
+assert.deepEqual(
+    mintedHandles.filter(handle => handle >= 0),
+    [],
+    'every handle the browser mints must be negative, or it would collide with one C# allocated');
+assert.equal(new Set(mintedHandles).size, mintedHandles.length, 'no two loaded nodes may share a handle');
+assert.deepEqual(mintedHandles.slice(0, 3), [-1, -2, -3], 'minting should count down from -1');
+
+for (const node of loadedNodes) {
+    assert.ok(loadingContext.objects.has(node.h), `handle ${node.h} should be registered in the object table`);
+}
+
+// Only *named* nodes are mirrored, and every row carries the transform the loader gave the node -
+// which is what makes the C# mirror's Position honest the moment it is handed over, rather than a
+// zero it would have to read back to correct.
+assert.deepEqual(
+    loadedNodes.filter(node => node !== loadedNodes[0] && !node.n),
+    [],
+    'no unnamed node may be mirrored');
+
+const head = loadedNodes.find(node => node.n === 'Head');
+assert.ok(head, 'the demo figure should carry a node named Head');
+assert.equal(head.t, 'Mesh', 'the head node should be reported as the Mesh three.js built for it');
+assert.equal(head.p.$t, 'Vector3', 'a node position should travel under the same Vector3 tag C# sends one in');
+assert.deepEqual(head.p.v, [0, 0.95, 0], 'the head position should be the one the file declares, read off the loaded object');
+assert.deepEqual(head.s.v, [0.3, 0.32, 0.3], 'the head scale should be the one the file declares');
+assert.equal(head.r.$t, 'Euler', 'a node rotation should travel under the Euler tag');
+assert.equal(head.v, true, 'a node the loader left visible should be reported visible');
+assert.equal(loadingContext.objects.get(head.h).isMesh, true, 'the registered object should be the real three.js Mesh');
+
+// A loaded node has to work like any other object in the graph, or the mirror would only be able to
+// name it. Adding it to a scene by handle, hiding it and hit-testing it are the three things a
+// consumer actually does with one.
+applyOp(loadingContext, { k: OP_CREATE, h: 100, t: 'Scene', a: [] });
+applyOp(loadingContext, { k: OP_ADD, h: 100, c: loadedNodes[0].h });
+assert.equal(
+    loadingContext.objects.get(100).children.length,
+    1,
+    'a loaded root must be addable to a C#-created scene by its minted handle');
+
+applyOp(loadingContext, { k: OP_SET, h: head.h, m: 'visible', v: false });
+assert.equal(loadingContext.objects.get(head.h).visible, false, 'a Set op must reach a loaded node like any other');
+applyOp(loadingContext, { k: OP_SET, h: head.h, m: 'visible', v: true });
+
+applyOp(loadingContext, { k: OP_PICK, h: head.h, v: true });
+assert.ok(loadingContext.pointerTargets.has(head.h), 'a loaded node must be able to opt into hit-testing');
+
+// Disposal. The geometries, materials and textures a loaded file brings in are the resources nothing
+// else releases: a Mesh has no dispose, so the generic arm never reaches them, and C# never created
+// them so no dispose op will ever name them either. Disposing the root has to release the graph.
+const releasedResources = new Set();
+loadingContext.objects.get(loadedNodes[0].h).traverse(object => {
+    for (const resource of [object.geometry, object.material]) {
+        if (resource) {
+            resource.addEventListener('dispose', () => releasedResources.add(resource));
+        }
+    }
+});
+
+applyOp(loadingContext, { k: OP_DISPOSE, h: loadedNodes[0].h });
+
+assert.ok(releasedResources.size >= 2, 'disposing a loaded root must release the geometries and materials it brought in');
+assert.deepEqual(
+    mintedHandles.filter(handle => loadingContext.objects.has(handle)),
+    [],
+    'disposing a loaded root must retire every handle minted for its graph');
+assert.equal(loadingContext.pointerTargets.size, 0, 'a disposed loaded node must stop being hit-testable');
+
+modelServer.close();
+
+// ---------------------------------------------------------------------------------------------
+// OrbitControls. The camera moves every frame on this side of the boundary, which is the whole
+// point, so what is asserted here is that it moves *and* that nothing crosses the boundary while it
+// does - and that every listener the addon registered comes back off on detach.
+// ---------------------------------------------------------------------------------------------
+
+function createRecordingElement() {
+    const registrations = [];
+    const listenTo = scope => ({
+        addEventListener(type, listener) {
+            registrations.push({ scope, type, listener });
+        },
+        removeEventListener(type, listener) {
+            const index = registrations.findIndex(x => x.scope === scope && x.type === type && x.listener === listener);
+            if (index >= 0) {
+                registrations.splice(index, 1);
+            }
+        }
+    });
+
+    const ownerDocument = listenTo('document');
+    return {
+        registrations,
+        ownerDocument,
+        style: {},
+        ...listenTo('element'),
+        getRootNode() {
+            return ownerDocument;
+        }
+    };
+}
+
+const controlsElement = createRecordingElement();
+const controlsDotNetRef = createRecordingDotNetRef();
+const controlsContext = {
+    objects: new Map(),
+    renderer: { domElement: controlsElement },
+    dotNetRef: controlsDotNetRef,
+    cameraHandle: 200
+};
+
+applyOp(controlsContext, { k: OP_CREATE, h: 200, t: 'PerspectiveCamera', a: [50, 1, 0.1, 100] });
+applyOp(controlsContext, { k: OP_SET, h: 200, m: 'position', v: { $t: 'Vector3', v: [0, 0, 5] } });
+
+assert.deepEqual(controlsElement.registrations, [], 'a canvas with no controls attached must carry none of their listeners');
+
+const controlsHandle = await attachOrbitControlsTo(controlsContext, 200);
+
+assert.ok(controlsHandle < 0, 'the controls handle must come out of the browser-minted half of the space');
+assert.equal(controlsContext.objects.get(controlsHandle).object, controlsContext.objects.get(200), 'the controls must be bound to the camera at the handle they were given');
+assert.ok(controlsElement.registrations.length > 0, 'attaching controls must put their listeners on the canvas');
+
+// Properties reach the controls through ordinary Set ops, on the minted handle, with no op kind of
+// their own - which is what lets them coalesce and flush exactly like every other mirrored property.
+applyOp(controlsContext, { k: OP_SET, h: controlsHandle, m: 'autoRotate', v: true });
+applyOp(controlsContext, { k: OP_SET, h: controlsHandle, m: 'target', v: { $t: 'Vector3', v: [0, 1, 0] } });
+assert.equal(controlsContext.objects.get(controlsHandle).autoRotate, true, 'a Set op must reach the controls');
+assert.deepEqual(
+    controlsContext.objects.get(controlsHandle).target.toArray(),
+    [0, 1, 0],
+    'a tagged Vector3 Set must be copied into the target the controls already hold');
+
+// The frame loop, a hundred and twenty times over. The camera has to actually move, or the assertion
+// below would be vacuous; and nothing may reach C# while it does, or a drag would be one SignalR
+// message per frame for as long as the user holds the mouse down.
+const cameraPositionBeforeFrames = controlsContext.objects.get(200).position.toArray();
+for (let frame = 0; frame < 120; frame++) {
+    controlsContext.objects.get(controlsHandle).update();
+}
+
+assert.notDeepEqual(
+    controlsContext.objects.get(200).position.toArray(),
+    cameraPositionBeforeFrames,
+    'the controls should have moved the camera, or the zero-interop assertion below proves nothing');
+assert.deepEqual(
+    controlsDotNetRef.invocations,
+    [],
+    'a hundred and twenty frames of camera movement must send nothing to C#');
+
+// Detach has to take back every listener it added - on the canvas and on the document it hangs off -
+// or the canvas would go on driving a camera nothing renders.
+detachControls(controlsContext);
+
+assert.deepEqual(controlsElement.registrations, [], 'detaching controls must remove every listener they registered');
+assert.equal(controlsContext.objects.has(controlsHandle), false, 'detaching controls must retire their handle');
+assert.equal(controlsContext.controls, null, 'detaching controls must leave nothing for the render loop to update');
+
 // The floor under the README's headline. `generator/api-coverage.json` is what that number is
 // rendered from, and what it claims is that each of those classes is a class a consumer can create -
 // which nothing upstream of here checks against the bundle that will actually be asked for it.
@@ -410,4 +625,6 @@ assert.deepEqual(
 console.log(`Wire contract OK - ${ops.length} ops applied against the vendored three.js.`);
 console.log('Read op OK - values, tagged math values, correlation, ordering and refusals round-tripped.');
 console.log('Picking OK - one callback per hit, none for a miss, and no pointer-movement listener at all.');
+console.log(`GLTFLoader OK - the demo's own model fetched, parsed and mirrored as ${loadedNodes.length} nodes on browser-minted handles, then released.`);
+console.log('OrbitControls OK - attached to the real canvas, 120 frames of camera movement, zero interop, every listener removed on detach.');
 console.log(`Generated surface OK - ${generatedClassNames.length} generated classes are constructors on the vendored three.js.`);

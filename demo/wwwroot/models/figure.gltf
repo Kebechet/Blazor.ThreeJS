@@ -1,0 +1,329 @@
+{
+  "asset": {
+    "version": "2.0",
+    "generator": "Blazor.ThreeJS demo figure - six boxes over one shared cube mesh, written as plain glTF JSON",
+    "copyright": "CC0 1.0 Universal - public domain, no attribution required"
+  },
+  "scene": 0,
+  "scenes": [
+    {
+      "name": "Figure",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Figure",
+      "children": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "name": "Head",
+      "mesh": 0,
+      "translation": [
+        0,
+        0.95,
+        0
+      ],
+      "scale": [
+        0.3,
+        0.32,
+        0.3
+      ]
+    },
+    {
+      "name": "Torso",
+      "mesh": 1,
+      "translation": [
+        0,
+        0.35,
+        0
+      ],
+      "scale": [
+        0.52,
+        0.72,
+        0.3
+      ]
+    },
+    {
+      "name": "ArmLeft",
+      "mesh": 2,
+      "translation": [
+        -0.42,
+        0.34,
+        0
+      ],
+      "scale": [
+        0.16,
+        0.66,
+        0.16
+      ]
+    },
+    {
+      "name": "ArmRight",
+      "mesh": 3,
+      "translation": [
+        0.42,
+        0.34,
+        0
+      ],
+      "scale": [
+        0.16,
+        0.66,
+        0.16
+      ]
+    },
+    {
+      "name": "LegLeft",
+      "mesh": 4,
+      "translation": [
+        -0.17,
+        -0.47,
+        0
+      ],
+      "scale": [
+        0.21,
+        0.92,
+        0.21
+      ]
+    },
+    {
+      "name": "LegRight",
+      "mesh": 5,
+      "translation": [
+        0.17,
+        -0.47,
+        0
+      ],
+      "scale": [
+        0.21,
+        0.92,
+        0.21
+      ]
+    }
+  ],
+  "meshes": [
+    {
+      "name": "HeadMesh",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1
+          },
+          "indices": 2,
+          "material": 0
+        }
+      ]
+    },
+    {
+      "name": "TorsoMesh",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1
+          },
+          "indices": 2,
+          "material": 1
+        }
+      ]
+    },
+    {
+      "name": "ArmLeftMesh",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1
+          },
+          "indices": 2,
+          "material": 2
+        }
+      ]
+    },
+    {
+      "name": "ArmRightMesh",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1
+          },
+          "indices": 2,
+          "material": 3
+        }
+      ]
+    },
+    {
+      "name": "LegLeftMesh",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1
+          },
+          "indices": 2,
+          "material": 4
+        }
+      ]
+    },
+    {
+      "name": "LegRightMesh",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1
+          },
+          "indices": 2,
+          "material": 5
+        }
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "name": "HeadMaterial",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.88,
+          0.66,
+          0.5,
+          1
+        ],
+        "metallicFactor": 0.05,
+        "roughnessFactor": 0.65
+      }
+    },
+    {
+      "name": "TorsoMaterial",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.2,
+          0.4,
+          0.8,
+          1
+        ],
+        "metallicFactor": 0.05,
+        "roughnessFactor": 0.65
+      }
+    },
+    {
+      "name": "ArmLeftMaterial",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.88,
+          0.66,
+          0.5,
+          1
+        ],
+        "metallicFactor": 0.05,
+        "roughnessFactor": 0.65
+      }
+    },
+    {
+      "name": "ArmRightMaterial",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.88,
+          0.66,
+          0.5,
+          1
+        ],
+        "metallicFactor": 0.05,
+        "roughnessFactor": 0.65
+      }
+    },
+    {
+      "name": "LegLeftMaterial",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.18,
+          0.22,
+          0.34,
+          1
+        ],
+        "metallicFactor": 0.05,
+        "roughnessFactor": 0.65
+      }
+    },
+    {
+      "name": "LegRightMaterial",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          0.18,
+          0.22,
+          0.34,
+          1
+        ],
+        "metallicFactor": 0.05,
+        "roughnessFactor": 0.65
+      }
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3",
+      "min": [
+        -0.5,
+        -0.5,
+        -0.5
+      ],
+      "max": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 24,
+      "type": "VEC3"
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5123,
+      "count": 36,
+      "type": "SCALAR"
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 288,
+      "byteLength": 288,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 576,
+      "byteLength": 72,
+      "target": 34963
+    }
+  ],
+  "buffers": [
+    {
+      "byteLength": 648,
+      "uri": "data:application/octet-stream;base64,AAAAvwAAAL8AAAA/AAAAPwAAAL8AAAA/AAAAPwAAAD8AAAA/AAAAvwAAAD8AAAA/AAAAPwAAAL8AAAC/AAAAvwAAAL8AAAC/AAAAvwAAAD8AAAC/AAAAPwAAAD8AAAC/AAAAvwAAAD8AAAA/AAAAPwAAAD8AAAA/AAAAPwAAAD8AAAC/AAAAvwAAAD8AAAC/AAAAvwAAAL8AAAC/AAAAPwAAAL8AAAC/AAAAPwAAAL8AAAA/AAAAvwAAAL8AAAA/AAAAPwAAAL8AAAA/AAAAPwAAAL8AAAC/AAAAPwAAAD8AAAC/AAAAPwAAAD8AAAA/AAAAvwAAAL8AAAC/AAAAvwAAAL8AAAA/AAAAvwAAAD8AAAA/AAAAvwAAAD8AAAC/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcA"
+    }
+  ]
+}

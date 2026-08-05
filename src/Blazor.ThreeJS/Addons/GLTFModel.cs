@@ -1,0 +1,62 @@
+namespace Kebechet.Blazor.ThreeJS.Addons;
+
+/// <summary>
+/// The result of loading one glTF or GLB file: the graph's root, and the nodes of it the mirror
+/// knows by name.
+/// <para>
+/// <b>How much is mirrored, and why not all of it.</b> A C# object is built for the root and for
+/// every <i>named</i> descendant, and for nothing else. A name is glTF's own way of addressing a
+/// node — it is what an artist sets when they mean a part to be reachable — whereas an unnamed node
+/// can only be identified by its position in a traversal, which changes the next time the file is
+/// exported. Mirroring those would hand the caller an identifier that quietly stops meaning the same
+/// thing. The cost of a load is therefore set by how much of the file its author chose to name, not
+/// by how much geometry it contains: a hundred-thousand-triangle figure with six named parts mirrors
+/// seven objects. A file that names all of its nodes mirrors all of them, and
+/// <see cref="Nodes"/>.Count says so.
+/// </para>
+/// <para>
+/// Everything not mirrored is still there and still renders — the graph lives in the browser and the
+/// renderer walks it whole. What the unmirrored part cannot do is be addressed from C#.
+/// </para>
+/// </summary>
+public sealed class GLTFModel
+{
+	/// <summary>
+	/// Root of the loaded graph. Add this to a scene to show the model, and move, rotate or hide it to
+	/// move, rotate or hide the whole thing.
+	/// </summary>
+	public LoadedObject3D Scene { get; }
+
+	/// <summary>
+	/// Every named node beneath <see cref="Scene"/>, in the order the browser traversed them. Empty
+	/// when the file names nothing below its root.
+	/// </summary>
+	public IReadOnlyList<LoadedObject3D> Nodes { get; }
+
+	/// <summary>
+	/// Builds the model over the nodes the browser reported.
+	/// </summary>
+	/// <param name="scene">The loaded root.</param>
+	/// <param name="nodes">Its named descendants.</param>
+	internal GLTFModel(LoadedObject3D scene, IReadOnlyList<LoadedObject3D> nodes)
+	{
+		Scene = scene;
+		Nodes = nodes;
+	}
+
+	/// <summary>
+	/// Finds a named node beneath <see cref="Scene"/>, or <see langword="null"/> when the file has no
+	/// such name. Matching is ordinal and case-sensitive, because a glTF name is data rather than an
+	/// identifier the mirror is free to normalize.
+	/// <para>
+	/// The first match wins. glTF does not require names to be unique, and the loader only makes them
+	/// unique within one file; a caller who needs every match can filter <see cref="Nodes"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="name">The node's glTF name.</param>
+	/// <returns>The node, or <see langword="null"/> when nothing carries that name.</returns>
+	public LoadedObject3D? FindNode(string name)
+	{
+		return Nodes.FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.Ordinal));
+	}
+}

@@ -1,3 +1,4 @@
+using Kebechet.Blazor.ThreeJS.Addons;
 using Kebechet.Blazor.ThreeJS.Objects;
 using Microsoft.JSInterop;
 
@@ -192,6 +193,68 @@ public sealed class ThreeContext : IAsyncDisposable
 		}
 
 		return ThreeValue.Decode<TValue>(result.Value);
+	}
+
+	/// <summary>
+	/// Asks the browser to load a glTF or GLB file and to report the graph it built.
+	/// <para>
+	/// This is not a batch op, and deliberately so. Every op kind is an instruction in an ordered
+	/// stream with no answer of its own; this is a request that mints JavaScript-side state and
+	/// answers with a description of it, which is a different shape of call. Routing it through the
+	/// batch would need an eighth op kind whose only purpose was to carry a payload the applier
+	/// invents, and would tie a load that may take seconds to the flush of a scene that is ready now.
+	/// </para>
+	/// <para>
+	/// Nothing is flushed first. The load reads no mirrored state, so there is nothing pending it could
+	/// observe; the handles it mints are registered the moment it returns, so a batch op referencing one
+	/// resolves whenever it is eventually flushed.
+	/// </para>
+	/// <para>
+	/// No timeout is imposed. A read has one because a value that never arrives leaves a caller waiting
+	/// on something the applier may simply not send; a load is a network fetch the browser is already
+	/// bounding, and a big model over a slow connection is slow rather than broken.
+	/// </para>
+	/// </summary>
+	/// <param name="url">URL of the file, as the browser will fetch it.</param>
+	/// <returns>One row per mirrored node of the loaded graph.</returns>
+	internal async Task<GLTFLoadResponse> LoadGltfAsync(string url)
+	{
+		return await _module.InvokeAsync<GLTFLoadResponse>("loadGltf", _contextId, url);
+	}
+
+	/// <summary>
+	/// Asks the browser to bind <c>OrbitControls</c> to the camera at <paramref name="cameraHandle"/>
+	/// and to this context's canvas, and hands back the handle it minted for them.
+	/// </summary>
+	/// <param name="cameraHandle">Handle of the camera the controls should drive.</param>
+	/// <returns>The negative handle the controls were registered under.</returns>
+	internal async Task<int> AttachOrbitControlsAsync(int cameraHandle)
+	{
+		return await _module.InvokeAsync<int>("attachOrbitControls", _contextId, cameraHandle);
+	}
+
+	/// <summary>
+	/// Takes any attached <c>OrbitControls</c> off this context's canvas, releasing the DOM listeners
+	/// three.js registered for them. Silently no-ops if the circuit has already disconnected or the
+	/// module reference has already been disposed — unlike a load, nothing is waiting on a value here,
+	/// and a canvas that is gone has no listeners left to remove.
+	/// </summary>
+	internal async Task DetachOrbitControlsAsync()
+	{
+		try
+		{
+			await _module.InvokeVoidAsync("detachOrbitControls", _contextId);
+		}
+		catch (JSDisconnectedException)
+		{
+			// A disconnected circuit is not recoverable and not an application bug; the canvas the
+			// listeners were on is gone with it.
+		}
+		catch (ObjectDisposedException)
+		{
+			// See the matching catch in FlushAsync — reachable when a consumer detaches while
+			// ThreeCanvas concurrently disposes the context.
+		}
 	}
 
 	/// <summary>

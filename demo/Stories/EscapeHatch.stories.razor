@@ -1,0 +1,112 @@
+@attribute [Stories("Architecture/Escape hatch")]
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Reaching what the mirror does not wrap">
+        <Template>
+            <p>
+                143 of three.js's classes have a generated wrapper. Everything on this canvas is one of
+                the ones that does not - reached by naming it, with no typed member involved anywhere.
+            </p>
+            <ThreeCanvas Style="width: 100%; height: 400px;" OnReady="BuildEscapeHatchSceneAsync" />
+            <p>
+                <button @onclick="ReadHelperTypeAsync">Ask the browser what the orange box actually is</button>
+                @_helperTypeReadout
+            </p>
+            <ul>
+                <li>
+                    The orange wireframe box is a <code>Box3Helper</code> built around a
+                    <code>Box3</code>. Neither class is wrapped, and both are constructed here through
+                    <code>PrimitiveObject3D</code> and <code>Primitive</code> - which resolve as
+                    <code>new THREE[name](…)</code>, exactly as every generated class does.
+                </li>
+                <li>
+                    The background colour and the fog are written with
+                    <code>scene.Set("background", …)</code> and <code>scene.Set("fog", …)</code>.
+                    <code>Scene</code> has no typed member for either, because three.js types both as a
+                    union the generator will not guess at - but <code>Fog</code> itself <em>is</em>
+                    wrapped, so a typed object goes into an untyped property.
+                </li>
+                <li>
+                    The button reads <code>type</code> off that helper through <code>GetAsync</code> -
+                    a property nothing mirrors, on an object no C# class describes. It answers
+                    <code>Box3Helper</code>, which is the browser confirming that a class named only by
+                    a string really was the class it constructed.
+                </li>
+            </ul>
+            <p>
+                ⚠️ Nothing here is checked at compile time. A name three.js does not export fails the op
+                in the browser and surfaces through <code>ThreeContext.OnError</code>, not at the call
+                site. That is the trade: 143 classes are typed, and all 309 are reachable.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private const int BackgroundHex = 0x1b2733;
+    private const int HelperHex = 0xffb347;
+
+    private ThreeContext? _threeContext;
+    private PrimitiveObject3D? _boundsHelper;
+    private string _helperTypeReadout = "not asked yet";
+
+    private async Task BuildEscapeHatchSceneAsync(ThreeContext threeContext)
+    {
+        _threeContext = threeContext;
+
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(4.5f, 3.2f, 7.5f);
+        camera.LookAt(0f, 0f, 0f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.6f));
+
+        var keyLight = new DirectionalLight(Color.White, 1.8f);
+        keyLight.Position.Set(4f, 6f, 6f);
+        scene.Add(keyLight);
+
+        var cubeMaterial = new MeshStandardMaterial();
+        cubeMaterial.Color.SetHex(0x5b8dd9);
+        cubeMaterial.Roughness = 0.4f;
+        scene.Add(new Mesh(new BoxGeometry(2f, 1.4f, 2f), cubeMaterial));
+
+        // Neither Box3 nor Box3Helper has a generated wrapper, and both are ordinary three.js exports.
+        // Vector3 and Color are hand-ported math types, so they encode as constructor arguments.
+        var bounds = new Primitive("Box3", new Vector3(-1.6f, -1.1f, -1.6f), new Vector3(1.6f, 1.1f, 1.6f));
+        _boundsHelper = new PrimitiveObject3D("Box3Helper", bounds, Color.FromHex(HelperHex));
+        scene.Add(_boundsHelper);
+
+        // Scene.background and Scene.fog are unions in three.js - Color | Texture | CubeTexture for one,
+        // Fog | FogExp2 for the other - so the generator emits no member for either.
+        scene.Set("background", Color.FromHex(BackgroundHex));
+        scene.Set("fog", new Fog(Color.FromHex(BackgroundHex), 8f, 22f));
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+    }
+
+    /// <summary>
+    /// Asks the browser for the helper's own <c>type</c> string. The applier resolves a member directly
+    /// rather than walking a path, so this reads a property of the object itself - which is also the
+    /// only evidence available that a class named by a string is the class that got built.
+    /// </summary>
+    private async Task ReadHelperTypeAsync()
+    {
+        if (_boundsHelper is null || _threeContext is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var helperType = await _boundsHelper.GetAsync<string>("type");
+            _helperTypeReadout = $"the browser says it is a {helperType}";
+        }
+        catch (InvalidOperationException exception)
+        {
+            _helperTypeReadout = $"the read failed: {exception.Message}";
+        }
+    }
+}

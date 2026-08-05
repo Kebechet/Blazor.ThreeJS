@@ -1,0 +1,181 @@
+@attribute [Stories("Architecture/Mirror authority")]
+@using System.Globalization
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="When the mirror is stale">
+        <Template>
+            <p>
+                A C# value is authoritative exactly when C# last wrote it through a typed member. This
+                story puts the three ways that stops being true next to each other, and lets you ask the
+                browser what it actually holds.
+            </p>
+            <ThreeCanvas Style="width: 100%; height: 400px;" OnReady="BuildMirrorSceneAsync" />
+            <p>
+                <button @onclick="CompareAsync">Compare the mirror with the browser</button>
+            </p>
+            <table>
+                <tbody>
+                    <tr>
+                        <td>Left cube - C# wrote <code>Position.X</code></td>
+                        <td>@_typedComparison</td>
+                    </tr>
+                    <tr>
+                        <td>Middle cube - C# called <code>LookAt</code></td>
+                        <td>@_commandComparison</td>
+                    </tr>
+                    <tr>
+                        <td>Right cube - C# wrote through <code>Set</code></td>
+                        <td>@_untypedComparison</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>
+                The left cube agrees, because a typed write is the one case the mirror tracks. The middle
+                one does not: <code>LookAt</code> is a command, and three.js works out a rotation from it
+                that C# never sees. Nor does the right one: a raw <code>Set</code> goes straight to the
+                browser without touching the mirrored value beside it.
+            </p>
+            <p>
+                ⚠️ The consequence worth remembering is not the disagreement itself but what happens next.
+                Writing a stale value back records <strong>nothing</strong>, because the setter
+                short-circuits when the value it holds already equals the one being assigned. The fix is
+                to read first, or to treat the browser as the owner of anything it was allowed to write.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private const float TypedPositionX = -3f;
+    private const float UntypedPositionY = 1.2f;
+
+    private ThreeContext? _threeContext;
+    private Mesh? _typedCube;
+    private Mesh? _commandCube;
+    private Mesh? _untypedCube;
+
+    private string _typedComparison = "not asked yet";
+    private string _commandComparison = "not asked yet";
+    private string _untypedComparison = "not asked yet";
+
+    private async Task BuildMirrorSceneAsync(ThreeContext threeContext)
+    {
+        _threeContext = threeContext;
+
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 1.4f, 10f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.55f));
+
+        var keyLight = new DirectionalLight(Color.White, 1.8f);
+        keyLight.Position.Set(4f, 6f, 6f);
+        scene.Add(keyLight);
+
+        var cubeMaterial = new MeshStandardMaterial();
+        cubeMaterial.Color.SetHex(0x5b8dd9);
+        cubeMaterial.Roughness = 0.4f;
+
+        // Typed write: the mirror holds this value and the browser is told about it.
+        _typedCube = new Mesh(new BoxGeometry(1.5f, 1.5f, 1.5f), cubeMaterial);
+        _typedCube.Position.Set(TypedPositionX, 0f, 0f);
+        scene.Add(_typedCube);
+
+        // Command: three.js derives a rotation that no mirrored member ever receives.
+        _commandCube = new Mesh(new BoxGeometry(1.5f, 1.5f, 1.5f), cubeMaterial);
+        _commandCube.Position.Set(0f, 0f, 0f);
+        scene.Add(_commandCube);
+        _commandCube.LookAt(6f, 4f, 6f);
+
+        // Untyped write: straight to the browser, past the mirrored Position beside it.
+        _untypedCube = new Mesh(new BoxGeometry(1.5f, 1.5f, 1.5f), cubeMaterial);
+        _untypedCube.Position.Set(3f, 0f, 0f);
+        scene.Add(_untypedCube);
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        _untypedCube.Set("position", new Vector3(3f, UntypedPositionY, 0f));
+        await threeContext.FlushAsync();
+    }
+
+    private async Task CompareAsync()
+    {
+        if (_threeContext is null || _typedCube is null || _commandCube is null || _untypedCube is null)
+        {
+            return;
+        }
+
+        _typedComparison = await ComparePositionAsync(_typedCube);
+        _commandComparison = await CompareRotationAsync(_commandCube);
+        _untypedComparison = await ComparePositionAsync(_untypedCube);
+    }
+
+    /// <summary>
+    /// Reads the whole vector rather than one component: the applier resolves a member directly, so
+    /// <c>position</c> is readable and <c>position.y</c> is not.
+    /// </summary>
+    /// <param name="target">Object to read the position of.</param>
+    private static async Task<string> ComparePositionAsync(Mesh target)
+    {
+        try
+        {
+            var browserPosition = await target.GetAsync<Vector3>("position");
+            var isAgreed = IsSame(browserPosition.X, target.Position.X) &&
+                IsSame(browserPosition.Y, target.Position.Y) &&
+                IsSame(browserPosition.Z, target.Position.Z);
+
+            return $"C# says {Format(target.Position.X, target.Position.Y, target.Position.Z)}, " +
+                $"browser says {Format(browserPosition.X, browserPosition.Y, browserPosition.Z)} - {Verdict(isAgreed)}";
+        }
+        catch (InvalidOperationException exception)
+        {
+            return $"the read failed: {exception.Message}";
+        }
+    }
+
+    /// <param name="target">Object to read the rotation of.</param>
+    private static async Task<string> CompareRotationAsync(Mesh target)
+    {
+        try
+        {
+            var browserRotation = await target.GetAsync<Euler>("rotation");
+            var isAgreed = IsSame(browserRotation.X, target.Rotation.X) &&
+                IsSame(browserRotation.Y, target.Rotation.Y) &&
+                IsSame(browserRotation.Z, target.Rotation.Z);
+
+            return $"C# says {Format(target.Rotation.X, target.Rotation.Y, target.Rotation.Z)}, " +
+                $"browser says {Format(browserRotation.X, browserRotation.Y, browserRotation.Z)} - {Verdict(isAgreed)}";
+        }
+        catch (InvalidOperationException exception)
+        {
+            return $"the read failed: {exception.Message}";
+        }
+    }
+
+    private static bool IsSame(float left, float right)
+    {
+        return MathF.Abs(left - right) < 0.001f;
+    }
+
+    private static string Verdict(bool isAgreed)
+    {
+        if (isAgreed)
+        {
+            return "agree";
+        }
+
+        return "DISAGREE";
+    }
+
+    /// <summary>
+    /// Invariant rather than the browser's culture: these numbers are separated by commas, and a
+    /// comma decimal separator turns one triple into what reads as six values.
+    /// </summary>
+    private static string Format(float x, float y, float z)
+    {
+        return string.Format(CultureInfo.InvariantCulture, "({0:0.00}, {1:0.00}, {2:0.00})", x, y, z);
+    }
+}

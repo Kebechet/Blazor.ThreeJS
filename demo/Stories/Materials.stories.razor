@@ -1,0 +1,168 @@
+@attribute [Stories("Catalogue/Materials")]
+@implements IDisposable
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Mesh materials">
+        <Template>
+            <p>
+                The same sphere and the same two lights, shaded nine different ways. Every material is
+                built with its own defaults and given one tint where it has a colour to give -
+                <code>MeshNormalMaterial</code> and <code>MeshDepthMaterial</code> have none, because
+                they colour by surface direction and by distance from the camera instead.
+            </p>
+            <ThreeCanvas Style="width: 100%; height: 440px;" OnReady="BuildMaterialGalleryAsync" />
+            <p>Reading left to right, top to bottom:</p>
+            <ol>
+                @foreach (var sampleName in _sampleNames)
+                {
+                    <li><code>@sampleName</code></li>
+                }
+            </ol>
+            <p>
+                <code>MeshMatcapMaterial</code> looks flat here on purpose: it shades entirely from a
+                matcap texture, and this package cannot load one yet, so what is on screen is the
+                material doing exactly what it does with no map. Four more materials are typed but not
+                shown - <code>ShaderMaterial</code> and <code>RawShaderMaterial</code> need GLSL,
+                <code>ShadowMaterial</code> needs a shadow map, and <code>MeshDistanceMaterial</code> is
+                what three.js uses internally for point-light shadows.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private const float RadiansPerFrame = 0.006f;
+    private const int ColumnCount = 3;
+    private const float GridSpacing = 2.6f;
+    private const int Tint = 0x5b8dd9;
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+    private IReadOnlyList<string> _sampleNames = [];
+
+    private async Task BuildMaterialGalleryAsync(ThreeContext threeContext)
+    {
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 0f, 11f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.35f));
+
+        var keyLight = new DirectionalLight(Color.White, 2f);
+        keyLight.Position.Set(4f, 5f, 6f);
+        scene.Add(keyLight);
+
+        var samples = BuildSamples();
+        var rowCount = (samples.Count + ColumnCount - 1) / ColumnCount;
+        var meshes = new List<Mesh>();
+        foreach (var (index, sample) in samples.Index())
+        {
+            // A geometry per sphere rather than one shared: TorusKnot aside, these are cheap, and
+            // sharing would make the gallery quietly depend on nothing ever mutating one of them.
+            var mesh = new Mesh(new SphereGeometry(1f, 48, 32), sample.Material);
+            mesh.Position.Set(ColumnOffset(index), RowOffset(index, rowCount), 0f);
+            scene.Add(mesh);
+            meshes.Add(mesh);
+        }
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        _sampleNames = samples.Select(x => x.Name).ToArray();
+        StateHasChanged();
+
+        _ = AnimateAsync(threeContext, meshes);
+    }
+
+    /// <summary>
+    /// Names and builds every material in one list, so the legend above the canvas cannot drift out of
+    /// step with what was actually put on screen.
+    /// </summary>
+    private static List<(string Name, Material Material)> BuildSamples()
+    {
+        // Written out one at a time rather than tinted through a helper: Color is declared on each
+        // material that has one rather than on the shared base, so there is no base-typed way to reach
+        // it and no constraint that could describe the subset that would work.
+        var basicMaterial = new MeshBasicMaterial();
+        basicMaterial.Color.SetHex(Tint);
+
+        var lambertMaterial = new MeshLambertMaterial();
+        lambertMaterial.Color.SetHex(Tint);
+
+        var phongMaterial = new MeshPhongMaterial();
+        phongMaterial.Color.SetHex(Tint);
+
+        var standardMaterial = new MeshStandardMaterial();
+        standardMaterial.Color.SetHex(Tint);
+        standardMaterial.Roughness = 0.45f;
+
+        var physicalMaterial = new MeshPhysicalMaterial();
+        physicalMaterial.Color.SetHex(Tint);
+        physicalMaterial.Roughness = 0.15f;
+        physicalMaterial.Metalness = 0.6f;
+
+        var toonMaterial = new MeshToonMaterial();
+        toonMaterial.Color.SetHex(Tint);
+
+        var matcapMaterial = new MeshMatcapMaterial();
+        matcapMaterial.Color.SetHex(Tint);
+
+        return
+        [
+            ("MeshBasicMaterial", basicMaterial),
+            ("MeshLambertMaterial", lambertMaterial),
+            ("MeshPhongMaterial", phongMaterial),
+            ("MeshStandardMaterial", standardMaterial),
+            ("MeshPhysicalMaterial", physicalMaterial),
+            ("MeshToonMaterial", toonMaterial),
+            ("MeshMatcapMaterial", matcapMaterial),
+            ("MeshNormalMaterial", new MeshNormalMaterial()),
+            ("MeshDepthMaterial", new MeshDepthMaterial())
+        ];
+    }
+
+    private static float ColumnOffset(int index)
+    {
+        var column = index % ColumnCount;
+        return (column - (ColumnCount - 1) / 2f) * GridSpacing;
+    }
+
+    private static float RowOffset(int index, int rowCount)
+    {
+        var row = index / ColumnCount;
+        return -(row - (rowCount - 1) / 2f) * GridSpacing;
+    }
+
+    private async Task AnimateAsync(ThreeContext threeContext, IReadOnlyList<Mesh> meshes)
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                foreach (var mesh in meshes)
+                {
+                    var nextRotationY = mesh.Rotation.Y + RadiansPerFrame;
+                    mesh.Rotation.Y = nextRotationY >= MathF.Tau ? nextRotationY - MathF.Tau : nextRotationY;
+                }
+
+                await threeContext.FlushAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // See Cube.stories.razor for why this is what stops the loop when a story is swapped.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+}

@@ -1,0 +1,129 @@
+@attribute [Stories("Components/Declarative nodes")]
+@implements IDisposable
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Every node the package ships">
+        <Template>
+            <p>
+                The declarative layer is fourteen components, and this scene uses all of them. Children
+                attach to whichever parent slot fits: a geometry and a material go into a
+                <code>ThreeMesh</code>, a mesh goes into a <code>ThreeGroup</code> or straight into the
+                canvas.
+            </p>
+            <p>
+                <button @onclick="ToggleCamera">@(_isPerspectiveActive ? "Switch to ThreeOrthographicCamera" : "Switch to ThreePerspectiveCamera")</button>
+                Rendering through: <strong>@(_isPerspectiveActive ? "ThreePerspectiveCamera" : "ThreeOrthographicCamera")</strong>
+            </p>
+            @* Keyed on the camera choice so the toggle rebuilds the whole canvas. A declarative scene
+               binds its camera once - see the note under the canvas - so swapping only the camera
+               component inside a surviving canvas would change nothing on screen. *@
+            @* A fixed aspect ratio because one of the two cameras is orthographic: its frustum is spelled
+               out in world units and nothing rescales it to the canvas, so a canvas of another shape
+               would render it stretched. See Catalogue/Cameras for the same note. *@
+            <ThreeCanvas @key="_isPerspectiveActive" Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;">
+                @if (_isPerspectiveActive)
+                {
+                    <ThreePerspectiveCamera Fov="45f" Aspect="16f / 9f" Near="0.1f" Far="100f" Position="new(0f, 1.5f, 11f)" />
+                }
+                else
+                {
+                    <ThreeOrthographicCamera Left="-7.1f" Right="7.1f" Top="4f" Bottom="-4f" Near="0.1f" Far="100f" Position="new(0f, 1.5f, 11f)" />
+                }
+
+                <ThreeAmbientLight Color="Color.White" Intensity="0.45f" />
+                <ThreeDirectionalLight Color="Color.White" Intensity="1.6f" Position="new(4f, 6f, 6f)" />
+                <ThreePointLight Color="Color.FromHex(0xffb347)" Intensity="26f" Position="new(-2f, 2.2f, 2.6f)" />
+
+                @* A group moves everything under it with one transform - the whole row swings from
+                   a single rotation write rather than one per child. *@
+                <ThreeGroup Rotation="new(0f, _groupRotationY, 0f)">
+                    <ThreeMesh Position="new(-3.4f, 0f, 0f)">
+                        <ThreeBoxGeometry Width="1.5f" Height="1.5f" Depth="1.5f" />
+                        <ThreeMeshStandardMaterial Color="Color.FromHex(0x5b8dd9)" Roughness="0.4f" />
+                    </ThreeMesh>
+                    <ThreeMesh Position="new(0f, 0f, 0f)">
+                        <ThreeSphereGeometry Radius="1f" WidthSegments="48" HeightSegments="32" />
+                        <ThreeMeshBasicMaterial Color="Color.FromHex(0x9fd0ff)" />
+                    </ThreeMesh>
+                    <ThreeMesh Position="new(3.4f, 0f, 0f)" Rotation="new(-1.5707964f, 0f, 0f)">
+                        <ThreePlaneGeometry Width="2.2f" Height="2.2f" />
+                        <ThreeMeshStandardMaterial Color="Color.FromHex(0xb8bcc0)" Roughness="0.85f" />
+                    </ThreeMesh>
+                </ThreeGroup>
+
+                <ThreePoints Position="new(0f, 3.2f, 0f)">
+                    <ThreeSphereGeometry Radius="1.4f" WidthSegments="26" HeightSegments="16" />
+                    <ThreePointsMaterial Color="Color.FromHex(0xe0e4e8)" Size="0.06f" />
+                </ThreePoints>
+            </ThreeCanvas>
+            <p>
+                Used here: <code>ThreeCanvas</code>, <code>ThreePerspectiveCamera</code>,
+                <code>ThreeOrthographicCamera</code>, <code>ThreeAmbientLight</code>,
+                <code>ThreeDirectionalLight</code>, <code>ThreePointLight</code>,
+                <code>ThreeGroup</code>, <code>ThreeMesh</code>, <code>ThreePoints</code>,
+                <code>ThreeBoxGeometry</code>, <code>ThreeSphereGeometry</code>,
+                <code>ThreePlaneGeometry</code>, <code>ThreeMeshStandardMaterial</code>,
+                <code>ThreeMeshBasicMaterial</code> and <code>ThreePointsMaterial</code>.
+            </p>
+            <p>
+                ⚠️ A declarative scene binds its camera <strong>once</strong>. The scene root keeps the
+                first camera that registers and never re-points the renderer afterwards, deliberately -
+                otherwise which camera won would depend on markup order. So an <code>@@if</code> that
+                swaps only the camera component leaves the view exactly as it was.
+            </p>
+            <p>
+                The button above works because the canvas carries <code>@@key</code> on that same flag:
+                changing it disposes the whole canvas and builds a new one, whose first registered
+                camera is the new one. To swap a camera without rebuilding, use the imperative path -
+                <code>SetActiveSceneAsync</code> names a camera and can be called again, which is what
+                <em>Catalogue/Cameras</em> does.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private const float RadiansPerFrame = 0.005f;
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+    private float _groupRotationY;
+    private bool _isPerspectiveActive = true;
+
+    protected override void OnInitialized()
+    {
+        _ = AnimateAsync();
+    }
+
+    private void ToggleCamera()
+    {
+        _isPerspectiveActive = !_isPerspectiveActive;
+    }
+
+    private async Task AnimateAsync()
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                var nextRotationY = _groupRotationY + RadiansPerFrame;
+                _groupRotationY = nextRotationY >= MathF.Tau ? nextRotationY - MathF.Tau : nextRotationY;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // See Cube.stories.razor for why this is what stops the loop when a story is swapped.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+}

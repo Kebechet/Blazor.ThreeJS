@@ -1,6 +1,7 @@
 @* Its own path in the sidebar rather than "Components/ThreeCanvas": BlazingStory keys the story tree
    by this string, so two files declaring the same one leave only whichever registers last. *@
 @attribute [Stories("Addons/GLTFLoader and OrbitControls")]
+@using System.Globalization
 @inject NavigationManager _navigationManager
 
 <Stories TComponent="ThreeCanvas">
@@ -93,8 +94,12 @@
         _cameraReadout = $"mirror says {Format(_camera.Position)}, browser says {Format(browserPosition)}";
     }
 
+    /// <summary>
+    /// Invariant rather than the browser's culture: the components are separated by commas, and a
+    /// comma decimal separator turns one position into what reads as six numbers.
+    /// </summary>
     private static string Format(Vector3 position)
     {
-        return $"({position.X:0.00}, {position.Y:0.00}, {position.Z:0.00})";
+        return string.Format(CultureInfo.InvariantCulture, "({0:0.00}, {1:0.00}, {2:0.00})", position.X, position.Y, position.Z);
     }
 }

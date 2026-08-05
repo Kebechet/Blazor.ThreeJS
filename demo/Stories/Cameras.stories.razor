@@ -1,0 +1,112 @@
+@attribute [Stories("Catalogue/Cameras")]
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Perspective and orthographic">
+        <Template>
+            <p>
+                The same five boxes, receding away from the camera, seen through each projection.
+                A perspective camera converges them toward a vanishing point; an orthographic camera
+                keeps every box the size it really is, however far away it is.
+            </p>
+            <p>
+                <button disabled="@_isPerspectiveActive" @onclick="UsePerspectiveAsync">PerspectiveCamera</button>
+                <button disabled="@(!_isPerspectiveActive)" @onclick="UseOrthographicAsync">OrthographicCamera</button>
+            </p>
+            @* ⚠️ A fixed aspect ratio, not a fixed height. The interop module overwrites a perspective
+               camera's Aspect with the canvas's own, so that one is right whatever shape the canvas is -
+               but an orthographic camera has left/right/top/bottom instead and nothing can correct it,
+               so a canvas of a different shape renders it stretched. *@
+            <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildCameraGalleryAsync" />
+            <p>
+                Showing: <strong>@(_isPerspectiveActive ? "PerspectiveCamera" : "OrthographicCamera")</strong>.
+                Switching is one <code>SetActiveSceneAsync</code> call naming a different camera - the
+                scene itself is untouched.
+            </p>
+            <p>
+                <code>ArrayCamera</code> and <code>StereoCamera</code> are typed but not shown. Both
+                render through several sub-cameras at once, which needs the renderer's viewport split
+                per camera, and the renderer is owned by the JavaScript side with no handle C# can
+                address.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private const float OrthographicHalfHeight = 3.2f;
+    private const float CanvasAspect = 16f / 9f;
+
+    private ThreeContext? _threeContext;
+    private Scene? _scene;
+    private PerspectiveCamera? _perspectiveCamera;
+    private OrthographicCamera? _orthographicCamera;
+    private bool _isPerspectiveActive = true;
+
+    private async Task BuildCameraGalleryAsync(ThreeContext threeContext)
+    {
+        _threeContext = threeContext;
+
+        var scene = new Scene();
+        threeContext.Attach(scene);
+        _scene = scene;
+
+        scene.Add(new AmbientLight(Color.White, 0.5f));
+
+        var keyLight = new DirectionalLight(Color.White, 1.8f);
+        keyLight.Position.Set(4f, 6f, 8f);
+        scene.Add(keyLight);
+
+        var boxMaterial = new MeshStandardMaterial();
+        boxMaterial.Color.SetHex(0x5b8dd9);
+        boxMaterial.Roughness = 0.4f;
+
+        foreach (var depthIndex in Enumerable.Range(0, 5))
+        {
+            var box = new Mesh(new BoxGeometry(1.2f, 1.2f, 1.2f), boxMaterial);
+            box.Position.Set(depthIndex * 1.15f - 2.3f, 0f, -depthIndex * 2.6f);
+            box.Rotation.Set(0f, 0.5f, 0f, EulerOrder.XYZ);
+            scene.Add(box);
+        }
+
+        var perspectiveCamera = new PerspectiveCamera(45f, CanvasAspect, 0.1f, 100f);
+        perspectiveCamera.Position.Set(0f, 2.4f, 8f);
+        perspectiveCamera.LookAt(0f, 0f, -4f);
+        _perspectiveCamera = perspectiveCamera;
+
+        var orthographicCamera = new OrthographicCamera(
+            -OrthographicHalfHeight * CanvasAspect,
+            OrthographicHalfHeight * CanvasAspect,
+            OrthographicHalfHeight,
+            -OrthographicHalfHeight,
+            0.1f,
+            100f);
+        orthographicCamera.Position.Set(0f, 2.4f, 8f);
+        orthographicCamera.LookAt(0f, 0f, -4f);
+        _orthographicCamera = orthographicCamera;
+
+        await threeContext.SetActiveSceneAsync(scene, perspectiveCamera);
+    }
+
+    private async Task UsePerspectiveAsync()
+    {
+        _isPerspectiveActive = true;
+        await ActivateAsync(_perspectiveCamera);
+    }
+
+    private async Task UseOrthographicAsync()
+    {
+        _isPerspectiveActive = false;
+        await ActivateAsync(_orthographicCamera);
+    }
+
+    /// <param name="camera">Camera to render the existing scene through.</param>
+    private async Task ActivateAsync(Object3D? camera)
+    {
+        if (_threeContext is null || _scene is null || camera is null)
+        {
+            return;
+        }
+
+        await _threeContext.SetActiveSceneAsync(_scene, camera);
+    }
+}

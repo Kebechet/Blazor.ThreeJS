@@ -42,6 +42,25 @@ public sealed class ThreeContext : IAsyncDisposable
 	public TimeSpan ReadTimeout { get; set; } = _defaultReadTimeout;
 
 	/// <summary>
+	/// How many interop calls this context has made since it was created. The retained mirror's central
+	/// claim is that a scene nobody is changing costs nothing to keep on screen, and this is the number
+	/// that shows it: the JavaScript side owns the render loop, so a still scene leaves this flat no
+	/// matter how many frames go by.
+	/// <para>
+	/// Counts calls that returned. A batch lost to a dead circuit never reached the browser and is not
+	/// counted as though it had.
+	/// </para>
+	/// </summary>
+	public long SentBatchCount { get; private set; }
+
+	/// <summary>
+	/// How many individual ops this context has delivered to the browser since it was created. Divided
+	/// by <see cref="SentBatchCount"/> this is the coalescing ratio — how many property writes a single
+	/// interop call carried.
+	/// </summary>
+	public long SentOpCount { get; private set; }
+
+	/// <summary>
 	/// Raised when the applier rejected one or more ops while running a batch: an unknown three.js
 	/// type name, an unknown handle, or a property write or method call that threw. Without this,
 	/// those failures would vanish into the browser console with no C#-side signal.
@@ -106,6 +125,7 @@ public sealed class ThreeContext : IAsyncDisposable
 		try
 		{
 			var response = await _module.InvokeAsync<ThreeBatchResponse>("applyBatch", _contextId, ops);
+			RecordSend(ops.Count);
 			RaiseErrors(response);
 		}
 		catch (JSDisconnectedException)
@@ -223,6 +243,7 @@ public sealed class ThreeContext : IAsyncDisposable
 			throw BuildTimeout(handle, member);
 		}
 
+		RecordSend(ops.Count);
 		RaiseErrors(response);
 
 		var result = response.Results.FirstOrDefault(x => x.RequestId == requestId);
@@ -359,6 +380,17 @@ public sealed class ThreeContext : IAsyncDisposable
 		}
 
 		pointerTarget.RaiseClick(pointerEvent);
+	}
+
+	/// <summary>
+	/// Records one delivered interop call and the ops it carried. Called only after the call returned,
+	/// so a batch the circuit swallowed is not counted as traffic that happened.
+	/// </summary>
+	/// <param name="opCount">How many ops the delivered call carried.</param>
+	private void RecordSend(int opCount)
+	{
+		SentBatchCount++;
+		SentOpCount += opCount;
 	}
 
 	/// <summary>

@@ -1,0 +1,179 @@
+@attribute [Stories("Catalogue/Geometries")]
+@implements IDisposable
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Parametric geometries">
+        <Template>
+            <p>
+                Every geometry the package types that three.js can build from numbers alone, each
+                constructed with its own defaults. The two drawn as outlines are
+                <code>EdgesGeometry</code> and <code>WireframeGeometry</code>, which take another
+                geometry rather than dimensions and describe lines rather than a surface - so they are
+                rendered through <code>LineSegments</code>, not <code>Mesh</code>.
+            </p>
+            <ThreeCanvas Style="width: 100%; height: 460px;" OnReady="BuildGeometryGalleryAsync" />
+            <p>Reading left to right, top to bottom:</p>
+            <ol>
+                @foreach (var sampleName in _sampleNames)
+                {
+                    <li><code>@sampleName</code></li>
+                }
+            </ol>
+            <p>
+                <code>ShapeGeometry</code> and <code>ExtrudeGeometry</code> are the two that need an
+                outline rather than dimensions. The triangle they share is a <code>Shape</code> built
+                through <code>Call</code>, since path building has no typed members - see
+                <em>Architecture/Escape hatch</em> for what that mechanism is.
+            </p>
+            <p>
+                Three of the package's twenty-one geometries are missing from this gallery:
+                <code>LatheGeometry</code>, <code>PolyhedronGeometry</code> and
+                <code>TubeGeometry</code>. Each takes an array of points or a curve, the generated
+                constructors for them take no arguments at all, and the wire format cannot yet carry
+                an array - so there is currently no way to build one, typed or untyped.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private const float RadiansPerFrame = 0.006f;
+    private const int ColumnCount = 4;
+    private const float GridSpacing = 2.6f;
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+    private IReadOnlyList<string> _sampleNames = [];
+
+    private async Task BuildGeometryGalleryAsync(ThreeContext threeContext)
+    {
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 0f, 14f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.55f));
+
+        var keyLight = new DirectionalLight(Color.White, 1.6f);
+        keyLight.Position.Set(4f, 6f, 8f);
+        scene.Add(keyLight);
+
+        var surfaceMaterial = new MeshStandardMaterial();
+        surfaceMaterial.Color.SetHex(0x5b8dd9);
+        surfaceMaterial.Roughness = 0.45f;
+        // The flat ones - circle, ring, plane - are invisible from behind under FrontSide, and this
+        // gallery turns every sample through a full rotation.
+        surfaceMaterial.Side = Side.DoubleSide;
+
+        var outlineMaterial = new LineBasicMaterial();
+        outlineMaterial.Color.SetHex(0xe0e4e8);
+
+        var samples = BuildSamples(surfaceMaterial, outlineMaterial);
+        var rowCount = (samples.Count + ColumnCount - 1) / ColumnCount;
+        foreach (var (index, sample) in samples.Index())
+        {
+            sample.Object.Position.Set(ColumnOffset(index), RowOffset(index, rowCount), 0f);
+            scene.Add(sample.Object);
+        }
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        _sampleNames = samples.Select(x => x.Name).ToArray();
+        StateHasChanged();
+
+        _ = AnimateAsync(threeContext, samples.Select(x => x.Object).ToArray());
+    }
+
+    /// <summary>
+    /// Names and builds every sample in one list, so the legend above the canvas cannot drift out of
+    /// step with what was actually added to the scene.
+    /// </summary>
+    private static List<(string Name, Object3D Object)> BuildSamples(MeshStandardMaterial surfaceMaterial, LineBasicMaterial outlineMaterial)
+    {
+        var outlineSource = new BoxGeometry(1.2f, 1.2f, 1.2f);
+
+        // Shape carries no typed path-building members, so the outline is drawn through the escape
+        // hatch. The calls are recorded before the shape is attached and replay in order behind its
+        // create op, which is what lets the two geometries below reference a shape that already has a
+        // path by the time three.js constructs them.
+        var triangle = new Shape();
+        triangle.Call("moveTo", -0.7f, -0.6f);
+        triangle.Call("lineTo", 0.7f, -0.6f);
+        triangle.Call("lineTo", 0f, 0.75f);
+        triangle.Call("closePath");
+
+        return
+        [
+            ("BoxGeometry", new Mesh(new BoxGeometry(), surfaceMaterial)),
+            ("SphereGeometry", new Mesh(new SphereGeometry(), surfaceMaterial)),
+            ("CapsuleGeometry", new Mesh(new CapsuleGeometry(0.5f, 0.9f), surfaceMaterial)),
+            ("CylinderGeometry", new Mesh(new CylinderGeometry(), surfaceMaterial)),
+            ("ConeGeometry", new Mesh(new ConeGeometry(), surfaceMaterial)),
+            ("TorusGeometry", new Mesh(new TorusGeometry(), surfaceMaterial)),
+            ("TorusKnotGeometry", new Mesh(new TorusKnotGeometry(0.7f), surfaceMaterial)),
+            ("CircleGeometry", new Mesh(new CircleGeometry(), surfaceMaterial)),
+            ("RingGeometry", new Mesh(new RingGeometry(), surfaceMaterial)),
+            ("PlaneGeometry", new Mesh(new PlaneGeometry(1.6f, 1.6f), surfaceMaterial)),
+            ("TetrahedronGeometry", new Mesh(new TetrahedronGeometry(), surfaceMaterial)),
+            ("OctahedronGeometry", new Mesh(new OctahedronGeometry(), surfaceMaterial)),
+            ("DodecahedronGeometry", new Mesh(new DodecahedronGeometry(), surfaceMaterial)),
+            ("IcosahedronGeometry", new Mesh(new IcosahedronGeometry(), surfaceMaterial)),
+            ("ShapeGeometry", new Mesh(new ShapeGeometry(triangle), surfaceMaterial)),
+            ("ExtrudeGeometry", new Mesh(new ExtrudeGeometry(triangle), surfaceMaterial)),
+            ("EdgesGeometry", new LineSegments(new EdgesGeometry(outlineSource), outlineMaterial)),
+            ("WireframeGeometry", new LineSegments(new WireframeGeometry(outlineSource), outlineMaterial))
+        ];
+    }
+
+    private static float ColumnOffset(int index)
+    {
+        var column = index % ColumnCount;
+        return (column - (ColumnCount - 1) / 2f) * GridSpacing;
+    }
+
+    private static float RowOffset(int index, int rowCount)
+    {
+        var row = index / ColumnCount;
+        return -(row - (rowCount - 1) / 2f) * GridSpacing;
+    }
+
+    /// <summary>
+    /// Turns every sample in place. Sixteen property writes per tick leave the batch as a single
+    /// interop call, which is the point worth watching as much as the shapes are.
+    /// </summary>
+    private async Task AnimateAsync(ThreeContext threeContext, IReadOnlyList<Object3D> samples)
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                foreach (var sample in samples)
+                {
+                    var nextRotationY = sample.Rotation.Y + RadiansPerFrame;
+                    sample.Rotation.Y = nextRotationY >= MathF.Tau ? nextRotationY - MathF.Tau : nextRotationY;
+                    sample.Rotation.X = 0.35f;
+                }
+
+                await threeContext.FlushAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // BlazingStory keeps this story component alive while swapping the rendered story, so
+            // Dispose() below can run while this loop is mid-flight. See Cube.stories.razor for the
+            // full account of why this - not OperationCanceledException - is what stops the loop.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+}

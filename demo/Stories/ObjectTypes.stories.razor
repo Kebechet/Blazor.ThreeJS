@@ -1,0 +1,161 @@
+@attribute [Stories("Catalogue/Object types")]
+@implements IDisposable
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Non-mesh objects">
+        <Template>
+            <p>
+                Four ways to put something on screen that is not an ordinary <code>Mesh</code>. Each one
+                takes a geometry the package can already build, so nothing here needs vertex data
+                written by hand.
+            </p>
+            <ThreeCanvas Style="width: 100%; height: 420px;" OnReady="BuildObjectGalleryAsync" />
+            <p>Left to right:</p>
+            <ol>
+                <li><code>Points</code> - a sphere's vertices drawn as dots, through <code>PointsMaterial</code>.</li>
+                <li><code>LineSegments</code> - a box's edges through <code>EdgesGeometry</code> and <code>LineBasicMaterial</code>.</li>
+                <li><code>Sprite</code> - a quad that always faces the camera, through <code>SpriteMaterial</code>. Turn the view and it does not turn with the rest.</li>
+                <li><code>InstancedMesh</code> - twenty-seven cubes drawn in one call, each placed by a <code>Matrix4</code> handed to <code>setMatrixAt</code>.</li>
+            </ol>
+            <p>
+                <code>Line</code> and <code>LineLoop</code> are typed but not shown: both want a list of
+                points in the order they should be joined, and the only geometries this package can build
+                without vertex arrays order their vertices for triangles rather than for a path.
+                <code>LineDashedMaterial</code> needs <code>computeLineDistances</code> for the same
+                reason. <code>SkinnedMesh</code> and <code>Bone</code> need a skeleton, which arrives with
+                a loaded model rather than being built here.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private const float RadiansPerFrame = 0.006f;
+    private const int InstanceGridSide = 3;
+    private const float InstanceSpacing = 0.62f;
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+
+    private async Task BuildObjectGalleryAsync(ThreeContext threeContext)
+    {
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 0.6f, 10f);
+        camera.LookAt(0f, 0f, 0f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.6f));
+
+        var keyLight = new DirectionalLight(Color.White, 1.8f);
+        keyLight.Position.Set(4f, 6f, 8f);
+        scene.Add(keyLight);
+
+        var turning = new List<Object3D>();
+
+        var pointsMaterial = new PointsMaterial();
+        pointsMaterial.Color.SetHex(0x9fd0ff);
+        pointsMaterial.Size = 0.07f;
+        var points = new Points(new SphereGeometry(1.1f, 28, 18), pointsMaterial);
+        points.Position.Set(-4.2f, 0f, 0f);
+        scene.Add(points);
+        turning.Add(points);
+
+        var lineMaterial = new LineBasicMaterial();
+        lineMaterial.Color.SetHex(0xe0e4e8);
+        var lineSegments = new LineSegments(new EdgesGeometry(new BoxGeometry(1.7f, 1.7f, 1.7f)), lineMaterial);
+        lineSegments.Position.Set(-1.4f, 0f, 0f);
+        scene.Add(lineSegments);
+        turning.Add(lineSegments);
+
+        var spriteMaterial = new SpriteMaterial();
+        spriteMaterial.Color.SetHex(0xffb347);
+        var sprite = new Sprite(spriteMaterial);
+        sprite.Position.Set(1.4f, 0f, 0f);
+        sprite.Scale.Set(1.6f, 1.6f, 1f);
+        scene.Add(sprite);
+
+        var instancedMesh = BuildInstancedCubes();
+        instancedMesh.Position.Set(4.2f, 0f, 0f);
+        scene.Add(instancedMesh);
+        turning.Add(instancedMesh);
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        _ = AnimateAsync(threeContext, turning);
+    }
+
+    /// <summary>
+    /// A 3x3x3 block of cubes in one draw call. Each instance's transform is a <see cref="Matrix4"/>
+    /// composed in C# and handed to <c>setMatrixAt</c> through the escape hatch, because the per-instance
+    /// matrix buffer has no typed member of its own.
+    /// </summary>
+    private static InstancedMesh BuildInstancedCubes()
+    {
+        var instanceMaterial = new MeshStandardMaterial();
+        instanceMaterial.Color.SetHex(0x5b8dd9);
+        instanceMaterial.Roughness = 0.4f;
+
+        var instanceCount = InstanceGridSide * InstanceGridSide * InstanceGridSide;
+        var instancedMesh = new InstancedMesh(new BoxGeometry(0.4f, 0.4f, 0.4f), instanceMaterial, instanceCount);
+
+        var rotation = new Quaternion();
+        var scale = new Vector3(1f, 1f, 1f);
+        var instanceIndex = 0;
+        foreach (var x in Enumerable.Range(0, InstanceGridSide))
+        {
+            foreach (var y in Enumerable.Range(0, InstanceGridSide))
+            {
+                foreach (var z in Enumerable.Range(0, InstanceGridSide))
+                {
+                    var position = new Vector3(
+                        (x - 1) * InstanceSpacing,
+                        (y - 1) * InstanceSpacing,
+                        (z - 1) * InstanceSpacing);
+
+                    // Composed fresh per instance: the applier encodes the matrix at the moment the call
+                    // is recorded, so reusing one instance and re-composing it would be safe - but a
+                    // Matrix4 per instance is what makes that independence obvious rather than assumed.
+                    var transform = new Matrix4().Compose(position, rotation, scale);
+                    instancedMesh.Call("setMatrixAt", instanceIndex, transform);
+                    instanceIndex++;
+                }
+            }
+        }
+
+        return instancedMesh;
+    }
+
+    private async Task AnimateAsync(ThreeContext threeContext, IReadOnlyList<Object3D> turningObjects)
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                foreach (var turningObject in turningObjects)
+                {
+                    var nextRotationY = turningObject.Rotation.Y + RadiansPerFrame;
+                    turningObject.Rotation.Y = nextRotationY >= MathF.Tau ? nextRotationY - MathF.Tau : nextRotationY;
+                }
+
+                await threeContext.FlushAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // See Cube.stories.razor for why this is what stops the loop when a story is swapped.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+}

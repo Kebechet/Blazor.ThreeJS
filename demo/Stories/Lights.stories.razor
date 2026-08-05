@@ -1,0 +1,136 @@
+@attribute [Stories("Catalogue/Lights")]
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Light types">
+        <Template>
+            <p>
+                One scene, one light at a time. Switching costs two property writes - the old light's
+                <code>IsVisible</code> off and the new one's on - which is the whole interop bill for
+                changing how the scene is lit.
+            </p>
+            <p>
+                @foreach (var lightName in _lightNames)
+                {
+                    <button disabled="@(lightName == _activeLightName)" @onclick="@(() => ShowOnlyAsync(lightName))">@lightName</button>
+                }
+            </p>
+            <ThreeCanvas Style="width: 100%; height: 420px;" OnReady="BuildLightGalleryAsync" />
+            <p>
+                Showing: <strong>@_activeLightName</strong>. <code>AmbientLight</code> has no direction,
+                so it flattens everything; <code>HemisphereLight</code> tints from above and below;
+                the other three have a position, and a spot light also has a cone.
+            </p>
+            <p>
+                <code>RectAreaLight</code> and <code>LightProbe</code> are typed but not shown. A rect
+                area light only lights anything once three.js's <code>RectAreaLightUniformsLib</code>
+                has been initialised, which is an addon this package does not vendor, and a light probe
+                needs spherical-harmonic coefficients that no typed member can carry yet.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private const string AmbientName = "AmbientLight";
+    private const string DirectionalName = "DirectionalLight";
+    private const string HemisphereName = "HemisphereLight";
+    private const string PointName = "PointLight";
+    private const string SpotName = "SpotLight";
+
+    private static readonly string[] _lightNames = [AmbientName, DirectionalName, HemisphereName, PointName, SpotName];
+
+    private readonly Dictionary<string, Object3D> _lightsByName = [];
+    private ThreeContext? _threeContext;
+    private string _activeLightName = DirectionalName;
+
+    private async Task BuildLightGalleryAsync(ThreeContext threeContext)
+    {
+        _threeContext = threeContext;
+
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 3.4f, 9f);
+        camera.LookAt(0f, 0.4f, 0f);
+        scene.Add(camera);
+
+        BuildStage(scene);
+
+        var ambientLight = new AmbientLight(Color.White, 1.1f);
+
+        var directionalLight = new DirectionalLight(Color.White, 2.2f);
+        directionalLight.Position.Set(4f, 6f, 4f);
+
+        var hemisphereLight = new HemisphereLight(Color.FromHex(0x88bbff), Color.FromHex(0xcc7733), 2.2f);
+
+        var pointLight = new PointLight(Color.White, 24f);
+        pointLight.Position.Set(0f, 2.4f, 1.6f);
+
+        var spotLight = new SpotLight(Color.White, 60f, 0f, 0.42f, 0.35f);
+        spotLight.Position.Set(0f, 6f, 2.5f);
+
+        _lightsByName[AmbientName] = ambientLight;
+        _lightsByName[DirectionalName] = directionalLight;
+        _lightsByName[HemisphereName] = hemisphereLight;
+        _lightsByName[PointName] = pointLight;
+        _lightsByName[SpotName] = spotLight;
+
+        foreach (var light in _lightsByName)
+        {
+            light.Value.IsVisible = light.Key == _activeLightName;
+            scene.Add(light.Value);
+        }
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+    }
+
+    /// <summary>
+    /// A floor and three objects at different heights, so a light with a position and a light without
+    /// one look visibly different rather than merely differently bright.
+    /// </summary>
+    private static void BuildStage(Scene scene)
+    {
+        var floorMaterial = new MeshStandardMaterial();
+        floorMaterial.Color.SetHex(0xb8bcc0);
+        floorMaterial.Roughness = 0.9f;
+
+        var floor = new Mesh(new PlaneGeometry(24f, 24f), floorMaterial);
+        floor.Rotation.Set(-MathF.PI / 2f, 0f, 0f, EulerOrder.XYZ);
+        floor.Position.Set(0f, -1f, 0f);
+        scene.Add(floor);
+
+        var objectMaterial = new MeshStandardMaterial();
+        objectMaterial.Color.SetHex(0x5b8dd9);
+        objectMaterial.Roughness = 0.35f;
+
+        var sphere = new Mesh(new SphereGeometry(1f, 48, 32), objectMaterial);
+        sphere.Position.Set(-2.4f, 0f, 0f);
+        scene.Add(sphere);
+
+        var box = new Mesh(new BoxGeometry(1.6f, 1.6f, 1.6f), objectMaterial);
+        box.Position.Set(0f, -0.2f, 0f);
+        box.Rotation.Set(0f, 0.6f, 0f, EulerOrder.XYZ);
+        scene.Add(box);
+
+        var torusKnot = new Mesh(new TorusKnotGeometry(0.7f, 0.26f), objectMaterial);
+        torusKnot.Position.Set(2.6f, 0.2f, 0f);
+        scene.Add(torusKnot);
+    }
+
+    private async Task ShowOnlyAsync(string lightName)
+    {
+        if (_threeContext is null)
+        {
+            return;
+        }
+
+        _activeLightName = lightName;
+        foreach (var light in _lightsByName)
+        {
+            light.Value.IsVisible = light.Key == lightName;
+        }
+
+        await _threeContext.FlushAsync();
+    }
+}

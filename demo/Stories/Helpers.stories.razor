@@ -1,0 +1,98 @@
+@attribute [Stories("Catalogue/Helpers")]
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Scene and light helpers">
+        <Template>
+            <p>
+                Helpers draw things that are otherwise invisible - axes, ground planes, a light's
+                position and reach, a camera's frustum. They are ordinary <code>Object3D</code>s, so
+                they go into the scene like anything else.
+            </p>
+            <ThreeCanvas Style="width: 100%; height: 440px;" OnReady="BuildHelperGalleryAsync" />
+            <ul>
+                <li><code>GridHelper</code> - the ground plane.</li>
+                <li><code>PolarGridHelper</code> - the circular grid raised above it.</li>
+                <li><code>AxesHelper</code> - red, green and blue for X, Y and Z at the origin.</li>
+                <li><code>ArrowHelper</code> - the single orange arrow.</li>
+                <li><code>BoxHelper</code> - the yellow box drawn around the cube's bounds.</li>
+                <li><code>PointLightHelper</code> - the small cage around the point light.</li>
+                <li><code>DirectionalLightHelper</code> - the square with a line back to its light.</li>
+                <li><code>HemisphereLightHelper</code> - the octahedron near the top.</li>
+                <li><code>SpotLightHelper</code> - the cone outline.</li>
+                <li><code>CameraHelper</code> - the frustum of a second, non-rendering camera.</li>
+            </ul>
+            <p>
+                <code>SkeletonHelper</code> is the one this story leaves out: it needs a rigged model to
+                draw the bones of, which arrives with a loaded file rather than being built here.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private async Task BuildHelperGalleryAsync(ThreeContext threeContext)
+    {
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(50f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(7.5f, 6f, 11f);
+        camera.LookAt(0f, 0.5f, 0f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.7f));
+
+        var cubeMaterial = new MeshStandardMaterial();
+        cubeMaterial.Color.SetHex(0x5b8dd9);
+        cubeMaterial.Roughness = 0.45f;
+        var cube = new Mesh(new BoxGeometry(1.8f, 1.8f, 1.8f), cubeMaterial);
+        cube.Position.Set(0f, 0.9f, 0f);
+        cube.Rotation.Set(0f, 0.6f, 0f, EulerOrder.XYZ);
+        scene.Add(cube);
+
+        scene.Add(new GridHelper(16f, 16f, Color.FromHex(0x6b7176), Color.FromHex(0x3c4145)));
+
+        var polarGridHelper = new PolarGridHelper(4f, 8f, 4f, 64f, Color.FromHex(0x6b7176), Color.FromHex(0x3c4145));
+        polarGridHelper.Position.Set(0f, 3.6f, 0f);
+        scene.Add(polarGridHelper);
+
+        scene.Add(new AxesHelper(3f));
+
+        scene.Add(new ArrowHelper(
+            new Vector3(0f, 0f, 1f),
+            new Vector3(-4f, 0.1f, -4f),
+            3f,
+            Color.FromHex(0xffb347)));
+
+        scene.Add(new BoxHelper(cube, Color.FromHex(0xf2e06b)));
+
+        var pointLight = new PointLight(Color.White, 16f);
+        pointLight.Position.Set(-3.4f, 2.6f, 2.6f);
+        scene.Add(pointLight);
+        scene.Add(new PointLightHelper(pointLight, 0.4f));
+
+        var directionalLight = new DirectionalLight(Color.White, 1.1f);
+        directionalLight.Position.Set(4.5f, 4f, 3f);
+        scene.Add(directionalLight);
+        scene.Add(new DirectionalLightHelper(directionalLight, 1.2f));
+
+        var hemisphereLight = new HemisphereLight(Color.FromHex(0x88bbff), Color.FromHex(0xcc7733), 0.8f);
+        hemisphereLight.Position.Set(0f, 5.4f, 0f);
+        scene.Add(hemisphereLight);
+        scene.Add(new HemisphereLightHelper(hemisphereLight, 0.6f));
+
+        var spotLight = new SpotLight(Color.White, 24f, 0f, 0.38f, 0.3f);
+        spotLight.Position.Set(3.6f, 5f, -3.4f);
+        scene.Add(spotLight);
+        scene.Add(new SpotLightHelper(spotLight));
+
+        // A camera that nothing renders through: it is here only so its frustum can be drawn.
+        var observedCamera = new PerspectiveCamera(35f, 1.6f, 1f, 5f);
+        observedCamera.Position.Set(-4.5f, 2.2f, 4.5f);
+        observedCamera.LookAt(0f, 0.9f, 0f);
+        scene.Add(observedCamera);
+        scene.Add(new CameraHelper(observedCamera));
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+    }
+}

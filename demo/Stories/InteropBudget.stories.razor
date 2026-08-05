@@ -1,0 +1,180 @@
+@attribute [Stories("Architecture/Interop budget")]
+@implements IDisposable
+@using System.Globalization
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="An idle scene costs nothing">
+        <Template>
+            <p>
+                The counters below are read straight off <code>ThreeContext</code>. They count what
+                actually crossed the boundary into JavaScript, and they are what makes this package
+                usable over a Blazor Server circuit, where every op is a network message.
+            </p>
+            <p>
+                <strong>Drag the scene to orbit it.</strong> The camera moves every frame and the
+                renderer draws every frame - and the counters do not move at all, because the render
+                loop and the controls both live in JavaScript. Then start the C#-driven spin and watch
+                what a scene actually driven from C# costs.
+            </p>
+            <table>
+                <tbody>
+                    <tr><td>Interop calls</td><td><strong>@_sentBatchCount</strong></td></tr>
+                    <tr><td>Ops delivered</td><td><strong>@_sentOpCount</strong></td></tr>
+                    <tr><td>Interop calls in the last second</td><td><strong>@_batchesPerSecond</strong></td></tr>
+                    <tr><td>Ops per interop call</td><td><strong>@_opsPerBatch</strong></td></tr>
+                </tbody>
+            </table>
+            <p>
+                <button @onclick="ToggleSpin">@(_isSpinning ? "Stop the C#-driven spin" : "Start a C#-driven spin")</button>
+                C#-driven spin: <strong>@(_isSpinning ? "running" : "stopped")</strong>
+            </p>
+            <ThreeCanvas Style="width: 100%; height: 400px;" OnReady="BuildBudgetSceneAsync" />
+            <p>
+                While the spin runs, three cubes each get a new rotation every tick and the whole tick
+                leaves as <em>one</em> interop call - so "ops per interop call" settles near three rather
+                than one. That is the batch doing its job: the cost of a frame is one message, not one
+                message per thing that changed.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private static readonly TimeSpan ReadoutInterval = TimeSpan.FromSeconds(1);
+    private const float RadiansPerFrame = 0.02f;
+
+    private readonly CancellationTokenSource _loopCancellation = new();
+    private readonly List<Mesh> _cubes = [];
+    private ThreeContext? _threeContext;
+
+    private long _sentBatchCount;
+    private long _sentOpCount;
+    private long _batchesPerSecond;
+    private long _previousBatchCount;
+    private string _opsPerBatch = "0.0";
+    private bool _isSpinning;
+
+    private async Task BuildBudgetSceneAsync(ThreeContext threeContext)
+    {
+        _threeContext = threeContext;
+
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 1.6f, 8f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.5f));
+
+        var keyLight = new DirectionalLight(Color.White, 1.8f);
+        keyLight.Position.Set(4f, 6f, 6f);
+        scene.Add(keyLight);
+
+        var cubeMaterial = new MeshStandardMaterial();
+        cubeMaterial.Color.SetHex(0x5b8dd9);
+        cubeMaterial.Roughness = 0.4f;
+
+        foreach (var offsetIndex in Enumerable.Range(0, 3))
+        {
+            var cube = new Mesh(new BoxGeometry(1.4f, 1.4f, 1.4f), cubeMaterial);
+            cube.Position.Set((offsetIndex - 1) * 2.4f, 0f, 0f);
+            cube.Rotation.Set(0.4f, 0.6f, 0f, EulerOrder.XYZ);
+            scene.Add(cube);
+            _cubes.Add(cube);
+        }
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        var orbitControls = await OrbitControls.AttachAsync(threeContext, camera);
+        orbitControls.IsDampingEnabled = true;
+        await threeContext.FlushAsync();
+
+        _ = RunReadoutAsync();
+        _ = RunSpinAsync();
+    }
+
+    private void ToggleSpin()
+    {
+        _isSpinning = !_isSpinning;
+    }
+
+    /// <summary>
+    /// Samples the counters once a second and re-renders. Deliberately touches no three.js state of its
+    /// own — if this loop cost interop, it would be measuring itself.
+    /// </summary>
+    private async Task RunReadoutAsync()
+    {
+        using var timer = new PeriodicTimer(ReadoutInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_loopCancellation.Token))
+            {
+                if (_threeContext is not { } threeContext)
+                {
+                    continue;
+                }
+
+                _sentBatchCount = threeContext.SentBatchCount;
+                _sentOpCount = threeContext.SentOpCount;
+                _batchesPerSecond = _sentBatchCount - _previousBatchCount;
+                _previousBatchCount = _sentBatchCount;
+                // Invariant rather than the browser's culture: the surrounding copy is English, and a
+                // comma decimal separator reads as a thousands separator in it.
+                _opsPerBatch = _sentBatchCount == 0
+                    ? "0.0"
+                    : ((double) _sentOpCount / _sentBatchCount).ToString("0.0", CultureInfo.InvariantCulture);
+
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // See Cube.stories.razor for why this is what stops the loop when a story is swapped.
+        }
+    }
+
+    /// <summary>
+    /// Ticks at frame rate whether or not the spin is on, and writes nothing while it is off - so the
+    /// counters stand still because there was nothing to send, not because nothing asked.
+    /// </summary>
+    private async Task RunSpinAsync()
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_loopCancellation.Token))
+            {
+                if (!_isSpinning || _threeContext is not { } threeContext)
+                {
+                    continue;
+                }
+
+                foreach (var cube in _cubes)
+                {
+                    var nextRotationY = cube.Rotation.Y + RadiansPerFrame;
+                    cube.Rotation.Y = nextRotationY >= MathF.Tau ? nextRotationY - MathF.Tau : nextRotationY;
+                }
+
+                await threeContext.FlushAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // See Cube.stories.razor for why this is what stops the loop when a story is swapped.
+        }
+    }
+
+    public void Dispose()
+    {
+        _loopCancellation.Cancel();
+        _loopCancellation.Dispose();
+    }
+}

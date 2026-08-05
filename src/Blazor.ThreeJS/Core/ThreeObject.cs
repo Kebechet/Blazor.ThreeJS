@@ -39,6 +39,12 @@ public abstract class ThreeObject
 	/// </summary>
 	internal ThreeBatch? Batch { get; set; }
 
+	/// <summary>Whether this object has reached a batch, and therefore records its writes rather than holding them.</summary>
+	internal bool IsAttached
+	{
+		get { return Batch is not null; }
+	}
+
 	/// <summary>Name of the corresponding export on the three.js namespace, e.g. <c>"Mesh"</c>.</summary>
 	protected abstract string ThreeTypeName { get; }
 
@@ -295,6 +301,31 @@ public abstract class ThreeObject
 	public Task<TValue> GetAsync<TValue>(string member)
 	{
 		return RequireContext(member).GetAsync<TValue>(Handle, member);
+	}
+
+	/// <summary>
+	/// Records releasing this object's JavaScript-side resources and retiring its handle. The applier
+	/// invokes three.js's own <c>dispose()</c> where the object has one, drops the object from the
+	/// handle table, and takes it out of the pointer-target set.
+	/// <para>
+	/// A no-op before this object is attached: there is nothing on the JavaScript side to release, and
+	/// nothing is held for replay — unlike a write, a release is not something a later attach should
+	/// carry out.
+	/// </para>
+	/// <para>
+	/// ⚠️ The handle is not reusable afterwards and this object must not be attached again. Nothing in
+	/// C# enforces that, because <see cref="Batch"/> is what an attach checks and the object goes on
+	/// holding it; a write recorded after this point reaches the applier as an unknown handle.
+	/// </para>
+	/// <para>
+	/// Internal because the declarative components are what release the objects they own. An
+	/// imperatively built graph is released with its <see cref="ThreeContext"/>, whose own teardown
+	/// disposes every object the context created.
+	/// </para>
+	/// </summary>
+	internal void Release()
+	{
+		Batch?.Dispose(Handle);
 	}
 
 	/// <summary>

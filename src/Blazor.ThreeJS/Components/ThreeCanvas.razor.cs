@@ -2,6 +2,7 @@ using Kebechet.Blazor.ThreeJS.Core;
 using Kebechet.Blazor.ThreeJS.Math;
 using Kebechet.Blazor.ThreeJS.Objects;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.JSInterop;
 
 namespace Kebechet.Blazor.ThreeJS.Components;
@@ -24,6 +25,18 @@ public partial class ThreeCanvas
 	/// <summary>Inline style applied to the underlying <c>&lt;canvas&gt;</c> element.</summary>
 	[Parameter] public string? Style { get; set; }
 
+	/// <summary>
+	/// A scene written as a component tree — a camera, some lights, some meshes. Supplying it builds
+	/// and renders that scene; leaving it out leaves the canvas entirely to
+	/// <see cref="OnReady"/> and the imperative API, which is what it was before this existed.
+	/// <para>
+	/// The two compose: the declarative scene is built and made active before <see cref="OnReady"/>
+	/// fires, so a handler can go on to drive it imperatively — start an animation loop, read a value
+	/// back — against a context whose scene is already running.
+	/// </para>
+	/// </summary>
+	[Parameter] public RenderFragment? ChildContent { get; set; }
+
 	private const string ModulePath = "./_content/Kebechet.Blazor.ThreeJS/three-interop.js";
 
 	private ElementReference _canvasElement;
@@ -31,6 +44,41 @@ public partial class ThreeCanvas
 	private ThreeContext? _threeContext;
 	private Task? _initializationTask;
 	private bool _isDisposed;
+
+	/// <summary>
+	/// The declarative scene's root, present only while <see cref="ChildContent"/> is supplied. Captured
+	/// as the component is rendered, so it is set by the time the first render has been applied.
+	/// </summary>
+	private ThreeSceneRoot? _sceneRoot;
+
+	/// <summary>
+	/// The declarative scene's root, as a fragment the markup renders, or <see langword="null"/> when no
+	/// scene was written. Built here rather than written as a tag because <see cref="ThreeSceneRoot"/> is
+	/// internal — it is machinery this component owns, not a component a consumer writes — and Razor only
+	/// resolves a tag to a public type.
+	/// </summary>
+	private RenderFragment? _declarativeScene
+	{
+		get
+		{
+			if (ChildContent is null)
+			{
+				return null;
+			}
+
+			return BuildSceneRoot;
+		}
+	}
+
+	/// <summary>Renders the scene root around the consumer's markup, capturing it for the build below.</summary>
+	/// <param name="builder">Builder for this component's render tree.</param>
+	private void BuildSceneRoot(RenderTreeBuilder builder)
+	{
+		builder.OpenComponent<ThreeSceneRoot>(0);
+		builder.AddAttribute(1, "ChildContent", ChildContent);
+		builder.AddComponentReferenceCapture(2, x => _sceneRoot = (ThreeSceneRoot) x);
+		builder.CloseComponent();
+	}
 
 	/// <summary>
 	/// What lets the browser call back into this component, handed to <c>createContext</c> so the
@@ -48,6 +96,13 @@ public partial class ThreeCanvas
 	/// framework-owned JS interop (which reliably faults with <see cref="JSDisconnectedException"/> on
 	/// a dead circuit) rather than by arbitrary, possibly-unbounded consumer code in
 	/// <see cref="OnReady"/>, so <see cref="DisposeAsync"/> can safely await it without risking a hang.
+	/// <para>
+	/// A declarative scene is built here too, before <see cref="OnReady"/>. This is the moment the whole
+	/// component tree has rendered, so the attach it triggers reaches a complete object graph and emits
+	/// it in dependency order — a geometry's create op ahead of the mesh that holds it — rather than
+	/// piecemeal as each component initialized. It sits in this method's continuation rather than in
+	/// <see cref="_initializationTask"/> for the same reason <see cref="OnReady"/> does.
+	/// </para>
 	/// </summary>
 	/// <param name="firstRender">Whether this is the first time the component has rendered.</param>
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -64,6 +119,11 @@ public partial class ThreeCanvas
 		if (_isDisposed || threeContext is null)
 		{
 			return;
+		}
+
+		if (_sceneRoot is not null)
+		{
+			await _sceneRoot.BuildAsync(threeContext);
 		}
 
 		await OnReady.InvokeAsync(threeContext);

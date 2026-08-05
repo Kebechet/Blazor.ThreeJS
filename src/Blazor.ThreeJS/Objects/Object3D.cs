@@ -469,6 +469,30 @@ public abstract class Object3D : ThreeObject
 	}
 
 	/// <summary>
+	/// Detaches a child added by <see cref="Add"/>. Records the detach op once this object is attached
+	/// to a batch; before that there is nothing on the JavaScript side to detach from, so the child is
+	/// simply dropped from the list <see cref="AttachTo"/> would have replayed.
+	/// <para>
+	/// Detaching does not release the child. The child keeps its handle and its JavaScript-side object,
+	/// so it can be added somewhere else; releasing it is <see cref="ThreeObject.Release"/>'s job.
+	/// </para>
+	/// <para>
+	/// A no-op for an object that is not a child of this one, which is what lets a caller detach
+	/// defensively without first checking <see cref="Children"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="child">The object to detach.</param>
+	public void Remove(Object3D child)
+	{
+		if (!_children.Remove(child))
+		{
+			return;
+		}
+
+		Batch?.Remove(Handle, child.Handle);
+	}
+
+	/// <summary>
 	/// Orients this object to face the given point in world space.
 	/// <para>
 	/// three.js declares <c>lookAt</c> on <c>Object3D</c> rather than on the camera, so every object in

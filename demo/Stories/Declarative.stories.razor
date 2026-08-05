@@ -1,0 +1,102 @@
+@* Its own path in the sidebar rather than "Components/ThreeCanvas": BlazingStory keys the story tree
+   by this string, so two files declaring the same one leave only whichever registers last. *@
+@attribute [Stories("Components/Declarative scene")]
+@implements IDisposable
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Rotating cube">
+        <Template>
+            <p>
+                The same scene as "Components/ThreeCanvas &rarr; Rotating cube", written as a component
+                tree instead of built in C#. Each frame changes one field and re-renders; the batch turns
+                that into a single property write.
+            </p>
+            <ThreeCanvas Style="width: 100%; height: 400px;">
+                <ThreePerspectiveCamera Fov="75f" Aspect="16f / 9f" Near="0.1f" Far="1000f" Position="new(0f, 0f, 5f)" />
+                <ThreeAmbientLight Color="Color.White" Intensity="0.4f" />
+                <ThreeDirectionalLight Color="Color.White" Intensity="1f" Position="new(5f, 5f, 5f)" />
+                <ThreeMesh Rotation="new(0.4f, _rotationY, 0f)">
+                    <ThreeBoxGeometry Width="1f" Height="1f" Depth="1f" />
+                    <ThreeMeshStandardMaterial Color="Color.FromHex(0x3366cc)" Roughness="0.4f" />
+                </ThreeMesh>
+            </ThreeCanvas>
+        </Template>
+    </Story>
+    <Story Name="Click to recolour">
+        <Template>
+            <p>
+                Click the outer cubes to recolour them. The middle one has no <code>OnClick</code>, so it is
+                never hit-tested and a click passes straight through it. A handler here changes a field and
+                lets the re-render write the new colour, rather than reaching into the scene graph itself.
+            </p>
+            <ThreeCanvas Style="width: 100%; height: 400px;">
+                <ThreePerspectiveCamera Fov="75f" Aspect="16f / 9f" Near="0.1f" Far="1000f" Position="new(0f, 0f, 6f)" />
+                <ThreeAmbientLight Color="Color.White" Intensity="0.4f" />
+                <ThreeDirectionalLight Color="Color.White" Intensity="1f" Position="new(5f, 5f, 5f)" />
+                @foreach (var (index, positionX) in CubeOffsets.Index())
+                {
+                    var cubeIndex = index;
+                    <ThreeMesh Position="new(positionX, 0f, 0f)"
+                               Rotation="new(0.4f, 0.8f, 0f)"
+                               OnClick="@(cubeIndex == 1 ? default : EventCallback.Factory.Create<ThreePointerEvent>(this, () => Recolour(cubeIndex)))">
+                        <ThreeBoxGeometry Width="1f" Height="1f" Depth="1f" />
+                        <ThreeMeshStandardMaterial Color="Color.FromHex(PaletteHexColors.ElementAt(_paletteIndexes.ElementAt(cubeIndex)))" Roughness="0.4f" />
+                    </ThreeMesh>
+                }
+            </ThreeCanvas>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private const float RadiansPerFrame = 0.01f;
+    private static readonly float[] CubeOffsets = [-2.2f, 0f, 2.2f];
+    private static readonly int[] PaletteHexColors = [0x3366cc, 0xcc3366, 0x66cc33, 0xcc9933];
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+    private readonly int[] _paletteIndexes = [0, 0, 0];
+    private float _rotationY = 0.8f;
+
+    protected override void OnInitialized()
+    {
+        _ = AnimateAsync();
+    }
+
+    private void Recolour(int cubeIndex)
+    {
+        _paletteIndexes[cubeIndex] = (_paletteIndexes.ElementAt(cubeIndex) + 1) % PaletteHexColors.Length;
+    }
+
+    private async Task AnimateAsync()
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                var nextRotationY = _rotationY + RadiansPerFrame;
+                _rotationY = nextRotationY >= MathF.Tau ? nextRotationY - MathF.Tau : nextRotationY;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // BlazingStory keeps this story component alive while swapping the rendered story, so
+            // Dispose() below can run while this loop is mid-flight. Cancel() and Dispose() run back
+            // to back there; if the loop is awaiting the re-render when that happens, the next loop
+            // condition re-reads _animationCancellation.Token against an already-disposed source
+            // instead of observing cancellation, so this - not OperationCanceledException - is what
+            // actually stops the loop in that window.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+}

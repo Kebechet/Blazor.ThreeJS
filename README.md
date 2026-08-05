@@ -68,6 +68,56 @@ interop call and tells the renderer what to draw.
 The camera's `aspect` is re-derived from the canvas when the scene goes active and again whenever the
 canvas is resized, so the value you pass to the constructor is only a starting point.
 
+### Writing the scene as components
+
+The same scene can be written inside the canvas instead, as a component tree. Blazor's render tree
+becomes the scene graph: a component is added to whatever it is written inside, so a geometry written
+inside a mesh fills that mesh's geometry slot and a mesh written inside a group becomes the group's
+child. Nothing declares where it belongs - where it is written is where it goes.
+
+```razor
+@using Kebechet.Blazor.ThreeJS.Components
+@using Kebechet.Blazor.ThreeJS.Math
+
+<ThreeCanvas Style="width: 100%; height: 400px;">
+    <ThreePerspectiveCamera Fov="75f" Aspect="16f / 9f" Near="0.1f" Far="1000f" Position="new(0f, 0f, 5f)" />
+    <ThreeAmbientLight Color="Color.White" Intensity="0.4f" />
+    <ThreeDirectionalLight Color="Color.White" Intensity="1f" Position="new(5f, 5f, 5f)" />
+    <ThreeMesh Rotation="new(0.4f, _rotationY, 0f)" OnClick="Recolour">
+        <ThreeBoxGeometry Width="1f" Height="1f" Depth="1f" />
+        <ThreeMeshStandardMaterial Color="@_cubeColor" Roughness="0.4f" />
+    </ThreeMesh>
+</ThreeCanvas>
+```
+
+Animating is then an ordinary re-render: change a field, call `StateHasChanged`, and the changed
+parameter is the only thing that reaches the browser. Everything the imperative API guarantees still
+holds underneath, because the components write into the same mirror - **a re-render in which no
+parameter changed produces no interop call at all**, which matters here because child content is a
+`RenderFragment` and Blazor therefore cannot skip re-rendering a scene graph.
+
+The two styles compose. Leaving `OnReady` on a `<ThreeCanvas>` that also has a component tree gives
+you the context once the declarative scene is built and running, so you can drive it imperatively from
+there.
+
+What is shipped as components today: `<ThreeGroup>`, `<ThreeMesh>`, `<ThreePoints>`,
+`<ThreePerspectiveCamera>`, `<ThreeOrthographicCamera>`, `<ThreeAmbientLight>`,
+`<ThreeDirectionalLight>`, `<ThreePointLight>`, `<ThreeBoxGeometry>`, `<ThreeSphereGeometry>`,
+`<ThreePlaneGeometry>`, `<ThreeMeshStandardMaterial>`, `<ThreeMeshBasicMaterial>` and
+`<ThreePointsMaterial>`. Every wrapped class is still reachable imperatively through `OnReady`,
+whether or not it has a component; the component set is deliberately smaller than the 143 wrapped
+classes, and adding one is a matter of deriving from `ThreeNode<T>` or `ThreeObject3DNode<T>`.
+
+Three rules are worth knowing:
+
+- **A camera is required.** The first camera component in the markup is the one the canvas renders
+  through. A scene with none has no point of view, and says so rather than rendering black.
+- **A parameter three.js only takes as a constructor argument cannot change.** A box's `Width` builds
+  vertices once; changing it afterwards throws rather than being quietly ignored. Put an `@key` on the
+  component so a change builds a fresh object.
+- **Fill a slot one way or the other.** `<ThreeMesh Geometry="@_shared">` and a `<ThreeBoxGeometry>`
+  written inside it both target the same slot, and the parameter is re-applied on every render.
+
 ### Animating
 
 Mutate the scene graph as you would in three.js, then call `FlushAsync` once per frame. Property

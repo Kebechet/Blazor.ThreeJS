@@ -88,6 +88,7 @@ internal static class EmitterConfig
 		"position",
 		"quaternion",
 		"receiveShadow",
+		"remove",
 		"renderOrder",
 		"rotation",
 		"scale",

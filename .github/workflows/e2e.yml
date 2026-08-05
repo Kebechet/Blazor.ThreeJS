@@ -1,0 +1,51 @@
+name: Real browser
+
+# Deliberately not on push. The suite starts the demo, launches Chrome and renders on a software
+# rasteriser, which is minutes rather than seconds and has more moving parts than the rest of the
+# checks put together. Gating every push on it would make an unrelated browser hiccup look like a
+# broken commit, so it runs on pull requests - where a human is already waiting to read the result -
+# and on demand.
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  BUILD_CONFIGURATION: Release
+  E2E_PROJECT: tests/Blazor.ThreeJS.E2E/Blazor.ThreeJS.E2E.csproj
+  DEMO_PROJECT: demo/Blazor.ThreeJS.Demo.csproj
+
+jobs:
+  browser-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+    - uses: actions/checkout@v7
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    # The demo as well as the suite: the test fixture starts it with `dotnet run`, and restoring it
+    # up front keeps that out of the first test's start timeout.
+    - name: Restore the suite and the demo
+      run: |
+        dotnet restore ${{ env.E2E_PROJECT }}
+        dotnet restore ${{ env.DEMO_PROJECT }}
+
+    # No Playwright browser download: the suite drives the Google Chrome already on the runner image
+    # through Playwright's `chrome` channel, and pins rendering to SwiftShader with launch flags
+    # rather than depending on which build of Chrome that happens to be.
+    #
+    # No --collect and no --filter either. This project's test host is Microsoft.Testing.Platform
+    # (TestingPlatformDotnetTestSupport + xunit.v3.mtp-v2), which rejects both outright - they are
+    # VSTest flags, and copying one in from a sibling repository has already cost this project a red
+    # build more than once.
+    - name: Run the browser tests
+      run: dotnet test ${{ env.E2E_PROJECT }} --no-restore --configuration ${{ env.BUILD_CONFIGURATION }}

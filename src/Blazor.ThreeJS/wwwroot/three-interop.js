@@ -1,4 +1,4 @@
-import * as THREE from './three.module.js';
+import * as THREE from './three.module.min.js';
 
 // Wire format shared with ThreeOp.cs — the numeric kinds, the short property names (k/h/t/m/a/v/c/i),
 // the response shape ({e, r} with rows of {i, v} or {i, e}) and the tagged-value keys ($t/$ref/$undef)

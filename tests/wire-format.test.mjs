@@ -29,7 +29,7 @@ import {
     loadGltfInto,
     runOps
 } from '../src/Blazor.ThreeJS/wwwroot/three-interop.js';
-import * as THREE from '../src/Blazor.ThreeJS/wwwroot/three.module.js';
+import * as THREE from '../src/Blazor.ThreeJS/wwwroot/three.module.min.js';
 
 // A browser global three.js's FileLoader reports download progress through, and which Node has not
 // got. A gap in the test host rather than in anything this package ships: every browser it targets

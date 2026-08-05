@@ -478,12 +478,12 @@ hatch goes through it rather than around it.
   directories above, extracted into `generator/three-api.json`. three.js also exports 65 top-level
   functions, which are not classes, are not counted in the total, and are not wrapped either.
   `npm run extract:check` fails if that snapshot differs from what `@types/three` says today.
-- **Generated is a class you can construct**: every one of them is a constructor on the `src/Blazor.ThreeJS/wwwroot/three.module.js`
+- **Generated is a class you can construct**: every one of them is a constructor on the `src/Blazor.ThreeJS/wwwroot/three.module.min.js`
   bundle that ships in this package, which `tests/wire-format.test.mjs` asserts name by name. A class
   three.js declares in its types but does not put on `THREE` is **blocked**, not counted.
 - **Generated**: the files in `src/Blazor.ThreeJS/Generated/`, one per class or enum. `npm run emit:check`
   fails if any of them differs from what the generator produces today, or if one is left behind.
-- **Reachable is a name the bundle exports**: the extractor imports `src/Blazor.ThreeJS/wwwroot/three.module.js`
+- **Reachable is a name the bundle exports**: the extractor imports `src/Blazor.ThreeJS/wwwroot/three.module.min.js`
   and records, per class, whether three.js puts that name on `THREE` - the runtime itself rather than a
   second reading of the types. `tests/wire-format.test.mjs` asserts the figure from **both** sides: every
   class called reachable is a constructor on that bundle, and no class it leaves out is one, so the number

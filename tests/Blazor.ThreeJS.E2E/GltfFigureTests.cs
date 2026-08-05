@@ -21,8 +21,8 @@ public sealed class GltfFigureTests(DemoFixture fixture)
 	private static readonly string[] RequiredModuleChunks =
 	[
 		"/_content/Kebechet.Blazor.ThreeJS/three-interop.js",
-		"/_content/Kebechet.Blazor.ThreeJS/three.module.js",
-		"/_content/Kebechet.Blazor.ThreeJS/three.core.js",
+		"/_content/Kebechet.Blazor.ThreeJS/three.module.min.js",
+		"/_content/Kebechet.Blazor.ThreeJS/three.core.min.js",
 		"/_content/Kebechet.Blazor.ThreeJS/addons/loaders/GLTFLoader.js",
 		"/_content/Kebechet.Blazor.ThreeJS/addons/controls/OrbitControls.js",
 		"/_content/Kebechet.Blazor.ThreeJS/addons/utils/BufferGeometryUtils.js",

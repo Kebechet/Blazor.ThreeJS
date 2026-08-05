@@ -38,7 +38,7 @@ const PUBLIC_BARREL = "Three.d.ts";
  * against this module's namespace (`THREE[op.t]`), so a class absent from it cannot be created at
  * runtime no matter what `@types/three` declares.
  */
-const RUNTIME_BUNDLE_PATH = path.join(REPO_ROOT, "src", "Blazor.ThreeJS", "wwwroot", "three.module.js");
+const RUNTIME_BUNDLE_PATH = path.join(REPO_ROOT, "src", "Blazor.ThreeJS", "wwwroot", "three.module.min.js");
 
 function byText(a, b) {
 	if (a === b) {

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Kebechet.Blazor.ThreeJS.Addons;
 using Kebechet.Blazor.ThreeJS.Objects;
 using Microsoft.JSInterop;
@@ -75,9 +76,15 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// <paramref name="root"/> and every object already added under it, then replays any property
 	/// writes made before this call. Attaching is idempotent - calling this again on an
 	/// already-attached root is a no-op.
+	/// <para>
+	/// Takes any mirrored object rather than only a scene-graph one. Most objects reach a context by
+	/// being referenced from one that is already attached - a geometry through the mesh that holds it -
+	/// but an object nothing in the graph references, a <c>Clock</c> or a curve being measured, has no
+	/// such route and would otherwise have no way in at all.
+	/// </para>
 	/// </summary>
 	/// <param name="root">Root of the object graph to attach, typically a <see cref="Scene"/>.</param>
-	public void Attach(Object3D root)
+	public void Attach(ThreeObject root)
 	{
 		root.AttachTo(Batch);
 	}
@@ -145,9 +152,49 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// <exception cref="InvalidOperationException">
 	/// Thrown when the applier rejected the read, or answered the batch without a row for it.
 	/// </exception>
-	internal async Task<TValue> ReadAsync<TValue>(int handle, string member, object?[] encodedArgs)
+	internal Task<TValue> ReadAsync<TValue>(int handle, string member, object?[] encodedArgs)
 	{
-		var requestId = Batch.Read(handle, member, encodedArgs);
+		return AwaitValueAsync<TValue>(Batch.Read(handle, member, encodedArgs), handle, member);
+	}
+
+	/// <summary>
+	/// Runs one property read, on exactly the terms <see cref="ReadAsync{TValue}"/> runs a method one:
+	/// recorded behind everything already pending, sent in the same interop call, and answered on its
+	/// own result row.
+	/// <para>
+	/// This is the escape hatch's half of the read channel. The generated classes have no use for it —
+	/// a three.js property they mirror is state C# already holds — but a property nothing mirrors, on a
+	/// class nothing wraps, has no method to route through <see cref="ReadAsync{TValue}"/> and would
+	/// otherwise be unreachable.
+	/// </para>
+	/// </summary>
+	/// <typeparam name="TValue">C# type the caller declares the property holds.</typeparam>
+	/// <param name="handle">Handle of the object to read from.</param>
+	/// <param name="member">Name of the three.js property to read.</param>
+	/// <returns>The decoded value.</returns>
+	/// <exception cref="TimeoutException">Thrown when no response arrives within <see cref="ReadTimeout"/>.</exception>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when the applier rejected the read, answered the batch without a row for it, or sent back
+	/// a value <typeparamref name="TValue"/> cannot hold.
+	/// </exception>
+	internal Task<TValue> GetAsync<TValue>(int handle, string member)
+	{
+		return AwaitValueAsync<TValue>(Batch.Get(handle, member), handle, member);
+	}
+
+	/// <summary>
+	/// Sends the batch carrying a value-producing op and completes with the value that comes back.
+	/// Shared by <see cref="ReadAsync{TValue}"/> and <see cref="GetAsync{TValue}"/>, which differ only
+	/// in the op they record — everything from the drain onwards is the same correlation, the same
+	/// timeout and the same refusal to answer with a value nobody sent.
+	/// </summary>
+	/// <typeparam name="TValue">C# type the caller declares the value has.</typeparam>
+	/// <param name="requestId">Id the recorded op will be answered under.</param>
+	/// <param name="handle">Handle the read targeted, named in any failure.</param>
+	/// <param name="member">Member the read named, named in any failure.</param>
+	/// <returns>The decoded value.</returns>
+	private async Task<TValue> AwaitValueAsync<TValue>(int requestId, int handle, string member)
+	{
 		var ops = Batch.Drain();
 
 		using var timeout = new CancellationTokenSource(ReadTimeout);
@@ -192,7 +239,22 @@ public sealed class ThreeContext : IAsyncDisposable
 				$"The applier could not read '{member}' from handle {handle}: {result.Message}");
 		}
 
-		return ThreeValue.Decode<TValue>(result.Value);
+		try
+		{
+			return ThreeValue.Decode<TValue>(result.Value);
+		}
+		catch (JsonException exception)
+		{
+			// Only reachable when what three.js actually holds is not what the caller declared - a
+			// string read as a float, a number read as a bool. Faulting is the whole policy for a read:
+			// the alternative is answering with default(TValue), which is a value the browser never
+			// sent. The wrap exists because the raw deserializer message names neither the member nor
+			// the object, and this failure is one an escape-hatch caller reaches by getting a type wrong.
+			throw new InvalidOperationException(
+				$"The value of '{member}' on handle {handle} cannot be held as '{typeof(TValue).FullName}': {exception.Message} " +
+				$"A read faults rather than answering with a default the browser never sent.",
+				exception);
+		}
 	}
 
 	/// <summary>

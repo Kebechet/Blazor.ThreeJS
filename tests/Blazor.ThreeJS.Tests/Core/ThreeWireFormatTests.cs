@@ -134,6 +134,19 @@ public class ThreeWireFormatTests
 	}
 
 	[Fact]
+	public void ThreeOp_GetOpSerialized_MatchesWireContract()
+	{
+		// Arrange
+		var getOp = BuildFixtureOps().First(x => x.Kind == ThreeOpKind.Get);
+
+		// Act
+		var json = JsonSerializer.Serialize(getOp, _webOptions);
+
+		// Assert
+		json.ShouldBe("""{"k":8,"h":6,"m":"fov","v":null,"i":2}""");
+	}
+
+	[Fact]
 	public void ThreeOp_NonReadOp_OmitsTheRequestIdKey()
 	{
 		// Arrange
@@ -640,8 +653,9 @@ public class ThreeWireFormatTests
 	/// <c>Set</c> that reassigns a mesh's material after it was already attached, and the pair of
 	/// <c>PerspectiveCamera</c> creates that prove the <c>$undef</c> sentinel reaches JavaScript as a
 	/// real <c>undefined</c>, an <c>AmbientLight</c> create carrying a tagged math value as a
-	/// constructor argument, the <c>Read</c> op that hands a value back, and the <c>Pick</c> op that
-	/// opts an object into pointer hit-testing — as a batch the JavaScript applier can run end to end.
+	/// constructor argument, the <c>Read</c> op that hands a value back, the <c>Pick</c> op that
+	/// opts an object into pointer hit-testing, and the <c>Get</c> op that reads a property — as a batch
+	/// the JavaScript applier can run end to end.
 	/// Kept in step with
 	/// <c>tests/wire-format-fixture.json</c> by <c>ThreeOp_FixtureBatchSerialized_MatchesTheSharedFixtureFile</c>.
 	/// </summary>
@@ -706,7 +720,13 @@ public class ThreeWireFormatTests
 			// The op behind the only traffic C# never asked for: it opts handle 3, the mesh, into
 			// pointer hit-testing, and the JavaScript half asserts the applier reads this exact shape as
 			// a candidate registration.
-			new ThreeOp { Kind = ThreeOpKind.Pick, Handle = 3, Value = true }
+			new ThreeOp { Kind = ThreeOpKind.Pick, Handle = 3, Value = true },
+
+			// The other op that answers with a value, and the one the escape hatch's GetAsync rides on.
+			// It reads a *property* where the Read op above invokes a method, which is the whole
+			// difference between them; it targets handle 6 again, so the 50 the JavaScript half reads
+			// back is three.js's own fov default rather than a number C# ever sent.
+			new ThreeOp { Kind = ThreeOpKind.Get, Handle = 6, Member = "fov", RequestId = 2 }
 		];
 	}
 

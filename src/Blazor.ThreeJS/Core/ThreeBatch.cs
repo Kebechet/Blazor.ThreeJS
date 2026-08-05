@@ -164,6 +164,36 @@ internal sealed class ThreeBatch
 	}
 
 	/// <summary>
+	/// Records a property read on <paramref name="handle"/> whose value the caller needs back, and
+	/// allocates the request id the applier will echo on the result row.
+	/// <para>
+	/// Shares <see cref="Read"/>'s request-id space and its result-row machinery, and is a barrier for
+	/// the same reason: a read observes the object's property state at the point it runs, so a
+	/// <c>Set</c> recorded afterwards appends a new op instead of overwriting a value the read may
+	/// already have seen. What it does not share is how the applier resolves the member — this one
+	/// reads it, where <see cref="Read"/> invokes it.
+	/// </para>
+	/// </summary>
+	/// <param name="handle">Handle of the object to read from.</param>
+	/// <param name="member">Name of the property to read.</param>
+	/// <returns>The request id identifying this read in the applier's response.</returns>
+	public int Get(int handle, string member)
+	{
+		InvalidateSetCoalescing(handle);
+
+		_nextRequestId++;
+		_ops.Add(new ThreeOp
+		{
+			Kind = ThreeOpKind.Get,
+			Handle = handle,
+			Member = member,
+			RequestId = _nextRequestId
+		});
+
+		return _nextRequestId;
+	}
+
+	/// <summary>
 	/// Records attaching a child object to a parent object.
 	/// </summary>
 	/// <param name="parentHandle">Handle of the parent object.</param>

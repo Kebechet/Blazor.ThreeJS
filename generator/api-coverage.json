@@ -6,6 +6,7 @@
     "emittableClasses": 143,
     "outOfSurfaceClasses": 60,
     "blockedClasses": 106,
+    "reachableClasses": 215,
     "members": 6338,
     "mirroredState": 1454,
     "commands": 883,
@@ -17,6 +18,7 @@
       "name": "AmbientLight",
       "file": "src/lights/AmbientLight.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -27,6 +29,7 @@
       "name": "AnimationAction",
       "file": "src/animation/AnimationAction.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'mixer' cannot be mapped: `AnimationMixer` is not an emitted class: required parameter 'root' cannot be mapped: `Object3D | AnimationObjectGroup` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
       "category": "UnmappedUnion",
       "constructorParameterCount": 4,
@@ -39,6 +42,7 @@
       "name": "AnimationClip",
       "file": "src/animation/AnimationClip.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [
         {
@@ -62,6 +66,7 @@
       "name": "AnimationLoader",
       "file": "src/loaders/AnimationLoader.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -70,6 +75,7 @@
       "name": "AnimationMixer",
       "file": "src/animation/AnimationMixer.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'root' cannot be mapped: `Object3D | AnimationObjectGroup` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
       "category": "UnmappedUnion",
       "constructorParameterCount": 0,
@@ -80,6 +86,7 @@
       "name": "AnimationObjectGroup",
       "file": "src/animation/AnimationObjectGroup.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -95,6 +102,7 @@
       "name": "AnimationUtils",
       "file": "src/animation/AnimationUtils.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -103,6 +111,7 @@
       "name": "ArcCurve",
       "file": "src/extras/curves/ArcCurve.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 6,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -114,6 +123,7 @@
       "name": "ArrayCamera",
       "file": "src/cameras/ArrayCamera.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -129,6 +139,7 @@
       "name": "ArrowHelper",
       "file": "src/helpers/ArrowHelper.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 6,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -142,6 +153,7 @@
       "name": "Audio",
       "file": "src/audio/Audio.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -150,6 +162,7 @@
       "name": "AudioAnalyser",
       "file": "src/audio/AudioAnalyser.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -158,6 +171,7 @@
       "name": "AudioContext",
       "file": "src/audio/AudioContext.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -166,6 +180,7 @@
       "name": "AudioListener",
       "file": "src/audio/AudioListener.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -174,6 +189,7 @@
       "name": "AudioLoader",
       "file": "src/loaders/AudioLoader.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -182,6 +198,7 @@
       "name": "AxesHelper",
       "file": "src/helpers/AxesHelper.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -190,6 +207,7 @@
       "name": "Backend",
       "file": "src/renderers/common/Backend.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -200,6 +218,7 @@
       "name": "BasicNodeLibrary",
       "file": "src/renderers/webgpu/nodes/BasicNodeLibrary.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -210,6 +229,7 @@
       "name": "BatchedMesh",
       "file": "src/objects/BatchedMesh.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 4,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -220,6 +240,7 @@
       "name": "BezierInterpolant",
       "file": "src/math/interpolants/BezierInterpolant.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -230,6 +251,7 @@
       "name": "BlendMode",
       "file": "src/renderers/common/BlendMode.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -240,6 +262,7 @@
       "name": "Bone",
       "file": "src/objects/Bone.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -248,6 +271,7 @@
       "name": "BooleanKeyframeTrack",
       "file": "src/animation/tracks/BooleanKeyframeTrack.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'times' cannot be mapped: `ArrayLike<number>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
       "category": "DomOrLibType",
       "constructorParameterCount": 0,
@@ -258,6 +282,7 @@
       "name": "Box2",
       "file": "src/math/Box2.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -268,6 +293,7 @@
       "name": "Box3",
       "file": "src/math/Box3.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -278,6 +304,7 @@
       "name": "Box3Helper",
       "file": "src/helpers/Box3Helper.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'box' cannot be mapped: `Box3` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -288,6 +315,7 @@
       "name": "BoxGeometry",
       "file": "src/geometries/BoxGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 6,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -296,6 +324,7 @@
       "name": "BoxHelper",
       "file": "src/helpers/BoxHelper.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -304,6 +333,7 @@
       "name": "BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'array' cannot be mapped: `TypedArray` aliases `| Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array`, which is neither a group of numeric constants nor a type the mirror expresses",
       "category": "UnmappedTypeAlias",
       "constructorParameterCount": 0,
@@ -314,6 +344,7 @@
       "name": "BufferGeometry",
       "file": "src/core/BufferGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -322,6 +353,7 @@
       "name": "BufferGeometryLoader",
       "file": "src/loaders/BufferGeometryLoader.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -330,6 +362,7 @@
       "name": "BundleGroup",
       "file": "src/renderers/common/BundleGroup.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -340,6 +373,7 @@
       "name": "Camera",
       "file": "src/cameras/Camera.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -348,6 +382,7 @@
       "name": "CameraHelper",
       "file": "src/helpers/CameraHelper.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -356,6 +391,7 @@
       "name": "CanvasTarget",
       "file": "src/renderers/common/CanvasTarget.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -366,6 +402,7 @@
       "name": "CanvasTexture",
       "file": "src/textures/CanvasTexture.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -429,6 +466,7 @@
       "name": "CapsuleGeometry",
       "file": "src/geometries/CapsuleGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 5,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -437,6 +475,7 @@
       "name": "CatmullRomCurve3",
       "file": "src/extras/curves/CatmullRomCurve3.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -470,6 +509,7 @@
       "name": "CircleGeometry",
       "file": "src/geometries/CircleGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 4,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -478,6 +518,7 @@
       "name": "ClippingContext",
       "file": "src/renderers/common/ClippingContext.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -488,6 +529,7 @@
       "name": "ClippingGroup",
       "file": "src/objects/ClippingGroup.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -498,6 +540,7 @@
       "name": "Clock",
       "file": "src/core/Clock.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -506,6 +549,7 @@
       "name": "Color",
       "file": "src/math/Color.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -516,6 +560,7 @@
       "name": "ColorKeyframeTrack",
       "file": "src/animation/tracks/ColorKeyframeTrack.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'times' cannot be mapped: `ArrayLike<number>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
       "category": "DomOrLibType",
       "constructorParameterCount": 0,
@@ -526,6 +571,7 @@
       "name": "Composite",
       "file": "src/animation/PropertyBinding.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -536,6 +582,7 @@
       "name": "CompressedArrayTexture",
       "file": "src/textures/CompressedArrayTexture.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'mipmaps' cannot be mapped: `CompressedTextureMipmap[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding",
       "category": "CollectionType",
       "constructorParameterCount": 0,
@@ -546,6 +593,7 @@
       "name": "CompressedCubeTexture",
       "file": "src/textures/CompressedCubeTexture.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'images' cannot be mapped: `CompressedTextureImageData[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding",
       "category": "CollectionType",
       "constructorParameterCount": 0,
@@ -556,6 +604,7 @@
       "name": "CompressedTexture",
       "file": "src/textures/CompressedTexture.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'mipmaps' cannot be mapped: `CompressedTextureMipmap[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding",
       "category": "CollectionType",
       "constructorParameterCount": 0,
@@ -566,6 +615,7 @@
       "name": "CompressedTextureLoader",
       "file": "src/loaders/CompressedTextureLoader.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -574,6 +624,7 @@
       "name": "ConeGeometry",
       "file": "src/geometries/ConeGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 7,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -582,6 +633,7 @@
       "name": "Controls",
       "file": "src/extras/Controls.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "the class is abstract, so it has no constructor to mirror",
       "category": "AbstractClass",
       "constructorParameterCount": 0,
@@ -592,6 +644,7 @@
       "name": "CubeCamera",
       "file": "src/cameras/CubeCamera.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'renderTarget' cannot be mapped: `WebGLCubeRenderTarget | CubeRenderTarget` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
       "category": "UnmappedUnion",
       "constructorParameterCount": 0,
@@ -602,6 +655,7 @@
       "name": "CubeDepthTexture",
       "file": "src/textures/CubeDepthTexture.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 9,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -618,6 +672,7 @@
       "name": "CubeRenderTarget",
       "file": "src/renderers/common/CubeRenderTarget.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -628,6 +683,7 @@
       "name": "CubeTexture",
       "file": "src/textures/CubeTexture.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -697,6 +753,7 @@
       "name": "CubeTextureLoader",
       "file": "src/loaders/CubeTextureLoader.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -705,6 +762,7 @@
       "name": "CubicBezierCurve",
       "file": "src/extras/curves/CubicBezierCurve.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -738,6 +796,7 @@
       "name": "CubicBezierCurve3",
       "file": "src/extras/curves/CubicBezierCurve3.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 4,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -750,6 +809,7 @@
       "name": "CubicInterpolant",
       "file": "src/math/interpolants/CubicInterpolant.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -760,6 +820,7 @@
       "name": "Curve",
       "file": "src/extras/core/Curve.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "the class is abstract, so it has no constructor to mirror",
       "category": "AbstractClass",
       "constructorParameterCount": 0,
@@ -770,6 +831,7 @@
       "name": "CurvePath",
       "file": "src/extras/core/CurvePath.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -778,6 +840,7 @@
       "name": "CylinderGeometry",
       "file": "src/geometries/CylinderGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 8,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -786,6 +849,7 @@
       "name": "Cylindrical",
       "file": "src/math/Cylindrical.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -796,6 +860,7 @@
       "name": "Data3DTexture",
       "file": "src/textures/Data3DTexture.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -829,6 +894,7 @@
       "name": "DataArrayTexture",
       "file": "src/textures/DataArrayTexture.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -862,6 +928,7 @@
       "name": "DataTexture",
       "file": "src/textures/DataTexture.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -943,6 +1010,7 @@
       "name": "DataTextureLoader",
       "file": "src/loaders/DataTextureLoader.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "the class is abstract, so it has no constructor to mirror",
       "category": "AbstractClass",
       "constructorParameterCount": 0,
@@ -953,6 +1021,7 @@
       "name": "DataUtils",
       "file": "src/extras/DataUtils.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -961,6 +1030,7 @@
       "name": "DepthTexture",
       "file": "src/textures/DepthTexture.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 11,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -980,6 +1050,7 @@
       "name": "DirectionalLight",
       "file": "src/lights/DirectionalLight.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -990,6 +1061,7 @@
       "name": "DirectionalLightHelper",
       "file": "src/helpers/DirectionalLightHelper.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -998,6 +1070,7 @@
       "name": "DirectionalLightShadow",
       "file": "src/lights/DirectionalLightShadow.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1008,6 +1081,7 @@
       "name": "DiscreteInterpolant",
       "file": "src/math/interpolants/DiscreteInterpolant.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -1018,6 +1092,7 @@
       "name": "DodecahedronGeometry",
       "file": "src/geometries/DodecahedronGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1026,6 +1101,7 @@
       "name": "Earcut",
       "file": "src/extras/Earcut.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1036,6 +1112,7 @@
       "name": "EdgesGeometry",
       "file": "src/geometries/EdgesGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -1046,6 +1123,7 @@
       "name": "EllipseCurve",
       "file": "src/extras/curves/EllipseCurve.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 8,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -1056,6 +1134,7 @@
       "name": "Euler",
       "file": "src/math/Euler.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -1066,6 +1145,7 @@
       "name": "EventDispatcher",
       "file": "src/core/EventDispatcher.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1074,6 +1154,7 @@
       "name": "ExternalTexture",
       "file": "src/textures/ExternalTexture.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -1089,6 +1170,7 @@
       "name": "ExtrudeGeometry",
       "file": "src/geometries/ExtrudeGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [
         {
@@ -1104,6 +1186,7 @@
       "name": "FileLoader",
       "file": "src/loaders/FileLoader.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1112,6 +1195,7 @@
       "name": "Float16BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
       "category": "UnmappedUnion",
       "constructorParameterCount": 0,
@@ -1122,6 +1206,7 @@
       "name": "Float32BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
       "category": "UnmappedUnion",
       "constructorParameterCount": 0,
@@ -1132,6 +1217,7 @@
       "name": "Fog",
       "file": "src/scenes/Fog.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1140,6 +1226,7 @@
       "name": "FogExp2",
       "file": "src/scenes/FogExp2.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1148,6 +1235,7 @@
       "name": "FramebufferTexture",
       "file": "src/textures/FramebufferTexture.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1156,6 +1244,7 @@
       "name": "Frustum",
       "file": "src/math/Frustum.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -1166,6 +1255,7 @@
       "name": "FrustumArray",
       "file": "src/math/FrustumArray.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -1176,6 +1266,7 @@
       "name": "GLBufferAttribute",
       "file": "src/core/GLBufferAttribute.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'buffer' cannot be mapped: `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
       "category": "DomOrLibType",
       "constructorParameterCount": 0,
@@ -1186,6 +1277,7 @@
       "name": "GLSLNodeBuilder",
       "file": "src/renderers/webgl-fallback/nodes/GLSLNodeBuilder.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1196,6 +1288,7 @@
       "name": "GridHelper",
       "file": "src/helpers/GridHelper.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 4,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -1206,6 +1299,7 @@
       "name": "Group",
       "file": "src/objects/Group.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1214,6 +1308,7 @@
       "name": "HTMLTexture",
       "file": "src/textures/HTMLTexture.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -1277,6 +1372,7 @@
       "name": "HemisphereLight",
       "file": "src/lights/HemisphereLight.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -1288,6 +1384,7 @@
       "name": "HemisphereLightHelper",
       "file": "src/helpers/HemisphereLightHelper.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1296,6 +1393,7 @@
       "name": "IESSpotLight",
       "file": "src/lights/webgpu/IESSpotLight.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1306,6 +1404,7 @@
       "name": "IcosahedronGeometry",
       "file": "src/geometries/IcosahedronGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1314,6 +1413,7 @@
       "name": "ImageBitmapLoader",
       "file": "src/loaders/ImageBitmapLoader.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1322,6 +1422,7 @@
       "name": "ImageLoader",
       "file": "src/loaders/ImageLoader.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1330,6 +1431,7 @@
       "name": "ImageUtils",
       "file": "src/extras/ImageUtils.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1338,6 +1440,7 @@
       "name": "IndirectStorageBufferAttribute",
       "file": "src/renderers/common/IndirectStorageBufferAttribute.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1348,6 +1451,7 @@
       "name": "Info",
       "file": "src/renderers/common/Info.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1358,6 +1462,7 @@
       "name": "InspectorBase",
       "file": "src/renderers/common/InspectorBase.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1368,6 +1473,7 @@
       "name": "InstancedBufferAttribute",
       "file": "src/core/InstancedBufferAttribute.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'array' cannot be mapped: `TypedArray` aliases `| Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array`, which is neither a group of numeric constants nor a type the mirror expresses",
       "category": "UnmappedTypeAlias",
       "constructorParameterCount": 0,
@@ -1378,6 +1484,7 @@
       "name": "InstancedBufferGeometry",
       "file": "src/core/InstancedBufferGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1386,6 +1493,7 @@
       "name": "InstancedInterleavedBuffer",
       "file": "src/core/InstancedInterleavedBuffer.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'array' cannot be mapped: `TypedArray` aliases `| Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array`, which is neither a group of numeric constants nor a type the mirror expresses",
       "category": "UnmappedTypeAlias",
       "constructorParameterCount": 0,
@@ -1396,6 +1504,7 @@
       "name": "InstancedMesh",
       "file": "src/objects/InstancedMesh.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1404,6 +1513,7 @@
       "name": "Int16BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
       "category": "UnmappedUnion",
       "constructorParameterCount": 0,
@@ -1414,6 +1524,7 @@
       "name": "Int32BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
       "category": "UnmappedUnion",
       "constructorParameterCount": 0,
@@ -1424,6 +1535,7 @@
       "name": "Int8BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
       "category": "UnmappedUnion",
       "constructorParameterCount": 0,
@@ -1434,6 +1546,7 @@
       "name": "InterleavedBuffer",
       "file": "src/core/InterleavedBuffer.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'array' cannot be mapped: `TypedArray` aliases `| Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array`, which is neither a group of numeric constants nor a type the mirror expresses",
       "category": "UnmappedTypeAlias",
       "constructorParameterCount": 0,
@@ -1444,6 +1557,7 @@
       "name": "InterleavedBufferAttribute",
       "file": "src/core/InterleavedBufferAttribute.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'interleavedBuffer' cannot be mapped: `InterleavedBuffer` is not an emitted class: required parameter 'array' cannot be mapped: `TypedArray` aliases `| Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array`, which is neither a group of numeric constants nor a type the mirror expresses",
       "category": "UnmappedTypeAlias",
       "constructorParameterCount": 0,
@@ -1454,6 +1568,7 @@
       "name": "Interpolant",
       "file": "src/math/Interpolant.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -1464,6 +1579,7 @@
       "name": "KeyframeTrack",
       "file": "src/animation/KeyframeTrack.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'times' cannot be mapped: `ArrayLike<number>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
       "category": "DomOrLibType",
       "constructorParameterCount": 0,
@@ -1474,6 +1590,7 @@
       "name": "LOD",
       "file": "src/objects/LOD.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1482,6 +1599,7 @@
       "name": "LatheGeometry",
       "file": "src/geometries/LatheGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -1515,6 +1633,7 @@
       "name": "Layers",
       "file": "src/core/Layers.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1523,6 +1642,7 @@
       "name": "Light",
       "file": "src/lights/Light.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "the class is abstract, so it has no constructor to mirror",
       "category": "AbstractClass",
       "constructorParameterCount": 0,
@@ -1533,6 +1653,7 @@
       "name": "LightProbe",
       "file": "src/lights/LightProbe.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -1554,6 +1675,7 @@
       "name": "LightShadow",
       "file": "src/lights/LightShadow.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1564,6 +1686,7 @@
       "name": "Lighting",
       "file": "src/renderers/common/Lighting.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1574,6 +1697,7 @@
       "name": "Line",
       "file": "src/objects/Line.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -1584,6 +1708,7 @@
       "name": "Line2NodeMaterial",
       "file": "src/materials/nodes/Line2NodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1594,6 +1719,7 @@
       "name": "Line3",
       "file": "src/math/Line3.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -1604,6 +1730,7 @@
       "name": "LineBasicMaterial",
       "file": "src/materials/LineBasicMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -1619,6 +1746,7 @@
       "name": "LineBasicNodeMaterial",
       "file": "src/materials/nodes/LineBasicNodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1629,6 +1757,7 @@
       "name": "LineCurve",
       "file": "src/extras/curves/LineCurve.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -1650,6 +1779,7 @@
       "name": "LineCurve3",
       "file": "src/extras/curves/LineCurve3.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -1660,6 +1790,7 @@
       "name": "LineDashedMaterial",
       "file": "src/materials/LineDashedMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -1675,6 +1806,7 @@
       "name": "LineDashedNodeMaterial",
       "file": "src/materials/nodes/LineDashedNodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1685,6 +1817,7 @@
       "name": "LineLoop",
       "file": "src/objects/LineLoop.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -1695,6 +1828,7 @@
       "name": "LineSegments",
       "file": "src/objects/LineSegments.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -1705,6 +1839,7 @@
       "name": "LinearInterpolant",
       "file": "src/math/interpolants/LinearInterpolant.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -1715,6 +1850,7 @@
       "name": "Loader",
       "file": "src/loaders/Loader.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1723,6 +1859,7 @@
       "name": "LoaderUtils",
       "file": "src/loaders/LoaderUtils.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1731,6 +1868,7 @@
       "name": "LoadingManager",
       "file": "src/loaders/LoadingManager.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -1758,6 +1896,7 @@
       "name": "Material",
       "file": "src/materials/Material.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1766,6 +1905,7 @@
       "name": "MaterialLoader",
       "file": "src/loaders/MaterialLoader.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1774,6 +1914,7 @@
       "name": "Matrix2",
       "file": "src/math/Matrix2.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -1784,6 +1925,7 @@
       "name": "Matrix3",
       "file": "src/math/Matrix3.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -1794,6 +1936,7 @@
       "name": "Matrix4",
       "file": "src/math/Matrix4.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -1804,6 +1947,7 @@
       "name": "Mesh",
       "file": "src/objects/Mesh.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -1814,6 +1958,7 @@
       "name": "MeshBasicMaterial",
       "file": "src/materials/MeshBasicMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -1829,6 +1974,7 @@
       "name": "MeshBasicNodeMaterial",
       "file": "src/materials/nodes/MeshBasicNodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1839,6 +1985,7 @@
       "name": "MeshDepthMaterial",
       "file": "src/materials/MeshDepthMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -1854,6 +2001,7 @@
       "name": "MeshDistanceMaterial",
       "file": "src/materials/MeshDistanceMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -1869,6 +2017,7 @@
       "name": "MeshLambertMaterial",
       "file": "src/materials/MeshLambertMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -1884,6 +2033,7 @@
       "name": "MeshLambertNodeMaterial",
       "file": "src/materials/nodes/MeshLambertNodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1894,6 +2044,7 @@
       "name": "MeshMatcapMaterial",
       "file": "src/materials/MeshMatcapMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -1909,6 +2060,7 @@
       "name": "MeshMatcapNodeMaterial",
       "file": "src/materials/nodes/MeshMatcapNodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1919,6 +2071,7 @@
       "name": "MeshNormalMaterial",
       "file": "src/materials/MeshNormalMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -1934,6 +2087,7 @@
       "name": "MeshNormalNodeMaterial",
       "file": "src/materials/nodes/MeshNormalNodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1944,6 +2098,7 @@
       "name": "MeshPhongMaterial",
       "file": "src/materials/MeshPhongMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -1959,6 +2114,7 @@
       "name": "MeshPhongNodeMaterial",
       "file": "src/materials/nodes/MeshPhongNodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1969,6 +2125,7 @@
       "name": "MeshPhysicalMaterial",
       "file": "src/materials/MeshPhysicalMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -1984,6 +2141,7 @@
       "name": "MeshPhysicalNodeMaterial",
       "file": "src/materials/nodes/MeshPhysicalNodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -1994,6 +2152,7 @@
       "name": "MeshSSSNodeMaterial",
       "file": "src/materials/nodes/MeshSSSNodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2004,6 +2163,7 @@
       "name": "MeshStandardMaterial",
       "file": "src/materials/MeshStandardMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -2019,6 +2179,7 @@
       "name": "MeshStandardNodeMaterial",
       "file": "src/materials/nodes/MeshStandardNodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2029,6 +2190,7 @@
       "name": "MeshToonMaterial",
       "file": "src/materials/MeshToonMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -2044,6 +2206,7 @@
       "name": "MeshToonNodeMaterial",
       "file": "src/materials/nodes/MeshToonNodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2054,6 +2217,7 @@
       "name": "NodeLibrary",
       "file": "src/renderers/common/nodes/NodeLibrary.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2064,6 +2228,7 @@
       "name": "NodeLoader",
       "file": "src/loaders/nodes/NodeLoader.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2074,6 +2239,7 @@
       "name": "NodeMaterial",
       "file": "src/materials/nodes/NodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2084,6 +2250,7 @@
       "name": "NodeMaterialLoader",
       "file": "src/loaders/nodes/NodeMaterialLoader.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2094,6 +2261,7 @@
       "name": "NodeMaterialObserver",
       "file": "src/materials/nodes/manager/NodeMaterialObserver.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2104,6 +2272,7 @@
       "name": "NodeObjectLoader",
       "file": "src/loaders/nodes/NodeObjectLoader.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2114,6 +2283,7 @@
       "name": "NumberKeyframeTrack",
       "file": "src/animation/tracks/NumberKeyframeTrack.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'times' cannot be mapped: `ArrayLike<number>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
       "category": "DomOrLibType",
       "constructorParameterCount": 0,
@@ -2124,6 +2294,7 @@
       "name": "Object3D",
       "file": "src/core/Object3D.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "hand-written by the runtime. It carries scene-graph behaviour — attachment, the transform, pre-attach state replay — rather than surface, so the generated classes derive from it instead of replacing it",
       "category": "HandWritten",
       "constructorParameterCount": 0,
@@ -2134,6 +2305,7 @@
       "name": "ObjectLoader",
       "file": "src/loaders/ObjectLoader.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2142,6 +2314,7 @@
       "name": "OctahedronGeometry",
       "file": "src/geometries/OctahedronGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2150,6 +2323,7 @@
       "name": "OrthographicCamera",
       "file": "src/cameras/OrthographicCamera.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 6,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2158,6 +2332,7 @@
       "name": "PMREMGenerator",
       "file": "src/extras/PMREMGenerator.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2166,6 +2341,7 @@
       "name": "PMREMGenerator",
       "file": "src/renderers/common/extras/PMREMGenerator.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "another class named `PMREMGenerator` is declared in `src/extras/PMREMGenerator.d.ts`, and a C# namespace holds one type of a given name",
       "category": "DuplicateClassName",
       "constructorParameterCount": 0,
@@ -2176,6 +2352,7 @@
       "name": "Path",
       "file": "src/extras/core/Path.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -2191,6 +2368,7 @@
       "name": "PerspectiveCamera",
       "file": "src/cameras/PerspectiveCamera.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 4,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2199,6 +2377,7 @@
       "name": "Plane",
       "file": "src/math/Plane.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -2209,6 +2388,7 @@
       "name": "PlaneGeometry",
       "file": "src/geometries/PlaneGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 4,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2217,6 +2397,7 @@
       "name": "PlaneHelper",
       "file": "src/helpers/PlaneHelper.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'plane' cannot be mapped: `Plane` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -2227,6 +2408,7 @@
       "name": "PointLight",
       "file": "src/lights/PointLight.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 4,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -2237,6 +2419,7 @@
       "name": "PointLightHelper",
       "file": "src/helpers/PointLightHelper.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2245,6 +2428,7 @@
       "name": "PointLightShadow",
       "file": "src/lights/PointLightShadow.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2255,6 +2439,7 @@
       "name": "Points",
       "file": "src/objects/Points.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -2265,6 +2450,7 @@
       "name": "PointsMaterial",
       "file": "src/materials/PointsMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -2280,6 +2466,7 @@
       "name": "PointsNodeMaterial",
       "file": "src/materials/nodes/PointsNodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2290,6 +2477,7 @@
       "name": "PolarGridHelper",
       "file": "src/helpers/PolarGridHelper.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 6,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -2300,6 +2488,7 @@
       "name": "PolyhedronGeometry",
       "file": "src/geometries/PolyhedronGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -2333,6 +2522,7 @@
       "name": "PositionalAudio",
       "file": "src/audio/PositionalAudio.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "its C# base `Audio` has a constructor requiring `listener`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
       "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 0,
@@ -2343,6 +2533,7 @@
       "name": "PostProcessing",
       "file": "src/renderers/common/PostProcessing.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2353,6 +2544,7 @@
       "name": "ProjectorLight",
       "file": "src/lights/webgpu/ProjectorLight.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2363,6 +2555,7 @@
       "name": "PropertyBinding",
       "file": "src/animation/PropertyBinding.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'rootNode' cannot be mapped: `Object3D | Skeleton` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
       "category": "UnmappedUnion",
       "constructorParameterCount": 0,
@@ -2373,6 +2566,7 @@
       "name": "PropertyMixer",
       "file": "src/animation/PropertyMixer.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'binding' cannot be mapped: `PropertyBinding` is not an emitted class: required parameter 'rootNode' cannot be mapped: `Object3D | Skeleton` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
       "category": "UnmappedUnion",
       "constructorParameterCount": 0,
@@ -2383,6 +2577,7 @@
       "name": "QuadMesh",
       "file": "src/renderers/common/QuadMesh.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2393,6 +2588,7 @@
       "name": "QuadraticBezierCurve",
       "file": "src/extras/curves/QuadraticBezierCurve.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -2420,6 +2616,7 @@
       "name": "QuadraticBezierCurve3",
       "file": "src/extras/curves/QuadraticBezierCurve3.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -2431,6 +2628,7 @@
       "name": "Quaternion",
       "file": "src/math/Quaternion.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -2441,6 +2639,7 @@
       "name": "QuaternionKeyframeTrack",
       "file": "src/animation/tracks/QuaternionKeyframeTrack.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'times' cannot be mapped: `ArrayLike<number>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
       "category": "DomOrLibType",
       "constructorParameterCount": 0,
@@ -2451,6 +2650,7 @@
       "name": "QuaternionLinearInterpolant",
       "file": "src/math/interpolants/QuaternionLinearInterpolant.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -2461,6 +2661,7 @@
       "name": "RawShaderMaterial",
       "file": "src/materials/RawShaderMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2469,6 +2670,7 @@
       "name": "Ray",
       "file": "src/math/Ray.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -2479,6 +2681,7 @@
       "name": "Raycaster",
       "file": "src/core/Raycaster.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 4,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -2490,6 +2693,7 @@
       "name": "ReadbackBuffer",
       "file": "src/renderers/common/ReadbackBuffer.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2500,6 +2704,7 @@
       "name": "RectAreaLight",
       "file": "src/lights/RectAreaLight.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 4,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -2510,6 +2715,7 @@
       "name": "RenderPipeline",
       "file": "src/renderers/common/RenderPipeline.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2520,6 +2726,7 @@
       "name": "RenderTarget",
       "file": "src/core/RenderTarget.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [
         {
@@ -2537,6 +2744,7 @@
       "name": "RenderTarget3D",
       "file": "src/core/RenderTarget3D.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [
         {
@@ -2555,6 +2763,7 @@
       "name": "Renderer",
       "file": "src/renderers/common/Renderer.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2565,6 +2774,7 @@
       "name": "RingGeometry",
       "file": "src/geometries/RingGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 6,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2573,6 +2783,7 @@
       "name": "SSSLightingModel",
       "file": "src/materials/nodes/MeshSSSNodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2583,6 +2794,7 @@
       "name": "Scene",
       "file": "src/scenes/Scene.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2591,6 +2803,7 @@
       "name": "ShaderMaterial",
       "file": "src/materials/ShaderMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -2606,6 +2819,7 @@
       "name": "ShadowMaterial",
       "file": "src/materials/ShadowMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -2621,6 +2835,7 @@
       "name": "ShadowNodeMaterial",
       "file": "src/materials/nodes/ShadowNodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2631,6 +2846,7 @@
       "name": "Shape",
       "file": "src/extras/core/Shape.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -2646,6 +2862,7 @@
       "name": "ShapeGeometry",
       "file": "src/geometries/ShapeGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -2656,6 +2873,7 @@
       "name": "ShapePath",
       "file": "src/extras/core/ShapePath.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2664,6 +2882,7 @@
       "name": "ShapeUtils",
       "file": "src/extras/ShapeUtils.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2672,6 +2891,7 @@
       "name": "Skeleton",
       "file": "src/objects/Skeleton.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -2693,6 +2913,7 @@
       "name": "SkeletonHelper",
       "file": "src/helpers/SkeletonHelper.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2701,6 +2922,7 @@
       "name": "SkinnedMesh",
       "file": "src/objects/SkinnedMesh.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -2712,6 +2934,7 @@
       "name": "Source",
       "file": "src/textures/Source.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to",
       "category": "UnerasableTypeParameter",
       "constructorParameterCount": 0,
@@ -2722,6 +2945,7 @@
       "name": "SourceJSON",
       "file": "src/textures/Source.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "the types re-export it but the shipped three.js bundle carries no such runtime value, so constructing it would throw `Unknown three.js type`",
       "category": "AbsentFromShippedBundle",
       "constructorParameterCount": 0,
@@ -2732,6 +2956,7 @@
       "name": "Sphere",
       "file": "src/math/Sphere.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -2742,6 +2967,7 @@
       "name": "SphereGeometry",
       "file": "src/geometries/SphereGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 7,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -2752,6 +2978,7 @@
       "name": "Spherical",
       "file": "src/math/Spherical.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -2762,6 +2989,7 @@
       "name": "SphericalHarmonics3",
       "file": "src/math/SphericalHarmonics3.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -2772,6 +3000,7 @@
       "name": "SplineCurve",
       "file": "src/extras/curves/SplineCurve.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -2787,6 +3016,7 @@
       "name": "SpotLight",
       "file": "src/lights/SpotLight.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 6,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -2798,6 +3028,7 @@
       "name": "SpotLightHelper",
       "file": "src/helpers/SpotLightHelper.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2806,6 +3037,7 @@
       "name": "SpotLightShadow",
       "file": "src/lights/SpotLightShadow.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2816,6 +3048,7 @@
       "name": "Sprite",
       "file": "src/objects/Sprite.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2824,6 +3057,7 @@
       "name": "SpriteMaterial",
       "file": "src/materials/SpriteMaterial.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -2839,6 +3073,7 @@
       "name": "SpriteNodeMaterial",
       "file": "src/materials/nodes/SpriteNodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2849,6 +3084,7 @@
       "name": "StandardNodeLibrary",
       "file": "src/renderers/webgpu/nodes/StandardNodeLibrary.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2859,6 +3095,7 @@
       "name": "StereoCamera",
       "file": "src/cameras/StereoCamera.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2867,6 +3104,7 @@
       "name": "Storage3DTexture",
       "file": "src/renderers/common/Storage3DTexture.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2877,6 +3115,7 @@
       "name": "Storage3DTexture",
       "file": "src/renderers/common/StorageArrayTexture.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2887,6 +3126,7 @@
       "name": "StorageBufferAttribute",
       "file": "src/renderers/common/StorageBufferAttribute.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2897,6 +3137,7 @@
       "name": "StorageInstancedBufferAttribute",
       "file": "src/renderers/common/StorageInstancedBufferAttribute.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2907,6 +3148,7 @@
       "name": "StorageTexture",
       "file": "src/renderers/common/StorageTexture.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2917,6 +3159,7 @@
       "name": "StringKeyframeTrack",
       "file": "src/animation/tracks/StringKeyframeTrack.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'times' cannot be mapped: `ArrayLike<number>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
       "category": "DomOrLibType",
       "constructorParameterCount": 0,
@@ -2927,6 +3170,7 @@
       "name": "TetrahedronGeometry",
       "file": "src/geometries/TetrahedronGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2935,6 +3179,7 @@
       "name": "Texture",
       "file": "src/textures/Texture.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "2 constructor overloads; C# overload emission is not implemented",
       "category": "ConstructorOverloads",
       "constructorParameterCount": 0,
@@ -2945,6 +3190,7 @@
       "name": "TextureLoader",
       "file": "src/loaders/TextureLoader.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2953,6 +3199,7 @@
       "name": "Timer",
       "file": "src/core/Timer.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2961,6 +3208,7 @@
       "name": "TimestampQueryPool",
       "file": "src/renderers/common/TimestampQueryPool.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -2971,6 +3219,7 @@
       "name": "TorusGeometry",
       "file": "src/geometries/TorusGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 7,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -2981,6 +3230,7 @@
       "name": "TorusKnotGeometry",
       "file": "src/geometries/TorusKnotGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 6,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2989,6 +3239,7 @@
       "name": "Triangle",
       "file": "src/math/Triangle.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -2999,6 +3250,7 @@
       "name": "TubeGeometry",
       "file": "src/geometries/TubeGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -3038,6 +3290,7 @@
       "name": "Uint16BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
       "category": "UnmappedUnion",
       "constructorParameterCount": 0,
@@ -3048,6 +3301,7 @@
       "name": "Uint32BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
       "category": "UnmappedUnion",
       "constructorParameterCount": 0,
@@ -3058,6 +3312,7 @@
       "name": "Uint8BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
       "category": "UnmappedUnion",
       "constructorParameterCount": 0,
@@ -3068,6 +3323,7 @@
       "name": "Uint8ClampedBufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
       "category": "UnmappedUnion",
       "constructorParameterCount": 0,
@@ -3078,6 +3334,7 @@
       "name": "Uniform",
       "file": "src/core/Uniform.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express",
       "category": "UntypedValue",
       "constructorParameterCount": 0,
@@ -3088,6 +3345,7 @@
       "name": "UniformsGroup",
       "file": "src/core/UniformsGroup.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -3096,6 +3354,7 @@
       "name": "Vector2",
       "file": "src/math/Vector2.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -3106,6 +3365,7 @@
       "name": "Vector3",
       "file": "src/math/Vector3.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -3116,6 +3376,7 @@
       "name": "Vector4",
       "file": "src/math/Vector4.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
@@ -3126,6 +3387,7 @@
       "name": "VectorKeyframeTrack",
       "file": "src/animation/tracks/VectorKeyframeTrack.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'times' cannot be mapped: `ArrayLike<number>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
       "category": "DomOrLibType",
       "constructorParameterCount": 0,
@@ -3136,6 +3398,7 @@
       "name": "VideoFrameTexture",
       "file": "src/textures/VideoFrameTexture.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 8,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -3152,6 +3415,7 @@
       "name": "VideoTexture",
       "file": "src/textures/VideoTexture.d.ts",
       "status": "blocked",
+      "isReachable": true,
       "reason": "required parameter 'video' cannot be mapped: `HTMLVideoElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
       "category": "DomOrLibType",
       "constructorParameterCount": 0,
@@ -3162,6 +3426,7 @@
       "name": "VolumeNodeMaterial",
       "file": "src/materials/nodes/VolumeNodeMaterial.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -3172,6 +3437,7 @@
       "name": "WGSLNodeBuilder",
       "file": "src/renderers/webgpu/nodes/WGSLNodeBuilder.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -3182,6 +3448,7 @@
       "name": "WebGL3DRenderTarget",
       "file": "src/renderers/WebGL3DRenderTarget.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [
         {
@@ -3197,6 +3464,7 @@
       "name": "WebGLArrayRenderTarget",
       "file": "src/renderers/WebGLArrayRenderTarget.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [
         {
@@ -3212,6 +3480,7 @@
       "name": "WebGLAttributes",
       "file": "src/renderers/webgl/WebGLAttributes.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3222,6 +3491,7 @@
       "name": "WebGLBackend",
       "file": "src/renderers/webgl-fallback/WebGLBackend.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -3232,6 +3502,7 @@
       "name": "WebGLBindingStates",
       "file": "src/renderers/webgl/WebGLBindingStates.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3242,6 +3513,7 @@
       "name": "WebGLBufferRenderer",
       "file": "src/renderers/webgl/WebGLBufferRenderer.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3252,6 +3524,7 @@
       "name": "WebGLCapabilities",
       "file": "src/renderers/webgl-fallback/utils/WebGLCapabilities.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -3262,6 +3535,7 @@
       "name": "WebGLCapabilities",
       "file": "src/renderers/webgl/WebGLCapabilities.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3272,6 +3546,7 @@
       "name": "WebGLClipping",
       "file": "src/renderers/webgl/WebGLClipping.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3282,6 +3557,7 @@
       "name": "WebGLColorBuffer",
       "file": "src/renderers/webgl/WebGLState.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3292,6 +3568,7 @@
       "name": "WebGLCubeRenderTarget",
       "file": "src/renderers/WebGLCubeRenderTarget.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [
         {
@@ -3307,6 +3584,7 @@
       "name": "WebGLDepthBuffer",
       "file": "src/renderers/webgl/WebGLState.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3317,6 +3595,7 @@
       "name": "WebGLEnvironments",
       "file": "src/renderers/webgl/WebGLEnvironments.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3327,6 +3606,7 @@
       "name": "WebGLExtensions",
       "file": "src/renderers/webgl/WebGLExtensions.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3337,6 +3617,7 @@
       "name": "WebGLGeometries",
       "file": "src/renderers/webgl/WebGLGeometries.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3347,6 +3628,7 @@
       "name": "WebGLIndexedBufferRenderer",
       "file": "src/renderers/webgl/WebGLIndexedBufferRenderer.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3357,6 +3639,7 @@
       "name": "WebGLInfo",
       "file": "src/renderers/webgl/WebGLInfo.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3367,6 +3650,7 @@
       "name": "WebGLLights",
       "file": "src/renderers/webgl/WebGLLights.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3377,6 +3661,7 @@
       "name": "WebGLObjects",
       "file": "src/renderers/webgl/WebGLObjects.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3387,6 +3672,7 @@
       "name": "WebGLProgram",
       "file": "src/renderers/webgl/WebGLProgram.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3397,6 +3683,7 @@
       "name": "WebGLPrograms",
       "file": "src/renderers/webgl/WebGLPrograms.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3407,6 +3694,7 @@
       "name": "WebGLProperties",
       "file": "src/renderers/webgl/WebGLProperties.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3417,6 +3705,7 @@
       "name": "WebGLRenderList",
       "file": "src/renderers/webgl/WebGLRenderLists.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3427,6 +3716,7 @@
       "name": "WebGLRenderLists",
       "file": "src/renderers/webgl/WebGLRenderLists.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3437,6 +3727,7 @@
       "name": "WebGLRenderTarget",
       "file": "src/renderers/WebGLRenderTarget.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [
         {
@@ -3454,6 +3745,7 @@
       "name": "WebGLRenderer",
       "file": "src/renderers/WebGLRenderer.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [
         {
@@ -3469,6 +3761,7 @@
       "name": "WebGLShadowMap",
       "file": "src/renderers/webgl/WebGLShadowMap.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3479,6 +3772,7 @@
       "name": "WebGLState",
       "file": "src/renderers/webgl/WebGLState.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3489,6 +3783,7 @@
       "name": "WebGLStencilBuffer",
       "file": "src/renderers/webgl/WebGLState.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3499,6 +3794,7 @@
       "name": "WebGLTextures",
       "file": "src/renderers/webgl/WebGLTextures.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3509,6 +3805,7 @@
       "name": "WebGLUniforms",
       "file": "src/renderers/webgl/WebGLUniforms.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3519,6 +3816,7 @@
       "name": "WebGLUtils",
       "file": "src/renderers/webgl/WebGLUtils.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3529,6 +3827,7 @@
       "name": "WebGPUBackend",
       "file": "src/renderers/webgpu/WebGPUBackend.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -3539,6 +3838,7 @@
       "name": "WebGPURenderer",
       "file": "src/renderers/webgpu/WebGPURenderer.Nodes.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -3549,6 +3849,7 @@
       "name": "WebGPURenderer",
       "file": "src/renderers/webgpu/WebGPURenderer.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -3559,6 +3860,7 @@
       "name": "WebXRController",
       "file": "src/renderers/webxr/WebXRController.d.ts",
       "status": "outOfSurface",
+      "isReachable": true,
       "reason": "renderer internals under `src/renderers/webxr/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3569,6 +3871,7 @@
       "name": "WebXRDepthSensing",
       "file": "src/renderers/webxr/WebXRDepthSensing.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webxr/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3579,6 +3882,7 @@
       "name": "WebXRManager",
       "file": "src/renderers/webxr/WebXRManager.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webxr/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3589,6 +3893,7 @@
       "name": "WireframeGeometry",
       "file": "src/geometries/WireframeGeometry.d.ts",
       "status": "emittable",
+      "isReachable": true,
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -3597,6 +3902,7 @@
       "name": "XRGripSpace",
       "file": "src/renderers/webxr/WebXRController.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webxr/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3607,6 +3913,7 @@
       "name": "XRHandSpace",
       "file": "src/renderers/webxr/WebXRController.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webxr/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3617,6 +3924,7 @@
       "name": "XRJointSpace",
       "file": "src/renderers/webxr/WebXRController.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webxr/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,
@@ -3627,6 +3935,7 @@
       "name": "XRManager",
       "file": "src/renderers/common/XRManager.d.ts",
       "status": "blocked",
+      "isReachable": false,
       "reason": "three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported",
       "constructorParameterCount": 0,
@@ -3637,6 +3946,7 @@
       "name": "XRTargetRaySpace",
       "file": "src/renderers/webxr/WebXRController.d.ts",
       "status": "outOfSurface",
+      "isReachable": false,
       "reason": "renderer internals under `src/renderers/webxr/**`; no consumer instantiates them and emitting them would inflate the coverage table",
       "category": "UnwrappedClass",
       "constructorParameterCount": 0,

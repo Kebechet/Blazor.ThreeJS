@@ -10,9 +10,11 @@
 // directly instead of applyBatch: applyBatch swallows an unknown context id and returns an empty
 // response, which would make every assertion below pass without a single op being applied.
 //
-// It then drives the read op end to end — the only op that hands a value back — and closes with the
-// other contract this bundle settles: that every generated class is a name the bundle actually
-// exports, which is what the README's coverage headline claims about them.
+// It then drives the two ops that hand a value back end to end — the method read and the property
+// read — proves that a class with no generated wrapper is still constructible, mutable and readable
+// by name, and closes with the two contracts this bundle settles: that every generated class is a
+// name the bundle actually exports, and that every class the coverage table calls reachable is one
+// too, neither more nor fewer.
 
 import assert from 'node:assert/strict';
 import { createReadStream, readFileSync } from 'node:fs';
@@ -52,6 +54,7 @@ const OP_ADD = 3;
 const OP_DISPOSE = 5;
 const OP_READ = 6;
 const OP_PICK = 7;
+const OP_GET = 8;
 
 const ops = JSON.parse(readFileSync(new URL('./wire-format-fixture.json', import.meta.url), 'utf8'));
 const context = { objects: new Map() };
@@ -62,12 +65,14 @@ const context = { objects: new Map() };
 // it — applying everything in one loop would make that constructor-time assertion false by the
 // time it runs.
 //
-// The fixture's read op is held out of both passes: applyOp returns its value rather than mutating
-// anything, so only runOps turns it into the result row the C# side actually consumes.
+// The fixture's two value-producing ops are held out of both passes: applyOp returns their value
+// rather than mutating anything, so only runOps turns them into the result rows the C# side actually
+// consumes.
 const reassignmentStartIndex = ops.findIndex(op => op.h === 5);
 const opsBeforeReassignment = ops.slice(0, reassignmentStartIndex);
-const opsFromReassignment = ops.slice(reassignmentStartIndex).filter(op => op.k !== OP_READ);
+const opsFromReassignment = ops.slice(reassignmentStartIndex).filter(op => op.k !== OP_READ && op.k !== OP_GET);
 const fixtureReadOps = ops.filter(op => op.k === OP_READ);
+const fixtureGetOps = ops.filter(op => op.k === OP_GET);
 
 for (const op of opsBeforeReassignment) {
     applyOp(context, op);
@@ -183,6 +188,16 @@ assert.ok(
 assert.ok(Math.abs(fixtureReadResponse.r[0].v - 18.76443555445864) < 1e-9,
     'the focal length of a default 50° camera at aspect 2 should be 18.76…');
 
+// The fixture's own get op, the second of the two shapes C# serializes that answer with a value. It
+// names the same handle 6 and reads `fov` as a *property*, which no read op can do — that one insists
+// the member is a function — so the 50 it comes back with is three.js's own default, read off the
+// object rather than computed by it. Run here, before the ordering batch below writes a new fov.
+const fixtureGetResponse = runOps(context, fixtureGetOps);
+assert.deepEqual(fixtureGetResponse.e, [], 'the fixture get should not have been rejected');
+assert.equal(fixtureGetResponse.r.length, 1, 'one get op should produce exactly one result row');
+assert.equal(fixtureGetResponse.r[0].i, 2, 'the result row should echo its own request id back');
+assert.equal(fixtureGetResponse.r[0].v, 50, "a get should answer with the property's own value, three.js's default fov here");
+
 // Ordering: a Set and a Read in one batch, on the same handle. The read must observe the write,
 // because the applier runs the batch in order — this is what makes a read unable to see stale
 // state without any flush discipline on the C# side.
@@ -255,6 +270,70 @@ assert.match(
     unencodableReadResponse.r[0].e,
     /no wire encoding/,
     'a read returning a three.js object must be refused, not serialized as a plain object');
+
+// ---------------------------------------------------------------------------------------------
+// The escape hatch. Everything above is the typed surface proving itself; this is the other half of
+// the coverage claim - that a class the generator does NOT wrap is still reachable, by name, with no
+// C# type behind it.
+//
+// The subject is asserted to be a class with no generated wrapper, read out of the same
+// api-coverage.json the README's table is rendered from. If it ever becomes generated, this stops
+// proving anything and says so rather than passing quietly.
+// ---------------------------------------------------------------------------------------------
+
+const coverage = JSON.parse(readFileSync(new URL('../generator/api-coverage.json', import.meta.url), 'utf8'));
+
+const UNWRAPPED_CLASS = 'Vector2';
+const unwrappedEntry = coverage.classes.find(entry => entry.name === UNWRAPPED_CLASS);
+assert.ok(unwrappedEntry, `${UNWRAPPED_CLASS} should be one of the classes in the coverage report`);
+assert.notEqual(
+    unwrappedEntry.status,
+    'emittable',
+    'the escape-hatch subject must be a class with no generated wrapper, or this section proves nothing');
+assert.equal(unwrappedEntry.isReachable, true, 'the escape-hatch subject must be one the coverage report calls reachable');
+
+// Construct, mutate and read back a class with no generated wrapper, in one batch, through the same
+// four ops the untyped C# surface records: Create names it, Get reads a property, Read invokes a
+// method, Set writes a property and Call invokes a command.
+const escapeHatchResponse = runOps(context, [
+    { k: OP_CREATE, h: 70, t: UNWRAPPED_CLASS, a: [3, 4] },
+    { k: OP_GET, h: 70, m: 'x', i: 51 },
+    { k: OP_READ, h: 70, m: 'length', a: [], i: 52 },
+    { k: OP_SET, h: 70, m: 'x', v: 6 },
+    { k: OP_CALL, h: 70, m: 'multiplyScalar', a: [2] },
+    { k: OP_GET, h: 70, m: 'y', i: 53 }
+]);
+
+const escapeHatchRow = requestId => escapeHatchResponse.r.find(row => row.i === requestId);
+assert.deepEqual(escapeHatchResponse.e, [], 'no op of the escape-hatch batch should have been rejected');
+assert.ok(context.objects.get(70).isVector2, `a Create naming '${UNWRAPPED_CLASS}' should build the real three.js class`);
+assert.equal(escapeHatchRow(51).v, 3, 'a get should read the property the constructor argument landed in');
+assert.ok(Math.abs(escapeHatchRow(52).v - 5) < 1e-9, 'a read should invoke the method, and (3, 4) is 5 units long');
+assert.equal(escapeHatchRow(53).v, 8, 'the get behind the Set and the Call should observe both: 4 doubled is 8');
+assert.equal(context.objects.get(70).x, 12, 'the Set and the Call should both have reached the object: 6 doubled is 12');
+
+// A get reads the member; it does not invoke it. `length` is a method on Vector2, so asking for it
+// as a property yields the function itself, which has no wire encoding - where the read op above
+// invoked the same name and got 5 back. Without this the two op kinds could quietly become one.
+const getRefusalResponse = runOps(context, [
+    { k: OP_GET, h: 70, m: 'length', i: 54 },
+    { k: OP_GET, h: 70, m: 'notAProperty', i: 55 },
+    { k: OP_GET, h: 3, m: 'geometry', i: 56 }
+]);
+
+assert.deepEqual(getRefusalResponse.e, [], 'a failed get must not be reported on the batch error channel');
+assert.match(
+    getRefusalResponse.r.find(row => row.i === 54).e,
+    /no wire encoding/,
+    'a get naming a method must refuse the function rather than invoking it');
+assert.match(
+    getRefusalResponse.r.find(row => row.i === 55).e,
+    /not a property/,
+    'a get naming a property the object has not got must fail rather than answering with undefined');
+assert.match(
+    getRefusalResponse.r.find(row => row.i === 56).e,
+    /no wire encoding/,
+    'a get of a property holding a three.js object must be refused, not serialized as a plain object');
 
 // ---------------------------------------------------------------------------------------------
 // Pointer picking, end to end against the vendored three.js. The read op above proves a value C#
@@ -613,7 +692,6 @@ assert.equal(controlsContext.controls, null, 'detaching controls must leave noth
 // `three-interop.js` resolves a Create op as `THREE[op.t]`, so a name the bundle does not export
 // throws `Unknown three.js type` at runtime with a green build and a passing emit:check behind it.
 // The 46 classes that shipped in exactly that state were the reason this assertion exists.
-const coverage = JSON.parse(readFileSync(new URL('../generator/api-coverage.json', import.meta.url), 'utf8'));
 const generatedClassNames = coverage.classes.filter(entry => entry.status === 'emittable').map(entry => entry.name);
 assert.ok(generatedClassNames.length > 0, 'api-coverage.json should list emittable classes');
 const unconstructible = generatedClassNames.filter(name => typeof THREE[name] !== 'function');
@@ -622,9 +700,43 @@ assert.deepEqual(
     [],
     'every generated class must be a constructor on the vendored three.js namespace');
 
+// The floor under the *second* claim the README makes about that table: that the classes it does not
+// generate are still reachable, by name, through Primitive. It is asserted from both sides, because
+// each side fails differently and both would be a lie.
+//
+// Overstating is the dangerous one: a class the table calls reachable but the bundle does not export
+// sends a consumer down a path that throws `Unknown three.js type`. Understating is the quiet one: a
+// class the bundle does export while the table leaves it out of the count makes the reachable figure
+// too small, and a coverage number that drifts either way is exactly what this file exists to stop.
+const reachableClassNames = coverage.classes.filter(entry => entry.isReachable).map(entry => entry.name);
+assert.equal(
+    coverage.totals.reachableClasses,
+    reachableClassNames.length,
+    'the reachable total must be the number of classes the report marks reachable');
+
+const overstatedReachable = reachableClassNames.filter(name => typeof THREE[name] !== 'function');
+assert.deepEqual(
+    overstatedReachable,
+    [],
+    'every class the coverage report calls reachable must be a constructor on the vendored three.js namespace');
+
+const understatedReachable = coverage.classes
+    .filter(entry => !entry.isReachable && typeof THREE[entry.name] === 'function')
+    .map(entry => entry.name);
+
+assert.deepEqual(
+    understatedReachable,
+    [],
+    'a class the bundle exports as a constructor must be counted as reachable, or the figure understates itself');
+
+assert.ok(
+    reachableClassNames.length > generatedClassNames.length,
+    'the reachable set must be strictly larger than the generated one, or the escape hatch reaches nothing new');
+
 console.log(`Wire contract OK - ${ops.length} ops applied against the vendored three.js.`);
 console.log('Read op OK - values, tagged math values, correlation, ordering and refusals round-tripped.');
 console.log('Picking OK - one callback per hit, none for a miss, and no pointer-movement listener at all.');
 console.log(`GLTFLoader OK - the demo's own model fetched, parsed and mirrored as ${loadedNodes.length} nodes on browser-minted handles, then released.`);
 console.log('OrbitControls OK - attached to the real canvas, 120 frames of camera movement, zero interop, every listener removed on detach.');
 console.log(`Generated surface OK - ${generatedClassNames.length} generated classes are constructors on the vendored three.js.`);
+console.log(`Escape hatch OK - '${UNWRAPPED_CLASS}' has no generated wrapper and was still constructed, mutated and read back; ${reachableClassNames.length} classes are reachable, from both sides.`);

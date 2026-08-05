@@ -47,6 +47,13 @@ internal sealed class CoverageTotalsJson
 	/// <summary>Classes in the surface that are blocked on something.</summary>
 	public required int BlockedClasses { get; init; }
 
+	/// <summary>
+	/// Classes the shipped bundle exports, and which are therefore constructible by name through the
+	/// untyped escape hatch whether or not they are generated. A superset of
+	/// <see cref="EmittableClasses"/>.
+	/// </summary>
+	public required int ReachableClasses { get; init; }
+
 	/// <summary>Declared members across every class, including augmented ones.</summary>
 	public required int Members { get; init; }
 
@@ -74,6 +81,14 @@ internal sealed class CoverageClassJson
 
 	/// <summary><c>emittable</c>, <c>outOfSurface</c> or <c>blocked</c>.</summary>
 	public required string Status { get; init; }
+
+	/// <summary>
+	/// Whether the shipped three.js bundle puts this name on <c>THREE</c>, which is exactly what the
+	/// applier resolves a create op against — so it is also whether an untyped <c>Primitive</c> can
+	/// construct it. Independent of <see cref="Status"/>: a class can be unreachable by the generator
+	/// and still reachable by name, and a class the bundle does not export is reachable by nothing.
+	/// </summary>
+	public required bool IsReachable { get; init; }
 
 	/// <summary>Why, when the status is not <c>emittable</c>.</summary>
 	public string? Reason { get; init; }

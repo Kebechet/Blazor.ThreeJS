@@ -30,7 +30,7 @@ internal sealed class ThreeOp
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Type { get; init; }
 
-	/// <summary>Name of the property or method this op writes or invokes. Set for <see cref="ThreeOpKind.Set"/> and <see cref="ThreeOpKind.Call"/>, and omitted from the payload otherwise.</summary>
+	/// <summary>Name of the property or method this op writes, invokes or reads. Set for <see cref="ThreeOpKind.Set"/>, <see cref="ThreeOpKind.Call"/>, <see cref="ThreeOpKind.Read"/> and <see cref="ThreeOpKind.Get"/>, and omitted from the payload otherwise.</summary>
 	[JsonPropertyName("m")]
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 	public string? Member { get; init; }
@@ -58,9 +58,9 @@ internal sealed class ThreeOp
 	public int ChildHandle { get; init; }
 
 	/// <summary>
-	/// Identifies which pending read a returned value answers. Only set for
-	/// <see cref="ThreeOpKind.Read"/>, and omitted when zero — request ids are allocated from 1
-	/// upwards, so 0 is never a real one.
+	/// Identifies which pending read a returned value answers. Only set for the two kinds that produce
+	/// one, <see cref="ThreeOpKind.Read"/> and <see cref="ThreeOpKind.Get"/>, and omitted when zero —
+	/// request ids are allocated from 1 upwards, so 0 is never a real one.
 	/// <para>
 	/// The applier echoes it back on the result row rather than relying on position, so a batch
 	/// carrying several reads still matches each value to the request that asked for it, and a
@@ -112,5 +112,18 @@ internal enum ThreeOpKind : byte
 	/// hit-test candidates — so unlike <see cref="Call"/> it is not a coalescing barrier.
 	/// </para>
 	/// </summary>
-	Pick = 7
+	Pick = 7,
+
+	/// <summary>
+	/// Read a property off an existing object and send its value back. The second op that produces a
+	/// value, and the mirror image of <see cref="Set"/> — where <see cref="Read"/> invokes a method,
+	/// this one reads a member, which is what puts three.js's read-only properties within reach.
+	/// <para>
+	/// A kind of its own rather than a relaxation of <see cref="Read"/>: the applier rejects a
+	/// <see cref="Read"/> whose member is not a function, and letting it fall back to a property read
+	/// would turn a mistyped method name into a silent <see langword="default"/> instead of an error.
+	/// Never coalesces, and acts as the same barrier a <see cref="Read"/> does.
+	/// </para>
+	/// </summary>
+	Get = 8
 }

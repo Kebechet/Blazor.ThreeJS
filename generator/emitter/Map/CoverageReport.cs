@@ -111,6 +111,7 @@ internal sealed class CoverageReport
 		AppendReadmeExclusions(builder);
 		AppendReadmeReadChannel(builder);
 		AppendReadmeNarrowings(builder);
+		AppendReadmeEscapeHatch(builder);
 		AppendReadmeMeasurement(builder);
 		return builder.ToString();
 	}
@@ -125,6 +126,7 @@ internal sealed class CoverageReport
 				Name = x.Class.Name,
 				File = x.Class.File,
 				Status = DescribeStatus(x.Status),
+				IsReachable = x.Class.IsRuntimeExport,
 				Reason = x.Reason,
 				Category = x.Category == SkipCategory.None ? null : x.Category.ToString(),
 				ConstructorParameterCount = x.Constructor?.Parameters.Count ?? 0,
@@ -151,6 +153,7 @@ internal sealed class CoverageReport
 				EmittableClasses = _scope.Results.Count(x => x.Status == ClassScopeStatus.Emittable),
 				OutOfSurfaceClasses = _scope.Results.Count(x => x.Status == ClassScopeStatus.OutOfSurface),
 				BlockedClasses = _scope.Results.Count(x => x.Status == ClassScopeStatus.Blocked),
+				ReachableClasses = ReachableClassCount(),
 				Members = _members.Count,
 				MirroredState = CountBucket(MemberBucket.MirroredState),
 				Commands = CountBucket(MemberBucket.Command),
@@ -212,6 +215,9 @@ internal sealed class CoverageReport
 		AppendLine(builder, $"**{_enums.Generatable.Count}** of its constant groups, carrying {publicMemberCount} public members and {enumMemberCount} enum members. Property names,");
 		AppendLine(builder, "constructor argument order and documentation are three.js's own rather than a paraphrase - and so is");
 		AppendLine(builder, "everything below, which is what that same generator run measured about itself.");
+		AppendLine(builder);
+		AppendLine(builder, $"A further {ReachableClassCount() - emittableCount} classes have no generated type and are still **reachable** untyped, by name -");
+		AppendLine(builder, "[how](#reaching-what-is-not-generated). What is out of reach is what three.js does not export at all.");
 		AppendLine(builder);
 	}
 
@@ -338,8 +344,9 @@ internal sealed class CoverageReport
 			AppendLine(builder, "  callable**: it answers with `Intersection[]`, and the wire has no array encoding in either direction.");
 		}
 
-		AppendLine(builder, $"- **{readOnlyCount} read-only properties**. The read op invokes a method, so a property has nothing to route");
-		AppendLine(builder, "  through it; exposing one as an async method would change the shape of the API rather than its coverage.");
+		AppendLine(builder, $"- **{readOnlyCount} read-only properties** are not generated as members. The read op invokes a method, so a");
+		AppendLine(builder, "  property has nothing to route through it, and exposing one as an async method would change the shape of");
+		AppendLine(builder, "  the API rather than its coverage. They are still readable: `GetAsync` below reads any property by name.");
 		AppendLine(builder);
 		AppendLine(builder, "A read is caller-initiated and costs one interop call. An idle scene still costs **zero** - nothing polls,");
 		AppendLine(builder, "and no callback runs per frame.");
@@ -377,6 +384,68 @@ internal sealed class CoverageReport
 		AppendLine(builder);
 	}
 
+	/// <summary>
+	/// The other half of the coverage claim, and the reason every limit stated above is a limit of the
+	/// <b>typed</b> surface rather than of the package. A partial typed surface with an escape hatch
+	/// reads "this many typed, this many reachable"; the same surface without one reads "this many, and
+	/// you are stuck" - and only one of those is what a consumer actually gets.
+	/// <para>
+	/// The word "reachable" is load-bearing and is not stretched: it means the shipped bundle exports
+	/// the name, so the applier can construct it. A class three.js keeps to itself is reachable by
+	/// nothing at all, and is counted on its own line rather than folded in.
+	/// </para>
+	/// </summary>
+	/// <param name="builder">Destination.</param>
+	private void AppendReadmeEscapeHatch(StringBuilder builder)
+	{
+		var emittableCount = _scope.Results.Count(x => x.Status == ClassScopeStatus.Emittable);
+		var reachableCount = ReachableClassCount();
+		var untypedCount = reachableCount - emittableCount;
+		var unreachableCount = _scope.Results.Count - reachableCount;
+
+		AppendLine(builder, "### Reaching what is not generated");
+		AppendLine(builder);
+		AppendLine(builder, "Everything above is a limit of the **typed** surface. None of it is a limit of the package, because a");
+		AppendLine(builder, "class the generator refuses is still a class three.js has:");
+		AppendLine(builder);
+		AppendLine(builder, "- **`Primitive` / `PrimitiveObject3D`** construct any class the shipped bundle exports, by its three.js");
+		AppendLine(builder, "  name - the same `new THREE[name](…)` the applier runs for a generated one.");
+		AppendLine(builder, "- **`Set` / `Call` / `CallAsync` / `GetAsync`** reach any member of any object you hold, generated or");
+		AppendLine(builder, "  not, by its three.js name. `GetAsync` reads a **property**, which is what puts the read-only ones above");
+		AppendLine(builder, "  within reach.");
+		AppendLine(builder);
+		AppendLine(builder, "| | classes |");
+		AppendLine(builder, "|---|---|");
+		AppendLine(builder, $"| **generated, and typed** | **{emittableCount}** |");
+		AppendLine(builder, $"| reachable by name, untyped | {untypedCount} |");
+		AppendLine(builder, $"| **reachable at all** | **{reachableCount}** |");
+		AppendLine(builder, $"| not exported by three.js, so reachable by nothing | {unreachableCount} |");
+		AppendLine(builder, $"| **three.js core total** | **{_scope.Results.Count}** |");
+		AppendLine(builder);
+		AppendLine(builder, $"⚠️ The last row is not a gap this package can close. Those {unreachableCount} classes are ones three.js's own barrel does");
+		AppendLine(builder, "not publish as values, so `THREE[name]` is `undefined` in the browser and there is nothing to construct -");
+		AppendLine(builder, "by this package or by any other consumer of the same bundle. They are counted separately rather than");
+		AppendLine(builder, "folded into the claim.");
+		AppendLine(builder);
+		AppendLine(builder, "⚠️ **The escape hatch is sharper than the typed surface, on purpose.** It bypasses the generated types,");
+		AppendLine(builder, "so it bypasses what they know:");
+		AppendLine(builder);
+		AppendLine(builder, "- **Nothing checks the names.** A misspelled type, member or argument list is three.js's to reject, and it");
+		AppendLine(builder, "  does so when the batch runs - through `OnError` for a write, and by faulting the task for a read.");
+		AppendLine(builder, "- **The mirror does not learn from a raw `Set`.** `mesh.Set(\"visible\", false)` leaves `mesh.IsVisible`");
+		AppendLine(builder, "  reporting `true`, and the next typed write of `true` then records nothing. Where a typed property exists,");
+		AppendLine(builder, "  use it.");
+		AppendLine(builder, "- **A raw `Set` made before the object is attached replays after every typed property**, whichever order the");
+		AppendLine(builder, "  two were written in. A typed property is replayed from its field, which does not know when it was set.");
+		AppendLine(builder);
+		AppendLine(builder, "What it does **not** bypass: an object-valued write still attaches the object it references before the");
+		AppendLine(builder, "op that names it, a call recorded before an attach is still replayed rather than dropped, writes still");
+		AppendLine(builder, "coalesce per member and a call is still a barrier to that coalescing, and a value with no wire encoding is");
+		AppendLine(builder, "still refused rather than shipped as a plain object. Those are properties of the batch, and the escape");
+		AppendLine(builder, "hatch goes through it rather than around it.");
+		AppendLine(builder);
+	}
+
 	private void AppendReadmeMeasurement(StringBuilder builder)
 	{
 		var functionCount = _ir.Meta?.Counts?.Functions ?? 0;
@@ -391,6 +460,11 @@ internal sealed class CoverageReport
 		AppendLine(builder, "  three.js declares in its types but does not put on `THREE` is **blocked**, not counted.");
 		AppendLine(builder, "- **Generated**: the files in `src/Blazor.ThreeJS/Generated/`, one per class or enum. `npm run emit:check`");
 		AppendLine(builder, "  fails if any of them differs from what the generator produces today, or if one is left behind.");
+		AppendLine(builder, $"- **Reachable is a name the bundle exports**: the extractor imports `{_ir.Meta?.PublicSurface?.RuntimeBundle}`");
+		AppendLine(builder, "  and records, per class, whether three.js puts that name on `THREE` - the runtime itself rather than a");
+		AppendLine(builder, "  second reading of the types. `tests/wire-format.test.mjs` asserts the figure from **both** sides: every");
+		AppendLine(builder, "  class called reachable is a constructor on that bundle, and no class it leaves out is one, so the number");
+		AppendLine(builder, "  can neither overstate nor understate itself.");
 		AppendLine(builder, "- **Public members**: `grep -c \"^\\tpublic \" src/Blazor.ThreeJS/Generated/*.cs`, summed over the class files.");
 		AppendLine(builder, "- **Everything else**: `generator/api-coverage.json`, written by the run that wrote this section. The");
 		AppendLine(builder, "  per-class and per-member detail behind every figure, including each blocked class and each skipped");
@@ -611,6 +685,11 @@ internal sealed class CoverageReport
 		AppendLine(builder, $"| blocked | {byStatus.GetValueOrDefault(ClassScopeStatus.Blocked)} |");
 		AppendLine(builder, $"| **total** | **{_scope.Results.Count}** |");
 		AppendLine(builder);
+		AppendLine(builder, $"Emittability and **reachability** are different questions. {ReachableClassCount()} of these classes are names the shipped");
+		AppendLine(builder, "bundle puts on `THREE`, so the untyped `Primitive` can construct any of them whether or not the generator");
+		AppendLine(builder, $"produced a type for it. The other {_scope.Results.Count - ReachableClassCount()} are exported by nothing and reachable by nothing, which is why");
+		AppendLine(builder, "they are never folded into a coverage claim.");
+		AppendLine(builder);
 
 		AppendLine(builder, "### Out of the mirrored surface, by rule");
 		AppendLine(builder);
@@ -690,9 +769,11 @@ internal sealed class CoverageReport
 		AppendBucketRow(builder, MemberBucket.Skipped, "not mirrored; see the skip list below");
 		AppendLine(builder, $"| **total** | | **{_members.Count}** | **{EmittableMembers().Count()}** |");
 		AppendLine(builder);
-		AppendLine(builder, "⚠️ **No async query is emittable yet.** The wire format has six op kinds — create, set, call, add,");
-		AppendLine(builder, "remove, dispose — and none of them reads a value back. Every member in that bucket is classified and");
-		AppendLine(builder, "waiting on a read op, not on a mapping.");
+		var emittableAsyncQueryCount = EmittableMembers().Count(x => x.Bucket == MemberBucket.AsyncQuery);
+		AppendLine(builder, "Two op kinds answer with a value: **read**, which invokes a method, and **get**, which reads a property.");
+		AppendLine(builder, $"{emittableAsyncQueryCount} of the async queries above sit on an emitted class and are generated as `…Async` methods over the");
+		AppendLine(builder, "read op. A property has no method to route through that op, so none is generated for one — the untyped");
+		AppendLine(builder, "`GetAsync` reads any property by name instead.");
 		AppendLine(builder);
 
 		var overloadedMethods = _members
@@ -942,6 +1023,18 @@ internal sealed class CoverageReport
 		AppendLine(builder);
 		AppendLine(builder, "</details>");
 		AppendLine(builder);
+	}
+
+	/// <summary>
+	/// How many classes the shipped bundle puts on <c>THREE</c>, which is what the applier resolves a
+	/// create op against and therefore what the untyped escape hatch can construct. Read off the IR's
+	/// own runtime-export flag, which the extractor produced by importing the bundle itself rather than
+	/// by reading the types a second time.
+	/// </summary>
+	/// <returns>The number of reachable classes.</returns>
+	private int ReachableClassCount()
+	{
+		return _scope.Results.Count(x => x.Class.IsRuntimeExport);
 	}
 
 	private IEnumerable<ClassifiedMember> EmittableMembers()

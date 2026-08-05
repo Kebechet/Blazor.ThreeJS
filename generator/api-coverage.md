@@ -151,6 +151,11 @@ as a mutable array, so a change to it cannot be observed, and matrix-typed prope
 | blocked | 106 |
 | **total** | **309** |
 
+Emittability and **reachability** are different questions. 215 of these classes are names the shipped
+bundle puts on `THREE`, so the untyped `Primitive` can construct any of them whether or not the generator
+produced a type for it. The other 94 are exported by nothing and reachable by nothing, which is why
+they are never folded into a coverage claim.
+
 ### Out of the mirrored surface, by rule
 
 | obstacle | classes | example reason |
@@ -462,9 +467,10 @@ three.js is reachable at all" and "how much of what we mirror is state".
 | Skipped | not mirrored; see the skip list below | 3694 | 1197 |
 | **total** | | **6338** | **2098** |
 
-⚠️ **No async query is emittable yet.** The wire format has six op kinds — create, set, call, add,
-remove, dispose — and none of them reads a value back. Every member in that bucket is classified and
-waiting on a read op, not on a mapping.
+Two op kinds answer with a value: **read**, which invokes a method, and **get**, which reads a property.
+58 of the async queries above sit on an emitted class and are generated as `…Async` methods over the
+read op. A property has no method to route through that op, so none is generated for one — the untyped
+`GetAsync` reads any property by name instead.
 
 ⚠️ **36 methods declare more than one overload, and only the first is classified.** Each stands
 for several C# overloads; the classification says what the first signature is, not how many methods a

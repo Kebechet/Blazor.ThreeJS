@@ -14,7 +14,7 @@
 
 Blazor wrapper for three.js. Typed C# scene graph with batched interop, safe on WebAssembly, Server, and MAUI Hybrid. Ships the three.js bundle - no npm, no CDN, no manual script tags.
 
-> **Generated from `@types/three`.** Most of three.js's class surface is wrapped mechanically from the upstream type declarations, so the property names, constructor argument order and documentation are three.js's own rather than a paraphrase. The `Vector3` / `Euler` / `Quaternion` / `Color` / `Matrix4` math types, the `Object3D` scene-graph base and the two addon wrappers (`GLTFLoader`, `OrbitControls`) are hand-written. [Coverage](#coverage) is exactly how much is wrapped, what is not, and how those numbers were arrived at; [Wrapping a type yourself](#wrapping-a-type-yourself) is how to reach the rest in the meantime.
+> **Generated from `@types/three`.** Most of three.js's class surface is wrapped mechanically from the upstream type declarations, so the property names, constructor argument order and documentation are three.js's own rather than a paraphrase. The `Vector3` / `Euler` / `Quaternion` / `Color` / `Matrix4` math types, the `Object3D` scene-graph base and the two addon wrappers (`GLTFLoader`, `OrbitControls`) are hand-written. [Coverage](#coverage) is exactly how much is wrapped, what is not, and how those numbers were arrived at; [Reaching a class the mirror does not wrap](#reaching-a-class-the-mirror-does-not-wrap) is how to reach the rest - untyped in three lines, or with a wrapper of your own.
 
 ## Installation
 
@@ -219,6 +219,9 @@ Generated from `@types/three@0.185.3`: **143 of three.js's 309 core classes** an
 constructor argument order and documentation are three.js's own rather than a paraphrase - and so is
 everything below, which is what that same generator run measured about itself.
 
+A further 72 classes have no generated type and are still **reachable** untyped, by name -
+[how](#reaching-what-is-not-generated). What is out of reach is what three.js does not export at all.
+
 ### Classes
 
 | | classes |
@@ -284,8 +287,9 @@ It does **not** carry handles, and that is what still puts members out of reach:
   arbitrary method return, which would have to describe an object nobody asked it to describe.
 - **38 methods returning or taking an array** - which is why **`Raycaster.intersectObjects` is still not
   callable**: it answers with `Intersection[]`, and the wire has no array encoding in either direction.
-- **99 read-only properties**. The read op invokes a method, so a property has nothing to route
-  through it; exposing one as an async method would change the shape of the API rather than its coverage.
+- **99 read-only properties** are not generated as members. The read op invokes a method, so a
+  property has nothing to route through it, and exposing one as an async method would change the shape of
+  the API rather than its coverage. They are still readable: `GetAsync` below reads any property by name.
 
 A read is caller-initiated and costs one interop call. An idle scene still costs **zero** - nothing polls,
 and no callback runs per frame.
@@ -300,6 +304,47 @@ and no callback runs per frame.
   taken; the hex form is covered by `Color.FromHex`, the string form is not exposed.
 - **`T | T[]` maps to `T`** in 6 declared types, so a mesh with several materials is not expressible.
 
+### Reaching what is not generated
+
+Everything above is a limit of the **typed** surface. None of it is a limit of the package, because a
+class the generator refuses is still a class three.js has:
+
+- **`Primitive` / `PrimitiveObject3D`** construct any class the shipped bundle exports, by its three.js
+  name - the same `new THREE[name](…)` the applier runs for a generated one.
+- **`Set` / `Call` / `CallAsync` / `GetAsync`** reach any member of any object you hold, generated or
+  not, by its three.js name. `GetAsync` reads a **property**, which is what puts the read-only ones above
+  within reach.
+
+| | classes |
+|---|---|
+| **generated, and typed** | **143** |
+| reachable by name, untyped | 72 |
+| **reachable at all** | **215** |
+| not exported by three.js, so reachable by nothing | 94 |
+| **three.js core total** | **309** |
+
+⚠️ The last row is not a gap this package can close. Those 94 classes are ones three.js's own barrel does
+not publish as values, so `THREE[name]` is `undefined` in the browser and there is nothing to construct -
+by this package or by any other consumer of the same bundle. They are counted separately rather than
+folded into the claim.
+
+⚠️ **The escape hatch is sharper than the typed surface, on purpose.** It bypasses the generated types,
+so it bypasses what they know:
+
+- **Nothing checks the names.** A misspelled type, member or argument list is three.js's to reject, and it
+  does so when the batch runs - through `OnError` for a write, and by faulting the task for a read.
+- **The mirror does not learn from a raw `Set`.** `mesh.Set("visible", false)` leaves `mesh.IsVisible`
+  reporting `true`, and the next typed write of `true` then records nothing. Where a typed property exists,
+  use it.
+- **A raw `Set` made before the object is attached replays after every typed property**, whichever order the
+  two were written in. A typed property is replayed from its field, which does not know when it was set.
+
+What it does **not** bypass: an object-valued write still attaches the object it references before the
+op that names it, a call recorded before an attach is still replayed rather than dropped, writes still
+coalesce per member and a call is still a barrier to that coalescing, and a value with no wire encoding is
+still refused rather than shipped as a plain object. Those are properties of the batch, and the escape
+hatch goes through it rather than around it.
+
 ### How this was measured
 
 - **Classes**: every class declaration under `@types/three@0.185.3`'s `src/`, minus the excluded
@@ -311,6 +356,11 @@ and no callback runs per frame.
   three.js declares in its types but does not put on `THREE` is **blocked**, not counted.
 - **Generated**: the files in `src/Blazor.ThreeJS/Generated/`, one per class or enum. `npm run emit:check`
   fails if any of them differs from what the generator produces today, or if one is left behind.
+- **Reachable is a name the bundle exports**: the extractor imports `src/Blazor.ThreeJS/wwwroot/three.module.js`
+  and records, per class, whether three.js puts that name on `THREE` - the runtime itself rather than a
+  second reading of the types. `tests/wire-format.test.mjs` asserts the figure from **both** sides: every
+  class called reachable is a constructor on that bundle, and no class it leaves out is one, so the number
+  can neither overstate nor understate itself.
 - **Public members**: `grep -c "^\tpublic " src/Blazor.ThreeJS/Generated/*.cs`, summed over the class files.
 - **Everything else**: `generator/api-coverage.json`, written by the run that wrote this section. The
   per-class and per-member detail behind every figure, including each blocked class and each skipped
@@ -321,13 +371,81 @@ hand is pointless: the next run overwrites it, and `npm run emit:check` fails un
 
 <!-- coverage:end -->
 
+## Reaching a class the mirror does not wrap
+
+Some of three.js's classes have no generated C# type - typed-array buffer attributes, abstract bases,
+types taking a DOM handle - and none of them blocks you. The three.js bundle this package ships is the
+complete library, and the applier resolves a class by **name** off it, so anything three.js exports is
+constructible whether a C# type exists for it or not.
+
+`Primitive` names the class. `Set`, `Call`, `CallAsync` and `GetAsync` reach its members, by their
+three.js names. All four live on `ThreeObject`, so they work on the generated types too - a property
+three.js added last week is a `Set` away rather than a package release away.
+
+```csharp
+// Vector2 is a math type this package has not hand-ported, so a material's normalScale has no typed
+// spelling. Passing a Primitive as a value sends it as a handle reference, and attaches it first.
+var normalScale = new Primitive("Vector2", 0.5f, 0.5f);
+material.Set("normalScale", normalScale);
+
+// PositionalAudio has no generated type either: the generator refuses it because its base needs a
+// constructor argument a generated subclass has nothing to supply. It belongs in the scene graph, so
+// it gets the transform, the parenting and OnClick that come with Object3D.
+var positionalAudio = new PrimitiveObject3D("PositionalAudio", listener);
+positionalAudio.Position.Set(0f, 1f, 0f);
+positionalAudio.Set("refDistance", 2f);
+positionalAudio.Call("play");
+scene.Add(positionalAudio);
+
+await threeContext.FlushAsync();
+
+// Reading back works on any object, generated or not: GetAsync reads a property, CallAsync invokes a
+// method and hands its return value over.
+var refDistance = await positionalAudio.GetAsync<float>("refDistance");
+var roughness = await material.GetAsync<float>("roughness");
+```
+
+Use `PrimitiveObject3D` for a class that belongs in the scene graph and `Primitive` for everything
+else - a geometry, a material, a texture, a curve. The difference matters: `PrimitiveObject3D` replays
+a transform when it attaches, which on something that is not an `Object3D` would write `position` and
+`scale` onto an object three.js never gave them to.
+
+An object nothing in the scene graph references - a curve you only want to measure - reaches a context
+through `threeContext.Attach(…)`, which takes any mirrored object rather than only a scene-graph one.
+
+**⚠️ The escape hatch is sharper than the typed surface, and knowingly so:**
+
+- **Nothing checks the names.** A misspelled type, member or argument list is three.js's to reject, and
+  it does so when the batch runs: through `OnError` for a write, and by faulting the task for a read.
+- **The mirror does not learn from a raw `Set`.** `mesh.Set("visible", false)` leaves `mesh.IsVisible`
+  reporting `true`, and the next typed write of `true` then records nothing at all. Where a typed
+  property exists, use it.
+- **A raw `Set` made before the object is attached replays after every typed property**, whichever order
+  the two were written in - a typed property is replayed from its field, which does not know when it was
+  assigned.
+- **A middle constructor argument cannot be left unsupplied.** The generated constructors have a wire
+  sentinel for "not supplied"; this does not expose it, so pass three.js's documented default
+  explicitly when an argument after it has to be supplied.
+- **`GetAsync<T>` cannot check `T`.** If what three.js holds is not what you declared, the task faults -
+  it never answers with a `default` the browser did not send.
+
+What it does **not** give up, because it goes through the same batch the typed surface does: an
+object-valued write still attaches the object it references before the op that names it, a call
+recorded before an attach is still replayed rather than dropped, writes still coalesce per member and
+a call is still a barrier to that coalescing, and a value with no wire encoding is still refused at the
+call site rather than shipped as a plain object over a live three.js instance.
+
+Only values come back over the wire - numbers, booleans, strings, and the five math types. A property
+or method whose value is a three.js **object** is refused rather than serialized, so `GetAsync` reaches
+`fov` but not `geometry`. And a class three.js does not export at all is out of reach for this too:
+`THREE[name]` is `undefined` in the browser, and there is nothing there to construct.
+
 ## Wrapping a type yourself
 
-Some of three.js's classes are not wrapped - typed-array buffer attributes, abstract bases, types
-taking a DOM handle - and you are not blocked by any of them: the three.js bundle this package ships
-is the complete library, and every hook the generated types use is `protected`, so you can add the
-wrapper in your own project. Derive from `Object3D` for anything that belongs in the scene graph and
-it attaches, batches, and flushes exactly like a generated type.
+When you want the class to have a real C# type - properties with names, a compiler that checks them,
+IntelliSense - write the wrapper instead. Every hook the generated types use is `protected`, so it
+lives in your own project. Derive from `Object3D` for anything that belongs in the scene graph and it
+attaches, batches, and flushes exactly like a generated type.
 
 Four members are all it takes. `ThreeTypeName` names the export on the `THREE` namespace,
 `ConstructorArgs` supplies its constructor arguments, `RecordSet` writes a property, and `RecordCall`
@@ -395,7 +513,8 @@ constructor argument order are three.js's own, so the
 One difference from a generated type: give a custom type its initial state through `ConstructorArgs`,
 not through a property write before it is attached. `RecordSet` only records once the object has
 reached a context, and the replay-on-attach that covers generated properties is internal to this
-package. Everything `Object3D` itself carries - `Position`, `Rotation`, `Scale`, `Quaternion`, `Up`,
+package - the public `Set` is the exception, since a write with no field behind it is held and
+replayed. Everything `Object3D` itself carries - `Position`, `Rotation`, `Scale`, `Quaternion`, `Up`,
 `IsVisible`, `Name`, `CastShadow`, `ReceiveShadow`, `FrustumCulled`, `RenderOrder`, `Layers`, the
 matrix-update flags - is inherited and replayed as usual, whenever you write it.
 
@@ -407,9 +526,10 @@ three.js instance.
 
 A type outside the scene graph works the same way: derive from the generated `BufferGeometry` or
 `Material` (or from `ThreeObject` directly) and assign it to `mesh.Geometry` / `mesh.Material`, which
-attaches it to the same context before the property write that references it. The one thing a wrapper
-outside this package cannot do is attach dependencies of its own - the hook for that is internal - so
-a custom type that has to construct another wrapped object first is still out of reach.
+attaches it to the same context before the property write that references it. What a wrapper outside
+this package cannot do is attach its **own** constructor dependencies - the hook for that is internal -
+so attach them yourself first with `threeContext.Attach(dependency)`, which takes any mirrored object,
+or reach for `Primitive`, which does it for you.
 
 ## License
 

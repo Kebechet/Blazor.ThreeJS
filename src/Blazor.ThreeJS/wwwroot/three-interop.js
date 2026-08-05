@@ -12,6 +12,7 @@ const OP_REMOVE = 4;
 const OP_DISPOSE = 5;
 const OP_READ = 6;
 const OP_PICK = 7;
+const OP_GET = 8;
 
 // Name of the [JSInvokable] method a pointer hit is delivered to, on the ThreeCanvas the
 // DotNetObjectReference passed to createContext wraps. Part of the same contract as the op kinds
@@ -120,12 +121,12 @@ export function runOps(context, ops) {
     for (const op of ops) {
         try {
             const value = applyOp(context, op);
-            if (op.k === OP_READ) {
+            if (producesValue(op)) {
                 results.push({ i: op.i, v: value });
             }
         } catch (error) {
             const message = String(error && error.message ? error.message : error);
-            if (op.k === OP_READ) {
+            if (producesValue(op)) {
                 results.push({ i: op.i, e: message });
                 continue;
             }
@@ -137,11 +138,19 @@ export function runOps(context, ops) {
     return { e: errors, r: results };
 }
 
+// Whether an op answers with a value, and therefore belongs on a result row rather than on the error
+// channel. The two kinds that do are the method read and the property read; every other kind is an
+// instruction nobody is awaiting.
+function producesValue(op) {
+    return op.k === OP_READ || op.k === OP_GET;
+}
+
 // Exported so the wire-contract test can drive the applier directly. It only ever touches
 // `context.objects`, never the renderer, so a plain `{ objects: new Map() }` is enough to run every
 // op kind under Node against the vendored three.js — no WebGL, no canvas.
 //
-// Returns the encoded value for a read op, and nothing for every other kind.
+// Returns the encoded value for the two ops that produce one - a method read and a property read -
+// and nothing for every other kind.
 export function applyOp(context, op) {
     switch (op.k) {
         case OP_CREATE: {
@@ -204,6 +213,21 @@ export function applyOp(context, op) {
 
             const args = (op.a ?? []).map(value => decode(context, value).value);
             return encode(target[op.m](...args));
+        }
+        case OP_GET: {
+            const target = resolveHandle(context, op.h);
+
+            // `in` rather than an undefined check, and it walks the prototype chain, which is where a
+            // three.js class declares its accessors. A property the object has not got would otherwise
+            // read as undefined, encode to null, and reach C# as default(T) - a fabricated answer to a
+            // question three.js never understood. A property that genuinely holds undefined still
+            // answers null, which is the one case the two cannot be told apart, and is what `null`
+            // means everywhere else on this wire.
+            if (!(op.m in target)) {
+                throw new Error(`'${op.m}' is not a property on the object at handle '${op.h}'`);
+            }
+
+            return encode(target[op.m]);
         }
         default:
             throw new Error(`Unknown op kind '${op.k}'`);

@@ -140,6 +140,12 @@ internal sealed class ClassEmitter
 			WriteCommand(writer, command);
 		}
 
+		foreach (var query in surface.Queries)
+		{
+			writer.WriteLine();
+			WriteQuery(writer, query);
+		}
+
 		WriteAttachmentAndReplay(writer, irClass, threeTypeName, constructorParameters, surface.Properties);
 
 		writer.Outdent();
@@ -287,6 +293,7 @@ internal sealed class ClassEmitter
 		var takenCSharpNames = new HashSet<string>(StringComparer.Ordinal) { threeTypeName };
 		var properties = new List<EmittedProperty>();
 		var commands = new List<EmittedCommand>();
+		var queries = new List<EmittedQuery>();
 
 		foreach (var member in _classifier.Classify(irClass))
 		{
@@ -297,13 +304,10 @@ internal sealed class ClassEmitter
 				continue;
 			}
 
-			if (member.Bucket == MemberBucket.AsyncQuery)
-			{
-				audit.RecordSkippedMember(threeTypeName, $"{kind} {member.MemberName}", "returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back");
-				continue;
-			}
+			var cSharpName = member.Bucket == MemberBucket.AsyncQuery
+				? ToPascalCase(member.MemberName) + EmitterConfig.QueryMethodSuffix
+				: ToPascalCase(member.MemberName);
 
-			var cSharpName = ToPascalCase(member.MemberName);
 			if (!takenCSharpNames.Add(cSharpName))
 			{
 				audit.RecordSkippedMember(
@@ -324,6 +328,12 @@ internal sealed class ClassEmitter
 			if (member.Bucket == MemberBucket.Command)
 			{
 				commands.Add(BuildCommand(member, cSharpName));
+				continue;
+			}
+
+			if (member.Bucket == MemberBucket.AsyncQuery)
+			{
+				queries.Add(BuildQuery(member, cSharpName));
 				continue;
 			}
 
@@ -367,7 +377,7 @@ internal sealed class ClassEmitter
 			properties.Add(BuildProperty(member, cSharpName, fieldName, cSharpTypeName, defaultLiteral, isOwnedMathValue));
 		}
 
-		return new EmittedSurface { Properties = properties, Commands = commands };
+		return new EmittedSurface { Properties = properties, Commands = commands, Queries = queries };
 	}
 
 	private static EmittedProperty BuildProperty(
@@ -400,6 +410,18 @@ internal sealed class ClassEmitter
 			ThreeName = member.MemberName,
 			CSharpName = cSharpName,
 			Parameters = member.Method!.Parameters,
+			Documentation = member.Method.Signature?.Doc
+		};
+	}
+
+	private static EmittedQuery BuildQuery(ClassifiedMember member, string cSharpName)
+	{
+		return new EmittedQuery
+		{
+			ThreeName = member.MemberName,
+			CSharpName = cSharpName,
+			Parameters = member.Method!.Parameters,
+			ReturnTypeName = member.CSharpTypeName!,
 			Documentation = member.Method.Signature?.Doc
 		};
 	}
@@ -493,7 +515,9 @@ internal sealed class ClassEmitter
 	{
 		return constructorParameters.Any(x => x.Mapping.Kind == TypeMappingKind.HandWrittenMathType) ||
 			surface.Properties.Any(x => x.Mapping.Kind == TypeMappingKind.HandWrittenMathType) ||
-			surface.Commands.Any(command => command.Parameters.Any(x => x.Mapping.Kind == TypeMappingKind.HandWrittenMathType));
+			surface.Commands.Any(command => command.Parameters.Any(x => x.Mapping.Kind == TypeMappingKind.HandWrittenMathType)) ||
+			surface.Queries.Any(query => EmitterConfig.MathTypeNames.Contains(query.ReturnTypeName) ||
+				query.Parameters.Any(x => x.Mapping.Kind == TypeMappingKind.HandWrittenMathType));
 	}
 
 	/// <summary>Writes the provenance header. See <see cref="WriteFileHeader"/> for why it is not an auto-generated marker.</summary>
@@ -892,6 +916,76 @@ internal sealed class ClassEmitter
 	}
 
 	/// <summary>
+	/// Writes one query: a method that records a read op and awaits the value three.js sends back.
+	/// <para>
+	/// The C# name carries an <c>Async</c> suffix that three.js's own name does not, which is the one
+	/// place the mirror renames a member. It has to: the return type is a <c>Task&lt;T&gt;</c>, and a
+	/// method that hands back a task without saying so reads as a synchronous call at every call site.
+	/// </para>
+	/// </summary>
+	/// <param name="writer">Destination.</param>
+	/// <param name="query">The query being emitted.</param>
+	private static void WriteQuery(CSharpWriter writer, EmittedQuery query)
+	{
+		var summary = query.Documentation?.Summary is { Length: > 0 } rawSummary
+			? DocCommentEmitter.EnsureSentenceEnd(DocCommentEmitter.RenderInline(rawSummary))
+			: $"Reads <c>{query.ThreeName}</c> back from the JavaScript-side object.";
+
+		summary += $" Records a read op, sends it behind every write already pending, and completes with what <c>{query.ThreeName}</c> returned.";
+
+		DocCommentEmitter.WriteSummary(writer, summary);
+		foreach (var parameter in query.Parameters)
+		{
+			var text = parameter.Documentation is { Length: > 0 } documentation
+				? DocCommentEmitter.RenderInline(DocCommentEmitter.StripRedundantTail(documentation))
+				: $"Value forwarded to the <c>{parameter.ThreeName}</c> argument.";
+
+			DocCommentEmitter.WriteParam(writer, parameter.Name, text);
+		}
+
+		DocCommentEmitter.WriteReturns(writer, $"The value <c>{query.ThreeName}</c> returned, once the JavaScript side has answered.");
+
+		var declaredParameters = query.Parameters
+			.Select(x => x.DefaultLiteral is null
+				? $"{x.CSharpTypeName} {x.DeclarationName}"
+				: $"{x.CSharpTypeName} {x.DeclarationName} = {x.DefaultLiteral}")
+			.ToList();
+
+		var returnTypeName = $"Task<{query.ReturnTypeName}>";
+		var declaration = $"public {returnTypeName} {query.CSharpName}({string.Join(", ", declaredParameters)})";
+		if (writer.IndentColumn + declaration.Length <= EmitterConfig.DeclarationWrapColumn)
+		{
+			writer.WriteLine(declaration);
+		}
+		else
+		{
+			writer.WriteLine($"public {returnTypeName} {query.CSharpName}(");
+			writer.Indent();
+			foreach (var (index, declaredParameter) in declaredParameters.Index())
+			{
+				writer.WriteLine(index == declaredParameters.Count - 1
+					? declaredParameter + ")"
+					: declaredParameter + ",");
+			}
+
+			writer.Outdent();
+		}
+
+		writer.WriteLine("{");
+		writer.Indent();
+
+		// RecordRead owns attaching any argument that is itself a mirrored object, for the same reason
+		// RecordCall does: one owner for the invariant is what keeps the two paths from drifting.
+		var arguments = query.Parameters.Count == 0
+			? string.Empty
+			: ", " + string.Join(", ", query.Parameters.Select(x => x.DeclarationName));
+
+		writer.WriteLine($"return RecordRead<{query.ReturnTypeName}>(\"{query.ThreeName}\"{arguments});");
+		writer.Outdent();
+		writer.WriteLine("}");
+	}
+
+	/// <summary>
 	/// Writes the two attachment hooks: one that gets this object's dependencies onto the JavaScript
 	/// side before the create op that references them by handle, and one that replays the state the
 	/// caller wrote before this object was attached.
@@ -1047,6 +1141,9 @@ internal sealed class EmittedSurface
 
 	/// <summary>Commands, in resolution order.</summary>
 	public required IReadOnlyList<EmittedCommand> Commands { get; init; }
+
+	/// <summary>Queries — the methods whose result is read back — in resolution order.</summary>
+	public required IReadOnlyList<EmittedQuery> Queries { get; init; }
 }
 
 /// <summary>One backing field of a generated class.</summary>
@@ -1114,6 +1211,25 @@ internal sealed class EmittedCommand
 
 	/// <summary>Parameters that reached the C# signature.</summary>
 	public required IReadOnlyList<MappedParameter> Parameters { get; init; }
+
+	/// <summary>Upstream JSDoc for the signature.</summary>
+	public IrDoc? Documentation { get; init; }
+}
+
+/// <summary>One query — a method whose return value is read back — resolved into C# terms.</summary>
+internal sealed class EmittedQuery
+{
+	/// <summary>Method name as three.js spells it, and the wire token.</summary>
+	public required string ThreeName { get; init; }
+
+	/// <summary>C# method name, which carries the <c>Async</c> suffix the returned task calls for.</summary>
+	public required string CSharpName { get; init; }
+
+	/// <summary>Parameters that reached the C# signature.</summary>
+	public required IReadOnlyList<MappedParameter> Parameters { get; init; }
+
+	/// <summary>C# type of the value read back, without the surrounding task.</summary>
+	public required string ReturnTypeName { get; init; }
 
 	/// <summary>Upstream JSDoc for the signature.</summary>
 	public IrDoc? Documentation { get; init; }

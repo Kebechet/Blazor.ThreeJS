@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Kebechet.Blazor.ThreeJS.Math;
 
@@ -17,6 +18,14 @@ internal static class ThreeValue
 	/// caller can construct or compare.
 	/// </summary>
 	public static readonly UnspecifiedValue Unspecified = new();
+
+	/// <summary>
+	/// Options the untagged half of <see cref="Decode{TValue}"/> deserializes under. Web defaults match
+	/// what Blazor's own JS interop uses, so a value read back lands on the same C# types a value sent
+	/// out came from. Declared here rather than taken from <c>JsonSerializerOptions.Web</c>, which does
+	/// not exist before .NET 9 and this package targets back to .NET 6.
+	/// </summary>
+	private static readonly JsonSerializerOptions _readOptions = new(JsonSerializerDefaults.Web);
 
 	/// <summary>
 	/// Converts a value into its wire representation. Math types (<see cref="Vector3"/>,
@@ -75,6 +84,44 @@ internal static class ThreeValue
 	}
 
 	/// <summary>
+	/// Turns a value the applier read back off a three.js object into the C# type the query declares.
+	/// The inverse of <see cref="Encode"/>: a <c>$t</c>-tagged object rebuilds the math value it names,
+	/// and everything else — a number, a boolean, a string, an enum's numeric value — deserializes
+	/// straight onto <typeparamref name="TValue"/>.
+	/// </summary>
+	/// <typeparam name="TValue">C# type the query declares it returns.</typeparam>
+	/// <param name="element">The raw JSON the applier sent back, absent when the read produced no value.</param>
+	/// <returns>The decoded value, or the C# default when the read produced <c>null</c> or <c>undefined</c>.</returns>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when the applier sent back a math value of a tag <typeparamref name="TValue"/> cannot hold.
+	/// A silent <see langword="default"/> there would be a fabricated answer, which is the one outcome a
+	/// read must never produce.
+	/// </exception>
+	/// <exception cref="NotSupportedException">Thrown for a <c>$t</c> tag this decoder has no arm for.</exception>
+	public static TValue Decode<TValue>(JsonElement? element)
+	{
+		if (element is not { } value || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+		{
+			return default!;
+		}
+
+		if (value.ValueKind != JsonValueKind.Object || !value.TryGetProperty(ThreeWireFormat.TagKey, out var tag))
+		{
+			return value.Deserialize<TValue>(_readOptions)!;
+		}
+
+		var mathValue = DecodeMathValue(tag.GetString(), value);
+		if (mathValue is TValue typedMathValue)
+		{
+			return typedMathValue;
+		}
+
+		throw new InvalidOperationException(
+			$"The applier read back a '{tag.GetString()}' value, which cannot be held as '{typeof(TValue).FullName}'. " +
+			$"The query's declared return type and the value three.js actually produced have diverged.");
+	}
+
+	/// <summary>
 	/// Substitutes <see cref="Unspecified"/> for a <see langword="null"/> that means "the caller did
 	/// not supply this constructor argument", leaving every supplied value — including a deliberate
 	/// <see langword="null"/> on a parameter three.js declares nullable — untouched.
@@ -106,6 +153,58 @@ internal static class ThreeValue
 	}
 
 	/// <summary>
+	/// Rebuilds one of the five hand-written math types from its tagged wire form.
+	/// </summary>
+	/// <param name="tag">The <c>$t</c> tag naming which math type was encoded.</param>
+	/// <param name="value">The whole tagged object, read for its components and rotation order.</param>
+	/// <returns>The reconstructed math value.</returns>
+	/// <exception cref="NotSupportedException">Thrown for a tag with no arm here.</exception>
+	private static object DecodeMathValue(string? tag, JsonElement value)
+	{
+		var components = value.GetProperty(ThreeWireFormat.ValuesKey);
+		switch (tag)
+		{
+			case ThreeWireFormat.Vector3Tag:
+				return new Vector3(Component(components, 0), Component(components, 1), Component(components, 2));
+			case ThreeWireFormat.EulerTag:
+				var order = value.TryGetProperty(ThreeWireFormat.OrderKey, out var encodedOrder)
+					? (EulerOrder) encodedOrder.GetByte()
+					: EulerOrder.XYZ;
+
+				return new Euler(Component(components, 0), Component(components, 1), Component(components, 2), order);
+			case ThreeWireFormat.QuaternionTag:
+				return new Quaternion(Component(components, 0), Component(components, 1), Component(components, 2), Component(components, 3));
+			case ThreeWireFormat.ColorTag:
+				return new Color(Component(components, 0), Component(components, 1), Component(components, 2));
+			case ThreeWireFormat.Matrix4Tag:
+				// Written straight into Elements rather than through Set: the wire carries the components
+				// column-major, which is how Elements already stores them, while Set takes them in visual
+				// row-major reading order and transposes. Routing through Set would silently transpose
+				// every matrix read back.
+				var matrix = new Matrix4();
+				for (var index = 0; index < matrix.Elements.Length; index++)
+				{
+					matrix.Elements[index] = Component(components, index);
+				}
+
+				return matrix;
+			default:
+				throw new NotSupportedException(
+					$"{nameof(ThreeValue)}.{nameof(Decode)} has no arm for the '{tag}' wire tag. " +
+					$"Add one here and a matching encode case in three-interop.js.");
+		}
+	}
+
+	/// <summary>Reads one component of a tagged math value's array.</summary>
+	/// <param name="components">The <c>v</c> array of a tagged value.</param>
+	/// <param name="index">Position to read.</param>
+	/// <returns>The component as a <see cref="float"/>.</returns>
+	private static float Component(JsonElement components, int index)
+	{
+		return components[index].GetSingle();
+	}
+
+	/// <summary>
 	/// Wire representation of an argument the caller never supplied, which the applier decodes to
 	/// JavaScript's <c>undefined</c> so three.js applies its own parameter default.
 	/// </summary>
@@ -129,11 +228,11 @@ internal static class ThreeValue
 	internal sealed class TaggedValue
 	{
 		/// <summary>One of the <see cref="ThreeWireFormat"/> tag constants identifying the math type.</summary>
-		[JsonPropertyName("$t")]
+		[JsonPropertyName(ThreeWireFormat.TagKey)]
 		public required string Tag { get; init; }
 
 		/// <summary>The raw component values, e.g. [x, y, z] for a vector.</summary>
-		[JsonPropertyName("v")]
+		[JsonPropertyName(ThreeWireFormat.ValuesKey)]
 		public required float[] Values { get; init; }
 
 		/// <summary>
@@ -141,7 +240,7 @@ internal static class ThreeValue
 		/// and omitted from the payload for every other tag. The applier already reads it
 		/// defensively (<c>value.o ?? 0</c>), so absence and an explicit null are equivalent to it.
 		/// </summary>
-		[JsonPropertyName("o")]
+		[JsonPropertyName(ThreeWireFormat.OrderKey)]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public byte? Order { get; init; }
 	}
@@ -153,7 +252,7 @@ internal static class ThreeValue
 	internal sealed class HandleReference
 	{
 		/// <summary>Handle of the referenced object.</summary>
-		[JsonPropertyName("$ref")]
+		[JsonPropertyName(ThreeWireFormat.HandleReferenceKey)]
 		public required int Handle { get; init; }
 	}
 }

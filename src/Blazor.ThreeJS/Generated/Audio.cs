@@ -187,6 +187,47 @@ public class Audio : Object3D
 	}
 
 	/// <summary>
+	/// Returns the detuning of oscillation in cents. Records a read op, sends it behind every write
+	/// already pending, and completes with what <c>getDetune</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getDetune</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetDetuneAsync()
+	{
+		return RecordRead<float>("getDetune");
+	}
+
+	/// <summary>
+	/// Returns the current playback rate. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getPlaybackRate</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getPlaybackRate</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetPlaybackRateAsync()
+	{
+		return RecordRead<float>("getPlaybackRate");
+	}
+
+	/// <summary>
+	/// Returns the loop flag. Can only be used with compatible audio sources that allow playback
+	/// control. Records a read op, sends it behind every write already pending, and completes with what
+	/// <c>getLoop</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getLoop</c> returned, once the JavaScript side has answered.</returns>
+	public Task<bool> GetLoopAsync()
+	{
+		return RecordRead<bool>("getLoop");
+	}
+
+	/// <summary>
+	/// Returns the volume. Records a read op, sends it behind every write already pending, and
+	/// completes with what <c>getVolume</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getVolume</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetVolumeAsync()
+	{
+		return RecordRead<float>("getVolume");
+	}
+
+	/// <summary>
 	/// Attaches the objects <c>THREE.Audio</c> is constructed from, so their create ops reach the batch
 	/// before the one that references them by handle, then emits this object's own.
 	/// </summary>

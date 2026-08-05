@@ -36,6 +36,17 @@ public sealed class AudioAnalyser : ThreeObject
 	}
 
 	/// <summary>
+	/// Returns the average of the frequencies returned by <c>AudioAnalyser#getFrequencyData</c>.
+	/// Records a read op, sends it behind every write already pending, and completes with what
+	/// <c>getAverageFrequency</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getAverageFrequency</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetAverageFrequencyAsync()
+	{
+		return RecordRead<float>("getAverageFrequency");
+	}
+
+	/// <summary>
 	/// Attaches the objects <c>THREE.AudioAnalyser</c> is constructed from, so their create ops reach
 	/// the batch before the one that references them by handle, then emits this object's own.
 	/// </summary>

@@ -77,7 +77,8 @@ public class ThreeContextTests
 		// Arrange
 		var applierErrors = new List<ThreeError> { new() { Handle = 1, Member = "roughness", Message = "Invalid roughness value." } };
 		var module = Substitute.For<IJSObjectReference>();
-		module.InvokeAsync<List<ThreeError>>(Arg.Any<string>(), Arg.Any<object[]>()).Returns(applierErrors);
+		module.InvokeAsync<ThreeBatchResponse>(Arg.Any<string>(), Arg.Any<object[]>())
+			.Returns(new ThreeBatchResponse { Errors = applierErrors });
 		var context = new ThreeContext(module, contextId: 1);
 		context.Batch.Set(1, "visible", true);
 		IReadOnlyList<ThreeError>? raisedErrors = null;
@@ -95,7 +96,7 @@ public class ThreeContextTests
 	{
 		// Arrange
 		var module = Substitute.For<IJSObjectReference>();
-		module.InvokeAsync<List<ThreeError>>(Arg.Any<string>(), Arg.Any<object[]>()).Returns([]);
+		module.InvokeAsync<ThreeBatchResponse>(Arg.Any<string>(), Arg.Any<object[]>()).Returns(new ThreeBatchResponse());
 		var context = new ThreeContext(module, contextId: 1);
 		context.Batch.Set(1, "visible", true);
 		var wasOnErrorRaised = false;
@@ -113,7 +114,7 @@ public class ThreeContextTests
 	{
 		// Arrange
 		var module = Substitute.For<IJSObjectReference>();
-		module.InvokeAsync<List<ThreeError>>(Arg.Any<string>(), Arg.Any<object[]>())
+		module.InvokeAsync<ThreeBatchResponse>(Arg.Any<string>(), Arg.Any<object[]>())
 			.ThrowsAsync(new JSDisconnectedException("Circuit disconnected."));
 		var context = new ThreeContext(module, contextId: 1);
 		context.Batch.Set(1, "visible", true);
@@ -237,12 +238,21 @@ internal sealed class RecordingJsObjectReference : IJSObjectReference
 	/// <summary>Every invocation received so far, in the order it arrived.</summary>
 	public List<JsInvocation> Invocations { get; } = [];
 
+	/// <summary>
+	/// Stands in for the applier when a test needs it to answer rather than just be recorded — a read
+	/// has to get a result row back or its task never completes. Left unset, every batch is answered
+	/// with no errors and no results, which is what the write-only tests expect.
+	/// </summary>
+	public Func<IReadOnlyList<ThreeOp>, ThreeBatchResponse>? RespondToBatch { get; set; }
+
 	public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
 	{
 		Invocations.Add(new JsInvocation { Identifier = identifier, Arguments = args ?? [] });
-		if (typeof(TValue) == typeof(List<ThreeError>))
+		if (typeof(TValue) == typeof(ThreeBatchResponse))
 		{
-			return ValueTask.FromResult((TValue) (object) new List<ThreeError>());
+			var ops = args?.OfType<IReadOnlyList<ThreeOp>>().FirstOrDefault() ?? [];
+			var response = RespondToBatch?.Invoke(ops) ?? new ThreeBatchResponse();
+			return ValueTask.FromResult((TValue) (object) response);
 		}
 
 		return default;

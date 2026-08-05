@@ -1017,6 +1017,19 @@ public class Material : EventDispatcher
 	}
 
 	/// <summary>
+	/// In case <c>Material#onBeforeCompile</c> is used, this callback can be used to identify values of
+	/// settings used in <c>onBeforeCompile()</c>, so three.js can reuse a cached shader or recompile
+	/// the shader for this material as needed. This method can only be used when rendering with
+	/// <see cref="WebGLRenderer"/>. Records a read op, sends it behind every write already pending, and
+	/// completes with what <c>customProgramCacheKey</c> returned.
+	/// </summary>
+	/// <returns>The value <c>customProgramCacheKey</c> returned, once the JavaScript side has answered.</returns>
+	public Task<string> CustomProgramCacheKeyAsync()
+	{
+		return RecordRead<string>("customProgramCacheKey");
+	}
+
+	/// <summary>
 	/// Emits the create op for <c>THREE.Material</c>, then replays every property written before this
 	/// object was attached.
 	/// </summary>

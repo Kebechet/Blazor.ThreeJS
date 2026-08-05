@@ -19,5 +19,6 @@
   { "k": 5, "h": 1, "v": null },
   { "k": 0, "h": 6, "t": "PerspectiveCamera", "a": [{ "$undef": true }, 2, { "$undef": true }, 1000], "v": null },
   { "k": 0, "h": 7, "t": "PerspectiveCamera", "a": [null, 2], "v": null },
-  { "k": 0, "h": 8, "t": "AmbientLight", "a": [{ "$t": "Color", "v": [1, 0, 0] }, 0.4], "v": null }
+  { "k": 0, "h": 8, "t": "AmbientLight", "a": [{ "$t": "Color", "v": [1, 0, 0] }, 0.4], "v": null },
+  { "k": 6, "h": 6, "m": "getFocalLength", "a": [], "v": null, "i": 1 }
 ]

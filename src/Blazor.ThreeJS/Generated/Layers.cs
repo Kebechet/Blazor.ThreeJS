@@ -99,6 +99,29 @@ public sealed class Layers : ThreeObject
 	}
 
 	/// <summary>
+	/// Returns true if this and the passed <c>layers</c> object have at least one layer in common.
+	/// Records a read op, sends it behind every write already pending, and completes with what
+	/// <c>test</c> returned.
+	/// </summary>
+	/// <param name="layers">A Layers object.</param>
+	/// <returns>The value <c>test</c> returned, once the JavaScript side has answered.</returns>
+	public Task<bool> TestAsync(Layers layers)
+	{
+		return RecordRead<bool>("test", layers);
+	}
+
+	/// <summary>
+	/// Returns true if the given layer is enabled. Records a read op, sends it behind every write
+	/// already pending, and completes with what <c>isEnabled</c> returned.
+	/// </summary>
+	/// <param name="layer">An integer from 0 to 31.</param>
+	/// <returns>The value <c>isEnabled</c> returned, once the JavaScript side has answered.</returns>
+	public Task<bool> IsEnabledAsync(float layer)
+	{
+		return RecordRead<bool>("isEnabled", layer);
+	}
+
+	/// <summary>
 	/// Emits the create op for <c>THREE.Layers</c>, then replays every property written before this
 	/// object was attached.
 	/// </summary>

@@ -2,6 +2,7 @@
 // Re-run `npm run emit` after changing the emitter or generator/three-api.json.
 
 using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Math;
 
 namespace Kebechet.Blazor.ThreeJS.Objects;
 
@@ -111,6 +112,19 @@ public class Mesh : Object3D
 	public void UpdateMorphTargets()
 	{
 		RecordCall("updateMorphTargets");
+	}
+
+	/// <summary>
+	/// Get the local-space position of the vertex at the given index, taking into account the current
+	/// animation state of both morph targets and skinning. Records a read op, sends it behind every
+	/// write already pending, and completes with what <c>getVertexPosition</c> returned.
+	/// </summary>
+	/// <param name="index"></param>
+	/// <param name="target">Value forwarded to the <c>target</c> argument.</param>
+	/// <returns>The value <c>getVertexPosition</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Vector3> GetVertexPositionAsync(int index, Vector3 target)
+	{
+		return RecordRead<Vector3>("getVertexPosition", index, target);
 	}
 
 	/// <summary>

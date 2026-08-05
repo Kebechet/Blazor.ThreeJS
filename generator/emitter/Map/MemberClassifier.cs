@@ -103,8 +103,8 @@ internal sealed class MemberClassifier
 
 		return Skip(
 			row,
-			$"read-only in three.js (declared `{property.Type?.Text ?? "?"}`), and the wire format has no read op — C# could neither write it nor observe it",
-			SkipCategory.ReadOnlyWithoutReadChannel);
+			$"read-only in three.js (declared `{property.Type?.Text ?? "?"}`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage",
+			SkipCategory.ReadOnlyProperty);
 	}
 
 	private ClassifiedMember ClassifyMethod(IrClass irClass, IrMethod method, SurfaceMember member)
@@ -160,8 +160,8 @@ internal sealed class MemberClassifier
 
 			return Skip(
 				row,
-				"takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created",
-				SkipCategory.NoReadChannel);
+				"takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created",
+				SkipCategory.NoHandleForResult);
 		}
 
 		var returnMapping = _mapper.Map(signature.ReturnType, new TypeMappingContext
@@ -176,9 +176,37 @@ internal sealed class MemberClassifier
 			return Skip(row, $"return type: {returnMapping.SkipReason}", returnMapping.SkipCategory);
 		}
 
+		if (!IsReadable(returnMapping))
+		{
+			return Skip(
+				row,
+				$"returns `{returnMapping.CSharpTypeName}`, a handle-backed object — the read op carries values, and no op mints a handle for an object JavaScript created",
+				SkipCategory.NoHandleForResult);
+		}
+
 		row.CSharpTypeName = returnMapping.CSharpTypeName;
+		row.ReturnMapping = returnMapping;
 		row.Bucket = MemberBucket.AsyncQuery;
 		return row;
+	}
+
+	/// <summary>
+	/// Whether a return type can travel back over the read op. The op carries <b>values</b>: a primitive
+	/// passes through as itself, an enum as the same numeric backing value the write path already sends,
+	/// and one of the five hand-written math types as the same <c>$t</c>-tagged form C# encodes in the
+	/// other direction.
+	/// <para>
+	/// A generated wrapper class cannot: it is mirrored by handle, and no op mints a handle for an
+	/// object JavaScript created. Serializing its public shape instead would hand C# a plausible bag of
+	/// numbers, which is the one outcome a read must never produce, so <c>three-interop.js</c> refuses
+	/// it at runtime too rather than trusting this rule alone.
+	/// </para>
+	/// </summary>
+	/// <param name="returnMapping">The method's resolved return type.</param>
+	/// <returns><see langword="true"/> when a value of that type can be read back.</returns>
+	private static bool IsReadable(TypeMapping returnMapping)
+	{
+		return returnMapping.Kind is TypeMappingKind.Primitive or TypeMappingKind.GeneratedEnum or TypeMappingKind.HandWrittenMathType;
 	}
 
 	/// <summary>Whether a return type means no value comes back at all.</summary>
@@ -278,6 +306,9 @@ internal sealed class ClassifiedMember
 	/// <summary>The full type mapping behind <see cref="CSharpTypeName"/>, on a mapped member.</summary>
 	public TypeMapping? Mapping { get; set; }
 
+	/// <summary>The resolved return type, on a query whose result can be read back.</summary>
+	public TypeMapping? ReturnMapping { get; set; }
+
 	/// <summary>The resolved signature, on a method the mapper accepted.</summary>
 	public MappedMethod? Method { get; set; }
 
@@ -306,7 +337,7 @@ internal enum MemberBucket : byte
 	/// <summary>A method recorded as a call op and applied on the JavaScript side.</summary>
 	Command,
 
-	/// <summary>A method whose result the caller needs back, which needs a read op the wire format does not have.</summary>
+	/// <summary>A method whose result the caller needs back, recorded as a read op and awaited.</summary>
 	AsyncQuery,
 
 	/// <summary>Not mirrored; <see cref="ClassifiedMember.SkipReason"/> says why.</summary>

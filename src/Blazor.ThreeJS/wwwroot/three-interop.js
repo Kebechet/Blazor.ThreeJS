@@ -1,14 +1,16 @@
 import * as THREE from './three.module.js';
 
-// Wire format shared with ThreeOp.cs — the numeric kinds, the short property names (k/h/t/m/a/v/c)
-// and the tagged-value keys ($t/$ref/$undef) are a contract and must be changed on both sides
-// together. The C# half of each literal lives in ThreeWireFormat.cs.
+// Wire format shared with ThreeOp.cs — the numeric kinds, the short property names (k/h/t/m/a/v/c/i),
+// the response shape ({e, r} with rows of {i, v} or {i, e}) and the tagged-value keys ($t/$ref/$undef)
+// are a contract and must be changed on both sides together. The C# half of each literal lives in
+// ThreeWireFormat.cs, ThreeOp.cs and ThreeBatchResponse.cs.
 const OP_CREATE = 0;
 const OP_SET = 1;
 const OP_CALL = 2;
 const OP_ADD = 3;
 const OP_REMOVE = 4;
 const OP_DISPOSE = 5;
+const OP_READ = 6;
 
 const EULER_ORDERS = ['XYZ', 'YXZ', 'ZXY', 'ZYX', 'YZX', 'XZY'];
 
@@ -69,25 +71,50 @@ export function createContext(canvas, dotNetRef) {
 export function applyBatch(contextId, ops) {
     const context = contexts.get(contextId);
     if (!context) {
-        return [];
+        return { e: [], r: [] };
     }
 
+    return runOps(context, ops);
+}
+
+// Runs a whole batch against an already-resolved context and reports both halves of the outcome:
+// `e` carries the ops the applier rejected, `r` one row per read op.
+//
+// The two are kept apart because they are answered differently on the C# side. A rejected write has
+// nobody awaiting it, so it goes to the OnError event; a rejected read faults the one task that
+// asked for the value, and announcing it on OnError as well would report the same failure twice.
+//
+// Exported for the same reason applyOp is: the wire-contract test needs to drive it against a plain
+// `{ objects: new Map() }`, and going through applyBatch would be vacuous, since an unknown context
+// id makes it return an empty response without applying anything.
+export function runOps(context, ops) {
     const errors = [];
+    const results = [];
     for (const op of ops) {
         try {
-            applyOp(context, op);
+            const value = applyOp(context, op);
+            if (op.k === OP_READ) {
+                results.push({ i: op.i, v: value });
+            }
         } catch (error) {
-            errors.push({ handle: op.h, member: op.m ?? op.t, message: String(error && error.message ? error.message : error) });
+            const message = String(error && error.message ? error.message : error);
+            if (op.k === OP_READ) {
+                results.push({ i: op.i, e: message });
+                continue;
+            }
+
+            errors.push({ handle: op.h, member: op.m ?? op.t, message });
         }
     }
 
-    return errors;
+    return { e: errors, r: results };
 }
 
 // Exported so the wire-contract test can drive the applier directly. It only ever touches
 // `context.objects`, never the renderer, so a plain `{ objects: new Map() }` is enough to run every
-// op kind under Node against the vendored three.js — no WebGL, no canvas. Going through applyBatch
-// instead would be vacuous: an unknown context id makes it return [] without applying anything.
+// op kind under Node against the vendored three.js — no WebGL, no canvas.
+//
+// Returns the encoded value for a read op, and nothing for every other kind.
 export function applyOp(context, op) {
     switch (op.k) {
         case OP_CREATE: {
@@ -127,6 +154,15 @@ export function applyOp(context, op) {
 
             context.objects.delete(op.h);
             break;
+        }
+        case OP_READ: {
+            const target = resolveHandle(context, op.h);
+            if (typeof target[op.m] !== 'function') {
+                throw new Error(`'${op.m}' is not a method on the object at handle '${op.h}'`);
+            }
+
+            const args = (op.a ?? []).map(value => decode(context, value).value);
+            return encode(target[op.m](...args));
         }
         default:
             throw new Error(`Unknown op kind '${op.k}'`);
@@ -194,6 +230,54 @@ function decode(context, value) {
         default:
             return { value, isMathValue: false };
     }
+}
+
+// Turns a value a read op produced into the wire form C#'s ThreeValue.Decode understands: a
+// primitive passes through, one of the five hand-written math types becomes the same $t-tagged shape
+// C# sends in the other direction, and undefined becomes null, since JSON has no undefined.
+//
+// Anything else throws rather than being serialized. A three.js object serialized as a plain JSON
+// object would arrive in C# as a bag of numbers that deserializes onto whichever fields happen to
+// match — a fabricated value where the caller expects a read one. The refusal mirrors the same rule
+// on the C# encode side.
+function encode(value) {
+    if (value === undefined || value === null) {
+        return null;
+    }
+
+    const type = typeof value;
+    if (type === 'number' || type === 'boolean' || type === 'string') {
+        return value;
+    }
+
+    if (value.isVector3) {
+        return { $t: 'Vector3', v: [value.x, value.y, value.z] };
+    }
+
+    if (value.isEuler) {
+        const order = EULER_ORDERS.indexOf(value.order);
+        if (order < 0) {
+            throw new Error(`Euler order '${value.order}' is not one of ${EULER_ORDERS.join(', ')}`);
+        }
+
+        return { $t: 'Euler', v: [value.x, value.y, value.z], o: order };
+    }
+
+    if (value.isQuaternion) {
+        return { $t: 'Quaternion', v: [value.x, value.y, value.z, value.w] };
+    }
+
+    if (value.isColor) {
+        return { $t: 'Color', v: [value.r, value.g, value.b] };
+    }
+
+    if (value.isMatrix4) {
+        // three.js stores elements column-major and C#'s Matrix4.Elements does too, so this must not
+        // transpose — the same rule the Matrix4 decode arm above states from the other direction.
+        return { $t: 'Matrix4', v: Array.from(value.elements) };
+    }
+
+    throw new Error(`A '${value.constructor ? value.constructor.name : type}' value has no wire encoding, so it cannot be read back`);
 }
 
 export function setActiveScene(contextId, sceneHandle, cameraHandle) {

@@ -215,6 +215,108 @@ public sealed class BatchedMesh : Mesh
 	}
 
 	/// <summary>
+	/// Get the color of the defined geometry. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getColorAt</c> returned.
+	/// </summary>
+	/// <param name="instanceId">The id of an instance to get the color of.</param>
+	/// <param name="color">The target object that is used to store the method's result.</param>
+	/// <returns>The value <c>getColorAt</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Color> GetColorAtAsync(float instanceId, Color color)
+	{
+		return RecordRead<Color>("getColorAt", instanceId, color);
+	}
+
+	/// <summary>
+	/// Get the local transformation matrix of the defined instance. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>getMatrixAt</c> returned.
+	/// </summary>
+	/// <param name="instanceId">The id of an instance to get the matrix of.</param>
+	/// <param name="target">
+	/// This 4x4 matrix will be set to the local transformation matrix of the defined instance.
+	/// </param>
+	/// <returns>The value <c>getMatrixAt</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Matrix4> GetMatrixAtAsync(float instanceId, Matrix4 target)
+	{
+		return RecordRead<Matrix4>("getMatrixAt", instanceId, target);
+	}
+
+	/// <summary>
+	/// Get whether the given instance is marked as "visible" or not. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>getVisibleAt</c> returned.
+	/// </summary>
+	/// <param name="instanceId">The id of an instance to get the visibility state of.</param>
+	/// <returns>The value <c>getVisibleAt</c> returned, once the JavaScript side has answered.</returns>
+	public Task<bool> GetVisibleAtAsync(float instanceId)
+	{
+		return RecordRead<bool>("getVisibleAt", instanceId);
+	}
+
+	/// <summary>
+	/// Get the geometryIndex of the defined instance. Records a read op, sends it behind every write
+	/// already pending, and completes with what <c>getGeometryIdAt</c> returned.
+	/// </summary>
+	/// <param name="instanceId">The id of an instance to get the geometryIndex of.</param>
+	/// <returns>The value <c>getGeometryIdAt</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetGeometryIdAtAsync(float instanceId)
+	{
+		return RecordRead<float>("getGeometryIdAt", instanceId);
+	}
+
+	/// <summary>
+	/// Adds the given geometry to the <see cref="BatchedMesh"/> and returns the associated index
+	/// referring to it. Records a read op, sends it behind every write already pending, and completes
+	/// with what <c>addGeometry</c> returned.
+	/// </summary>
+	/// <param name="geometry">The geometry to add into the <see cref="BatchedMesh"/>.</param>
+	/// <param name="reservedVertexRange">
+	/// Optional parameter specifying the amount of vertex buffer space to reserve for the added
+	/// geometry. This is necessary if it is planned to set a new geometry at this index at a later time
+	/// that is larger than the original geometry. Defaults to the length of the given geometry vertex
+	/// buffer.
+	/// </param>
+	/// <param name="reservedIndexRange">
+	/// Optional parameter specifying the amount of index buffer space to reserve for the added
+	/// geometry. This is necessary if it is planned to set a new geometry at this index at a later time
+	/// that is larger than the original geometry. Defaults to the length of the given geometry index
+	/// buffer.
+	/// </param>
+	/// <returns>The value <c>addGeometry</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> AddGeometryAsync(BufferGeometry geometry, float reservedVertexRange, float reservedIndexRange)
+	{
+		return RecordRead<float>("addGeometry", geometry, reservedVertexRange, reservedIndexRange);
+	}
+
+	/// <summary>
+	/// Adds a new instance to the <see cref="BatchedMesh"/> using the geometry of the given geometryId
+	/// and returns a new id referring to the new instance to be used by other functions. Records a read
+	/// op, sends it behind every write already pending, and completes with what <c>addInstance</c>
+	/// returned.
+	/// </summary>
+	/// <param name="geometryId">
+	/// The id of a previously added geometry via "addGeometry" to add into the
+	/// <see cref="BatchedMesh"/> to render.
+	/// </param>
+	/// <returns>The value <c>addInstance</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> AddInstanceAsync(float geometryId)
+	{
+		return RecordRead<float>("addInstance", geometryId);
+	}
+
+	/// <summary>
+	/// Replaces the geometry at <c>geometryId</c> with the provided geometry. Throws an error if there
+	/// is not enough space reserved for geometry. Calling this will change all instances that are
+	/// rendering that geometry. Records a read op, sends it behind every write already pending, and
+	/// completes with what <c>setGeometryAt</c> returned.
+	/// </summary>
+	/// <param name="geometryId">Which geometry id to replace with this geometry.</param>
+	/// <param name="geometry">The geometry to substitute at the given geometry id.</param>
+	/// <returns>The value <c>setGeometryAt</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> SetGeometryAtAsync(float geometryId, BufferGeometry geometry)
+	{
+		return RecordRead<float>("setGeometryAt", geometryId, geometry);
+	}
+
+	/// <summary>
 	/// Attaches the objects <c>THREE.BatchedMesh</c> is constructed from, so their create ops reach the
 	/// batch before the one that references them by handle, then emits this object's own.
 	/// </summary>

@@ -144,6 +144,46 @@ public abstract class ThreeObject
 	}
 
 	/// <summary>
+	/// Invokes a method on this object and hands its return value back, which is the one thing the rest
+	/// of this class cannot do: every other member records an instruction and returns immediately.
+	/// <para>
+	/// The read is recorded into <see cref="Batch"/> behind everything already pending and the whole
+	/// batch is sent in one call, so the value is taken after the writes the caller has already made.
+	/// </para>
+	/// <para>
+	/// Unlike <see cref="RecordCall"/>, a read on an unattached object is <b>not</b> held for replay: a
+	/// held write eventually happens, whereas a held read has no value to give the caller now, and there
+	/// is no JavaScript object to ask yet. It fails at the call site instead.
+	/// </para>
+	/// </summary>
+	/// <typeparam name="TValue">C# type the query declares it returns.</typeparam>
+	/// <param name="member">Name of the three.js method to invoke.</param>
+	/// <param name="args">Positional arguments to pass to the method.</param>
+	/// <returns>The value three.js returned, decoded into <typeparamref name="TValue"/>.</returns>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when this object is not attached to a <see cref="ThreeContext"/>, so there is nothing to
+	/// read from.
+	/// </exception>
+	protected Task<TValue> RecordRead<TValue>(string member, params object?[] args)
+	{
+		var batch = Batch;
+		if (batch?.Context is not { } context)
+		{
+			throw new InvalidOperationException(
+				$"'{GetType().Name}' (handle {Handle}) is not attached to a {nameof(ThreeContext)}, so '{member}' has nothing to read from. " +
+				$"A property written before an attach is replayed once it happens, but a read cannot be: there is no JavaScript object to ask, " +
+				$"and no value to hand back now. Attach the object graph to a context first.");
+		}
+
+		AttachMirroredArguments(batch, args);
+		var encodedArgs = args
+			.Select(ThreeValue.Encode)
+			.ToArray();
+
+		return context.ReadAsync<TValue>(Handle, member, encodedArgs);
+	}
+
+	/// <summary>
 	/// Emits the create op plus every property this object currently holds. Called on attach, and
 	/// again after a WebGL context loss to rebuild the scene from the C# mirror.
 	/// <para>

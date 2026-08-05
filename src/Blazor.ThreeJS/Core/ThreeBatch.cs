@@ -9,12 +9,20 @@ internal sealed class ThreeBatch
 {
 	private readonly List<ThreeOp> _ops = [];
 	private readonly Dictionary<(int Handle, string Member), int> _setIndexesByTarget = [];
+	private int _nextRequestId;
 
 	/// <summary>Whether any op is currently pending a <see cref="Drain"/>.</summary>
 	public bool HasPendingOps
 	{
 		get { return _ops.Any(); }
 	}
+
+	/// <summary>
+	/// The context that owns this batch and can deliver a <see cref="Read"/> to JavaScript. Assigned by
+	/// <see cref="ThreeContext"/> at construction; <see langword="null"/> in a batch built without one,
+	/// where a read has nowhere to go and fails at the call site rather than returning a made-up value.
+	/// </summary>
+	public ThreeContext? Context { get; set; }
 
 	/// <summary>
 	/// Records an instantiation of a new three.js object under <paramref name="handle"/>. Also acts as
@@ -119,6 +127,40 @@ internal sealed class ThreeBatch
 			Member = member,
 			Args = args
 		});
+	}
+
+	/// <summary>
+	/// Records a method invocation on <paramref name="handle"/> whose return value the caller needs
+	/// back, and allocates the request id the applier will echo on the result row.
+	/// <para>
+	/// Recorded into the same batch as the writes that precede it, rather than sent on its own call, so
+	/// the read runs after every write already made in C# with no ordering discipline for a caller to
+	/// forget. Like <see cref="Call"/> it never coalesces and acts as a barrier for this handle: a read
+	/// observes the object's property state at the point it runs, so a <c>Set</c> recorded afterwards
+	/// appends a new op instead of overwriting a value the read may already have seen.
+	/// </para>
+	/// </summary>
+	/// <param name="handle">Handle of the object to invoke the method on.</param>
+	/// <param name="member">Name of the method to invoke.</param>
+	/// <param name="args">Positional arguments to pass to the method.</param>
+	/// <returns>The request id identifying this read in the applier's response.</returns>
+	public int Read(int handle, string member, object?[] args)
+	{
+		InvalidateSetCoalescing(handle);
+
+		// Never reset, not even by Drain: an id that could recur across batches would let a late
+		// response from an earlier batch be matched to a later request.
+		_nextRequestId++;
+		_ops.Add(new ThreeOp
+		{
+			Kind = ThreeOpKind.Read,
+			Handle = handle,
+			Member = member,
+			Args = args,
+			RequestId = _nextRequestId
+		});
+
+		return _nextRequestId;
 	}
 
 	/// <summary>

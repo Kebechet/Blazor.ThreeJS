@@ -62,6 +62,14 @@ internal static class DocCommentEmitter
 		WriteElement(writer, "remarks", text);
 	}
 
+	/// <summary>Writes a <c>&lt;returns&gt;</c> block for a method that hands a value back.</summary>
+	/// <param name="writer">Destination.</param>
+	/// <param name="text">Already-rendered XML content.</param>
+	public static void WriteReturns(CSharpWriter writer, string text)
+	{
+		WriteElement(writer, "returns", text);
+	}
+
 	/// <summary>Writes a <c>&lt;param&gt;</c> block for one constructor or method parameter.</summary>
 	/// <param name="writer">Destination.</param>
 	/// <param name="parameterName">C# parameter name.</param>

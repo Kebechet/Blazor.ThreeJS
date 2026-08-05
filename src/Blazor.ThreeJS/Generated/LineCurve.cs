@@ -54,6 +54,28 @@ public sealed class LineCurve : ThreeObject
 	}
 
 	/// <summary>
+	/// Get total <c>Curve</c> arc length. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getLength</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getLength</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetLengthAsync()
+	{
+		return RecordRead<float>("getLength");
+	}
+
+	/// <summary>
+	/// Given u in the range <c>[ 0, 1 ]</c>,. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getUtoTmapping</c> returned.
+	/// </summary>
+	/// <param name="u"></param>
+	/// <param name="distance"></param>
+	/// <returns>The value <c>getUtoTmapping</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetUtoTmappingAsync(float u, float distance)
+	{
+		return RecordRead<float>("getUtoTmapping", u, distance);
+	}
+
+	/// <summary>
 	/// Emits the create op for <c>THREE.LineCurve</c>, then replays every property written before this
 	/// object was attached.
 	/// </summary>

@@ -204,30 +204,29 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 |---|---|---|
 | `AmbientLight` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `AmbientLight` | `property color` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
-| `AmbientLight` | `property isAmbientLight` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
-| `AmbientLight` | `property isLight` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `AmbientLight` | `property isAmbientLight` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `AmbientLight` | `property isLight` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `AnimationClip` | `constructor parameter blendMode` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `AnimationClip` | `constructor parameter tracks` | `Array<KeyframeTrack>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `AnimationClip` | `method CreateClipsFromMorphTargetSequences` | static; the mirror models instances, and a static write has no handle to address |
 | `AnimationClip` | `method CreateFromMorphTargetSequence` | static; the mirror models instances, and a static write has no handle to address |
-| `AnimationClip` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `AnimationClip` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `AnimationClip` | `method findByName` | static; the mirror models instances, and a static write has no handle to address |
-| `AnimationClip` | `method optimize` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `AnimationClip` | `method optimize` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `AnimationClip` | `method parse` | static; the mirror models instances, and a static write has no handle to address |
-| `AnimationClip` | `method resetDuration` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `AnimationClip` | `method resetDuration` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `AnimationClip` | `method toJSON` | static; the mirror models instances, and a static write has no handle to address |
-| `AnimationClip` | `method trim` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
-| `AnimationClip` | `method validate` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
+| `AnimationClip` | `method trim` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `AnimationClip` | `property tracks` | `Array<KeyframeTrack>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `AnimationClip` | `property userData` | `Record<string, unknown>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `AnimationClip` | `property uuid` | read-only in three.js (declared `string`), and the wire format has no read op — C# could neither write it nor observe it |
+| `AnimationClip` | `property uuid` | read-only in three.js (declared `string`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `AnimationLoader` | `method parse` | parameter 'json': `readonly unknown[]` is a TypeScript `typeOperator` type, which has no C# equivalent |
 | `AnimationObjectGroup` | `constructor parameter args` | a rest parameter; three.js applies its own behaviour when it receives none |
 | `AnimationObjectGroup` | `method add` | parameter 'args' is a rest parameter (`Object3D[]`) |
 | `AnimationObjectGroup` | `method remove` | parameter 'args' is a rest parameter (`Object3D[]`) |
 | `AnimationObjectGroup` | `method uncache` | parameter 'args' is a rest parameter (`Object3D[]`) |
 | `AnimationObjectGroup` | `property isAnimationObjectGroup` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
-| `AnimationObjectGroup` | `property uuid` | read-only in three.js (declared `string`), and the wire format has no read op — C# could neither write it nor observe it |
+| `AnimationObjectGroup` | `property uuid` | read-only in three.js (declared `string`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `AnimationUtils` | `method convertArray` | static; the mirror models instances, and a static write has no handle to address |
 | `AnimationUtils` | `method flattenJSON` | static; the mirror models instances, and a static write has no handle to address |
 | `AnimationUtils` | `method getKeyframeOrder` | static; the mirror models instances, and a static write has no handle to address |
@@ -238,19 +237,15 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `ArcCurve` | `property isArcCurve` | the declaration carries no type |
 | `ArrayCamera` | `constructor parameter array` | `PerspectiveCamera[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `ArrayCamera` | `property cameras` | `PerspectiveCamera[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
-| `ArrayCamera` | `property isArrayCamera` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
-| `ArrayCamera` | `property isMultiViewCamera` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `ArrayCamera` | `property isArrayCamera` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `ArrayCamera` | `property isMultiViewCamera` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `ArrowHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `Audio` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
-| `Audio` | `method connect` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `Audio` | `method connect` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `Audio` | `method disconnect` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
-| `Audio` | `method getDetune` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `Audio` | `method getFilter` | return type: `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `method getFilters` | return type: `AudioNode[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
-| `Audio` | `method getLoop` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `Audio` | `method getOutput` | return type: `GainNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Audio` | `method getPlaybackRate` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `Audio` | `method getVolume` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `Audio` | `method pause` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
 | `Audio` | `method play` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
 | `Audio` | `method setBuffer` | parameter 'audioBuffer': `AudioBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -264,18 +259,17 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Audio` | `method stop` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
 | `Audio` | `property buffer` | `AudioBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `property context` | `AudioContext` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Audio` | `property detune` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `Audio` | `property detune` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `Audio` | `property filters` | `AudioNode[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `Audio` | `property gain` | `GainNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Audio` | `property hasPlaybackControl` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
-| `Audio` | `property isPlaying` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
-| `Audio` | `property listener` | read-only in three.js (declared `AudioListener`), and the wire format has no read op — C# could neither write it nor observe it |
-| `Audio` | `property loop` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
-| `Audio` | `property playbackRate` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `Audio` | `property hasPlaybackControl` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `Audio` | `property isPlaying` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `Audio` | `property listener` | read-only in three.js (declared `AudioListener`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `Audio` | `property loop` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `Audio` | `property playbackRate` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `Audio` | `property source` | `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `property sourceType` | `"empty" | "audioNode" | "mediaNode" | "mediaStreamNode" | "buffer"` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `AudioAnalyser` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
-| `AudioAnalyser` | `method getAverageFrequency` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `AudioAnalyser` | `method getFrequencyData` | return type: `Uint8Array` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `AudioAnalyser` | `property analyser` | `AnalyserNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `AudioAnalyser` | `property data` | `Uint8Array` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -283,36 +277,28 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `AudioContext` | `method setContext` | static; the mirror models instances, and a static write has no handle to address |
 | `AudioListener` | `method getFilter` | return type: `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `AudioListener` | `method getInput` | return type: `GainNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `AudioListener` | `method getMasterVolume` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `AudioListener` | `method removeFilter` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `AudioListener` | `method removeFilter` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `AudioListener` | `method setFilter` | parameter 'value': `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `AudioListener` | `property context` | `AudioContext` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `AudioListener` | `property filter` | `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `AudioListener` | `property gain` | `GainNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `AudioListener` | `property timeDelta` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `AudioListener` | `property timeDelta` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `AxesHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `BatchedMesh` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `BatchedMesh` | `method addGeometry` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `BatchedMesh` | `method addInstance` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `BatchedMesh` | `method getBoundingBoxAt` | parameter 'target': `Box3` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `BatchedMesh` | `method getBoundingSphereAt` | parameter 'target': `Sphere` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `BatchedMesh` | `method getColorAt` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `BatchedMesh` | `method getGeometryIdAt` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `BatchedMesh` | `method getGeometryRangeAt` | return type: `BatchedMeshGeometryRange` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `BatchedMesh` | `method getMatrixAt` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `BatchedMesh` | `method getVisibleAt` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `BatchedMesh` | `method optimize` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `BatchedMesh` | `method optimize` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `BatchedMesh` | `method setColorAt` | parameter 'color': `Color | Vector4` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BatchedMesh` | `method setCustomSort` | parameter 'sortFunction': `(this: this, list: Array<{ start: number; count: number; z: number }>, camera: Camera) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `BatchedMesh` | `method setGeometryAt` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `BatchedMesh` | `property boundingBox` | `Box3` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `BatchedMesh` | `property boundingSphere` | `Sphere` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `BatchedMesh` | `property customSort` | `(this: this, list: Array<{ start: number; count: number; z: number }>, camera: Camera) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `BatchedMesh` | `property instanceCount` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `BatchedMesh` | `property instanceCount` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `BatchedMesh` | `property isBatchedMesh` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
-| `BatchedMesh` | `property maxInstanceCount` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
-| `BatchedMesh` | `property unusedIndexCount` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
-| `BatchedMesh` | `property unusedVertexCount` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `BatchedMesh` | `property maxInstanceCount` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `BatchedMesh` | `property unusedIndexCount` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `BatchedMesh` | `property unusedVertexCount` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `Bone` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `Bone` | `property isBone` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
 | `BoxGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
@@ -320,8 +306,8 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `BoxGeometry` | `property parameters` | `{ readonly width: number; readonly height: number; readonly depth: number; readonly widthSegments: number; readonly heightSegments: number; readonly depthSegments: number; }` is an anonymous object literal type with no named C# equivalent |
 | `BoxHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `BufferGeometry` | `@example` | 2 TypeScript example block(s), which would be misleading in C# documentation |
-| `BufferGeometry` | `method center` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
-| `BufferGeometry` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `BufferGeometry` | `method center` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
+| `BufferGeometry` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `BufferGeometry` | `method deleteAttribute` | parameter 'name': `keyof Attributes` is a TypeScript `typeOperator` type, which has no C# equivalent |
 | `BufferGeometry` | `method getAttribute` | parameter 'name': type parameter `K` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `BufferGeometry` | `method getIndex` | return type: `BufferAttribute` is not an emitted class: required parameter 'array' cannot be mapped: `TypedArray` aliases `| Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array`, which is neither a group of numeric constants nor a type the mirror expresses |
@@ -332,7 +318,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `BufferGeometry` | `method setIndex` | parameter 'index': `BufferAttribute | number[] | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BufferGeometry` | `method setIndirect` | parameter 'indirect': `IndirectStorageBufferAttribute` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `BufferGeometry` | `method toJSON` | return type: `BufferGeometryJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `BufferGeometry` | `method toNonIndexed` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `BufferGeometry` | `method toNonIndexed` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `BufferGeometry` | `property attributes` | `Record<string, BufferAttribute | InterleavedBufferAttribute>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `BufferGeometry` | `property boundingBox` | `Box3` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `BufferGeometry` | `property boundingSphere` | `Sphere` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
@@ -345,11 +331,11 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `BufferGeometry` | `property type` | `string | "BufferGeometry"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BufferGeometry` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `BufferGeometryLoader` | `method parse` | parameter 'json': `unknown` carries no type information a C# signature could express |
-| `Camera` | `property isCamera` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `Camera` | `property isCamera` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `Camera` | `property matrixWorldInverse` | `Matrix4` hands its components out as a mutable array, so a change to it cannot be observed and there is nothing to record a property write from |
 | `Camera` | `property projectionMatrix` | `Matrix4` hands its components out as a mutable array, so a change to it cannot be observed and there is nothing to record a property write from |
 | `Camera` | `property projectionMatrixInverse` | `Matrix4` hands its components out as a mutable array, so a change to it cannot be observed and there is nothing to record a property write from |
-| `Camera` | `property reversedDepth` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `Camera` | `property reversedDepth` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `Camera` | `property viewport` | `Vector4` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `CameraHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `CameraHelper` | `property pointMap` | `{ [x: string]: number[]; }` is an anonymous object literal type with no named C# equivalent |
@@ -362,7 +348,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CanvasTexture` | `constructor parameter type` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `CanvasTexture` | `constructor parameter wrapS` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `CanvasTexture` | `constructor parameter wrapT` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
-| `CanvasTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `CanvasTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `CanvasTexture` | `method copy` | parameter 'source': `Texture<TImage>` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `CanvasTexture` | `method setValues` | parameter 'values': `TextureParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `CanvasTexture` | `method toJSON` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
@@ -371,10 +357,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CanvasTexture` | `property DEFAULT_IMAGE` | static; the mirror models instances, and a static write has no handle to address |
 | `CanvasTexture` | `property DEFAULT_MAPPING` | static; the mirror models instances, and a static write has no handle to address |
 | `CanvasTexture` | `property center` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `CanvasTexture` | `property depth` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `CanvasTexture` | `property depth` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `CanvasTexture` | `property format` | `AnyPixelFormat` aliases `PixelFormat | DepthTexturePixelFormat | CompressedPixelFormat`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `CanvasTexture` | `property height` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
-| `CanvasTexture` | `property id` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `CanvasTexture` | `property height` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `CanvasTexture` | `property id` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `CanvasTexture` | `property image` | `unknown` carries no type information a C# signature could express |
 | `CanvasTexture` | `property internalFormat` | `PixelFormatGPU` aliases `| "ALPHA" | "RGB" | "RGBA" | "LUMINANCE" | "LUMINANCE_ALPHA" | "RED_INTEGER" | "R8" | "R8_SNORM" | "R8I" | "R8UI" | "R16I" | "R16UI" | "R16F" | "R32I" | "R32UI" | "R32F" | "RG8" | "RG8_SNORM" | "RG8I" | "RG8UI" | "RG16I" | "RG16UI" | "RG16F" | "RG32I" | "RG32UI" | "RG32F" | "RGB565" | "RGB8" | "RGB8_SNORM" | "RGB8I" | "RGB8UI" | "RGB16I" | "RGB16UI" | "RGB16F" | "RGB32I" | "RGB32UI" | "RGB32F" | "RGB9_E5" | "SRGB8" | "R11F_G11F_B10F" | "RGBA4" | "RGBA8" | "RGBA8_SNORM" | "RGBA8I" | "RGBA8UI" | "RGBA16I" | "RGBA16UI" | "RGBA16F" | "RGBA32I" | "RGBA32UI" | "RGBA32F" | "RGB5_A1" | "RGB10_A2" | "RGB10_A2UI" | "SRGB8_ALPHA8" | "SRGB8" | "DEPTH_COMPONENT16" | "DEPTH_COMPONENT24" | "DEPTH_COMPONENT32F" | "DEPTH24_STENCIL8" | "DEPTH32F_STENCIL8"`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `CanvasTexture` | `property isCanvasTexture` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
@@ -388,7 +374,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CanvasTexture` | `property source` | `Source<TImage>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `CanvasTexture` | `property updateRanges` | `Array<{ start: number; count: number }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `CanvasTexture` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `CanvasTexture` | `property width` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `CanvasTexture` | `property width` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `CapsuleGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `CapsuleGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
 | `CapsuleGeometry` | `property parameters` | `{ readonly radius: number; readonly height: number; readonly capSegments: number; readonly radialSegments: number; readonly heightSegments: number; }` is an anonymous object literal type with no named C# equivalent |
@@ -397,11 +383,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CatmullRomCurve3` | `constructor parameter curveType` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `CatmullRomCurve3` | `constructor parameter points` | `Vector3[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `CatmullRomCurve3` | `constructor parameter tension` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
-| `CatmullRomCurve3` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `CatmullRomCurve3` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `CatmullRomCurve3` | `method computeFrenetFrames` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `CatmullRomCurve3` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `CatmullRomCurve3` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `CatmullRomCurve3` | `method getLength` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `CatmullRomCurve3` | `method getLengths` | return type: `number[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `CatmullRomCurve3` | `method getPoint` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CatmullRomCurve3` | `method getPointAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -409,7 +394,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CatmullRomCurve3` | `method getSpacedPoints` | return type: `TVector[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `CatmullRomCurve3` | `method getTangent` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CatmullRomCurve3` | `method getTangentAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `CatmullRomCurve3` | `method getUtoTmapping` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `CatmullRomCurve3` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CatmullRomCurve3` | `property curveType` | `CurveType` aliases `"centripetal" | "chordal" | "catmullrom"`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `CatmullRomCurve3` | `property isCatmullRomCurve3` | the declaration carries no type |
@@ -418,8 +402,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CircleGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `CircleGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
 | `CircleGeometry` | `property parameters` | `{ readonly radius: number; readonly segments: number; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent |
-| `Clock` | `method getDelta` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `Clock` | `method getElapsedTime` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `ConeGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `CubeDepthTexture` | `property images` | `CubeDepthTextureImageData` aliases `[ DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, ]`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `CubeDepthTexture` | `property isCubeDepthTexture` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
@@ -435,7 +417,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CubeTexture` | `constructor parameter type` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `CubeTexture` | `constructor parameter wrapS` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `CubeTexture` | `constructor parameter wrapT` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
-| `CubeTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `CubeTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `CubeTexture` | `method copy` | parameter 'source': `Texture<TImage>` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `CubeTexture` | `method setValues` | parameter 'values': `TextureParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `CubeTexture` | `method toJSON` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
@@ -444,10 +426,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CubeTexture` | `property DEFAULT_IMAGE` | static; the mirror models instances, and a static write has no handle to address |
 | `CubeTexture` | `property DEFAULT_MAPPING` | static; the mirror models instances, and a static write has no handle to address |
 | `CubeTexture` | `property center` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `CubeTexture` | `property depth` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `CubeTexture` | `property depth` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `CubeTexture` | `property format` | `AnyPixelFormat` aliases `PixelFormat | DepthTexturePixelFormat | CompressedPixelFormat`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `CubeTexture` | `property height` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
-| `CubeTexture` | `property id` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `CubeTexture` | `property height` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `CubeTexture` | `property id` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `CubeTexture` | `property image` | `unknown` carries no type information a C# signature could express |
 | `CubeTexture` | `property images` | `TImage[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `CubeTexture` | `property internalFormat` | `PixelFormatGPU` aliases `| "ALPHA" | "RGB" | "RGBA" | "LUMINANCE" | "LUMINANCE_ALPHA" | "RED_INTEGER" | "R8" | "R8_SNORM" | "R8I" | "R8UI" | "R16I" | "R16UI" | "R16F" | "R32I" | "R32UI" | "R32F" | "RG8" | "RG8_SNORM" | "RG8I" | "RG8UI" | "RG16I" | "RG16UI" | "RG16F" | "RG32I" | "RG32UI" | "RG32F" | "RGB565" | "RGB8" | "RGB8_SNORM" | "RGB8I" | "RGB8UI" | "RGB16I" | "RGB16UI" | "RGB16F" | "RGB32I" | "RGB32UI" | "RGB32F" | "RGB9_E5" | "SRGB8" | "R11F_G11F_B10F" | "RGBA4" | "RGBA8" | "RGBA8_SNORM" | "RGBA8I" | "RGBA8UI" | "RGBA16I" | "RGBA16UI" | "RGBA16F" | "RGBA32I" | "RGBA32UI" | "RGBA32F" | "RGB5_A1" | "RGB10_A2" | "RGB10_A2UI" | "SRGB8_ALPHA8" | "SRGB8" | "DEPTH_COMPONENT16" | "DEPTH_COMPONENT24" | "DEPTH_COMPONENT32F" | "DEPTH24_STENCIL8" | "DEPTH32F_STENCIL8"`, which is neither a group of numeric constants nor a type the mirror expresses |
@@ -461,17 +443,16 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CubeTexture` | `property source` | `Source<TImage>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `CubeTexture` | `property updateRanges` | `Array<{ start: number; count: number }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `CubeTexture` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `CubeTexture` | `property width` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `CubeTexture` | `property width` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `CubicBezierCurve` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `CubicBezierCurve` | `constructor parameter v0` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `CubicBezierCurve` | `constructor parameter v1` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `CubicBezierCurve` | `constructor parameter v2` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `CubicBezierCurve` | `constructor parameter v3` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
-| `CubicBezierCurve` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `CubicBezierCurve` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `CubicBezierCurve` | `method computeFrenetFrames` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `CubicBezierCurve` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `CubicBezierCurve` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `CubicBezierCurve` | `method getLength` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `CubicBezierCurve` | `method getLengths` | return type: `number[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `CubicBezierCurve` | `method getPoint` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CubicBezierCurve` | `method getPointAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -479,7 +460,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CubicBezierCurve` | `method getSpacedPoints` | return type: `TVector[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `CubicBezierCurve` | `method getTangent` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CubicBezierCurve` | `method getTangentAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `CubicBezierCurve` | `method getUtoTmapping` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `CubicBezierCurve` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CubicBezierCurve` | `property isCubicBezierCurve` | the declaration carries no type |
 | `CubicBezierCurve` | `property type` | `string | "CubicBezierCurve"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -488,11 +468,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CubicBezierCurve` | `property v2` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `CubicBezierCurve` | `property v3` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `CubicBezierCurve3` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `CubicBezierCurve3` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `CubicBezierCurve3` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `CubicBezierCurve3` | `method computeFrenetFrames` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `CubicBezierCurve3` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `CubicBezierCurve3` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `CubicBezierCurve3` | `method getLength` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `CubicBezierCurve3` | `method getLengths` | return type: `number[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `CubicBezierCurve3` | `method getPoint` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CubicBezierCurve3` | `method getPointAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -500,7 +479,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CubicBezierCurve3` | `method getSpacedPoints` | return type: `TVector[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `CubicBezierCurve3` | `method getTangent` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CubicBezierCurve3` | `method getTangentAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `CubicBezierCurve3` | `method getUtoTmapping` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `CubicBezierCurve3` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CubicBezierCurve3` | `property isCubicBezierCurve3` | the declaration carries no type |
 | `CubicBezierCurve3` | `property type` | `string | "CubicBezierCurve3"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -509,13 +487,12 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CubicBezierCurve3` | `property v2` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `CubicBezierCurve3` | `property v3` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `CurvePath` | `method add` | parameter 'curve': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
-| `CurvePath` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
-| `CurvePath` | `method closePath` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `CurvePath` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
+| `CurvePath` | `method closePath` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `CurvePath` | `method computeFrenetFrames` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `CurvePath` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `CurvePath` | `method fromJSON` | parameter 'json': `CurvePathJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CurvePath` | `method getCurveLengths` | return type: `number[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
-| `CurvePath` | `method getLength` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `CurvePath` | `method getLengths` | return type: `number[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `CurvePath` | `method getPoint` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getPointAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -523,7 +500,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CurvePath` | `method getSpacedPoints` | return type: `TVector[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `CurvePath` | `method getTangent` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getTangentAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `CurvePath` | `method getUtoTmapping` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `CurvePath` | `method toJSON` | return type: `CurvePathJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CurvePath` | `property curves` | `Array<Curve<TVector>>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `CurvePath` | `property type` | `string | "CurvePath"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -535,7 +511,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Data3DTexture` | `constructor parameter depth` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `Data3DTexture` | `constructor parameter height` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `Data3DTexture` | `constructor parameter width` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
-| `Data3DTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `Data3DTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `Data3DTexture` | `method copy` | parameter 'source': `Texture<TImage>` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `Data3DTexture` | `method setValues` | parameter 'values': `TextureParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `Data3DTexture` | `method toJSON` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
@@ -544,10 +520,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Data3DTexture` | `property DEFAULT_IMAGE` | static; the mirror models instances, and a static write has no handle to address |
 | `Data3DTexture` | `property DEFAULT_MAPPING` | static; the mirror models instances, and a static write has no handle to address |
 | `Data3DTexture` | `property center` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `Data3DTexture` | `property depth` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `Data3DTexture` | `property depth` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `Data3DTexture` | `property format` | `AnyPixelFormat` aliases `PixelFormat | DepthTexturePixelFormat | CompressedPixelFormat`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `Data3DTexture` | `property height` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
-| `Data3DTexture` | `property id` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `Data3DTexture` | `property height` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `Data3DTexture` | `property id` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `Data3DTexture` | `property image` | `unknown` carries no type information a C# signature could express |
 | `Data3DTexture` | `property internalFormat` | `PixelFormatGPU` aliases `| "ALPHA" | "RGB" | "RGBA" | "LUMINANCE" | "LUMINANCE_ALPHA" | "RED_INTEGER" | "R8" | "R8_SNORM" | "R8I" | "R8UI" | "R16I" | "R16UI" | "R16F" | "R32I" | "R32UI" | "R32F" | "RG8" | "RG8_SNORM" | "RG8I" | "RG8UI" | "RG16I" | "RG16UI" | "RG16F" | "RG32I" | "RG32UI" | "RG32F" | "RGB565" | "RGB8" | "RGB8_SNORM" | "RGB8I" | "RGB8UI" | "RGB16I" | "RGB16UI" | "RGB16F" | "RGB32I" | "RGB32UI" | "RGB32F" | "RGB9_E5" | "SRGB8" | "R11F_G11F_B10F" | "RGBA4" | "RGBA8" | "RGBA8_SNORM" | "RGBA8I" | "RGBA8UI" | "RGBA16I" | "RGBA16UI" | "RGBA16F" | "RGBA32I" | "RGBA32UI" | "RGBA32F" | "RGB5_A1" | "RGB10_A2" | "RGB10_A2UI" | "SRGB8_ALPHA8" | "SRGB8" | "DEPTH_COMPONENT16" | "DEPTH_COMPONENT24" | "DEPTH_COMPONENT32F" | "DEPTH24_STENCIL8" | "DEPTH32F_STENCIL8"`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Data3DTexture` | `property isData3DTexture` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
@@ -561,13 +537,13 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Data3DTexture` | `property source` | `Source<TImage>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `Data3DTexture` | `property updateRanges` | `Array<{ start: number; count: number }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Data3DTexture` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Data3DTexture` | `property width` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `Data3DTexture` | `property width` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `DataArrayTexture` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `DataArrayTexture` | `constructor parameter data` | `TypedArray` aliases `| Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `DataArrayTexture` | `constructor parameter depth` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `DataArrayTexture` | `constructor parameter height` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `DataArrayTexture` | `constructor parameter width` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
-| `DataArrayTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `DataArrayTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `DataArrayTexture` | `method copy` | parameter 'source': `Texture<TImage>` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `DataArrayTexture` | `method setValues` | parameter 'values': `TextureParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `DataArrayTexture` | `method toJSON` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
@@ -576,10 +552,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `DataArrayTexture` | `property DEFAULT_IMAGE` | static; the mirror models instances, and a static write has no handle to address |
 | `DataArrayTexture` | `property DEFAULT_MAPPING` | static; the mirror models instances, and a static write has no handle to address |
 | `DataArrayTexture` | `property center` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `DataArrayTexture` | `property depth` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `DataArrayTexture` | `property depth` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `DataArrayTexture` | `property format` | `AnyPixelFormat` aliases `PixelFormat | DepthTexturePixelFormat | CompressedPixelFormat`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `DataArrayTexture` | `property height` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
-| `DataArrayTexture` | `property id` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `DataArrayTexture` | `property height` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `DataArrayTexture` | `property id` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `DataArrayTexture` | `property image` | `unknown` carries no type information a C# signature could express |
 | `DataArrayTexture` | `property internalFormat` | `PixelFormatGPU` aliases `| "ALPHA" | "RGB" | "RGBA" | "LUMINANCE" | "LUMINANCE_ALPHA" | "RED_INTEGER" | "R8" | "R8_SNORM" | "R8I" | "R8UI" | "R16I" | "R16UI" | "R16F" | "R32I" | "R32UI" | "R32F" | "RG8" | "RG8_SNORM" | "RG8I" | "RG8UI" | "RG16I" | "RG16UI" | "RG16F" | "RG32I" | "RG32UI" | "RG32F" | "RGB565" | "RGB8" | "RGB8_SNORM" | "RGB8I" | "RGB8UI" | "RGB16I" | "RGB16UI" | "RGB16F" | "RGB32I" | "RGB32UI" | "RGB32F" | "RGB9_E5" | "SRGB8" | "R11F_G11F_B10F" | "RGBA4" | "RGBA8" | "RGBA8_SNORM" | "RGBA8I" | "RGBA8UI" | "RGBA16I" | "RGBA16UI" | "RGBA16F" | "RGBA32I" | "RGBA32UI" | "RGBA32F" | "RGB5_A1" | "RGB10_A2" | "RGB10_A2UI" | "SRGB8_ALPHA8" | "SRGB8" | "DEPTH_COMPONENT16" | "DEPTH_COMPONENT24" | "DEPTH_COMPONENT32F" | "DEPTH24_STENCIL8" | "DEPTH32F_STENCIL8"`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `DataArrayTexture` | `property isDataArrayTexture` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
@@ -594,7 +570,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `DataArrayTexture` | `property source` | `Source<TImage>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `DataArrayTexture` | `property updateRanges` | `Array<{ start: number; count: number }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `DataArrayTexture` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `DataArrayTexture` | `property width` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `DataArrayTexture` | `property width` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `DataTexture` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `DataTexture` | `constructor parameter anisotropy` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `DataTexture` | `constructor parameter colorSpace` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
@@ -608,7 +584,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `DataTexture` | `constructor parameter width` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `DataTexture` | `constructor parameter wrapS` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `DataTexture` | `constructor parameter wrapT` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
-| `DataTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `DataTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `DataTexture` | `method copy` | parameter 'source': `Texture<TImage>` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `DataTexture` | `method setValues` | parameter 'values': `TextureParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `DataTexture` | `method toJSON` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
@@ -617,10 +593,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `DataTexture` | `property DEFAULT_IMAGE` | static; the mirror models instances, and a static write has no handle to address |
 | `DataTexture` | `property DEFAULT_MAPPING` | static; the mirror models instances, and a static write has no handle to address |
 | `DataTexture` | `property center` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `DataTexture` | `property depth` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `DataTexture` | `property depth` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `DataTexture` | `property format` | `AnyPixelFormat` aliases `PixelFormat | DepthTexturePixelFormat | CompressedPixelFormat`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `DataTexture` | `property height` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
-| `DataTexture` | `property id` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `DataTexture` | `property height` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `DataTexture` | `property id` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `DataTexture` | `property image` | `unknown` carries no type information a C# signature could express |
 | `DataTexture` | `property internalFormat` | `PixelFormatGPU` aliases `| "ALPHA" | "RGB" | "RGBA" | "LUMINANCE" | "LUMINANCE_ALPHA" | "RED_INTEGER" | "R8" | "R8_SNORM" | "R8I" | "R8UI" | "R16I" | "R16UI" | "R16F" | "R32I" | "R32UI" | "R32F" | "RG8" | "RG8_SNORM" | "RG8I" | "RG8UI" | "RG16I" | "RG16UI" | "RG16F" | "RG32I" | "RG32UI" | "RG32F" | "RGB565" | "RGB8" | "RGB8_SNORM" | "RGB8I" | "RGB8UI" | "RGB16I" | "RGB16UI" | "RGB16F" | "RGB32I" | "RGB32UI" | "RGB32F" | "RGB9_E5" | "SRGB8" | "R11F_G11F_B10F" | "RGBA4" | "RGBA8" | "RGBA8_SNORM" | "RGBA8I" | "RGBA8UI" | "RGBA16I" | "RGBA16UI" | "RGBA16F" | "RGBA32I" | "RGBA32UI" | "RGBA32F" | "RGB5_A1" | "RGB10_A2" | "RGB10_A2UI" | "SRGB8_ALPHA8" | "SRGB8" | "DEPTH_COMPONENT16" | "DEPTH_COMPONENT24" | "DEPTH_COMPONENT32F" | "DEPTH24_STENCIL8" | "DEPTH32F_STENCIL8"`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `DataTexture` | `property isDataTexture` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
@@ -634,10 +610,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `DataTexture` | `property source` | `Source<TImage>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `DataTexture` | `property updateRanges` | `Array<{ start: number; count: number }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `DataTexture` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `DataTexture` | `property width` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `DataTexture` | `property width` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `DataUtils` | `method fromHalfFloat` | static; the mirror models instances, and a static write has no handle to address |
 | `DataUtils` | `method toHalfFloat` | static; the mirror models instances, and a static write has no handle to address |
-| `DepthTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `DepthTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `DepthTexture` | `method copy` | parameter 'source': `Texture<TImage>` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `DepthTexture` | `method setValues` | parameter 'values': `TextureParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `DepthTexture` | `method toJSON` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
@@ -646,9 +622,9 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `DepthTexture` | `property DEFAULT_IMAGE` | static; the mirror models instances, and a static write has no handle to address |
 | `DepthTexture` | `property DEFAULT_MAPPING` | static; the mirror models instances, and a static write has no handle to address |
 | `DepthTexture` | `property center` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `DepthTexture` | `property depth` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
-| `DepthTexture` | `property height` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
-| `DepthTexture` | `property id` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `DepthTexture` | `property depth` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `DepthTexture` | `property height` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `DepthTexture` | `property id` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `DepthTexture` | `property image` | `unknown` carries no type information a C# signature could express |
 | `DepthTexture` | `property internalFormat` | `PixelFormatGPU` aliases `| "ALPHA" | "RGB" | "RGBA" | "LUMINANCE" | "LUMINANCE_ALPHA" | "RED_INTEGER" | "R8" | "R8_SNORM" | "R8I" | "R8UI" | "R16I" | "R16UI" | "R16F" | "R32I" | "R32UI" | "R32F" | "RG8" | "RG8_SNORM" | "RG8I" | "RG8UI" | "RG16I" | "RG16UI" | "RG16F" | "RG32I" | "RG32UI" | "RG32F" | "RGB565" | "RGB8" | "RGB8_SNORM" | "RGB8I" | "RGB8UI" | "RGB16I" | "RGB16UI" | "RGB16F" | "RGB32I" | "RGB32UI" | "RGB32F" | "RGB9_E5" | "SRGB8" | "R11F_G11F_B10F" | "RGBA4" | "RGBA8" | "RGBA8_SNORM" | "RGBA8I" | "RGBA8UI" | "RGBA16I" | "RGBA16UI" | "RGBA16F" | "RGBA32I" | "RGBA32UI" | "RGBA32F" | "RGB5_A1" | "RGB10_A2" | "RGB10_A2UI" | "SRGB8_ALPHA8" | "SRGB8" | "DEPTH_COMPONENT16" | "DEPTH_COMPONENT24" | "DEPTH_COMPONENT32F" | "DEPTH24_STENCIL8" | "DEPTH32F_STENCIL8"`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `DepthTexture` | `property isDepthTexture` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
@@ -662,22 +638,21 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `DepthTexture` | `property source` | `Source<TImage>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `DepthTexture` | `property updateRanges` | `Array<{ start: number; count: number }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `DepthTexture` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `DepthTexture` | `property width` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `DepthTexture` | `property width` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `DirectionalLight` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `DirectionalLight` | `property color` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
-| `DirectionalLight` | `property isDirectionalLight` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
-| `DirectionalLight` | `property isLight` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `DirectionalLight` | `property isDirectionalLight` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `DirectionalLight` | `property isLight` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `DirectionalLight` | `property shadow` | `DirectionalLightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `DirectionalLightHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `DirectionalLightHelper` | `property color` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `EdgesGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `EdgesGeometry` | `property parameters` | `{ readonly geometry: TBufferGeometry | null; readonly thresholdAngle: number; }` is an anonymous object literal type with no named C# equivalent |
 | `EllipseCurve` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `EllipseCurve` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `EllipseCurve` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `EllipseCurve` | `method computeFrenetFrames` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `EllipseCurve` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `EllipseCurve` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `EllipseCurve` | `method getLength` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `EllipseCurve` | `method getLengths` | return type: `number[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `EllipseCurve` | `method getPoint` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `EllipseCurve` | `method getPointAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -685,7 +660,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `EllipseCurve` | `method getSpacedPoints` | return type: `TVector[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `EllipseCurve` | `method getTangent` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `EllipseCurve` | `method getTangentAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `EllipseCurve` | `method getUtoTmapping` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `EllipseCurve` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `EllipseCurve` | `property isEllipseCurve` | the declaration carries no type |
 | `EllipseCurve` | `property type` | `string | "EllipseCurve"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -695,7 +669,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `EventDispatcher` | `method hasEventListener` | parameter 'type': type parameter `T` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `EventDispatcher` | `method removeEventListener` | parameter 'type': type parameter `T` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `ExternalTexture` | `constructor parameter sourceTexture` | `WebGLTexture | GPUTexture | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `ExternalTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `ExternalTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `ExternalTexture` | `method copy` | parameter 'source': `Texture<TImage>` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `ExternalTexture` | `method setValues` | parameter 'values': `TextureParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `ExternalTexture` | `method toJSON` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
@@ -704,10 +678,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `ExternalTexture` | `property DEFAULT_IMAGE` | static; the mirror models instances, and a static write has no handle to address |
 | `ExternalTexture` | `property DEFAULT_MAPPING` | static; the mirror models instances, and a static write has no handle to address |
 | `ExternalTexture` | `property center` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `ExternalTexture` | `property depth` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `ExternalTexture` | `property depth` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `ExternalTexture` | `property format` | `AnyPixelFormat` aliases `PixelFormat | DepthTexturePixelFormat | CompressedPixelFormat`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `ExternalTexture` | `property height` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
-| `ExternalTexture` | `property id` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `ExternalTexture` | `property height` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `ExternalTexture` | `property id` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `ExternalTexture` | `property image` | `unknown` carries no type information a C# signature could express |
 | `ExternalTexture` | `property internalFormat` | `PixelFormatGPU` aliases `| "ALPHA" | "RGB" | "RGBA" | "LUMINANCE" | "LUMINANCE_ALPHA" | "RED_INTEGER" | "R8" | "R8_SNORM" | "R8I" | "R8UI" | "R16I" | "R16UI" | "R16F" | "R32I" | "R32UI" | "R32F" | "RG8" | "RG8_SNORM" | "RG8I" | "RG8UI" | "RG16I" | "RG16UI" | "RG16F" | "RG32I" | "RG32UI" | "RG32F" | "RGB565" | "RGB8" | "RGB8_SNORM" | "RGB8I" | "RGB8UI" | "RGB16I" | "RGB16UI" | "RGB16F" | "RGB32I" | "RGB32UI" | "RGB32F" | "RGB9_E5" | "SRGB8" | "R11F_G11F_B10F" | "RGBA4" | "RGBA8" | "RGBA8_SNORM" | "RGBA8I" | "RGBA8UI" | "RGBA16I" | "RGBA16UI" | "RGBA16F" | "RGBA32I" | "RGBA32UI" | "RGBA32F" | "RGB5_A1" | "RGB10_A2" | "RGB10_A2UI" | "SRGB8_ALPHA8" | "SRGB8" | "DEPTH_COMPONENT16" | "DEPTH_COMPONENT24" | "DEPTH_COMPONENT32F" | "DEPTH24_STENCIL8" | "DEPTH32F_STENCIL8"`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `ExternalTexture` | `property isExternalTexture` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
@@ -722,22 +696,22 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `ExternalTexture` | `property sourceTexture` | `WebGLTexture | GPUTexture | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `ExternalTexture` | `property updateRanges` | `Array<{ start: number; count: number }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `ExternalTexture` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `ExternalTexture` | `property width` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `ExternalTexture` | `property width` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `ExtrudeGeometry` | `constructor parameter options` | `ExtrudeGeometryOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `ExtrudeGeometry` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `ExtrudeGeometry` | `property parameters` | `{ readonly shapes: Shape | Shape[]; readonly options: ExtrudeGeometryOptions; }` is an anonymous object literal type with no named C# equivalent |
 | `Fog` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
-| `Fog` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `Fog` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `Fog` | `method toJSON` | return type: `FogJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Fog` | `property color` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
-| `Fog` | `property isFog` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `Fog` | `property isFog` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `FogExp2` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
-| `FogExp2` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `FogExp2` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `FogExp2` | `method toJSON` | return type: `FogExp2JSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `FogExp2` | `property color` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
-| `FogExp2` | `property isFogExp2` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `FogExp2` | `property isFogExp2` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `FramebufferTexture` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `FramebufferTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `FramebufferTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `FramebufferTexture` | `method copy` | parameter 'source': `Texture<TImage>` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `FramebufferTexture` | `method setValues` | parameter 'values': `TextureParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `FramebufferTexture` | `method toJSON` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
@@ -746,10 +720,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `FramebufferTexture` | `property DEFAULT_IMAGE` | static; the mirror models instances, and a static write has no handle to address |
 | `FramebufferTexture` | `property DEFAULT_MAPPING` | static; the mirror models instances, and a static write has no handle to address |
 | `FramebufferTexture` | `property center` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `FramebufferTexture` | `property depth` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `FramebufferTexture` | `property depth` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `FramebufferTexture` | `property format` | `AnyPixelFormat` aliases `PixelFormat | DepthTexturePixelFormat | CompressedPixelFormat`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `FramebufferTexture` | `property height` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
-| `FramebufferTexture` | `property id` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `FramebufferTexture` | `property height` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `FramebufferTexture` | `property id` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `FramebufferTexture` | `property image` | `unknown` carries no type information a C# signature could express |
 | `FramebufferTexture` | `property internalFormat` | `PixelFormatGPU` aliases `| "ALPHA" | "RGB" | "RGBA" | "LUMINANCE" | "LUMINANCE_ALPHA" | "RED_INTEGER" | "R8" | "R8_SNORM" | "R8I" | "R8UI" | "R16I" | "R16UI" | "R16F" | "R32I" | "R32UI" | "R32F" | "RG8" | "RG8_SNORM" | "RG8I" | "RG8UI" | "RG16I" | "RG16UI" | "RG16F" | "RG32I" | "RG32UI" | "RG32F" | "RGB565" | "RGB8" | "RGB8_SNORM" | "RGB8I" | "RGB8UI" | "RGB16I" | "RGB16UI" | "RGB16F" | "RGB32I" | "RGB32UI" | "RGB32F" | "RGB9_E5" | "SRGB8" | "R11F_G11F_B10F" | "RGBA4" | "RGBA8" | "RGBA8_SNORM" | "RGBA8I" | "RGBA8UI" | "RGBA16I" | "RGBA16UI" | "RGBA16F" | "RGBA32I" | "RGBA32UI" | "RGBA32F" | "RGB5_A1" | "RGB10_A2" | "RGB10_A2UI" | "SRGB8_ALPHA8" | "SRGB8" | "DEPTH_COMPONENT16" | "DEPTH_COMPONENT24" | "DEPTH_COMPONENT32F" | "DEPTH24_STENCIL8" | "DEPTH32F_STENCIL8"`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `FramebufferTexture` | `property isFramebufferTexture` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
@@ -763,7 +737,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `FramebufferTexture` | `property source` | `Source<TImage>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `FramebufferTexture` | `property updateRanges` | `Array<{ start: number; count: number }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `FramebufferTexture` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `FramebufferTexture` | `property width` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `FramebufferTexture` | `property width` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `GridHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `Group` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `Group` | `property isGroup` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
@@ -776,7 +750,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `HTMLTexture` | `constructor parameter type` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `HTMLTexture` | `constructor parameter wrapS` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `HTMLTexture` | `constructor parameter wrapT` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
-| `HTMLTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `HTMLTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `HTMLTexture` | `method copy` | parameter 'source': `Texture<TImage>` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `HTMLTexture` | `method setValues` | parameter 'values': `TextureParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `HTMLTexture` | `method toJSON` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
@@ -785,13 +759,13 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `HTMLTexture` | `property DEFAULT_IMAGE` | static; the mirror models instances, and a static write has no handle to address |
 | `HTMLTexture` | `property DEFAULT_MAPPING` | static; the mirror models instances, and a static write has no handle to address |
 | `HTMLTexture` | `property center` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `HTMLTexture` | `property depth` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `HTMLTexture` | `property depth` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `HTMLTexture` | `property format` | `AnyPixelFormat` aliases `PixelFormat | DepthTexturePixelFormat | CompressedPixelFormat`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `HTMLTexture` | `property height` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
-| `HTMLTexture` | `property id` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `HTMLTexture` | `property height` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `HTMLTexture` | `property id` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `HTMLTexture` | `property image` | `unknown` carries no type information a C# signature could express |
 | `HTMLTexture` | `property internalFormat` | `PixelFormatGPU` aliases `| "ALPHA" | "RGB" | "RGBA" | "LUMINANCE" | "LUMINANCE_ALPHA" | "RED_INTEGER" | "R8" | "R8_SNORM" | "R8I" | "R8UI" | "R16I" | "R16UI" | "R16F" | "R32I" | "R32UI" | "R32F" | "RG8" | "RG8_SNORM" | "RG8I" | "RG8UI" | "RG16I" | "RG16UI" | "RG16F" | "RG32I" | "RG32UI" | "RG32F" | "RGB565" | "RGB8" | "RGB8_SNORM" | "RGB8I" | "RGB8UI" | "RGB16I" | "RGB16UI" | "RGB16F" | "RGB32I" | "RGB32UI" | "RGB32F" | "RGB9_E5" | "SRGB8" | "R11F_G11F_B10F" | "RGBA4" | "RGBA8" | "RGBA8_SNORM" | "RGBA8I" | "RGBA8UI" | "RGBA16I" | "RGBA16UI" | "RGBA16F" | "RGBA32I" | "RGBA32UI" | "RGBA32F" | "RGB5_A1" | "RGB10_A2" | "RGB10_A2UI" | "SRGB8_ALPHA8" | "SRGB8" | "DEPTH_COMPONENT16" | "DEPTH_COMPONENT24" | "DEPTH_COMPONENT32F" | "DEPTH24_STENCIL8" | "DEPTH32F_STENCIL8"`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `HTMLTexture` | `property isHTMLTexture` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `HTMLTexture` | `property isHTMLTexture` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `HTMLTexture` | `property isTexture` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
 | `HTMLTexture` | `property mapping` | `AnyMapping` aliases `Mapping | CubeTextureMapping`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `HTMLTexture` | `property matrix` | `Matrix3` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
@@ -802,11 +776,11 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `HTMLTexture` | `property source` | `Source<TImage>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `HTMLTexture` | `property updateRanges` | `Array<{ start: number; count: number }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `HTMLTexture` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `HTMLTexture` | `property width` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `HTMLTexture` | `property width` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `HemisphereLight` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `HemisphereLight` | `property groundColor` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
-| `HemisphereLight` | `property isHemisphereLight` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
-| `HemisphereLight` | `property isLight` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `HemisphereLight` | `property isHemisphereLight` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `HemisphereLight` | `property isLight` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `HemisphereLightHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `HemisphereLightHelper` | `property color` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `ImageBitmapLoader` | `method setOptions` | parameter 'options': `ImageBitmapOptions` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -815,17 +789,13 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `ImageUtils` | `method getDataURL` | static; the mirror models instances, and a static write has no handle to address |
 | `ImageUtils` | `method sRGBToLinear` | static; the mirror models instances, and a static write has no handle to address |
 | `InstancedBufferGeometry` | `property isInstancedBufferGeometry` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
-| `InstancedMesh` | `method getColorAt` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `InstancedMesh` | `method getMatrixAt` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `InstancedMesh` | `property boundingBox` | `Box3` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `InstancedMesh` | `property boundingSphere` | `Sphere` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `InstancedMesh` | `property instanceColor` | `InstancedBufferAttribute` is not an emitted class: required parameter 'array' cannot be mapped: `TypedArray` aliases `| Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `InstancedMesh` | `property instanceMatrix` | `InstancedBufferAttribute` is not an emitted class: required parameter 'array' cannot be mapped: `TypedArray` aliases `| Int8Array | Uint8Array | Uint8ClampedArray | Int16Array | Uint16Array | Int32Array | Uint32Array | Float32Array | Float64Array`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `InstancedMesh` | `property isInstancedMesh` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
 | `LOD` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `LOD` | `method getCurrentLevel` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `LOD` | `method getObjectForDistance` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `LOD` | `method removeLevel` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
+| `LOD` | `method getObjectForDistance` | returns `Object3D`, a handle-backed object — the read op carries values, and no op mints a handle for an object JavaScript created |
 | `LOD` | `property isLOD` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
 | `LOD` | `property levels` | `Array<{ /** The Object3D to display at this level. */ object: Object3D; /** The distance at which to display this level of detail. Expects a `Float`. */ distance: number; /** Threshold used to avoid flickering at LOD boundaries, as a fraction of distance. Expects a `Float`. */ hysteresis: number; }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `LatheGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
@@ -835,15 +805,13 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `LatheGeometry` | `constructor parameter segments` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `LatheGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
 | `LatheGeometry` | `property parameters` | `{ readonly points: Vector2[]; readonly segments: number; readonly phiStart: number; readonly phiLength: number; }` is an anonymous object literal type with no named C# equivalent |
-| `Layers` | `method isEnabled` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `Layers` | `method test` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `LightProbe` | `constructor parameter intensity` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `LightProbe` | `constructor parameter sh` | `SphericalHarmonics3` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `LightProbe` | `property isLight` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
-| `LightProbe` | `property isLightProbe` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `LightProbe` | `property isLight` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `LightProbe` | `property isLightProbe` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `LightProbe` | `property sh` | `SphericalHarmonics3` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `Line` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `Line` | `method computeLineDistances` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `Line` | `method computeLineDistances` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `Line` | `property isLine` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
 | `Line` | `property morphTargetDictionary` | `{ [key: string]: number }` is an anonymous object literal type with no named C# equivalent |
 | `Line` | `property morphTargetInfluences` | `number[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
@@ -861,7 +829,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `LineBasicMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property fragmentNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property geometryNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `LineBasicMaterial` | `property isLineBasicMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `LineBasicMaterial` | `property isLineBasicMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `LineBasicMaterial` | `property lightsNode` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property linecap` | `"butt" | "round" | "square"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LineBasicMaterial` | `property linejoin` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -878,11 +846,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `LineBasicMaterial` | `property vertexNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineCurve` | `constructor parameter v1` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `LineCurve` | `constructor parameter v2` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
-| `LineCurve` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `LineCurve` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `LineCurve` | `method computeFrenetFrames` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `LineCurve` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `LineCurve` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `LineCurve` | `method getLength` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `LineCurve` | `method getLengths` | return type: `number[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `LineCurve` | `method getPoint` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LineCurve` | `method getPointAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -890,17 +857,15 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `LineCurve` | `method getSpacedPoints` | return type: `TVector[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `LineCurve` | `method getTangent` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LineCurve` | `method getTangentAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `LineCurve` | `method getUtoTmapping` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `LineCurve` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `LineCurve` | `property isLineCurve` | the declaration carries no type |
 | `LineCurve` | `property type` | `string | "LineCurve"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LineCurve` | `property v1` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `LineCurve` | `property v2` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `LineCurve3` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `LineCurve3` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `LineCurve3` | `method computeFrenetFrames` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `LineCurve3` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `LineCurve3` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `LineCurve3` | `method getLength` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `LineCurve3` | `method getLengths` | return type: `number[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `LineCurve3` | `method getPoint` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LineCurve3` | `method getPointAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -908,7 +873,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `LineCurve3` | `method getSpacedPoints` | return type: `TVector[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `LineCurve3` | `method getTangent` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LineCurve3` | `method getTangentAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `LineCurve3` | `method getUtoTmapping` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `LineCurve3` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `LineCurve3` | `property isLineCurve3` | the declaration carries no type |
 | `LineCurve3` | `property type` | `string | "LineCurve3"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -919,11 +883,11 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `LineDashedMaterial` | `property dashScaleNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineDashedMaterial` | `property dashSizeNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineDashedMaterial` | `property gapSizeNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `LineDashedMaterial` | `property isLineDashedMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `LineDashedMaterial` | `property isLineDashedMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `LineDashedMaterial` | `property offsetNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineLoop` | `property isLineLoop` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
 | `LineSegments` | `property isLineSegments` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
-| `Loader` | `method abort` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `Loader` | `method abort` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `Loader` | `method load` | parameter 'onLoad': `(data: TData) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Loader` | `method loadAsync` | return type: `Promise<TData>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Loader` | `method setRequestHeader` | parameter 'requestHeader': `{ [header: string]: string }` is an anonymous object literal type with no named C# equivalent |
@@ -948,8 +912,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `LoadingManager` | `property removeHandler` | `(regex: RegExp) => this` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `LoadingManager` | `property resolveURL` | `(url: string) => string` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `LoadingManager` | `property setURLModifier` | `(callback?: (url: string) => string) => this` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `Material` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
-| `Material` | `method customProgramCacheKey` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
+| `Material` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `Material` | `method fromJSON` | parameter 'json': `MaterialJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Material` | `method onBeforeCompile` | parameter 'parameters': `WebGLProgramParametersWithUniforms` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Material` | `method setValues` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
@@ -958,18 +921,17 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Material` | `property blendSrcAlpha` | `BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Material` | `property clippingPlanes` | `Array<Plane>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Material` | `property defines` | `Record<string, unknown>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Material` | `property isMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `Material` | `property isMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `Material` | `property precision` | `"highp" | "mediump" | "lowp"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Material` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Material` | `property uuid` | read-only in three.js (declared `string`), and the wire format has no read op — C# could neither write it nor observe it |
-| `Material` | `property version` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
-| `MaterialLoader` | `method createMaterialFromType` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
+| `Material` | `property uuid` | read-only in three.js (declared `string`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `Material` | `property version` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `MaterialLoader` | `method createMaterialFromType` | returns `Material`, a handle-backed object — the read op carries values, and no op mints a handle for an object JavaScript created |
 | `MaterialLoader` | `method parse` | parameter 'json': `unknown` carries no type information a C# signature could express |
 | `MaterialLoader` | `method registerMaterial` | static; the mirror models instances, and a static write has no handle to address |
 | `MaterialLoader` | `method setTextures` | parameter 'textures': `{ [key: string]: Texture }` is an anonymous object literal type with no named C# equivalent |
 | `MaterialLoader` | `property textures` | `{ [key: string]: Texture }` is an anonymous object literal type with no named C# equivalent |
 | `Mesh` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `Mesh` | `method getVertexPosition` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `Mesh` | `property isMesh` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
 | `Mesh` | `property morphTargetDictionary` | `{ [key: string]: number }` is an anonymous object literal type with no named C# equivalent |
 | `Mesh` | `property morphTargetInfluences` | `number[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
@@ -989,7 +951,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshBasicMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property fragmentNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property geometryNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshBasicMaterial` | `property isMeshBasicMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `MeshBasicMaterial` | `property isMeshBasicMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `MeshBasicMaterial` | `property lightMap` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `MeshBasicMaterial` | `property lightsNode` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property map` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
@@ -1009,12 +971,12 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshDepthMaterial` | `constructor parameter parameters` | `MeshDepthMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `MeshDepthMaterial` | `property alphaMap` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `MeshDepthMaterial` | `property displacementMap` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
-| `MeshDepthMaterial` | `property isMeshDepthMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `MeshDepthMaterial` | `property isMeshDepthMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `MeshDepthMaterial` | `property map` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `MeshDistanceMaterial` | `constructor parameter parameters` | `MeshDistanceMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `MeshDistanceMaterial` | `property alphaMap` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `MeshDistanceMaterial` | `property displacementMap` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
-| `MeshDistanceMaterial` | `property isMeshDistanceMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `MeshDistanceMaterial` | `property isMeshDistanceMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `MeshDistanceMaterial` | `property map` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `MeshLambertMaterial` | `constructor parameter parameters` | `MeshLambertMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `MeshLambertMaterial` | `property alphaMap` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
@@ -1035,7 +997,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshLambertMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property fragmentNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property geometryNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshLambertMaterial` | `property isMeshLambertMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `MeshLambertMaterial` | `property isMeshLambertMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `MeshLambertMaterial` | `property lightMap` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `MeshLambertMaterial` | `property lightsNode` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property map` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
@@ -1070,7 +1032,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshMatcapMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshMatcapMaterial` | `property fragmentNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshMatcapMaterial` | `property geometryNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshMatcapMaterial` | `property isMeshMatcapMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `MeshMatcapMaterial` | `property isMeshMatcapMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `MeshMatcapMaterial` | `property lightsNode` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshMatcapMaterial` | `property map` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `MeshMatcapMaterial` | `property maskNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1101,7 +1063,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshNormalMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshNormalMaterial` | `property fragmentNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshNormalMaterial` | `property geometryNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshNormalMaterial` | `property isMeshNormalMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `MeshNormalMaterial` | `property isMeshNormalMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `MeshNormalMaterial` | `property lightsNode` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshNormalMaterial` | `property maskNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshNormalMaterial` | `property maskShadowNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1134,7 +1096,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshPhongMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property fragmentNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property geometryNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshPhongMaterial` | `property isMeshPhongMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `MeshPhongMaterial` | `property isMeshPhongMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `MeshPhongMaterial` | `property lightMap` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `MeshPhongMaterial` | `property lightsNode` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property map` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
@@ -1175,7 +1137,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshPhysicalMaterial` | `property iridescenceThicknessMap` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `MeshPhysicalMaterial` | `property iridescenceThicknessNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhysicalMaterial` | `property iridescenceThicknessRange` | `[number, number]` is a tuple, which has no wire encoding |
-| `MeshPhysicalMaterial` | `property isMeshPhysicalMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `MeshPhysicalMaterial` | `property isMeshPhysicalMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `MeshPhysicalMaterial` | `property sheenColorMap` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `MeshPhysicalMaterial` | `property sheenNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhysicalMaterial` | `property sheenRoughnessMap` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
@@ -1208,7 +1170,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshStandardMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property fragmentNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property geometryNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshStandardMaterial` | `property isMeshStandardMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `MeshStandardMaterial` | `property isMeshStandardMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `MeshStandardMaterial` | `property lightMap` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `MeshStandardMaterial` | `property lightsNode` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property map` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
@@ -1249,7 +1211,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshToonMaterial` | `property fragmentNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property geometryNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property gradientMap` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
-| `MeshToonMaterial` | `property isMeshToonMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `MeshToonMaterial` | `property isMeshToonMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `MeshToonMaterial` | `property lightMap` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `MeshToonMaterial` | `property lightsNode` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property map` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
@@ -1277,11 +1239,11 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `ObjectLoader` | `method parseObject` | parameter 'data': `unknown` carries no type information a C# signature could express |
 | `ObjectLoader` | `method parseTextures` | parameter 'json': `unknown` carries no type information a C# signature could express |
 | `OrthographicCamera` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
-| `OrthographicCamera` | `property isOrthographicCamera` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `OrthographicCamera` | `property isOrthographicCamera` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `OrthographicCamera` | `property view` | `{ enabled: boolean; fullWidth: number; fullHeight: number; offsetX: number; offsetY: number; width: number; height: number; }` is an anonymous object literal type with no named C# equivalent |
-| `PMREMGenerator` | `method fromCubemap` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
+| `PMREMGenerator` | `method fromCubemap` | returns `WebGLRenderTarget`, a handle-backed object — the read op carries values, and no op mints a handle for an object JavaScript created |
 | `PMREMGenerator` | `method fromEquirectangular` | parameter 'equirectangular': `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
-| `PMREMGenerator` | `method fromScene` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
+| `PMREMGenerator` | `method fromScene` | returns `WebGLRenderTarget`, a handle-backed object — the read op carries values, and no op mints a handle for an object JavaScript created |
 | `Path` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `Path` | `constructor parameter points` | `Vector2[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `Path` | `method setFromPoints` | parameter 'vectors': `Vector2[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
@@ -1289,21 +1251,17 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Path` | `property currentPoint` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `PerspectiveCamera` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `PerspectiveCamera` | `fenced code in the method setViewOffset summary` | 2 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
-| `PerspectiveCamera` | `method getEffectiveFOV` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `PerspectiveCamera` | `method getFilmHeight` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `PerspectiveCamera` | `method getFilmWidth` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `PerspectiveCamera` | `method getFocalLength` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `PerspectiveCamera` | `method getViewBounds` | parameter 'minTarget': `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `PerspectiveCamera` | `method getViewSize` | parameter 'target': `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `PerspectiveCamera` | `property isPerspectiveCamera` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `PerspectiveCamera` | `property isPerspectiveCamera` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `PerspectiveCamera` | `property view` | `{ enabled: boolean; fullWidth: number; fullHeight: number; offsetX: number; offsetY: number; width: number; height: number; }` is an anonymous object literal type with no named C# equivalent |
 | `PlaneGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `PlaneGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
 | `PlaneGeometry` | `property parameters` | `{ readonly width: number; readonly height: number; readonly widthSegments: number; readonly heightSegments: number; }` is an anonymous object literal type with no named C# equivalent |
 | `PointLight` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `PointLight` | `property color` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
-| `PointLight` | `property isLight` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
-| `PointLight` | `property isPointLight` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `PointLight` | `property isLight` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `PointLight` | `property isPointLight` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `PointLight` | `property shadow` | `PointLightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `PointLightHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `PointLightHelper` | `property color` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
@@ -1325,7 +1283,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `PointsMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property fragmentNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property geometryNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `PointsMaterial` | `property isPointsMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `PointsMaterial` | `property isPointsMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `PointsMaterial` | `property lightsNode` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property map` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `PointsMaterial` | `property maskNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1353,11 +1311,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `QuadraticBezierCurve` | `constructor parameter v0` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `QuadraticBezierCurve` | `constructor parameter v1` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `QuadraticBezierCurve` | `constructor parameter v2` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
-| `QuadraticBezierCurve` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `QuadraticBezierCurve` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `QuadraticBezierCurve` | `method computeFrenetFrames` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `QuadraticBezierCurve` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `QuadraticBezierCurve` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `QuadraticBezierCurve` | `method getLength` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `QuadraticBezierCurve` | `method getLengths` | return type: `number[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `QuadraticBezierCurve` | `method getPoint` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `QuadraticBezierCurve` | `method getPointAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -1365,7 +1322,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `QuadraticBezierCurve` | `method getSpacedPoints` | return type: `TVector[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `QuadraticBezierCurve` | `method getTangent` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `QuadraticBezierCurve` | `method getTangentAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `QuadraticBezierCurve` | `method getUtoTmapping` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `QuadraticBezierCurve` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `QuadraticBezierCurve` | `property isQuadraticBezierCurve` | the declaration carries no type |
 | `QuadraticBezierCurve` | `property type` | `string | "QuadraticBezierCurve"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -1373,11 +1329,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `QuadraticBezierCurve` | `property v1` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `QuadraticBezierCurve` | `property v2` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `QuadraticBezierCurve3` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `QuadraticBezierCurve3` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `QuadraticBezierCurve3` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `QuadraticBezierCurve3` | `method computeFrenetFrames` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `QuadraticBezierCurve3` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `QuadraticBezierCurve3` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `QuadraticBezierCurve3` | `method getLength` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `QuadraticBezierCurve3` | `method getLengths` | return type: `number[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `QuadraticBezierCurve3` | `method getPoint` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `QuadraticBezierCurve3` | `method getPointAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -1385,14 +1340,13 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `QuadraticBezierCurve3` | `method getSpacedPoints` | return type: `TVector[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `QuadraticBezierCurve3` | `method getTangent` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `QuadraticBezierCurve3` | `method getTangentAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `QuadraticBezierCurve3` | `method getUtoTmapping` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `QuadraticBezierCurve3` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `QuadraticBezierCurve3` | `property isQuadraticBezierCurve3` | the declaration carries no type |
 | `QuadraticBezierCurve3` | `property type` | `string | "QuadraticBezierCurve3"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `QuadraticBezierCurve3` | `property v0` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `QuadraticBezierCurve3` | `property v1` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `QuadraticBezierCurve3` | `property v2` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
-| `RawShaderMaterial` | `property isRawShaderMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `RawShaderMaterial` | `property isRawShaderMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `Raycaster` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `Raycaster` | `fenced code in the property layers summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `Raycaster` | `method intersectObject` | return type: `Array<Intersection<TIntersected>>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -1403,10 +1357,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Raycaster` | `property ray` | `Ray` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `RectAreaLight` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `RectAreaLight` | `property color` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
-| `RectAreaLight` | `property isLight` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
-| `RectAreaLight` | `property isRectAreaLight` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `RectAreaLight` | `property isLight` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `RectAreaLight` | `property isRectAreaLight` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `RenderTarget` | `constructor parameter options` | `RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
-| `RenderTarget` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `RenderTarget` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `RenderTarget` | `property isRenderTarget` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
 | `RenderTarget` | `property scissor` | `Vector4` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `RenderTarget` | `property texture` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
@@ -1423,14 +1377,14 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Scene` | `property environmentNode` | `Node<"vec3">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Scene` | `property fog` | `Fog | FogExp2` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Scene` | `property fogNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `Scene` | `property isScene` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `Scene` | `property isScene` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `ShaderMaterial` | `constructor parameter parameters` | `ShaderMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `ShaderMaterial` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `ShaderMaterial` | `fenced code in the property fog summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `ShaderMaterial` | `property defaultAttributeValues` | `{ color: [number, number, number]; uv: [number, number]; uv1: [number, number]; }` is an anonymous object literal type with no named C# equivalent |
 | `ShaderMaterial` | `property extensions` | `{ clipCullDistance: boolean; multiDraw: boolean; }` is an anonymous object literal type with no named C# equivalent |
 | `ShaderMaterial` | `property glslVersion` | `GLSLVersion` cannot become a C# enum: the group is string-valued (`GLSL1` = "100"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `ShaderMaterial` | `property isShaderMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `ShaderMaterial` | `property isShaderMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `ShaderMaterial` | `property uniforms` | `{ [uniform: string]: IUniform }` is an anonymous object literal type with no named C# equivalent |
 | `ShaderMaterial` | `property uniformsGroups` | `Array<UniformsGroup>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `ShadowMaterial` | `constructor parameter parameters` | `ShadowMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
@@ -1447,7 +1401,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `ShadowMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property fragmentNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property geometryNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `ShadowMaterial` | `property isShadowMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `ShadowMaterial` | `property isShadowMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `ShadowMaterial` | `property lightsNode` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property maskNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property maskShadowNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1477,19 +1431,18 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Skeleton` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `Skeleton` | `constructor parameter boneInverses` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `Skeleton` | `constructor parameter bones` | `Bone[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
-| `Skeleton` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
-| `Skeleton` | `method computeBoneTexture` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `Skeleton` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
+| `Skeleton` | `method computeBoneTexture` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `Skeleton` | `method fromJSON` | parameter 'json': `SkeletonJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `Skeleton` | `method getBoneByName` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
+| `Skeleton` | `method getBoneByName` | returns `Bone`, a handle-backed object — the read op carries values, and no op mints a handle for an object JavaScript created |
 | `Skeleton` | `method toJSON` | return type: `SkeletonJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Skeleton` | `property boneInverses` | `Matrix4[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `Skeleton` | `property boneMatrices` | `Float32Array` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Skeleton` | `property bones` | `Bone[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `SkeletonHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `SkeletonHelper` | `property bones` | `Bone[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
-| `SkeletonHelper` | `property isSkeletonHelper` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `SkeletonHelper` | `property isSkeletonHelper` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `SkinnedMesh` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `SkinnedMesh` | `method applyBoneTransform` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `SkinnedMesh` | `property bindMatrix` | `Matrix4` hands its components out as a mutable array, so a change to it cannot be observed and there is nothing to record a property write from |
 | `SkinnedMesh` | `property bindMatrixInverse` | `Matrix4` hands its components out as a mutable array, so a change to it cannot be observed and there is nothing to record a property write from |
 | `SkinnedMesh` | `property bindMode` | `BindMode` cannot become a C# enum: the group is string-valued (`AttachedBindMode` = "attached"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
@@ -1501,11 +1454,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `SphereGeometry` | `property parameters` | `{ readonly radius: number; readonly widthSegments: number; readonly heightSegments: number; readonly phiStart: number; readonly phiLength: number; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent |
 | `SplineCurve` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `SplineCurve` | `constructor parameter points` | `Vector2[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
-| `SplineCurve` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `SplineCurve` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `SplineCurve` | `method computeFrenetFrames` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `SplineCurve` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `SplineCurve` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `SplineCurve` | `method getLength` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `SplineCurve` | `method getLengths` | return type: `number[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `SplineCurve` | `method getPoint` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `SplineCurve` | `method getPointAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -1513,15 +1465,14 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `SplineCurve` | `method getSpacedPoints` | return type: `TVector[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `SplineCurve` | `method getTangent` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `SplineCurve` | `method getTangentAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `SplineCurve` | `method getUtoTmapping` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `SplineCurve` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `SplineCurve` | `property isSplineCurve` | the declaration carries no type |
 | `SplineCurve` | `property points` | `Vector2[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `SplineCurve` | `property type` | `string | "SplineCurve"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `SpotLight` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `SpotLight` | `property color` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
-| `SpotLight` | `property isLight` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
-| `SpotLight` | `property isSpotLight` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `SpotLight` | `property isLight` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `SpotLight` | `property isSpotLight` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `SpotLight` | `property map` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `SpotLight` | `property shadow` | `SpotLightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `SpotLightHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
@@ -1544,7 +1495,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `SpriteMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `SpriteMaterial` | `property fragmentNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `SpriteMaterial` | `property geometryNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `SpriteMaterial` | `property isSpriteMaterial` | read-only in three.js (declared `boolean`), and the wire format has no read op — C# could neither write it nor observe it |
+| `SpriteMaterial` | `property isSpriteMaterial` | read-only in three.js (declared `boolean`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `SpriteMaterial` | `property lightsNode` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `SpriteMaterial` | `property map` | `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `SpriteMaterial` | `property maskNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1559,13 +1510,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `SpriteMaterial` | `property rotationNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `SpriteMaterial` | `property scaleNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `SpriteMaterial` | `property vertexNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `StereoCamera` | `property type` | read-only in three.js (declared `string`), and the wire format has no read op — C# could neither write it nor observe it |
+| `StereoCamera` | `property type` | read-only in three.js (declared `string`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `Timer` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `Timer` | `method connect` | parameter 'document': `Document` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Timer` | `method getDelta` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `Timer` | `method getElapsed` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `Timer` | `method getTimescale` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `Timer` | `method reset` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `Timer` | `method reset` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `TorusGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `TorusGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
 | `TorusGeometry` | `property parameters` | `{ readonly radius: number; readonly tube: number; readonly radialSegments: number; readonly tubularSegments: number; readonly arc: number; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent |
@@ -1584,11 +1532,11 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `TubeGeometry` | `property parameters` | `{ readonly path: Curve<Vector3>; readonly tubularSegments: number; readonly radius: number; readonly radialSegments: number; readonly closed: boolean; }` is an anonymous object literal type with no named C# equivalent |
 | `TubeGeometry` | `property tangents` | `Vector3[]` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding |
 | `UniformsGroup` | `method add` | parameter 'uniform': `Uniform` is not an emitted class: required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express |
-| `UniformsGroup` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `UniformsGroup` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `UniformsGroup` | `method remove` | parameter 'uniform': `Uniform` is not an emitted class: required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express |
 | `UniformsGroup` | `property isUniformsGroup` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
 | `UniformsGroup` | `property uniforms` | `Array<Uniform | Uniform[]>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `VideoFrameTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — the wire format has no op that hands back a handle for an object JavaScript created |
+| `VideoFrameTexture` | `method clone` | takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created |
 | `VideoFrameTexture` | `method copy` | parameter 'source': `Texture<TImage>` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `VideoFrameTexture` | `method setFrame` | parameter 'frame': `unknown` carries no type information a C# signature could express |
 | `VideoFrameTexture` | `method setValues` | parameter 'values': `TextureParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
@@ -1598,10 +1546,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `VideoFrameTexture` | `property DEFAULT_IMAGE` | static; the mirror models instances, and a static write has no handle to address |
 | `VideoFrameTexture` | `property DEFAULT_MAPPING` | static; the mirror models instances, and a static write has no handle to address |
 | `VideoFrameTexture` | `property center` | `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `VideoFrameTexture` | `property depth` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `VideoFrameTexture` | `property depth` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `VideoFrameTexture` | `property format` | `AnyPixelFormat` aliases `PixelFormat | DepthTexturePixelFormat | CompressedPixelFormat`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `VideoFrameTexture` | `property height` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
-| `VideoFrameTexture` | `property id` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `VideoFrameTexture` | `property height` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
+| `VideoFrameTexture` | `property id` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `VideoFrameTexture` | `property image` | `unknown` carries no type information a C# signature could express |
 | `VideoFrameTexture` | `property internalFormat` | `PixelFormatGPU` aliases `| "ALPHA" | "RGB" | "RGBA" | "LUMINANCE" | "LUMINANCE_ALPHA" | "RED_INTEGER" | "R8" | "R8_SNORM" | "R8I" | "R8UI" | "R16I" | "R16UI" | "R16F" | "R32I" | "R32UI" | "R32F" | "RG8" | "RG8_SNORM" | "RG8I" | "RG8UI" | "RG16I" | "RG16UI" | "RG16F" | "RG32I" | "RG32UI" | "RG32F" | "RGB565" | "RGB8" | "RGB8_SNORM" | "RGB8I" | "RGB8UI" | "RGB16I" | "RGB16UI" | "RGB16F" | "RGB32I" | "RGB32UI" | "RGB32F" | "RGB9_E5" | "SRGB8" | "R11F_G11F_B10F" | "RGBA4" | "RGBA8" | "RGBA8_SNORM" | "RGBA8I" | "RGBA8UI" | "RGBA16I" | "RGBA16UI" | "RGBA16F" | "RGBA32I" | "RGBA32UI" | "RGBA32F" | "RGB5_A1" | "RGB10_A2" | "RGB10_A2UI" | "SRGB8_ALPHA8" | "SRGB8" | "DEPTH_COMPONENT16" | "DEPTH_COMPONENT24" | "DEPTH_COMPONENT32F" | "DEPTH24_STENCIL8" | "DEPTH32F_STENCIL8"`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `VideoFrameTexture` | `property isTexture` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
@@ -1615,7 +1563,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `VideoFrameTexture` | `property source` | `Source<TImage>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `VideoFrameTexture` | `property updateRanges` | `Array<{ start: number; count: number }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `VideoFrameTexture` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `VideoFrameTexture` | `property width` | read-only in three.js (declared `number`), and the wire format has no read op — C# could neither write it nor observe it |
+| `VideoFrameTexture` | `property width` | read-only in three.js (declared `number`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage |
 | `WebGL3DRenderTarget` | `constructor parameter options` | `RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `WebGL3DRenderTarget` | `property isWebGL3DRenderTarget` | `true` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member |
 | `WebGLArrayRenderTarget` | `constructor parameter options` | `RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
@@ -1627,18 +1575,12 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `WebGLRenderer` | `constructor parameter parameters` | `WebGLRendererParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `WebGLRenderer` | `method copyFramebufferToTexture` | parameter 'texture': `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
 | `WebGLRenderer` | `method copyTextureToTexture` | parameter 'srcTexture': `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |
-| `WebGLRenderer` | `method getActiveCubeFace` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `WebGLRenderer` | `method getActiveMipmapLevel` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `WebGLRenderer` | `method getClearAlpha` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `WebGLRenderer` | `method getClearColor` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `WebGLRenderer` | `method getContext` | return type: `WebGLRenderingContext | WebGL2RenderingContext` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `WebGLRenderer` | `method getContextAttributes` | return type: `WebGLContextAttributes` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGLRenderer` | `method getCurrentViewport` | parameter 'target': `Vector4` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `WebGLRenderer` | `method getDrawingBufferSize` | parameter 'target': `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `WebGLRenderer` | `method getPixelRatio` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
-| `WebGLRenderer` | `method getRenderTarget` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
+| `WebGLRenderer` | `method getRenderTarget` | returns `WebGLRenderTarget`, a handle-backed object — the read op carries values, and no op mints a handle for an object JavaScript created |
 | `WebGLRenderer` | `method getScissor` | parameter 'target': `Vector4` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `WebGLRenderer` | `method getScissorTest` | returns a value, and the wire format has create, set, call, add, remove and dispose — no op reads anything back |
 | `WebGLRenderer` | `method getSize` | parameter 'target': `Vector2` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `WebGLRenderer` | `method getViewport` | parameter 'target': `Vector4` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. Five are hand-written (`Color`, `Euler`, `Matrix4`, `Quaternion`, `Vector3`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `WebGLRenderer` | `method initTexture` | parameter 'texture': `Texture` is not an emitted class: 2 constructor overloads; C# overload emission is not implemented |

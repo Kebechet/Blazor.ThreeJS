@@ -108,6 +108,35 @@ public class ThreeWireFormatTests
 	}
 
 	[Fact]
+	public void ThreeOp_ReadOpSerialized_MatchesWireContract()
+	{
+		// Arrange
+		var readOp = BuildFixtureOps().First(x => x.Kind == ThreeOpKind.Read);
+
+		// Act
+		var json = JsonSerializer.Serialize(readOp, _webOptions);
+
+		// Assert
+		json.ShouldBe("""{"k":6,"h":6,"m":"getFocalLength","a":[],"v":null,"i":1}""");
+	}
+
+	[Fact]
+	public void ThreeOp_NonReadOp_OmitsTheRequestIdKey()
+	{
+		// Arrange
+		var setOp = BuildFixtureOps().First(x => x.Member == "visible");
+
+		// Act
+		var serializedKeys = JsonNode.Parse(JsonSerializer.Serialize(setOp, _webOptions))!
+			.AsObject()
+			.Select(x => x.Key)
+			.ToList();
+
+		// Assert
+		serializedKeys.ShouldNotContain("i");
+	}
+
+	[Fact]
 	public void ThreeOp_EveryOpKind_SerializesKindAsANumber()
 	{
 		// Arrange
@@ -125,7 +154,7 @@ public class ThreeWireFormatTests
 	}
 
 	[Fact]
-	public void ThreeOp_AllSixOpKinds_AppearInTheFixtureBatch()
+	public void ThreeOp_EveryOpKind_AppearsInTheFixtureBatch()
 	{
 		// Arrange
 		var allOpKinds = Enum.GetValues<ThreeOpKind>();
@@ -438,6 +467,144 @@ public class ThreeWireFormatTests
 		encoded.ShouldBe(value);
 	}
 
+	[Theory]
+	[InlineData(1.5f)]
+	[InlineData(true)]
+	[InlineData("someString")]
+	public void ThreeValue_PrimitiveOrStringDecoded_ReturnsItUnchanged(object value)
+	{
+		// Arrange
+		var element = JsonSerializer.SerializeToElement(value, _webOptions);
+
+		// Act
+		var decoded = ThreeValue.Decode<object>(element);
+
+		// Assert
+		decoded.ToString().ShouldBe(value.ToString());
+	}
+
+	[Fact]
+	public void ThreeValue_Vector3Decoded_RoundTripsWhatTheEncoderProduced()
+	{
+		// Arrange
+		var element = JsonSerializer.SerializeToElement(ThreeValue.Encode(new Vector3(1f, 2f, 3f)), _webOptions);
+
+		// Act
+		var decoded = ThreeValue.Decode<Vector3>(element);
+
+		// Assert
+		decoded.ToArray().ShouldBe([1f, 2f, 3f]);
+	}
+
+	[Fact]
+	public void ThreeValue_EulerDecoded_RestoresItsRotationOrder()
+	{
+		// Arrange
+		var element = JsonSerializer.SerializeToElement(ThreeValue.Encode(new Euler(0.5f, 0f, 0f, EulerOrder.YXZ)), _webOptions);
+
+		// Act
+		var decoded = ThreeValue.Decode<Euler>(element);
+
+		// Assert
+		decoded.Order.ShouldBe(EulerOrder.YXZ);
+	}
+
+	[Fact]
+	public void ThreeValue_QuaternionDecoded_RoundTripsAllFourComponents()
+	{
+		// Arrange
+		var element = JsonSerializer.SerializeToElement(ThreeValue.Encode(new Quaternion(0.1f, 0.2f, 0.3f, 0.4f)), _webOptions);
+
+		// Act
+		var decoded = ThreeValue.Decode<Quaternion>(element);
+
+		// Assert
+		decoded.ToArray().ShouldBe([0.1f, 0.2f, 0.3f, 0.4f]);
+	}
+
+	[Fact]
+	public void ThreeValue_ColorDecoded_RoundTripsWhatTheEncoderProduced()
+	{
+		// Arrange
+		var element = JsonSerializer.SerializeToElement(ThreeValue.Encode(Color.Red), _webOptions);
+
+		// Act
+		var decoded = ThreeValue.Decode<Color>(element);
+
+		// Assert
+		decoded.ToArray().ShouldBe([1f, 0f, 0f]);
+	}
+
+	[Fact]
+	public void ThreeValue_Matrix4Decoded_KeepsTheColumnMajorOrderItWasSentIn()
+	{
+		// Arrange
+		var matrix = new Matrix4().Set(
+			1f, 2f, 3f, 4f,
+			5f, 6f, 7f, 8f,
+			9f, 10f, 11f, 12f,
+			13f, 14f, 15f, 16f);
+
+		var element = JsonSerializer.SerializeToElement(ThreeValue.Encode(matrix), _webOptions);
+
+		// Act
+		var decoded = ThreeValue.Decode<Matrix4>(element);
+
+		// Assert
+		decoded.Elements.ShouldBe(matrix.Elements);
+	}
+
+	[Fact]
+	public void ThreeValue_DecodeGivenNoValue_ReturnsTheDefault()
+	{
+		// Arrange & Act
+		var decoded = ThreeValue.Decode<float>(null);
+
+		// Assert
+		decoded.ShouldBe(0f);
+	}
+
+	[Fact]
+	public void ThreeValue_DecodeGivenAJsonNull_ReturnsTheDefault()
+	{
+		// Arrange
+		var element = JsonSerializer.SerializeToElement<object?>(null, _webOptions);
+
+		// Act
+		var decoded = ThreeValue.Decode<string>(element);
+
+		// Assert
+		decoded.ShouldBeNull();
+	}
+
+	[Fact]
+	public void ThreeValue_DecodeGivenATagTheTargetTypeCannotHold_Throws()
+	{
+		// Arrange
+		var element = JsonSerializer.SerializeToElement(ThreeValue.Encode(new Vector3(1f, 2f, 3f)), _webOptions);
+
+		// Act
+		var exception = Record.Exception(() => ThreeValue.Decode<Color>(element));
+
+		// Assert
+		exception.ShouldBeOfType<InvalidOperationException>();
+	}
+
+	[Fact]
+	public void ThreeValue_DecodeGivenAnUnknownTag_Throws()
+	{
+		// Arrange
+		var element = JsonSerializer.SerializeToElement(new { t = "Box3", v = new[] { 0f } }, _webOptions);
+		var retagged = JsonDocument.Parse(
+			element.GetRawText().Replace("\"t\":", $"\"{ThreeWireFormat.TagKey}\":", StringComparison.Ordinal)).RootElement;
+
+		// Act
+		var exception = Record.Exception(() => ThreeValue.Decode<Vector3>(retagged));
+
+		// Assert
+		exception.ShouldBeOfType<NotSupportedException>();
+	}
+
 	[Fact]
 	public void ThreeOp_FixtureBatchSerialized_MatchesTheSharedFixtureFile()
 	{
@@ -459,8 +626,9 @@ public class ThreeWireFormatTests
 	/// <see cref="ThreeWireFormat"/> tag, an enum-valued <c>Set</c>, a <c>$ref</c>-valued
 	/// <c>Set</c> that reassigns a mesh's material after it was already attached, and the pair of
 	/// <c>PerspectiveCamera</c> creates that prove the <c>$undef</c> sentinel reaches JavaScript as a
-	/// real <c>undefined</c>, and an <c>AmbientLight</c> create carrying a tagged math value as a
-	/// constructor argument — as a batch the JavaScript applier can run end to end. Kept in step with
+	/// real <c>undefined</c>, an <c>AmbientLight</c> create carrying a tagged math value as a
+	/// constructor argument, and the <c>Read</c> op that hands a value back — as a batch the JavaScript
+	/// applier can run end to end. Kept in step with
 	/// <c>tests/wire-format-fixture.json</c> by <c>ThreeOp_FixtureBatchSerialized_MatchesTheSharedFixtureFile</c>.
 	/// </summary>
 	/// <returns>The fixture batch, in the order the applier receives it.</returns>
@@ -514,7 +682,12 @@ public class ThreeWireFormatTests
 			// AmbientLight forwards its Color straight through, where the hand-written one it replaced
 			// converted to a hex integer first, so this is the one shape in the batch that only the
 			// generated classes produce.
-			new ThreeOp { Kind = ThreeOpKind.Create, Handle = 8, Type = "AmbientLight", Args = [ThreeValue.Encode(Color.Red), 0.4f] }
+			new ThreeOp { Kind = ThreeOpKind.Create, Handle = 8, Type = "AmbientLight", Args = [ThreeValue.Encode(Color.Red), 0.4f] },
+
+			// The only op that produces a value. It targets handle 6, the camera whose fov was left to
+			// the $undef sentinel, so the focal length the JavaScript half reads back is one three.js
+			// computed from its own default rather than from anything C# sent.
+			new ThreeOp { Kind = ThreeOpKind.Read, Handle = 6, Member = "getFocalLength", Args = [], RequestId = 1 }
 		];
 	}
 

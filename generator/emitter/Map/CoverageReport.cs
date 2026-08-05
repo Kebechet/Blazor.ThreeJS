@@ -296,32 +296,48 @@ internal sealed class CoverageReport
 	}
 
 	/// <summary>
-	/// The single most consequential limitation of the package, so it is stated in the README rather
-	/// than left to the coverage report: the wire format is write-only, and no amount of generated
-	/// surface changes that.
+	/// What the read op reaches and what it still does not. Stated in the README rather than left to
+	/// the coverage report, because "can I get a value back" is the first thing a consumer asks and the
+	/// honest answer is "some of them" — a figure that reads worse than the previous "none" did but is
+	/// the one that survives being checked.
 	/// </summary>
 	private void AppendReadmeReadChannel(StringBuilder builder)
 	{
 		var emittableMembers = EmittableMembers().ToList();
 		var asyncQueryCount = emittableMembers.Count(x => x.Bucket == MemberBucket.AsyncQuery);
-		var readOnlyCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.ReadOnlyWithoutReadChannel);
-		var fluentCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.NoReadChannel);
-		var total = asyncQueryCount + readOnlyCount + fluentCount;
+		var readOnlyCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.ReadOnlyProperty);
+		var noHandleCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.NoHandleForResult);
+		var collectionCount = emittableMembers.Count(x =>
+			x.MemberKind == ClassifiedMemberKind.Method &&
+			x.SkipCategory == SkipCategory.CollectionType);
 
-		AppendLine(builder, "### ⚠️ Nothing reads back");
+		AppendLine(builder, "### ⚠️ What reads back, and what does not");
 		AppendLine(builder);
-		AppendLine(builder, "The wire format has six op kinds - create, set, call, add, remove, dispose - and **none of them returns a");
-		AppendLine(builder, $"value**. On the generated classes that puts {total} members out of reach:");
+		AppendLine(builder, "The wire format has a seventh op kind, **read**: it invokes a three.js method inside the batch it");
+		AppendLine(builder, "travels in and sends the return value back, so a read always observes the writes made before it. It");
+		AppendLine(builder, "carries **values** - numbers, booleans, strings, and the five hand-written math types, tagged exactly as");
+		AppendLine(builder, "they are sent in the other direction.");
 		AppendLine(builder);
-		AppendLine(builder, $"- **{asyncQueryCount} methods whose result is the point of calling them.** Raycast results, bounding-box and");
-		AppendLine(builder, "  bounding-sphere computation, world position / rotation / scale, `getObjectByName` - anything that hands");
-		AppendLine(builder, "  data back from JavaScript cannot be called at all.");
-		AppendLine(builder, $"- **{readOnlyCount} read-only properties**, which C# could only guess at.");
-		AppendLine(builder, $"- **{fluentCount} methods returning a fresh object** (`clone`, `removeFromParent`), which would need a handle for");
-		AppendLine(builder, "  something JavaScript created.");
+		AppendLine(builder, $"On the generated classes that reaches **{asyncQueryCount} methods**: focal length and effective field of view, elapsed");
+		AppendLine(builder, "time, curve lengths, instance matrices and colours, vertex positions, layer tests. Each is emitted as");
+		AppendLine(builder, "`…Async` and returns a `Task<T>`.");
 		AppendLine(builder);
-		AppendLine(builder, "This is a property of the wire format rather than of the generator: it is the same limitation whether a");
-		AppendLine(builder, "class is generated or hand-written, and closing it needs a read op, not more coverage.");
+		AppendLine(builder, "It does **not** carry handles, and that is what still puts members out of reach:");
+		AppendLine(builder);
+		AppendLine(builder, $"- **{noHandleCount} methods returning a three.js object** - `clone`, `getObjectByName`, `getRenderTarget`,");
+		AppendLine(builder, "  `createMaterialFromType`. No op mints a handle for an object the browser created, and serializing one");
+		AppendLine(builder, "  as a plain object would hand C# a plausible bag of numbers instead of a value.");
+		if (collectionCount > 0)
+		{
+			AppendLine(builder, $"- **{collectionCount} methods returning or taking an array** - which is why **`Raycaster.intersectObjects` is still not");
+			AppendLine(builder, "  callable**: it answers with `Intersection[]`, and the wire has no array encoding in either direction.");
+		}
+
+		AppendLine(builder, $"- **{readOnlyCount} read-only properties**. The read op invokes a method, so a property has nothing to route");
+		AppendLine(builder, "  through it; exposing one as an async method would change the shape of the API rather than its coverage.");
+		AppendLine(builder);
+		AppendLine(builder, "A read is caller-initiated and costs one interop call. An idle scene still costs **zero** - nothing polls,");
+		AppendLine(builder, "and no callback runs per frame.");
 		AppendLine(builder);
 	}
 
@@ -1021,8 +1037,8 @@ internal sealed class CoverageReport
 			SkipCategory.ExternalType => "declared outside the scanned `src/` surface",
 			SkipCategory.UnresolvedType => "the TypeScript checker could not resolve the name",
 			SkipCategory.NotInstanceApi => "static, non-public or `@internal` — not part of the mirrored instance API",
-			SkipCategory.ReadOnlyWithoutReadChannel => "read-only in three.js, and the wire format has no read op",
-			SkipCategory.NoReadChannel => "its result is the point of calling it, and no op hands a value back",
+			SkipCategory.ReadOnlyProperty => "read-only in three.js, and the read op invokes a method rather than reading a property",
+			SkipCategory.NoHandleForResult => "its result is a JavaScript object, and no op mints a handle for one the browser created",
 			SkipCategory.ShadowedByConstructorParameter => "the constructor already takes it under the same name",
 			SkipCategory.HandWritten => "the package provides the class by hand, and the generated classes derive from it",
 			SkipCategory.UnreachableBaseConstructor => "its C# base requires constructor arguments the generated class has nothing to supply",

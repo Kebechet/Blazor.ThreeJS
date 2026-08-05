@@ -6,19 +6,25 @@
 // that actually ships, rather than the copy in node_modules.
 //
 // The fixture it reads is the same file ThreeWireFormatTests asserts the C# serializer produces, so
-// a change to either side that the other does not follow fails here. applyOp is driven directly
-// instead of applyBatch: applyBatch swallows an unknown context id and returns [], which would make
-// every assertion below pass without a single op being applied.
+// a change to either side that the other does not follow fails here. applyOp and runOps are driven
+// directly instead of applyBatch: applyBatch swallows an unknown context id and returns an empty
+// response, which would make every assertion below pass without a single op being applied.
 //
-// It closes with the other contract this bundle settles: that every generated class is a name the
-// bundle actually exports, which is what the README's coverage headline claims about them.
+// It then drives the read op end to end — the only op that hands a value back — and closes with the
+// other contract this bundle settles: that every generated class is a name the bundle actually
+// exports, which is what the README's coverage headline claims about them.
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { applyOp } from '../src/Blazor.ThreeJS/wwwroot/three-interop.js';
+import { applyOp, runOps } from '../src/Blazor.ThreeJS/wwwroot/three-interop.js';
 import * as THREE from '../src/Blazor.ThreeJS/wwwroot/three.module.js';
 
 const { DoubleSide } = THREE;
+
+// Kept in step with ThreeOpKind. Only the kinds this file names are spelled out.
+const OP_CREATE = 0;
+const OP_SET = 1;
+const OP_READ = 6;
 
 const ops = JSON.parse(readFileSync(new URL('./wire-format-fixture.json', import.meta.url), 'utf8'));
 const context = { objects: new Map() };
@@ -28,9 +34,13 @@ const context = { objects: new Map() };
 // constructor-time $ref still resolving to the original material, before the second pass rebinds
 // it — applying everything in one loop would make that constructor-time assertion false by the
 // time it runs.
+//
+// The fixture's read op is held out of both passes: applyOp returns its value rather than mutating
+// anything, so only runOps turns it into the result row the C# side actually consumes.
 const reassignmentStartIndex = ops.findIndex(op => op.h === 5);
 const opsBeforeReassignment = ops.slice(0, reassignmentStartIndex);
-const opsFromReassignment = ops.slice(reassignmentStartIndex);
+const opsFromReassignment = ops.slice(reassignmentStartIndex).filter(op => op.k !== OP_READ);
+const fixtureReadOps = ops.filter(op => op.k === OP_READ);
 
 for (const op of opsBeforeReassignment) {
     applyOp(context, op);
@@ -127,6 +137,98 @@ assert.throws(
     /Unknown op kind/,
     'an unrecognised op kind must throw');
 
+// ---------------------------------------------------------------------------------------------
+// The read op, end to end against the vendored three.js. Everything above proves an instruction
+// reached the browser; this proves a *value* came back from it.
+// ---------------------------------------------------------------------------------------------
+
+// The fixture's own read op first, so the shape C# serializes is the shape that actually runs.
+// Handle 6 is the camera whose fov was left to the $undef sentinel, so 18.76… is three.js's own
+// computation from its own 50° default and the aspect of 2 the fixture supplied — a number nothing
+// in C# could have produced.
+const fixtureReadResponse = runOps(context, fixtureReadOps);
+assert.deepEqual(fixtureReadResponse.e, [], 'the fixture read should not have been rejected');
+assert.equal(fixtureReadResponse.r.length, 1, 'one read op should produce exactly one result row');
+assert.equal(fixtureReadResponse.r[0].i, 1, 'the result row should echo the request id back');
+assert.ok(
+    Math.abs(fixtureReadResponse.r[0].v - context.objects.get(6).getFocalLength()) < 1e-9,
+    'the read should return the focal length three.js computes, not a placeholder');
+assert.ok(Math.abs(fixtureReadResponse.r[0].v - 18.76443555445864) < 1e-9,
+    'the focal length of a default 50° camera at aspect 2 should be 18.76…');
+
+// Ordering: a Set and a Read in one batch, on the same handle. The read must observe the write,
+// because the applier runs the batch in order — this is what makes a read unable to see stale
+// state without any flush discipline on the C# side.
+const focalLengthBefore = context.objects.get(6).getFocalLength();
+const orderedResponse = runOps(context, [
+    { k: OP_SET, h: 6, m: 'fov', v: 90 },
+    { k: OP_READ, h: 6, m: 'getFocalLength', a: [], i: 7 }
+]);
+
+assert.equal(orderedResponse.r.length, 1, 'the ordered batch should produce one result row');
+assert.notEqual(orderedResponse.r[0].v, focalLengthBefore,
+    'a read behind a Set in the same batch must observe the Set, not the value from before it');
+assert.ok(Math.abs(orderedResponse.r[0].v - 8.75) < 1e-9,
+    'the focal length should be the one three.js computes for the fov written earlier in the same batch');
+
+// Correlation: two reads in one batch come back as two rows, each carrying the id of the request it
+// answers. Matching by id rather than by position is what keeps several in-flight reads apart.
+const correlatedResponse = runOps(context, [
+    { k: OP_READ, h: 6, m: 'getEffectiveFOV', a: [], i: 11 },
+    { k: OP_READ, h: 6, m: 'getFilmWidth', a: [], i: 12 }
+]);
+
+assert.deepEqual(correlatedResponse.r.map(row => row.i), [11, 12], 'each result row should carry its own request id');
+assert.equal(correlatedResponse.r.find(row => row.i === 11).v, 90, 'request 11 should answer with the effective fov');
+assert.equal(correlatedResponse.r.find(row => row.i === 12).v, 35, 'request 12 should answer with the film width');
+
+// A math value read back, tagged exactly as C# sends one in the other direction. getVertexPosition
+// reads a real vertex out of the BoxGeometry's buffer, which C# holds nothing of.
+const mathReadResponse = runOps(context, [
+    { k: OP_CREATE, h: 20, t: 'BoxGeometry', a: [2, 2, 2] },
+    { k: OP_CREATE, h: 21, t: 'MeshStandardMaterial', a: [] },
+    { k: OP_CREATE, h: 22, t: 'Mesh', a: [{ $ref: 20 }, { $ref: 21 }] },
+    { k: OP_READ, h: 22, m: 'getVertexPosition', a: [0, { $t: 'Vector3', v: [0, 0, 0] }], i: 21 },
+    { k: OP_CREATE, h: 23, t: 'InstancedMesh', a: [{ $ref: 20 }, { $ref: 21 }, 4] },
+    { k: OP_READ, h: 23, m: 'getMatrixAt', a: [0, { $t: 'Matrix4', v: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }], i: 22 }
+]);
+
+assert.deepEqual(mathReadResponse.e, [], 'the math read batch should not have been rejected');
+const vertexPosition = mathReadResponse.r.find(row => row.i === 21).v;
+assert.equal(vertexPosition.$t, 'Vector3', 'a Vector3 return should come back under the Vector3 tag');
+assert.deepEqual(vertexPosition.v, [1, 1, 1], 'the first vertex of a 2x2x2 box is (1, 1, 1)');
+
+const instanceMatrix = mathReadResponse.r.find(row => row.i === 22).v;
+assert.equal(instanceMatrix.$t, 'Matrix4', 'a Matrix4 return should come back under the Matrix4 tag');
+assert.deepEqual(
+    instanceMatrix.v,
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+    'the matrix should come back column-major and untransposed, the same order C# sends one in');
+
+// A failed read reports on its own result row and stays out of the error list, because the C# side
+// faults the one task awaiting it rather than announcing it to every OnError subscriber.
+const failedReadResponse = runOps(context, [
+    { k: OP_SET, h: 6, m: 'fov', v: 45 },
+    { k: OP_READ, h: 999, m: 'getFocalLength', a: [], i: 31 },
+    { k: OP_READ, h: 6, m: 'notAMethod', a: [], i: 32 }
+]);
+
+assert.deepEqual(failedReadResponse.e, [], 'a failed read must not be reported on the batch error channel');
+assert.equal(failedReadResponse.r.length, 2, 'a failed read still produces a result row');
+assert.match(failedReadResponse.r.find(row => row.i === 31).e, /Unknown handle/, 'an unknown handle should be named on the result row');
+assert.match(failedReadResponse.r.find(row => row.i === 32).e, /not a method/, 'a missing method should be named on the result row');
+assert.equal(failedReadResponse.r.find(row => row.i === 31).v, undefined, 'a failed read must not also carry a value');
+
+// The failure mode the encoder exists to prevent: a method returning a three.js object has no wire
+// encoding, and serializing its public shape would hand C# a plausible-looking bag of numbers.
+// `clone()` is the exact case the member classifier refuses for this reason, so pin that the applier
+// refuses it too rather than relying on the generator never emitting one.
+const unencodableReadResponse = runOps(context, [{ k: OP_READ, h: 6, m: 'clone', a: [], i: 41 }]);
+assert.match(
+    unencodableReadResponse.r[0].e,
+    /no wire encoding/,
+    'a read returning a three.js object must be refused, not serialized as a plain object');
+
 // The floor under the README's headline. `generator/api-coverage.json` is what that number is
 // rendered from, and what it claims is that each of those classes is a class a consumer can create -
 // which nothing upstream of here checks against the bundle that will actually be asked for it.
@@ -143,4 +245,5 @@ assert.deepEqual(
     'every generated class must be a constructor on the vendored three.js namespace');
 
 console.log(`Wire contract OK - ${ops.length} ops applied against the vendored three.js.`);
+console.log('Read op OK - values, tagged math values, correlation, ordering and refusals round-tripped.');
 console.log(`Generated surface OK - ${generatedClassNames.length} generated classes are constructors on the vendored three.js.`);

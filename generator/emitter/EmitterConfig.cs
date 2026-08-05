@@ -37,6 +37,14 @@ internal static class EmitterConfig
 	public const string TrimUnspecifiedTailCall = "ThreeValue.TrimUnspecifiedTail";
 
 	/// <summary>
+	/// Suffix a query's C# name carries that three.js's own does not. The only rename the mirror makes:
+	/// a query returns a <c>Task&lt;T&gt;</c>, and a method that hands back a task without saying so
+	/// reads as a synchronous call at every call site. It also keeps a query from colliding with a
+	/// same-named property on the same type.
+	/// </summary>
+	public const string QueryMethodSuffix = "Async";
+
+	/// <summary>
 	/// Classes the runtime provides by hand, which the generator therefore does not emit. They are
 	/// still mirrored types: a generated class derives from one, and the surface resolver subtracts
 	/// their members so the same three.js member is declared in exactly one C# type.

@@ -179,11 +179,19 @@ internal enum SkipCategory : byte
 	/// <summary>The member is not part of the mirrored surface at all: static, non-public, or <c>@internal</c>.</summary>
 	NotInstanceApi,
 
-	/// <summary>Read-only in three.js, and the wire format has no read channel.</summary>
-	ReadOnlyWithoutReadChannel,
+	/// <summary>
+	/// Read-only in three.js. The read op invokes a method, so a property has nothing to route through
+	/// it — exposing one as an async method would change the shape of the mirrored API rather than its
+	/// coverage.
+	/// </summary>
+	ReadOnlyProperty,
 
-	/// <summary>The member's whole point is a value coming back from JavaScript, and no op does that.</summary>
-	NoReadChannel,
+	/// <summary>
+	/// Its result is a JavaScript object rather than a value. The read op carries values — numbers,
+	/// booleans, strings, the five tagged math types — and no op mints a handle for an object the
+	/// browser created, so there is nothing to hand back.
+	/// </summary>
+	NoHandleForResult,
 
 	/// <summary>A member the constructor already takes under the same name, so the two would collide.</summary>
 	ShadowedByConstructorParameter,

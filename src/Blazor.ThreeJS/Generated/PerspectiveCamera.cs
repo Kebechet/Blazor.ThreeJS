@@ -270,6 +270,52 @@ public class PerspectiveCamera : Camera
 	}
 
 	/// <summary>
+	/// Returns the focal length from the current <c>PerspectiveCamera#fov</c> and
+	/// <c>PerspectiveCamera#filmGauge</c>. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getFocalLength</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getFocalLength</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetFocalLengthAsync()
+	{
+		return RecordRead<float>("getFocalLength");
+	}
+
+	/// <summary>
+	/// Returns the current vertical field of view angle in degrees considering
+	/// <c>PerspectiveCamera#zoom</c>. Records a read op, sends it behind every write already pending,
+	/// and completes with what <c>getEffectiveFOV</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getEffectiveFOV</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetEffectiveFOVAsync()
+	{
+		return RecordRead<float>("getEffectiveFOV");
+	}
+
+	/// <summary>
+	/// Returns the width of the image on the film. If <c>PerspectiveCamera#aspect</c> is greater than
+	/// or equal to one (landscape format), the result equals <c>PerspectiveCamera#filmGauge</c>.
+	/// Records a read op, sends it behind every write already pending, and completes with what
+	/// <c>getFilmWidth</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getFilmWidth</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetFilmWidthAsync()
+	{
+		return RecordRead<float>("getFilmWidth");
+	}
+
+	/// <summary>
+	/// Returns the height of the image on the film. If <c>PerspectiveCamera#aspect</c> is greater than
+	/// or equal to one (landscape format), the result equals <c>PerspectiveCamera#filmGauge</c>.
+	/// Records a read op, sends it behind every write already pending, and completes with what
+	/// <c>getFilmHeight</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getFilmHeight</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetFilmHeightAsync()
+	{
+		return RecordRead<float>("getFilmHeight");
+	}
+
+	/// <summary>
 	/// Replays every property written before this object was attached, so construction order never
 	/// matters to the caller. A property the caller never wrote is left alone: three.js's own default
 	/// is the truth for it, and the mirror has never read anything back to improve on that.

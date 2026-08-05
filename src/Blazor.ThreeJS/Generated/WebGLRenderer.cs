@@ -396,6 +396,67 @@ public sealed class WebGLRenderer : ThreeObject
 	}
 
 	/// <summary>
+	/// Reads <c>getPixelRatio</c> back from the JavaScript-side object. Records a read op, sends it
+	/// behind every write already pending, and completes with what <c>getPixelRatio</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getPixelRatio</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetPixelRatioAsync()
+	{
+		return RecordRead<float>("getPixelRatio");
+	}
+
+	/// <summary>
+	/// Returns true if scissor test is enabled; returns false otherwise. Records a read op, sends it
+	/// behind every write already pending, and completes with what <c>getScissorTest</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getScissorTest</c> returned, once the JavaScript side has answered.</returns>
+	public Task<bool> GetScissorTestAsync()
+	{
+		return RecordRead<bool>("getScissorTest");
+	}
+
+	/// <summary>
+	/// Returns a THREE.Color instance with the current clear color. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>getClearColor</c> returned.
+	/// </summary>
+	/// <param name="target">Value forwarded to the <c>target</c> argument.</param>
+	/// <returns>The value <c>getClearColor</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Color> GetClearColorAsync(Color target)
+	{
+		return RecordRead<Color>("getClearColor", target);
+	}
+
+	/// <summary>
+	/// Returns a float with the current clear alpha. Ranges from 0 to 1. Records a read op, sends it
+	/// behind every write already pending, and completes with what <c>getClearAlpha</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getClearAlpha</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetClearAlphaAsync()
+	{
+		return RecordRead<float>("getClearAlpha");
+	}
+
+	/// <summary>
+	/// Returns the current active cube face. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getActiveCubeFace</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getActiveCubeFace</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetActiveCubeFaceAsync()
+	{
+		return RecordRead<float>("getActiveCubeFace");
+	}
+
+	/// <summary>
+	/// Returns the current active mipmap level. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getActiveMipmapLevel</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getActiveMipmapLevel</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetActiveMipmapLevelAsync()
+	{
+		return RecordRead<float>("getActiveMipmapLevel");
+	}
+
+	/// <summary>
 	/// Emits the create op for <c>THREE.WebGLRenderer</c>, then replays every property written before
 	/// this object was attached.
 	/// </summary>

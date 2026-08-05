@@ -55,6 +55,20 @@ internal sealed class ThreeOp
 	[JsonPropertyName("c")]
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 	public int ChildHandle { get; init; }
+
+	/// <summary>
+	/// Identifies which pending read a returned value answers. Only set for
+	/// <see cref="ThreeOpKind.Read"/>, and omitted when zero — request ids are allocated from 1
+	/// upwards, so 0 is never a real one.
+	/// <para>
+	/// The applier echoes it back on the result row rather than relying on position, so a batch
+	/// carrying several reads still matches each value to the request that asked for it, and a
+	/// response missing a row is detectable instead of silently answering with the wrong value.
+	/// </para>
+	/// </summary>
+	[JsonPropertyName("i")]
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+	public int RequestId { get; init; }
 }
 
 /// <summary>
@@ -79,5 +93,12 @@ internal enum ThreeOpKind : byte
 	Remove = 4,
 
 	/// <summary>Release an object and its JavaScript-side resources.</summary>
-	Dispose = 5
+	Dispose = 5,
+
+	/// <summary>
+	/// Invoke a method on an existing object and send its return value back. The only op that produces
+	/// a value; every other kind is one-directional. Never coalesces, and acts as the same barrier a
+	/// <see cref="Call"/> does, since a read observes the object's property state at the point it runs.
+	/// </summary>
+	Read = 6
 }

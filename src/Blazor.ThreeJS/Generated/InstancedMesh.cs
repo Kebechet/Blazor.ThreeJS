@@ -156,6 +156,32 @@ public sealed class InstancedMesh : Mesh
 	}
 
 	/// <summary>
+	/// Get the color of the defined instance. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getColorAt</c> returned.
+	/// </summary>
+	/// <param name="index">The index of an instance. Values have to be in the range <c>[0, count]</c>.</param>
+	/// <param name="color">This color object will be set to the color of the defined instance.</param>
+	/// <returns>The value <c>getColorAt</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Color> GetColorAtAsync(int index, Color color)
+	{
+		return RecordRead<Color>("getColorAt", index, color);
+	}
+
+	/// <summary>
+	/// Get the local transformation matrix of the defined instance. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>getMatrixAt</c> returned.
+	/// </summary>
+	/// <param name="index">The index of an instance Values have to be in the range <c>[0, count]</c>.</param>
+	/// <param name="matrix">
+	/// This 4x4 matrix will be set to the local transformation matrix of the defined instance.
+	/// </param>
+	/// <returns>The value <c>getMatrixAt</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Matrix4> GetMatrixAtAsync(int index, Matrix4 matrix)
+	{
+		return RecordRead<Matrix4>("getMatrixAt", index, matrix);
+	}
+
+	/// <summary>
 	/// Attaches the objects <c>THREE.InstancedMesh</c> is constructed from, so their create ops reach
 	/// the batch before the one that references them by handle, then emits this object's own.
 	/// </summary>

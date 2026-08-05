@@ -127,6 +127,19 @@ public sealed class SkinnedMesh : Mesh
 	}
 
 	/// <summary>
+	/// Applies the bone transform associated with the given index to the given position vector. Records
+	/// a read op, sends it behind every write already pending, and completes with what
+	/// <c>applyBoneTransform</c> returned.
+	/// </summary>
+	/// <param name="index"></param>
+	/// <param name="vector">Value forwarded to the <c>vector</c> argument.</param>
+	/// <returns>The value <c>applyBoneTransform</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Vector3> ApplyBoneTransformAsync(int index, Vector3 vector)
+	{
+		return RecordRead<Vector3>("applyBoneTransform", index, vector);
+	}
+
+	/// <summary>
 	/// Attaches the objects <c>THREE.SkinnedMesh</c> is constructed from, so their create ops reach the
 	/// batch before the one that references them by handle, then emits this object's own.
 	/// </summary>

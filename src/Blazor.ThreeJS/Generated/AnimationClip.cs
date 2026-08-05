@@ -113,6 +113,17 @@ public sealed class AnimationClip : ThreeObject
 	}
 
 	/// <summary>
+	/// Performs minimal validation on each track in the clip. Returns <c>true</c> if all tracks are
+	/// valid. Records a read op, sends it behind every write already pending, and completes with what
+	/// <c>validate</c> returned.
+	/// </summary>
+	/// <returns>The value <c>validate</c> returned, once the JavaScript side has answered.</returns>
+	public Task<bool> ValidateAsync()
+	{
+		return RecordRead<bool>("validate");
+	}
+
+	/// <summary>
 	/// Emits the create op for <c>THREE.AnimationClip</c>, then replays every property written before
 	/// this object was attached.
 	/// </summary>

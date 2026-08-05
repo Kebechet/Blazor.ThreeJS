@@ -163,6 +163,28 @@ public sealed class Clock : ThreeObject
 	}
 
 	/// <summary>
+	/// Get the seconds passed since the clock started and sets <c>.oldTime</c> to the current time.
+	/// Records a read op, sends it behind every write already pending, and completes with what
+	/// <c>getElapsedTime</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getElapsedTime</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetElapsedTimeAsync()
+	{
+		return RecordRead<float>("getElapsedTime");
+	}
+
+	/// <summary>
+	/// Get the seconds passed since the time <c>.oldTime</c> was set and sets <c>.oldTime</c> to the
+	/// current time. Records a read op, sends it behind every write already pending, and completes with
+	/// what <c>getDelta</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getDelta</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetDeltaAsync()
+	{
+		return RecordRead<float>("getDelta");
+	}
+
+	/// <summary>
 	/// Emits the create op for <c>THREE.Clock</c>, then replays every property written before this
 	/// object was attached.
 	/// </summary>

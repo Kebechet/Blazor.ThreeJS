@@ -34,4 +34,14 @@ public sealed class AudioListener : Object3D
 	{
 		RecordCall("setMasterVolume", value);
 	}
+
+	/// <summary>
+	/// Returns the applications master volume. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getMasterVolume</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getMasterVolume</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetMasterVolumeAsync()
+	{
+		return RecordRead<float>("getMasterVolume");
+	}
 }

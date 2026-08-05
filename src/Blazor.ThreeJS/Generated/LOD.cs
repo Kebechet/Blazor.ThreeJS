@@ -79,6 +79,28 @@ public sealed class LOD : Object3D
 	}
 
 	/// <summary>
+	/// Removes an existing level, based on the distance from the camera. Returns <c>true</c> when the
+	/// level has been removed. Otherwise <c>false</c>. Records a read op, sends it behind every write
+	/// already pending, and completes with what <c>removeLevel</c> returned.
+	/// </summary>
+	/// <param name="distance">Distance of the level to delete.</param>
+	/// <returns>The value <c>removeLevel</c> returned, once the JavaScript side has answered.</returns>
+	public Task<bool> RemoveLevelAsync(float distance)
+	{
+		return RecordRead<bool>("removeLevel", distance);
+	}
+
+	/// <summary>
+	/// Get the currently active <see cref="LOD"/> level. Records a read op, sends it behind every write
+	/// already pending, and completes with what <c>getCurrentLevel</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getCurrentLevel</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetCurrentLevelAsync()
+	{
+		return RecordRead<float>("getCurrentLevel");
+	}
+
+	/// <summary>
 	/// Replays every property written before this object was attached, so construction order never
 	/// matters to the caller. A property the caller never wrote is left alone: three.js's own default
 	/// is the truth for it, and the mirror has never read anything back to improve on that.

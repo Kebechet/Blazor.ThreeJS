@@ -66,4 +66,34 @@ public sealed class Timer : ThreeObject
 	{
 		RecordCall("update", timestamp);
 	}
+
+	/// <summary>
+	/// Returns the time delta in seconds. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getDelta</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getDelta</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetDeltaAsync()
+	{
+		return RecordRead<float>("getDelta");
+	}
+
+	/// <summary>
+	/// Returns the elapsed time in seconds. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getElapsed</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getElapsed</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetElapsedAsync()
+	{
+		return RecordRead<float>("getElapsed");
+	}
+
+	/// <summary>
+	/// Returns the time scale. Records a read op, sends it behind every write already pending, and
+	/// completes with what <c>getTimescale</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getTimescale</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float> GetTimescaleAsync()
+	{
+		return RecordRead<float>("getTimescale");
+	}
 }

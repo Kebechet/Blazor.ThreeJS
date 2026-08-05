@@ -96,14 +96,29 @@ public sealed class ThreeContext : IAsyncDisposable
 	}
 
 	/// <summary>
-	/// Flushes any pending ops, then tells the renderer which scene and camera to render each frame.
-	/// Silently no-ops if the circuit has already disconnected or the module reference has already
-	/// been disposed.
+	/// Attaches both objects to this context, flushes any pending ops, then tells the renderer which
+	/// scene and camera to render each frame. Silently no-ops if the circuit has already disconnected
+	/// or the module reference has already been disposed.
+	/// <para>
+	/// Attaching here rather than demanding it of the caller is what makes the idiomatic three.js
+	/// arrangement work: a camera does not have to sit in the scene graph, so an unattached one reaches
+	/// this call in perfectly ordinary code. Both attaches happen before the flush so their create ops
+	/// travel in the same interop call as the handles below. Attaching is idempotent, so a graph
+	/// already passed to <see cref="Attach"/> costs nothing here — while an object belonging to another
+	/// context still throws, which is the case that really is a mistake.
+	/// </para>
 	/// </summary>
 	/// <param name="scene">The scene object to render.</param>
 	/// <param name="camera">The camera to render through.</param>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when <paramref name="scene"/> or <paramref name="camera"/> is already attached to a
+	/// different <see cref="ThreeContext"/>.
+	/// </exception>
 	public async Task SetActiveSceneAsync(Object3D scene, Object3D camera)
 	{
+		Attach(scene);
+		Attach(camera);
+
 		await FlushAsync();
 		try
 		{

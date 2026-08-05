@@ -427,12 +427,13 @@ public abstract class Object3D : ThreeObject
 	}
 
 	/// <summary>
-	/// Attaches this object and its entire subtree to a batch: emits the create op, replays every
-	/// property already set on this object, then attaches each child in turn. Idempotent — a second
-	/// call on an already-attached object is a no-op. Internal because the only entry point a
-	/// consumer needs is <see cref="ThreeContext.Attach"/>, which calls this on the root object on
-	/// their behalf. Overrides <see cref="ThreeObject.AttachTo"/> to layer transform replay and child
-	/// attachment on top of the base create-op guard.
+	/// Attaches this object and its entire subtree to a batch: runs the base attach sequence — create
+	/// op, then <see cref="EmitState"/>, then the commands invoked before the attach — and attaches
+	/// each child in turn afterwards. Idempotent — a second call on an already-attached object is a
+	/// no-op. Internal because the only entry point a consumer needs is
+	/// <see cref="ThreeContext.Attach"/>, which calls this on the root object on their behalf.
+	/// Overrides <see cref="ThreeObject.AttachTo"/> to layer child attachment on top of the base
+	/// create-op guard.
 	/// </summary>
 	/// <param name="batch">The batch to attach this object to.</param>
 	/// <exception cref="InvalidOperationException">
@@ -448,7 +449,6 @@ public abstract class Object3D : ThreeObject
 		}
 
 		base.AttachTo(batch);
-		EmitState(batch);
 
 		foreach (var child in _children)
 		{
@@ -470,7 +470,7 @@ public abstract class Object3D : ThreeObject
 	/// </para>
 	/// </summary>
 	/// <param name="batch">Batch to record the property writes into.</param>
-	internal virtual void EmitState(ThreeBatch batch)
+	internal override void EmitState(ThreeBatch batch)
 	{
 		batch.Set(Handle, "position", ThreeValue.Encode(Position));
 		batch.Set(Handle, "rotation", ThreeValue.Encode(Rotation));

@@ -878,27 +878,10 @@ internal sealed class ClassEmitter
 		writer.Indent();
 
 		// An argument that is itself a mirrored object has to exist on the JavaScript side before the
-		// call that references it by handle. Attaching rather than emitting its create op directly is
-		// what keeps a shared instance from being created twice.
-		var attachedParameters = command.Parameters
-			.Where(x => x.Mapping.Kind == TypeMappingKind.GeneratedWrapperClass)
-			.ToList();
-
-		foreach (var parameter in attachedParameters)
-		{
-			var guard = parameter.CSharpTypeName.EndsWith('?')
-				? $"if (Batch is not null && {parameter.DeclarationName} is not null)"
-				: "if (Batch is not null)";
-
-			writer.WriteLine(guard);
-			writer.WriteLine("{");
-			writer.Indent();
-			writer.WriteLine($"{parameter.DeclarationName}.AttachTo(Batch);");
-			writer.Outdent();
-			writer.WriteLine("}");
-			writer.WriteLine();
-		}
-
+		// call that references it by handle, and RecordCall attaches it. Emitting that here instead
+		// would only cover the case where this object already has a batch: a command invoked before
+		// the attach is held and replayed later, and nothing at this call site can attach anything
+		// then. One owner for the invariant is what keeps the two paths from drifting.
 		var arguments = command.Parameters.Count == 0
 			? string.Empty
 			: ", " + string.Join(", ", command.Parameters.Select(x => x.DeclarationName));

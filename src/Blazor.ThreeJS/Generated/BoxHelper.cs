@@ -81,11 +81,6 @@ public sealed class BoxHelper : LineSegments
 	/// <param name="object">The 3D object to create the helper for.</param>
 	public void SetFromObject(Object3D @object)
 	{
-		if (Batch is not null)
-		{
-			@object.AttachTo(Batch);
-		}
-
 		RecordCall("setFromObject", @object);
 	}
 

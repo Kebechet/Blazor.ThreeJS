@@ -126,6 +126,64 @@ public class ThreeContextTests
 	}
 
 	[Fact]
+	public async Task ThreeContext_SetActiveSceneWithAnUnattachedCamera_SendsItsCreateOpBeforeTheSetActiveSceneCall()
+	{
+		// Arrange
+		var module = new RecordingJsObjectReference();
+		var context = new ThreeContext(module, contextId: 1);
+		var scene = new Scene();
+		var camera = new PerspectiveCamera();
+
+		// Act
+		await context.SetActiveSceneAsync(scene, camera);
+
+		// Assert
+		var applyBatchInvocation = module.Invocations.Single(x => x.Identifier == "applyBatch");
+		var ops = applyBatchInvocation.Arguments.OfType<IReadOnlyList<ThreeOp>>().Single();
+
+		ops.ShouldContain(x => x.Kind == ThreeOpKind.Create && x.Handle == scene.Handle);
+		ops.ShouldContain(x => x.Kind == ThreeOpKind.Create && x.Handle == camera.Handle);
+		module.Invocations.IndexOf(applyBatchInvocation)
+			.ShouldBeLessThan(module.Invocations.FindIndex(x => x.Identifier == "setActiveScene"));
+	}
+
+	[Fact]
+	public async Task ThreeContext_SetActiveSceneWithAnAlreadyAttachedGraph_DoesNotReemitItsCreateOps()
+	{
+		// Arrange
+		var module = new RecordingJsObjectReference();
+		var context = new ThreeContext(module, contextId: 1);
+		var scene = new Scene();
+		var camera = new PerspectiveCamera();
+		scene.Add(camera);
+		context.Attach(scene);
+		await context.FlushAsync();
+
+		// Act
+		await context.SetActiveSceneAsync(scene, camera);
+
+		// Assert
+		module.Invocations.Count(x => x.Identifier == "applyBatch").ShouldBe(1);
+	}
+
+	[Fact]
+	public async Task ThreeContext_SetActiveSceneWithACameraFromAnotherContext_Throws()
+	{
+		// Arrange
+		var context = new ThreeContext(new RecordingJsObjectReference(), contextId: 1);
+		var otherContext = new ThreeContext(new RecordingJsObjectReference(), contextId: 2);
+		var scene = new Scene();
+		var camera = new PerspectiveCamera();
+		otherContext.Attach(camera);
+
+		// Act
+		var exception = await Record.ExceptionAsync(() => context.SetActiveSceneAsync(scene, camera));
+
+		// Assert
+		exception.ShouldBeOfType<InvalidOperationException>();
+	}
+
+	[Fact]
 	public async Task ThreeContext_SetActiveSceneWhenCircuitDisconnected_DoesNotThrow()
 	{
 		// Arrange
@@ -165,6 +223,50 @@ internal sealed class ThrowingJsObjectReference : IJSObjectReference
 	{
 		return ValueTask.CompletedTask;
 	}
+}
+
+/// <summary>
+/// Fake <see cref="IJSObjectReference"/> that records every invocation and answers each one with an
+/// empty result. Lets a test assert what actually crossed the interop boundary and in what order,
+/// which is the only place the ops a context sent can be observed once <c>FlushAsync</c> has drained
+/// the batch. Implemented directly rather than substituted for the reason spelled out on
+/// <see cref="ThrowingJsObjectReference"/>.
+/// </summary>
+internal sealed class RecordingJsObjectReference : IJSObjectReference
+{
+	/// <summary>Every invocation received so far, in the order it arrived.</summary>
+	public List<JsInvocation> Invocations { get; } = [];
+
+	public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
+	{
+		Invocations.Add(new JsInvocation { Identifier = identifier, Arguments = args ?? [] });
+		if (typeof(TValue) == typeof(List<ThreeError>))
+		{
+			return ValueTask.FromResult((TValue) (object) new List<ThreeError>());
+		}
+
+		return default;
+	}
+
+	public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+	{
+		return InvokeAsync<TValue>(identifier, args);
+	}
+
+	public ValueTask DisposeAsync()
+	{
+		return ValueTask.CompletedTask;
+	}
+}
+
+/// <summary>A single invocation recorded by <see cref="RecordingJsObjectReference"/>.</summary>
+internal sealed class JsInvocation
+{
+	/// <summary>Name of the JavaScript function that was invoked.</summary>
+	public required string Identifier { get; init; }
+
+	/// <summary>Arguments the invocation carried.</summary>
+	public required object?[] Arguments { get; init; }
 }
 
 /// <summary>

@@ -120,11 +120,6 @@ public sealed class InstancedMesh : Mesh
 	/// </param>
 	public void GetMorphAt(int index, Mesh mesh)
 	{
-		if (Batch is not null)
-		{
-			mesh.AttachTo(Batch);
-		}
-
 		RecordCall("getMorphAt", index, mesh);
 	}
 
@@ -151,11 +146,6 @@ public sealed class InstancedMesh : Mesh
 	/// </param>
 	public void SetMorphAt(int index, Mesh mesh)
 	{
-		if (Batch is not null)
-		{
-			mesh.AttachTo(Batch);
-		}
-
 		RecordCall("setMorphAt", index, mesh);
 	}
 

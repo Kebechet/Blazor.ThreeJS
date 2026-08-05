@@ -375,16 +375,6 @@ public sealed class WebGLRenderer : ThreeObject
 	/// <param name="camera">Value forwarded to the <c>camera</c> argument.</param>
 	public void Render(Object3D scene, Camera camera)
 	{
-		if (Batch is not null)
-		{
-			scene.AttachTo(Batch);
-		}
-
-		if (Batch is not null)
-		{
-			camera.AttachTo(Batch);
-		}
-
 		RecordCall("render", scene, camera);
 	}
 
@@ -396,11 +386,6 @@ public sealed class WebGLRenderer : ThreeObject
 	/// <param name="target">Value forwarded to the <c>target</c> argument.</param>
 	public void InitRenderTarget(WebGLRenderTarget target)
 	{
-		if (Batch is not null)
-		{
-			target.AttachTo(Batch);
-		}
-
 		RecordCall("initRenderTarget", target);
 	}
 

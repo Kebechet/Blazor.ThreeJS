@@ -65,11 +65,6 @@ public sealed class LOD : Object3D
 	/// </param>
 	public void AddLevel(Object3D @object, float distance = 0f, float hysteresis = 0f)
 	{
-		if (Batch is not null)
-		{
-			@object.AttachTo(Batch);
-		}
-
 		RecordCall("addLevel", @object, distance, hysteresis);
 	}
 
@@ -80,11 +75,6 @@ public sealed class LOD : Object3D
 	/// <param name="camera">Value forwarded to the <c>camera</c> argument.</param>
 	public void Update(Camera camera)
 	{
-		if (Batch is not null)
-		{
-			camera.AttachTo(Batch);
-		}
-
 		RecordCall("update", camera);
 	}
 

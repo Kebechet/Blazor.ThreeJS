@@ -90,11 +90,6 @@ public sealed class UniformsGroup : EventDispatcher
 	/// <param name="source">Value forwarded to the <c>source</c> argument.</param>
 	public void Copy(UniformsGroup source)
 	{
-		if (Batch is not null)
-		{
-			source.AttachTo(Batch);
-		}
-
 		RecordCall("copy", source);
 	}
 

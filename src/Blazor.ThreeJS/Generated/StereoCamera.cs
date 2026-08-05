@@ -130,11 +130,6 @@ public sealed class StereoCamera : ThreeObject
 	/// <param name="camera">The perspective camera.</param>
 	public void Update(PerspectiveCamera camera)
 	{
-		if (Batch is not null)
-		{
-			camera.AttachTo(Batch);
-		}
-
 		RecordCall("update", camera);
 	}
 

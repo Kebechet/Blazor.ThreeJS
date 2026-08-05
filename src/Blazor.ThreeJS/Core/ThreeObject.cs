@@ -9,6 +9,13 @@ public abstract class ThreeObject
 	private static int _nextHandle;
 
 	/// <summary>
+	/// Commands invoked before this object reached a batch, held until <see cref="AttachTo"/> can
+	/// replay them. Stays <see langword="null"/> until the first such command, so an object built the
+	/// usual way — attached, then driven — never allocates it.
+	/// </summary>
+	private List<PendingCall>? _pendingCalls;
+
+	/// <summary>
 	/// Handle identifying this object on the JavaScript side. Allocated monotonically in C# via
 	/// <see cref="Interlocked.Increment(ref int)"/> at construction time, so creating an object
 	/// never awaits and never round-trips to JavaScript.
@@ -34,12 +41,16 @@ public abstract class ThreeObject
 	}
 
 	/// <summary>
-	/// Attaches this object to a batch: assigns <see cref="Batch"/> and emits the create op.
+	/// Attaches this object to a batch: assigns <see cref="Batch"/>, emits the create op, replays the
+	/// state written before the attach, then replays the commands invoked before it. That order is the
+	/// whole contract — a replayed command observes the object three.js would have had at the moment it
+	/// was invoked, which for <c>lookAt</c> and its kind means the replayed property values rather than
+	/// three.js's constructor defaults.
 	/// Idempotent — calling this a second time with the same batch is a no-op, which is what lets two
 	/// objects (e.g. two meshes) share the same geometry or material instance without emitting a
-	/// duplicate create for it. Virtual so a subclass with its own attachment concerns (replaying
-	/// transform state, attaching children) can extend it while this attach-once guard stays the
-	/// single source of truth for whether the create op was already emitted.
+	/// duplicate create for it. Virtual so a subclass with its own attachment concerns (attaching
+	/// children) can extend it while this attach-once guard stays the single source of truth for
+	/// whether the create op was already emitted.
 	/// </summary>
 	/// <param name="batch">The batch to attach this object to.</param>
 	/// <exception cref="InvalidOperationException">
@@ -56,6 +67,8 @@ public abstract class ThreeObject
 
 		Batch = batch;
 		EmitCreate(batch);
+		EmitState(batch);
+		ReplayPendingCalls(batch);
 	}
 
 	/// <summary>
@@ -92,7 +105,19 @@ public abstract class ThreeObject
 
 	/// <summary>
 	/// Records a method invocation on this object into <see cref="Batch"/>, encoding each argument
-	/// first. A no-op while <see cref="Batch"/> is unset.
+	/// first and attaching any argument that is itself a mirrored object, so its create op reaches the
+	/// batch before the call that references it by handle.
+	/// <para>
+	/// Invoked before this object is attached, the call is held instead and replayed by
+	/// <see cref="AttachTo"/> once the create op and the state replay have gone in. Dropping it — which
+	/// is what a bare no-op would do — is the one outcome that has no signal anywhere: properties
+	/// already survive a pre-attach write by being replayed from fields, so a command that silently did
+	/// not happen would be the only member kind where construction order changes the result.
+	/// </para>
+	/// <para>
+	/// Arguments are encoded at invocation time, not at replay time, so a held call carries the values
+	/// it was given rather than whatever a mutable argument was later changed to.
+	/// </para>
 	/// </summary>
 	/// <param name="member">Name of the method to invoke.</param>
 	/// <param name="args">Positional arguments to pass to the method.</param>
@@ -102,7 +127,20 @@ public abstract class ThreeObject
 			.Select(ThreeValue.Encode)
 			.ToArray();
 
-		Batch?.Call(Handle, member, encodedArgs);
+		if (Batch is null)
+		{
+			_pendingCalls ??= [];
+			_pendingCalls.Add(new PendingCall
+			{
+				Member = member,
+				Arguments = args,
+				EncodedArguments = encodedArgs
+			});
+			return;
+		}
+
+		AttachMirroredArguments(Batch, args);
+		Batch.Call(Handle, member, encodedArgs);
 	}
 
 	/// <summary>
@@ -124,9 +162,76 @@ public abstract class ThreeObject
 		batch.Create(Handle, ThreeTypeName, encodedConstructorArgs);
 	}
 
+	/// <summary>
+	/// Replays the state written before this object was attached. Empty here, because a class that
+	/// folds its own replay into <see cref="EmitCreate"/> has nothing left to say. The hook exists so
+	/// that <see cref="AttachTo"/> has a named slot between the create op and the command replay for
+	/// the classes that do replay separately — <c>Object3D</c>, which has a subtree to attach after
+	/// its own state — and so that a held command can be guaranteed to land after both.
+	/// </summary>
+	/// <param name="batch">Batch to record the property writes into.</param>
+	internal virtual void EmitState(ThreeBatch batch)
+	{
+	}
+
 	/// <summary>Positional arguments to pass to the three.js constructor when this object is created.</summary>
 	protected virtual object?[] ConstructorArgs
 	{
 		get { return []; }
+	}
+
+	/// <summary>
+	/// Records every command held while this object had no batch, in invocation order, and releases the
+	/// queue. Only ever reached once per object: <see cref="AttachTo"/> returns early on an object that
+	/// already has a batch, and every later command records straight into it.
+	/// </summary>
+	/// <param name="batch">Batch to record the call ops into.</param>
+	private void ReplayPendingCalls(ThreeBatch batch)
+	{
+		if (_pendingCalls is null)
+		{
+			return;
+		}
+
+		foreach (var pendingCall in _pendingCalls)
+		{
+			AttachMirroredArguments(batch, pendingCall.Arguments);
+			batch.Call(Handle, pendingCall.Member, pendingCall.EncodedArguments);
+		}
+
+		_pendingCalls = null;
+	}
+
+	/// <summary>
+	/// Attaches every argument that is itself a mirrored object. A <c>$ref</c> to a handle the applier
+	/// has never seen is an unknown-handle failure in the browser, and an argument passed to a command
+	/// invoked before this object reached a batch has not been attached by anything else. Attaching
+	/// rather than emitting the create op directly is what keeps a shared instance from being created
+	/// twice.
+	/// </summary>
+	/// <param name="batch">Batch to attach the arguments to.</param>
+	/// <param name="args">The command's positional arguments, unencoded.</param>
+	private static void AttachMirroredArguments(ThreeBatch batch, object?[] args)
+	{
+		foreach (var arg in args)
+		{
+			if (arg is ThreeObject mirroredArgument)
+			{
+				mirroredArgument.AttachTo(batch);
+			}
+		}
+	}
+
+	/// <summary>A command invoked before its object was attached, held until the attach can replay it.</summary>
+	private sealed class PendingCall
+	{
+		/// <summary>Name of the three.js method to invoke.</summary>
+		public required string Member { get; init; }
+
+		/// <summary>The arguments as the caller passed them, kept so the mirrored ones can be attached on replay.</summary>
+		public required object?[] Arguments { get; init; }
+
+		/// <summary>The same arguments in wire form, encoded at invocation time.</summary>
+		public required object?[] EncodedArguments { get; init; }
 	}
 }

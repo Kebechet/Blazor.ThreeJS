@@ -997,36 +997,6 @@ public class Material : EventDispatcher
 		Object3D @object,
 		Group group)
 	{
-		if (Batch is not null)
-		{
-			renderer.AttachTo(Batch);
-		}
-
-		if (Batch is not null)
-		{
-			scene.AttachTo(Batch);
-		}
-
-		if (Batch is not null)
-		{
-			camera.AttachTo(Batch);
-		}
-
-		if (Batch is not null)
-		{
-			geometry.AttachTo(Batch);
-		}
-
-		if (Batch is not null)
-		{
-			@object.AttachTo(Batch);
-		}
-
-		if (Batch is not null)
-		{
-			group.AttachTo(Batch);
-		}
-
 		RecordCall("onBeforeRender", renderer, scene, camera, geometry, @object, group);
 	}
 
@@ -1034,11 +1004,6 @@ public class Material : EventDispatcher
 	/// <param name="source">The material to copy.</param>
 	public void Copy(Material source)
 	{
-		if (Batch is not null)
-		{
-			source.AttachTo(Batch);
-		}
-
 		RecordCall("copy", source);
 	}
 

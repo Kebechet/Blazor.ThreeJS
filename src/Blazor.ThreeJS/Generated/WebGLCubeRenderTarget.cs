@@ -40,11 +40,6 @@ public sealed class WebGLCubeRenderTarget : WebGLRenderTarget
 	/// <param name="stencil">Value forwarded to the <c>stencil</c> argument.</param>
 	public void Clear(WebGLRenderer renderer, bool color, bool depth, bool stencil)
 	{
-		if (Batch is not null)
-		{
-			renderer.AttachTo(Batch);
-		}
-
 		RecordCall("clear", renderer, color, depth, stencil);
 	}
 }

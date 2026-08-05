@@ -90,11 +90,6 @@ public sealed class SkinnedMesh : Mesh
 	/// <param name="bindMatrix"><c>Matrix4</c> that represents the base transform of the skeleton.</param>
 	public void Bind(Skeleton skeleton, Matrix4 bindMatrix)
 	{
-		if (Batch is not null)
-		{
-			skeleton.AttachTo(Batch);
-		}
-
 		RecordCall("bind", skeleton, bindMatrix);
 	}
 

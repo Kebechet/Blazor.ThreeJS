@@ -1,0 +1,39 @@
+/*
+Story content renders inside a transparent iframe that BlazingStory composites over its own shell,
+so it inherits no colour from anywhere and the browser default applies: black. The shell paints
+rgb(27, 28, 29) behind it under a dark theme, which puts the prose at roughly 1.1:1 contrast.
+
+Only `color` is set. The canvas is deliberately created with `alpha: true` and is never
+colour-cleared, so giving this document a background would make the preview opaque and change what
+the story actually demonstrates.
+*/
+
+/*
+Declaring the supported schemes is what makes the pairing hold in both places this page is opened.
+Viewed on its own the browser paints the default canvas, and without this it paints white whatever
+the user prefers - so the dark-theme colour below would land light-on-white. Inside the shell the
+document stays transparent and composites over BlazingStory's own background either way.
+*/
+:root {
+    color-scheme: light dark;
+}
+
+body {
+    color: #1b1c1d;
+}
+
+code {
+    background-color: rgb(0 0 0 / 6%);
+    border-radius: 3px;
+    padding: 0.1em 0.3em;
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        color: #c9cdcf;
+    }
+
+    code {
+        background-color: rgb(255 255 255 / 10%);
+    }
+}

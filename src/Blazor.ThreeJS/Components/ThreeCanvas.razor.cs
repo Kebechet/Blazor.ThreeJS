@@ -1,4 +1,6 @@
 using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Math;
+using Kebechet.Blazor.ThreeJS.Objects;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
@@ -29,6 +31,14 @@ public partial class ThreeCanvas
 	private ThreeContext? _threeContext;
 	private Task? _initializationTask;
 	private bool _isDisposed;
+
+	/// <summary>
+	/// What lets the browser call back into this component, handed to <c>createContext</c> so the
+	/// applier can report a pointer hit. Released by <see cref="DisposeAsync"/>: an undisposed one
+	/// keeps this component, its context and its whole scene graph alive for as long as the circuit
+	/// lives, because the JS-side reference table holds it.
+	/// </summary>
+	private DotNetObjectReference<ThreeCanvas>? _selfReference;
 
 	/// <summary>
 	/// Creates the JavaScript-side context on the first render only, since the canvas element does not
@@ -68,22 +78,69 @@ public partial class ThreeCanvas
 	/// split is what lets <see cref="DisposeAsync"/> await this task unconditionally: every step in it
 	/// is framework JS interop, so a dead circuit faults it rather than hanging it. The module
 	/// reference is stored before <c>createContext</c> runs so it is still releasable if that call
-	/// throws — it does when WebGL is unavailable or the browser's live-context limit is reached.
+	/// throws — it does when WebGL is unavailable or the browser's live-context limit is reached. The
+	/// reference to this component is stored before the call for the same reason.
 	/// </summary>
 	private async Task CreateContextAsync()
 	{
 		var module = await _jsRuntime.InvokeAsync<IJSObjectReference>("import", ModulePath);
 		_module = module;
 
-		var contextId = await module.InvokeAsync<int>("createContext", _canvasElement, null);
+		_selfReference = DotNetObjectReference.Create(this);
+		var contextId = await module.InvokeAsync<int>("createContext", _canvasElement, _selfReference);
 		_threeContext = new ThreeContext(module, contextId);
+	}
+
+	/// <summary>
+	/// Receives a pointer hit from the JavaScript applier and raises it on the object the ray met.
+	/// Public and <c>[JSInvokable]</c> because the browser has to be able to reach it; it is not part
+	/// of the surface a consumer calls — subscribe to <see cref="Object3D.OnClick"/> instead.
+	/// <para>
+	/// The flush afterwards is what lets a handler be an ordinary synchronous <see cref="Action"/>: it
+	/// mutates the scene graph and the changes go out with no awaiting on its part. It costs nothing
+	/// when the handler changed nothing, because a flush with an empty batch makes no interop call.
+	/// </para>
+	/// <para>
+	/// No dispatching is done here, and none is needed. A JS-to-.NET call arrives on the renderer's
+	/// synchronization context on every hosting model this package supports — the circuit's on Blazor
+	/// Server, the single thread on WebAssembly, and the UI thread on MAUI Hybrid, where
+	/// <c>BlazorWebView</c> marshals JS interop onto it — so a handler may touch component state and
+	/// call <c>StateHasChanged</c> directly.
+	/// </para>
+	/// <para>
+	/// A hit that arrives after disposal raises nothing: the context is detached before its teardown
+	/// begins, and clears its own target table on top of that.
+	/// </para>
+	/// </summary>
+	/// <param name="handle">Handle of the object the ray met.</param>
+	/// <param name="x">X coordinate, in world space, of the point where the ray met it.</param>
+	/// <param name="y">Y coordinate, in world space, of the point where the ray met it.</param>
+	/// <param name="z">Z coordinate, in world space, of the point where the ray met it.</param>
+	/// <param name="distance">Distance in world units from the camera to that point.</param>
+	[JSInvokable]
+	public async Task DispatchPointerEventAsync(int handle, float x, float y, float z, float distance)
+	{
+		var threeContext = _threeContext;
+		if (threeContext is null)
+		{
+			return;
+		}
+
+		threeContext.DispatchPointerEvent(handle, new ThreePointerEvent
+		{
+			Point = new Vector3(x, y, z),
+			Distance = distance
+		});
+
+		await threeContext.FlushAsync();
 	}
 
 	/// <summary>
 	/// Waits for <see cref="CreateContextAsync"/> to reach a terminal state — whether or not it
 	/// started, and regardless of how it ended — then releases whatever it left behind: the full
 	/// <see cref="ThreeContext"/> if it got that far, otherwise just the module reference, otherwise
-	/// nothing. Because teardown always runs after that task has settled, the JavaScript-side context —
+	/// nothing, and in every one of those cases <see cref="_selfReference"/> if it was created.
+	/// Because teardown always runs after that task has settled, the JavaScript-side context —
 	/// its WebGL renderer, <c>ResizeObserver</c>, and render loop — is torn down through
 	/// <c>disposeContext</c> whenever <c>createContext</c> ever returned successfully, even if disposal
 	/// was requested while that call was still in flight.
@@ -115,13 +172,25 @@ public partial class ThreeCanvas
 			}
 		}
 
-		if (_threeContext is not null)
+		// The reference goes last, in a finally, so it is released however the teardown ends and only
+		// once the JavaScript side can no longer reach it: disposeContext takes the click listener off
+		// the canvas, and until that has run a pointer hit could still be on its way to it.
+		try
 		{
-			await DisposeThreeContextAsync();
-			return;
-		}
+			if (_threeContext is not null)
+			{
+				await DisposeThreeContextAsync();
+				return;
+			}
 
-		await DisposeModuleAsync();
+			await DisposeModuleAsync();
+		}
+		finally
+		{
+			var selfReference = _selfReference;
+			_selfReference = null;
+			selfReference?.Dispose();
+		}
 	}
 
 	/// <summary>

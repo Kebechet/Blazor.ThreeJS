@@ -81,6 +81,38 @@ await threeContext.FlushAsync();
 
 Reads never leave C#, and a tick that changes nothing makes no interop call.
 
+### Clicking objects
+
+Subscribe to an object's `OnClick` and the browser starts hit-testing it. The ray is cast in
+JavaScript, where the scene already lives, so C# hears only about clicks that actually landed on one
+of your objects. A click on empty space, or on an object nobody subscribed to, crosses no wire at
+all.
+
+```csharp
+mesh.OnClick += pointerEvent =>
+{
+    material.Color.SetHex(0xcc3366);
+    Console.WriteLine($"hit {pointerEvent.Distance} units away, at {pointerEvent.Point.X}, {pointerEvent.Point.Y}, {pointerEvent.Point.Z}");
+};
+```
+
+Subscribing is the opt-in and unsubscribing the last handler is the opt-out. Both record an op that
+travels with the next flush, exactly like a property write, so subscribe while you are building the
+scene - before `SetActiveSceneAsync` - or flush afterwards. Changes the handler makes to the scene
+graph are flushed for you once it returns, which is what lets it be an ordinary synchronous
+delegate; a handler that changes nothing costs nothing, because a flush with an empty batch makes no
+call.
+
+Only the object you subscribe on is hit-tested. Subscribing on a `Group` does not make its children
+clickable - subscribe on the meshes that carry the geometry you want clicked.
+
+**Moving the pointer costs nothing at all.** There is no `OnPointerEnter` / `OnPointerLeave`, and no
+pointer-movement listener is registered anywhere: hover has to report every boundary crossing, which
+on a Blazor Server circuit is one message per crossing, at a rate the user's mouse sets rather than
+one this package can bound. A click is deliberate and rare, so it has no such ceiling. And a scene
+with no subscriber has no click listener on the canvas either, so it costs nothing whether the
+pointer moves or not.
+
 ### `Path` and `Timer` collide with the BCL
 
 three.js has a `Path` (a 2D curve) and a `Timer`, and so does .NET. Both wrapped types live in

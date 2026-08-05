@@ -43,6 +43,7 @@ public abstract class Object3D : ThreeObject
 	private bool _isLayersWritten;
 	private bool _isCustomDepthMaterialWritten;
 	private bool _isCustomDistanceMaterialWritten;
+	private Action<ThreePointerEvent>? _onClick;
 
 	/// <summary>Position relative to the parent object.</summary>
 	public Vector3 Position { get; }
@@ -357,6 +358,49 @@ public abstract class Object3D : ThreeObject
 	}
 
 	/// <summary>
+	/// Raised when the user clicks this object — this object, not the canvas: the browser casts a ray
+	/// through the pointer and only an object the ray actually met raises anything. A click on empty
+	/// space, or on an object nobody subscribed to, sends nothing at all.
+	/// <para>
+	/// Subscribing is what opts the object into hit-testing, and unsubscribing the last handler opts it
+	/// back out, so hit-testing costs only what the objects with a subscriber cost. Both record an op
+	/// that travels with the next flush, exactly like a property write.
+	/// </para>
+	/// <para>
+	/// Only this object's own geometry is hit-tested. Subscribing on a parent does not make its
+	/// children clickable — subscribe on the objects that have the geometry you want clicked.
+	/// </para>
+	/// <para>
+	/// The handler runs on the renderer's synchronization context, the same one a DOM event handler
+	/// runs on, so calling <c>StateHasChanged</c> from it needs no dispatching on any of the three
+	/// hosting models. Scene-graph changes the handler makes are flushed for it once every handler has
+	/// run, so it does not have to await anything; a handler that changes nothing costs no interop,
+	/// because a flush with nothing pending makes no call.
+	/// </para>
+	/// </summary>
+	public event Action<ThreePointerEvent>? OnClick
+	{
+		add
+		{
+			var wasSubscribed = _onClick is not null;
+			_onClick += value;
+			if (!wasSubscribed && _onClick is not null)
+			{
+				RecordPointerSubscription(true);
+			}
+		}
+		remove
+		{
+			var wasSubscribed = _onClick is not null;
+			_onClick -= value;
+			if (wasSubscribed && _onClick is null)
+			{
+				RecordPointerSubscription(false);
+			}
+		}
+	}
+
+	/// <summary>
 	/// Initializes the transform with position at the origin, no rotation, and unit scale, and wires
 	/// each component's <c>OnChange</c> callback to record a property write. The values match three.js's
 	/// own defaults, so an object nobody has configured mirrors one three.js just constructed.
@@ -552,5 +596,58 @@ public abstract class Object3D : ThreeObject
 			_customDistanceMaterial?.AttachTo(batch);
 			batch.Set(Handle, "customDistanceMaterial", ThreeValue.Encode(_customDistanceMaterial));
 		}
+
+		// A handler subscribed before the attach recorded nothing at the time, for the same reason a
+		// property write did: there was no batch to record into. This is where it lands.
+		if (_onClick is not null)
+		{
+			batch.Pick(Handle, true);
+			batch.Context?.RegisterPointerTarget(this);
+		}
+	}
+
+	/// <summary>
+	/// Raises <see cref="OnClick"/> for a hit the browser reported. Called only by
+	/// <see cref="ThreeContext"/>, which resolves the handle in the callback back to this object, and
+	/// only for an object that opted in — an object with no subscriber is not in the applier's
+	/// candidate set, so no ray can reach it.
+	/// </summary>
+	/// <param name="pointerEvent">Where the ray met this object.</param>
+	internal void RaiseClick(ThreePointerEvent pointerEvent)
+	{
+		_onClick?.Invoke(pointerEvent);
+	}
+
+	/// <summary>
+	/// Records an opt-in or opt-out with both halves of the machinery: the op that tells the applier
+	/// which objects to hit-test, and the context's own handle-to-object table, which is what turns
+	/// the handle in an incoming callback back into the object whose event to raise.
+	/// <para>
+	/// A no-op before this object is attached — there is no batch to record into and no context to
+	/// register with. <see cref="EmitState"/> replays the subscription once there is.
+	/// </para>
+	/// </summary>
+	/// <param name="isPointerTarget">Whether the object is opting in or out.</param>
+	private void RecordPointerSubscription(bool isPointerTarget)
+	{
+		var batch = Batch;
+		if (batch is null)
+		{
+			return;
+		}
+
+		batch.Pick(Handle, isPointerTarget);
+		if (batch.Context is not { } context)
+		{
+			return;
+		}
+
+		if (isPointerTarget)
+		{
+			context.RegisterPointerTarget(this);
+			return;
+		}
+
+		context.UnregisterPointerTarget(this);
 	}
 }

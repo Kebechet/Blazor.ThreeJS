@@ -126,6 +126,18 @@ internal sealed class GatedCreateContextJsObjectReference : IJSObjectReference
 
 	public int DisposeCallCount { get; private set; }
 
+	/// <summary>
+	/// Arguments the <c>createContext</c> call carried, which is where the <c>DotNetObjectReference</c>
+	/// that lets the browser call back travels.
+	/// </summary>
+	public object?[]? CreateContextArguments { get; private set; }
+
+	/// <summary>
+	/// Ops of every batch applied so far, so a test can assert both what was flushed and — for the
+	/// paths that must cost nothing — that nothing was.
+	/// </summary>
+	public List<IReadOnlyList<ThreeOp>> AppliedBatches { get; } = [];
+
 	public GatedCreateContextJsObjectReference(TaskCompletionSource<int> createContextGate)
 	{
 		_createContextGate = createContextGate;
@@ -141,8 +153,12 @@ internal sealed class GatedCreateContextJsObjectReference : IJSObjectReference
 		switch (identifier)
 		{
 			case "createContext":
+				CreateContextArguments = args ?? [];
 				var contextId = await _createContextGate.Task;
 				return (TValue) (object) contextId;
+			case "applyBatch":
+				AppliedBatches.Add(args?.OfType<IReadOnlyList<ThreeOp>>().FirstOrDefault() ?? []);
+				return (TValue) (object) new ThreeBatchResponse();
 			case "disposeContext":
 				DisposeContextCallCount++;
 				return default!;

@@ -41,7 +41,8 @@ internal sealed class ThreeOp
 	public object?[]? Args { get; init; }
 
 	/// <summary>
-	/// The value being written. Only set for <see cref="ThreeOpKind.Set"/>.
+	/// The value being written, or — for <see cref="ThreeOpKind.Pick"/> — whether the object is opting
+	/// into pointer hit-testing or out of it. Set for those two kinds.
 	/// <para>
 	/// Always serialized, including when it is <see langword="null"/>. Writing <c>null</c> over a
 	/// property is a legitimate instruction, and omitting the key would make it indistinguishable
@@ -100,5 +101,16 @@ internal enum ThreeOpKind : byte
 	/// a value; every other kind is one-directional. Never coalesces, and acts as the same barrier a
 	/// <see cref="Call"/> does, since a read observes the object's property state at the point it runs.
 	/// </summary>
-	Read = 6
+	Read = 6,
+
+	/// <summary>
+	/// Opt an object into JavaScript-side pointer hit-testing, or back out of it, carried in
+	/// <see cref="ThreeOp.Value"/>. The only op that makes the browser send anything C# did not ask
+	/// for: an opted-in object that a click's ray meets produces a callback with no request behind it.
+	/// <para>
+	/// Touches no three.js state — it adds the object to, or removes it from, the applier's own set of
+	/// hit-test candidates — so unlike <see cref="Call"/> it is not a coalescing barrier.
+	/// </para>
+	/// </summary>
+	Pick = 7
 }

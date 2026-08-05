@@ -194,6 +194,29 @@ internal sealed class ThreeBatch
 	}
 
 	/// <summary>
+	/// Records opting <paramref name="handle"/> into JavaScript-side pointer hit-testing, or back out
+	/// of it. The applier keeps its own set of candidates and raycasts against those alone, so an
+	/// object nobody opted in is never hit-tested and a scene with none is never listened to at all.
+	/// <para>
+	/// Not a coalescing barrier, and not itself coalesced. It carries no property value and observes
+	/// none, so it can neither invalidate a pending <c>Set</c> nor be invalidated by one; and
+	/// subscribing is rare enough — once per object, at scene-build time — that deduplicating repeated
+	/// opt-ins would cost more bookkeeping than the ops it saved.
+	/// </para>
+	/// </summary>
+	/// <param name="handle">Handle of the object to opt in or out.</param>
+	/// <param name="isPointerTarget">Whether the object should be hit-tested against pointer events.</param>
+	public void Pick(int handle, bool isPointerTarget)
+	{
+		_ops.Add(new ThreeOp
+		{
+			Kind = ThreeOpKind.Pick,
+			Handle = handle,
+			Value = isPointerTarget
+		});
+	}
+
+	/// <summary>
 	/// Records releasing an object and its JavaScript-side resources. Also acts as a coalescing
 	/// barrier for this handle, for the same reason as <see cref="Call"/>: coalescing a later
 	/// <c>Set</c> back into a pre-dispose op would be meaningless once the object is gone.

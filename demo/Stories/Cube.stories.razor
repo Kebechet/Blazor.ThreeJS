@@ -7,11 +7,18 @@
             <ThreeCanvas Style="width: 100%; height: 400px;" OnReady="BuildSceneAsync" />
         </Template>
     </Story>
+    <Story Name="Click to recolour">
+        <Template>
+            <p>Click the outer cubes to recolour them. The middle one has no subscriber, so a click passes straight through it.</p>
+            <ThreeCanvas Style="width: 100%; height: 400px;" OnReady="BuildClickableSceneAsync" />
+        </Template>
+    </Story>
 </Stories>
 
 @code {
     private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
     private const float RadiansPerFrame = 0.01f;
+    private static readonly int[] PaletteHexColors = [0x3366cc, 0xcc3366, 0x66cc33, 0xcc9933];
 
     private readonly CancellationTokenSource _animationCancellation = new();
 
@@ -41,6 +48,49 @@
         await threeContext.SetActiveSceneAsync(scene, camera);
 
         _ = AnimateAsync(threeContext, mesh);
+    }
+
+    private async Task BuildClickableSceneAsync(ThreeContext threeContext)
+    {
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(75f, 16f / 9f, 0.1f, 1000f);
+        camera.Position.Set(0f, 0f, 6f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.4f));
+
+        var light = new DirectionalLight(Color.White, 1f);
+        light.Position.Set(5f, 5f, 5f);
+        scene.Add(light);
+
+        var geometry = new BoxGeometry(1f, 1f, 1f);
+        foreach (var (index, positionX) in new[] { -2.2f, 0f, 2.2f }.Index())
+        {
+            var material = new MeshStandardMaterial();
+            material.Color.SetHex(PaletteHexColors.First());
+            material.Roughness = 0.4f;
+
+            var mesh = new Mesh(geometry, material);
+            mesh.Position.Set(positionX, 0f, 0f);
+            mesh.Rotation.Set(0.4f, 0.8f, 0f, EulerOrder.XYZ);
+            scene.Add(mesh);
+
+            if (index == 1)
+            {
+                continue;
+            }
+
+            var paletteIndex = 0;
+            mesh.OnClick += _ =>
+            {
+                paletteIndex = (paletteIndex + 1) % PaletteHexColors.Length;
+                material.Color.SetHex(PaletteHexColors.ElementAt(paletteIndex));
+            };
+        }
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
     }
 
     private async Task AnimateAsync(ThreeContext threeContext, Mesh mesh)

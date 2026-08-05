@@ -16,7 +16,7 @@
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { applyOp, runOps } from '../src/Blazor.ThreeJS/wwwroot/three-interop.js';
+import { applyOp, dispatchPointerHit, runOps } from '../src/Blazor.ThreeJS/wwwroot/three-interop.js';
 import * as THREE from '../src/Blazor.ThreeJS/wwwroot/three.module.js';
 
 const { DoubleSide } = THREE;
@@ -24,7 +24,10 @@ const { DoubleSide } = THREE;
 // Kept in step with ThreeOpKind. Only the kinds this file names are spelled out.
 const OP_CREATE = 0;
 const OP_SET = 1;
+const OP_CALL = 2;
+const OP_DISPOSE = 5;
 const OP_READ = 6;
+const OP_PICK = 7;
 
 const ops = JSON.parse(readFileSync(new URL('./wire-format-fixture.json', import.meta.url), 'utf8'));
 const context = { objects: new Map() };
@@ -229,6 +232,166 @@ assert.match(
     /no wire encoding/,
     'a read returning a three.js object must be refused, not serialized as a plain object');
 
+// ---------------------------------------------------------------------------------------------
+// Pointer picking, end to end against the vendored three.js. The read op above proves a value C#
+// asked for came back; this proves a call C# never asked for goes out - and, just as importantly,
+// that nothing goes out when it should not.
+//
+// A real THREE.Raycaster, a real THREE.Mesh and a real box geometry do the work; only the two things
+// Node genuinely has not got are stood in for. The canvas is a recorder of addEventListener /
+// removeEventListener calls, which is what makes "no pointer-move listener exists" an assertion
+// rather than a claim, and the .NET reference is a recorder of invokeMethodAsync calls, which is what
+// makes "exactly one callback" countable.
+// ---------------------------------------------------------------------------------------------
+
+// The fixture's own pick op first, applied above with the rest of the batch, so the shape C#
+// serializes is the shape that actually registers a candidate. That context has no renderer and no
+// .NET reference, which is the other half of what this proves: opting an object in registers it
+// without touching the DOM at all.
+assert.ok(context.pointerTargets.has(3), 'the fixture pick op should have registered the mesh as a hit-test candidate');
+assert.equal(context.pointerListener, undefined, 'a context with no .NET reference must not have grown a listener');
+
+function createRecordingCanvas() {
+    const registrations = [];
+    return {
+        registrations,
+        addEventListener(type, listener) {
+            registrations.push({ type, listener });
+        },
+        removeEventListener(type, listener) {
+            const index = registrations.findIndex(registration => registration.type === type && registration.listener === listener);
+            if (index >= 0) {
+                registrations.splice(index, 1);
+            }
+        }
+    };
+}
+
+function createRecordingDotNetRef() {
+    const invocations = [];
+    return {
+        invocations,
+        invokeMethodAsync(...args) {
+            invocations.push(args);
+            return Promise.resolve();
+        }
+    };
+}
+
+const NEAR_MESH_HANDLE = 63;
+const FAR_MESH_HANDLE = 64;
+
+const pointerCanvas = createRecordingCanvas();
+const pointerDotNetRef = createRecordingDotNetRef();
+const pickingContext = {
+    objects: new Map(),
+    renderer: { domElement: pointerCanvas },
+    dotNetRef: pointerDotNetRef,
+    cameraHandle: 60
+};
+
+// A camera at the origin looking down -Z, and two boxes straight in front of it at 2 and 5 units.
+// The world matrices are updated by an explicit Call op because nothing else will: in the browser the
+// render loop does it every frame, and intersectObjects never does it itself.
+for (const op of [
+    { k: OP_CREATE, h: 60, t: 'PerspectiveCamera', a: [50, 1, 0.1, 100] },
+    { k: OP_CREATE, h: 61, t: 'BoxGeometry', a: [1, 1, 1] },
+    { k: OP_CREATE, h: 62, t: 'MeshStandardMaterial', a: [] },
+    { k: OP_CREATE, h: NEAR_MESH_HANDLE, t: 'Mesh', a: [{ $ref: 61 }, { $ref: 62 }] },
+    { k: OP_SET, h: NEAR_MESH_HANDLE, m: 'position', v: { $t: 'Vector3', v: [0, 0, -2] } },
+    { k: OP_CALL, h: NEAR_MESH_HANDLE, m: 'updateMatrixWorld', a: [] },
+    { k: OP_CREATE, h: FAR_MESH_HANDLE, t: 'Mesh', a: [{ $ref: 61 }, { $ref: 62 }] },
+    { k: OP_SET, h: FAR_MESH_HANDLE, m: 'position', v: { $t: 'Vector3', v: [0, 0, -5] } },
+    { k: OP_CALL, h: FAR_MESH_HANDLE, m: 'updateMatrixWorld', a: [] },
+    { k: OP_CALL, h: 60, m: 'updateMatrixWorld', a: [] }
+]) {
+    applyOp(pickingContext, op);
+}
+
+// Nothing has opted in yet, so there is nothing on the canvas to hear a pointer at all. This is the
+// zero-cost property the whole design rests on: an idle scene is not a scene whose listener does
+// little, it is a scene with no listener.
+assert.deepEqual(pointerCanvas.registrations, [], 'a context with nothing opted in must register no DOM listener');
+assert.equal(dispatchPointerHit(pickingContext, 0, 0), null, 'a pointer over a scene with nothing opted in must hit nothing');
+assert.deepEqual(pointerDotNetRef.invocations, [], 'a pointer over a scene with nothing opted in must send nothing to C#');
+
+// The opt-in op, which is the only thing that puts a listener on the canvas.
+applyOp(pickingContext, { k: OP_PICK, h: FAR_MESH_HANDLE, v: true });
+
+assert.deepEqual(
+    pointerCanvas.registrations.map(registration => registration.type),
+    ['click'],
+    'opting an object in must register the click listener and nothing else');
+
+// ⚠️ The property most likely to be violated quietly, asserted rather than reasoned about: no
+// pointer-move listener of any spelling exists, so moving the pointer runs no code and therefore
+// costs no interop, whatever the scene contains.
+assert.deepEqual(
+    pointerCanvas.registrations.filter(registration => /move|over|out|enter|leave/i.test(registration.type)),
+    [],
+    'no pointer-movement listener may be registered while only OnClick is subscribed');
+
+// A ray straight down the middle meets the opted-in box, and reports it once.
+assert.deepEqual(pointerDotNetRef.invocations, [], 'no callback should have been sent before the first pointer event');
+const farHit = dispatchPointerHit(pickingContext, 0, 0);
+assert.ok(farHit, 'a pointer over the opted-in box should have hit it');
+assert.equal(pointerDotNetRef.invocations.length, 1, 'one pointer event over one object must produce exactly one callback');
+
+const [callbackName, hitHandle, hitX, hitY, hitZ, hitDistance] = pointerDotNetRef.invocations[0];
+assert.equal(callbackName, 'DispatchPointerEventAsync', 'the callback must name the [JSInvokable] method on ThreeCanvas');
+assert.equal(hitHandle, FAR_MESH_HANDLE, 'the callback must carry the handle of the object the ray met');
+assert.equal(hitX, 0, 'the hit point should be on the ray, which runs down the camera axis');
+assert.equal(hitY, 0, 'the hit point should be on the ray, which runs down the camera axis');
+// The front face of a 1x1x1 box centred 5 units away is at z = -4.5, which is 4.5 from the camera at
+// the origin. Numbers three.js computed from its own geometry, not ones this file could arrange.
+assert.ok(Math.abs(hitZ - -4.5) < 1e-6, 'the hit point should be on the front face of the box, not at its origin');
+assert.ok(Math.abs(hitDistance - 4.5) < 1e-6, 'the distance should be from the camera to the front face');
+
+// A pointer over empty space. The ray still runs, and still meets nothing, so nothing crosses the
+// boundary - the outcome a hover-style API would have had to report and this one does not.
+pointerDotNetRef.invocations.length = 0;
+assert.equal(dispatchPointerHit(pickingContext, 0.9, 0.9), null, 'a pointer over empty space must hit nothing');
+assert.deepEqual(pointerDotNetRef.invocations, [], 'a pointer over empty space must send nothing to C#');
+
+// Two opted-in objects on the same ray: the nearer one wins and the further one is not also
+// reported, so a stack of clickable objects is still exactly one callback.
+applyOp(pickingContext, { k: OP_PICK, h: NEAR_MESH_HANDLE, v: true });
+assert.equal(pointerCanvas.registrations.length, 1, 'a second opt-in must not register a second listener, or one click would report twice');
+const nearHit = dispatchPointerHit(pickingContext, 0, 0);
+assert.equal(pointerDotNetRef.invocations.length, 1, 'a ray through two opted-in objects must still produce exactly one callback');
+assert.equal(nearHit.handle, NEAR_MESH_HANDLE, 'the nearest object on the ray must be the one reported');
+assert.ok(Math.abs(pointerDotNetRef.invocations[0][5] - 1.5) < 1e-6, 'the reported distance should be to the nearer box');
+
+// An object with no subscriber is not a candidate, however solidly it sits on the ray. Opting the
+// near box back out hands the same click to the far one.
+pointerDotNetRef.invocations.length = 0;
+applyOp(pickingContext, { k: OP_PICK, h: NEAR_MESH_HANDLE, v: false });
+assert.equal(dispatchPointerHit(pickingContext, 0, 0).handle, FAR_MESH_HANDLE, 'an opted-out object must stop being hit-testable');
+assert.equal(pointerDotNetRef.invocations.length, 1, 'the click should have been reported once, by the object still opted in');
+
+// Disposing an opted-in object must take it out of the candidate set too, or the applier would go on
+// holding and hit-testing an object three.js has released.
+pointerDotNetRef.invocations.length = 0;
+applyOp(pickingContext, { k: OP_DISPOSE, h: FAR_MESH_HANDLE });
+assert.equal(dispatchPointerHit(pickingContext, 0, 0), null, 'a disposed object must stop being hit-testable');
+assert.deepEqual(pointerDotNetRef.invocations, [], 'a disposed object must not report a hit');
+
+// And with the last candidate gone the listener comes off the canvas, so the scene is back to
+// costing nothing.
+assert.deepEqual(pointerCanvas.registrations, [], 'the click listener must be removed once nothing is opted in');
+
+// A context with no .NET reference has nowhere to report a hit, so it never listens for one either -
+// the other half of the gate, and what a consumer creating a context outside ThreeCanvas gets.
+const unreachableCanvas = createRecordingCanvas();
+const unreachableContext = {
+    objects: new Map(pickingContext.objects),
+    renderer: { domElement: unreachableCanvas },
+    dotNetRef: null,
+    cameraHandle: 60
+};
+applyOp(unreachableContext, { k: OP_PICK, h: NEAR_MESH_HANDLE, v: true });
+assert.deepEqual(unreachableCanvas.registrations, [], 'a context with no .NET reference must register no listener');
+
 // The floor under the README's headline. `generator/api-coverage.json` is what that number is
 // rendered from, and what it claims is that each of those classes is a class a consumer can create -
 // which nothing upstream of here checks against the bundle that will actually be asked for it.
@@ -246,4 +409,5 @@ assert.deepEqual(
 
 console.log(`Wire contract OK - ${ops.length} ops applied against the vendored three.js.`);
 console.log('Read op OK - values, tagged math values, correlation, ordering and refusals round-tripped.');
+console.log('Picking OK - one callback per hit, none for a miss, and no pointer-movement listener at all.');
 console.log(`Generated surface OK - ${generatedClassNames.length} generated classes are constructors on the vendored three.js.`);

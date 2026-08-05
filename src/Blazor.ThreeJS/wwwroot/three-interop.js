@@ -11,6 +11,16 @@ const OP_ADD = 3;
 const OP_REMOVE = 4;
 const OP_DISPOSE = 5;
 const OP_READ = 6;
+const OP_PICK = 7;
+
+// Name of the [JSInvokable] method a pointer hit is delivered to, on the ThreeCanvas the
+// DotNetObjectReference passed to createContext wraps. Part of the same contract as the op kinds
+// above: renaming the C# method without changing this string breaks delivery silently.
+const POINTER_HIT_CALLBACK = 'DispatchPointerEventAsync';
+
+// The one DOM event this module listens for. Deliberately not a pointer-move event: see
+// syncPointerListener.
+const POINTER_EVENT_NAME = 'click';
 
 const EULER_ORDERS = ['XYZ', 'YXZ', 'ZXY', 'ZYX', 'YZX', 'XZY'];
 
@@ -153,6 +163,15 @@ export function applyOp(context, op) {
             }
 
             context.objects.delete(op.h);
+
+            // A disposed object must stop being hit-testable, and the pointer-target map must not go
+            // on holding the only reference to it.
+            setPointerTarget(context, op.h, null);
+            break;
+        }
+        case OP_PICK: {
+            const target = resolveHandle(context, op.h);
+            setPointerTarget(context, op.h, op.v === true ? target : null);
             break;
         }
         case OP_READ: {
@@ -280,6 +299,126 @@ function encode(value) {
     throw new Error(`A '${value.constructor ? value.constructor.name : type}' value has no wire encoding, so it cannot be read back`);
 }
 
+// Adds or removes one opted-in object, then brings the listener into line with the result. `target`
+// is the three.js instance to hit-test, or null to opt the handle out.
+//
+// The map is created on the first opt-in rather than in createContext, so a scene nobody made
+// clickable never allocates it — which is also what makes "no opted-in objects" the cheap path in
+// every function below, since they all test the map first.
+function setPointerTarget(context, handle, target) {
+    if (target) {
+        if (!context.pointerTargets) {
+            context.pointerTargets = new Map();
+        }
+
+        context.pointerTargets.set(handle, target);
+    } else if (context.pointerTargets) {
+        context.pointerTargets.delete(handle);
+    }
+
+    syncPointerListener(context);
+}
+
+// Attaches the DOM listener exactly when there is both something to hit and somewhere to report it,
+// and removes it the moment either stops being true. A context with nothing opted in has no listener
+// at all, so an idle scene costs nothing — not one interop call, not one raycast, not one DOM
+// callback.
+//
+// The event listened for is `click` and nothing else. A pointer-move listener is what hover would
+// need, and hover reports every boundary crossing: on a Blazor Server circuit each of those is a
+// SignalR message, at a rate the user's mouse sets rather than one this module can bound. A click is
+// a deliberate, rare act, so it has no such ceiling problem. That is why moving the pointer over this
+// canvas costs nothing at all rather than merely costing little — there is no code on that path.
+function syncPointerListener(context) {
+    const shouldListen = Boolean(context.dotNetRef) && Boolean(context.pointerTargets) && context.pointerTargets.size > 0;
+    if (shouldListen === Boolean(context.pointerListener)) {
+        return;
+    }
+
+    const canvas = context.renderer.domElement;
+    if (!shouldListen) {
+        canvas.removeEventListener(POINTER_EVENT_NAME, context.pointerListener);
+        context.pointerListener = null;
+        return;
+    }
+
+    context.pointerListener = event => {
+        const bounds = canvas.getBoundingClientRect();
+        dispatchPointerHit(
+            context,
+            ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
+            -((event.clientY - bounds.top) / bounds.height) * 2 + 1);
+    };
+
+    canvas.addEventListener(POINTER_EVENT_NAME, context.pointerListener);
+}
+
+// Hit-tests the opted-in objects against a ray through the given normalized device coordinates and
+// answers with the nearest hit, or null when the ray met nothing.
+//
+// Exported for the same reason applyOp is: the wire-contract test drives it against the vendored
+// three.js under Node, where there is no WebGL and no canvas, to prove a real ray meets a real mesh.
+//
+// Two properties come out of how the intersection is run. The raycaster is given only the opted-in
+// objects, so the cost is set by how many objects the consumer made clickable rather than by how
+// large the scene is; and the search is non-recursive, so a hit is always one of those objects
+// itself, never a descendant of one. Opting an object in makes that object's own geometry clickable
+// and says nothing about its children.
+export function pickNearest(context, ndcX, ndcY) {
+    const camera = context.objects.get(context.cameraHandle);
+    if (!camera || !context.pointerTargets || context.pointerTargets.size === 0) {
+        return null;
+    }
+
+    if (!context.raycaster) {
+        context.raycaster = new THREE.Raycaster();
+    }
+
+    // World matrices are already current: the render loop calls renderer.render every frame, which
+    // updates them for the whole graph, and a DOM event can only arrive between frames.
+    // intersectObjects does not update them itself, so a caller driving this outside a render loop
+    // has to.
+    context.raycaster.setFromCamera(new THREE.Vector2(ndcX, ndcY), camera);
+
+    const entries = Array.from(context.pointerTargets.entries());
+    const intersections = context.raycaster.intersectObjects(entries.map(entry => entry[1]), false);
+    if (intersections.length === 0) {
+        return null;
+    }
+
+    // intersectObjects sorts by distance, so taking the first row is what makes a ray passing
+    // through several opted-in objects produce exactly one hit rather than one per object.
+    const nearest = intersections[0];
+    const hitEntry = entries.find(entry => entry[1] === nearest.object);
+    return { handle: hitEntry[0], point: nearest.point, distance: nearest.distance };
+}
+
+// Picks, and reports the hit to C# if there was one. A ray that met nothing sends nothing: the
+// pointer crossing empty space is not news, and inventing a "missed" message for it would put
+// traffic on the circuit for the most common outcome of all.
+//
+// Exported so the wire-contract test can drive the whole path — ray, hit, and the call C# would
+// receive — against a recording stand-in for the .NET reference.
+export function dispatchPointerHit(context, ndcX, ndcY) {
+    const hit = pickNearest(context, ndcX, ndcY);
+    if (!hit) {
+        return null;
+    }
+
+    // The returned promise is deliberately left alone. It rejects for two reasons — the consumer's
+    // own handler threw, or the .NET reference went away mid-teardown — and the browser console
+    // naming the rejection is the only signal the first one has anywhere.
+    context.dotNetRef.invokeMethodAsync(
+        POINTER_HIT_CALLBACK,
+        hit.handle,
+        hit.point.x,
+        hit.point.y,
+        hit.point.z,
+        hit.distance);
+
+    return hit;
+}
+
 export function setActiveScene(contextId, sceneHandle, cameraHandle) {
     const context = contexts.get(contextId);
     if (!context) {
@@ -328,6 +467,15 @@ export function disposeContext(contextId) {
     context.isRunning = false;
     cancelAnimationFrame(context.frameRequest);
     context.resizeObserver.disconnect();
+
+    // Before the renderer goes, since removing the listener needs its canvas. Emptying the map is
+    // what takes the listener off it, through the same path an opt-out uses.
+    if (context.pointerTargets) {
+        context.pointerTargets.clear();
+    }
+
+    syncPointerListener(context);
+
     for (const object of context.objects.values()) {
         if (object && typeof object.dispose === 'function') {
             object.dispose();

@@ -21,6 +21,13 @@ public sealed class ThreeContext : IAsyncDisposable
 	private readonly int _contextId;
 
 	/// <summary>
+	/// Objects that have a pointer-event subscriber, keyed by the handle the browser names in a
+	/// callback. Only these can be the target of one: the applier hit-tests exactly the same set, and
+	/// a handle absent from here is a callback with nowhere to go rather than a lookup that guesses.
+	/// </summary>
+	private readonly Dictionary<int, Object3D> _pointerTargetsByHandle = [];
+
+	/// <summary>
 	/// Accumulates pending create/set/call/add/remove/dispose/read ops for this context until the next
 	/// <see cref="FlushAsync"/> or read.
 	/// </summary>
@@ -188,6 +195,48 @@ public sealed class ThreeContext : IAsyncDisposable
 	}
 
 	/// <summary>
+	/// Records that <paramref name="pointerTarget"/> can be the target of a pointer callback. Called by
+	/// <see cref="Object3D"/> when it opts in, alongside the op that tells the applier the same thing.
+	/// </summary>
+	/// <param name="pointerTarget">The object that opted in.</param>
+	internal void RegisterPointerTarget(Object3D pointerTarget)
+	{
+		_pointerTargetsByHandle[pointerTarget.Handle] = pointerTarget;
+	}
+
+	/// <summary>
+	/// Drops <paramref name="pointerTarget"/> from the table, so a callback still in flight for it
+	/// finds nothing rather than raising an event nobody is subscribed to any more.
+	/// </summary>
+	/// <param name="pointerTarget">The object that opted out.</param>
+	internal void UnregisterPointerTarget(Object3D pointerTarget)
+	{
+		_pointerTargetsByHandle.Remove(pointerTarget.Handle);
+	}
+
+	/// <summary>
+	/// Raises the pointer event on the object the browser hit. Unlike every other path in this class,
+	/// nothing in C# asked for this call: the applier sends it when a click's ray meets an opted-in
+	/// object, and it arrives through <c>ThreeCanvas</c>'s <c>[JSInvokable]</c> method.
+	/// <para>
+	/// A handle with no entry is ignored rather than reported. The one way to reach it is a callback
+	/// that crossed the boundary while the object was opting out or the context was being torn down,
+	/// and the event it would have raised has by then been unsubscribed on purpose.
+	/// </para>
+	/// </summary>
+	/// <param name="handle">Handle of the object the ray met.</param>
+	/// <param name="pointerEvent">Where the ray met it.</param>
+	internal void DispatchPointerEvent(int handle, ThreePointerEvent pointerEvent)
+	{
+		if (!_pointerTargetsByHandle.TryGetValue(handle, out var pointerTarget))
+		{
+			return;
+		}
+
+		pointerTarget.RaiseClick(pointerEvent);
+	}
+
+	/// <summary>
 	/// Publishes the ops the applier rejected, if any. Read failures are not among them: they travel on
 	/// their own result row and fault the task that asked for the value.
 	/// </summary>
@@ -281,6 +330,10 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// </summary>
 	public async ValueTask DisposeAsync()
 	{
+		// Emptied before anything is awaited, so a pointer callback that crosses the boundary during
+		// the teardown finds no target and raises nothing. disposeContext takes the listener off the
+		// canvas as well, but only once it runs.
+		_pointerTargetsByHandle.Clear();
 		try
 		{
 			await _module.InvokeVoidAsync("disposeContext", _contextId);

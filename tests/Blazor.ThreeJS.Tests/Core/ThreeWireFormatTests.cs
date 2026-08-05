@@ -121,6 +121,19 @@ public class ThreeWireFormatTests
 	}
 
 	[Fact]
+	public void ThreeOp_PickOpSerialized_MatchesWireContract()
+	{
+		// Arrange
+		var pickOp = BuildFixtureOps().First(x => x.Kind == ThreeOpKind.Pick);
+
+		// Act
+		var json = JsonSerializer.Serialize(pickOp, _webOptions);
+
+		// Assert
+		json.ShouldBe("""{"k":7,"h":3,"v":true}""");
+	}
+
+	[Fact]
 	public void ThreeOp_NonReadOp_OmitsTheRequestIdKey()
 	{
 		// Arrange
@@ -627,8 +640,9 @@ public class ThreeWireFormatTests
 	/// <c>Set</c> that reassigns a mesh's material after it was already attached, and the pair of
 	/// <c>PerspectiveCamera</c> creates that prove the <c>$undef</c> sentinel reaches JavaScript as a
 	/// real <c>undefined</c>, an <c>AmbientLight</c> create carrying a tagged math value as a
-	/// constructor argument, and the <c>Read</c> op that hands a value back — as a batch the JavaScript
-	/// applier can run end to end. Kept in step with
+	/// constructor argument, the <c>Read</c> op that hands a value back, and the <c>Pick</c> op that
+	/// opts an object into pointer hit-testing — as a batch the JavaScript applier can run end to end.
+	/// Kept in step with
 	/// <c>tests/wire-format-fixture.json</c> by <c>ThreeOp_FixtureBatchSerialized_MatchesTheSharedFixtureFile</c>.
 	/// </summary>
 	/// <returns>The fixture batch, in the order the applier receives it.</returns>
@@ -687,7 +701,12 @@ public class ThreeWireFormatTests
 			// The only op that produces a value. It targets handle 6, the camera whose fov was left to
 			// the $undef sentinel, so the focal length the JavaScript half reads back is one three.js
 			// computed from its own default rather than from anything C# sent.
-			new ThreeOp { Kind = ThreeOpKind.Read, Handle = 6, Member = "getFocalLength", Args = [], RequestId = 1 }
+			new ThreeOp { Kind = ThreeOpKind.Read, Handle = 6, Member = "getFocalLength", Args = [], RequestId = 1 },
+
+			// The op behind the only traffic C# never asked for: it opts handle 3, the mesh, into
+			// pointer hit-testing, and the JavaScript half asserts the applier reads this exact shape as
+			// a candidate registration.
+			new ThreeOp { Kind = ThreeOpKind.Pick, Handle = 3, Value = true }
 		];
 	}
 

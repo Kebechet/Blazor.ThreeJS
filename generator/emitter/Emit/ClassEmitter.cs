@@ -137,7 +137,7 @@ internal sealed class ClassEmitter
 		foreach (var command in surface.Commands)
 		{
 			writer.WriteLine();
-			WriteCommand(writer, command);
+			WriteCommand(writer, command, surface.Properties);
 		}
 
 		foreach (var query in surface.Queries)
@@ -857,11 +857,18 @@ internal sealed class ClassEmitter
 		DocCommentEmitter.WriteSummary(writer, summary);
 	}
 
-	private static void WriteCommand(CSharpWriter writer, EmittedCommand command)
+	private static void WriteCommand(CSharpWriter writer, EmittedCommand command, IReadOnlyList<EmittedProperty> properties)
 	{
 		var summary = command.Documentation?.Summary is { Length: > 0 } rawSummary
 			? DocCommentEmitter.EnsureSentenceEnd(DocCommentEmitter.RenderInline(rawSummary))
 			: $"Records a call to <c>{command.ThreeName}</c> on the JavaScript-side object.";
+
+		if (FindShadowedProperty(command, properties) is { } shadowedProperty)
+		{
+			summary += $" This writes the same three.js state as <see cref=\"{shadowedProperty.CSharpName}\"/> " +
+				$"and the mirror does not learn from it: afterwards <c>{shadowedProperty.CSharpName}</c> still reports its previous value, " +
+				$"and writing that value back records nothing at all. Where the property exists, write the property.";
+		}
 
 		DocCommentEmitter.WriteSummary(writer, summary);
 		foreach (var parameter in command.Parameters)
@@ -913,6 +920,28 @@ internal sealed class ClassEmitter
 		writer.WriteLine($"RecordCall(\"{command.ThreeName}\"{arguments});");
 		writer.Outdent();
 		writer.WriteLine("}");
+	}
+
+	/// <summary>
+	/// The mirrored property a command writes behind the mirror's back, when there is one. three.js
+	/// spells such a pair <c>setX</c> / <c>x</c>, and the command records a call while the property's
+	/// backing field keeps the value it had — which the property's own write-elision then turns into a
+	/// silently dropped write. Same class only: a pair split across a base and its subclass is documented
+	/// on the base, where both members are declared together.
+	/// </summary>
+	/// <param name="command">The command being emitted.</param>
+	/// <param name="properties">The mirrored properties this class emits.</param>
+	/// <returns>The shadowed property, or <see langword="null"/> when the command shadows nothing.</returns>
+	private static EmittedProperty? FindShadowedProperty(EmittedCommand command, IReadOnlyList<EmittedProperty> properties)
+	{
+		const string setterPrefix = "set";
+		if (!command.ThreeName.StartsWith(setterPrefix, StringComparison.Ordinal) || command.ThreeName.Length <= setterPrefix.Length)
+		{
+			return null;
+		}
+
+		var shadowedName = char.ToLowerInvariant(command.ThreeName[setterPrefix.Length]) + command.ThreeName[(setterPrefix.Length + 1)..];
+		return properties.FirstOrDefault(x => string.Equals(x.ThreeName, shadowedName, StringComparison.Ordinal));
 	}
 
 	/// <summary>

@@ -31,8 +31,16 @@ public partial class ThreeCanvas
 	/// <see cref="OnReady"/> and the imperative API, which is what it was before this existed.
 	/// <para>
 	/// The two compose: the declarative scene is built and made active before <see cref="OnReady"/>
-	/// fires, so a handler can go on to drive it imperatively — start an animation loop, read a value
-	/// back — against a context whose scene is already running.
+	/// fires, so a handler receives a context whose scene is already running — enough to flush, to
+	/// subscribe to <see cref="ThreeContext.OnError"/>, or to attach <c>OrbitControls</c>.
+	/// </para>
+	/// <para>
+	/// ⚠️ The context is <b>not</b> a route to the declarative scene itself: the scene root is internal,
+	/// and <see cref="ThreeContext.SetActiveSceneAsync"/> would <b>replace</b> the scene the markup
+	/// built rather than let a caller into it. To drive a declaratively built object imperatively, put
+	/// an <c>@ref</c> on the component that owns it and use its <c>Object</c> property — the mirrored
+	/// object itself, built by the time this callback runs. Note that a parameter written in the markup
+	/// is re-applied on every render, so leave the parameter off for state C# means to drive.
 	/// </para>
 	/// </summary>
 	[Parameter] public RenderFragment? ChildContent { get; set; }

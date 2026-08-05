@@ -150,6 +150,57 @@ public class ThreeBatchTests
 		ops.Last().Value.ShouldBe("B");
 	}
 
+	/// <summary>
+	/// A <c>Get</c> observes the object's property state at the point it runs, so a later <c>Set</c>
+	/// folded back into the op in front of it would change a value the read already answered with.
+	/// </summary>
+	[Fact]
+	public void ThreeBatch_SetGetSetOnSameHandle_DoesNotCoalesceAcrossTheGet()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+
+		// Act
+		batch.Set(1, "roughness", "A");
+		batch.Get(1, "roughness");
+		batch.Set(1, "roughness", "B");
+		var ops = batch.Drain();
+
+		// Assert
+		ops.Count.ShouldBe(3);
+		ops.First().Kind.ShouldBe(ThreeOpKind.Set);
+		ops.First().Value.ShouldBe("A");
+		ops.ElementAt(1).Kind.ShouldBe(ThreeOpKind.Get);
+		ops.Last().Kind.ShouldBe(ThreeOpKind.Set);
+		ops.Last().Value.ShouldBe("B");
+	}
+
+	/// <summary>
+	/// Without the barrier a write recorded after a release is folded silently backwards into the op in
+	/// front of the <c>Dispose</c> and vanishes; with it, the write reaches the applier as its own op and
+	/// fails loudly against a handle the browser has already retired. A loud failure is the whole point.
+	/// </summary>
+	[Fact]
+	public void ThreeBatch_SetDisposeSetOnSameHandle_DoesNotCoalesceAcrossTheDispose()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+
+		// Act
+		batch.Set(1, "visible", "A");
+		batch.Dispose(1);
+		batch.Set(1, "visible", "B");
+		var ops = batch.Drain();
+
+		// Assert
+		ops.Count.ShouldBe(3);
+		ops.First().Kind.ShouldBe(ThreeOpKind.Set);
+		ops.First().Value.ShouldBe("A");
+		ops.ElementAt(1).Kind.ShouldBe(ThreeOpKind.Dispose);
+		ops.Last().Kind.ShouldBe(ThreeOpKind.Set);
+		ops.Last().Value.ShouldBe("B");
+	}
+
 	[Fact]
 	public void ThreeBatch_SetGivenTheNotSuppliedSentinel_Throws()
 	{

@@ -150,28 +150,48 @@ public class Loader : ThreeObject
 		}
 	}
 
-	/// <summary>Records a call to <c>setCrossOrigin</c> on the JavaScript-side object.</summary>
+	/// <summary>
+	/// Records a call to <c>setCrossOrigin</c> on the JavaScript-side object. This writes the same
+	/// three.js state as <see cref="CrossOrigin"/> and the mirror does not learn from it: afterwards
+	/// <c>CrossOrigin</c> still reports its previous value, and writing that value back records nothing
+	/// at all. Where the property exists, write the property.
+	/// </summary>
 	/// <param name="crossOrigin">Value forwarded to the <c>crossOrigin</c> argument.</param>
 	public void SetCrossOrigin(string crossOrigin)
 	{
 		RecordCall("setCrossOrigin", crossOrigin);
 	}
 
-	/// <summary>Records a call to <c>setWithCredentials</c> on the JavaScript-side object.</summary>
+	/// <summary>
+	/// Records a call to <c>setWithCredentials</c> on the JavaScript-side object. This writes the same
+	/// three.js state as <see cref="WithCredentials"/> and the mirror does not learn from it:
+	/// afterwards <c>WithCredentials</c> still reports its previous value, and writing that value back
+	/// records nothing at all. Where the property exists, write the property.
+	/// </summary>
 	/// <param name="value">Value forwarded to the <c>value</c> argument.</param>
 	public void SetWithCredentials(bool value)
 	{
 		RecordCall("setWithCredentials", value);
 	}
 
-	/// <summary>Records a call to <c>setPath</c> on the JavaScript-side object.</summary>
+	/// <summary>
+	/// Records a call to <c>setPath</c> on the JavaScript-side object. This writes the same three.js
+	/// state as <see cref="Path"/> and the mirror does not learn from it: afterwards <c>Path</c> still
+	/// reports its previous value, and writing that value back records nothing at all. Where the
+	/// property exists, write the property.
+	/// </summary>
 	/// <param name="path">Value forwarded to the <c>path</c> argument.</param>
 	public void SetPath(string path)
 	{
 		RecordCall("setPath", path);
 	}
 
-	/// <summary>Records a call to <c>setResourcePath</c> on the JavaScript-side object.</summary>
+	/// <summary>
+	/// Records a call to <c>setResourcePath</c> on the JavaScript-side object. This writes the same
+	/// three.js state as <see cref="ResourcePath"/> and the mirror does not learn from it: afterwards
+	/// <c>ResourcePath</c> still reports its previous value, and writing that value back records
+	/// nothing at all. Where the property exists, write the property.
+	/// </summary>
 	/// <param name="resourcePath">Value forwarded to the <c>resourcePath</c> argument.</param>
 	public void SetResourcePath(string resourcePath)
 	{

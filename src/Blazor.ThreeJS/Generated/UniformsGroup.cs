@@ -73,7 +73,12 @@ public sealed class UniformsGroup : EventDispatcher
 		RecordCall("setName", name);
 	}
 
-	/// <summary>Records a call to <c>setUsage</c> on the JavaScript-side object.</summary>
+	/// <summary>
+	/// Records a call to <c>setUsage</c> on the JavaScript-side object. This writes the same three.js
+	/// state as <see cref="Usage"/> and the mirror does not learn from it: afterwards <c>Usage</c>
+	/// still reports its previous value, and writing that value back records nothing at all. Where the
+	/// property exists, write the property.
+	/// </summary>
 	/// <param name="value">Value forwarded to the <c>value</c> argument.</param>
 	public void SetUsage(Usage value)
 	{

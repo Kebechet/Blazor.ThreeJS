@@ -96,9 +96,52 @@ holds underneath, because the components write into the same mirror - **a re-ren
 parameter changed produces no interop call at all**, which matters here because child content is a
 `RenderFragment` and Blazor therefore cannot skip re-rendering a scene graph.
 
-The two styles compose. Leaving `OnReady` on a `<ThreeCanvas>` that also has a component tree gives
-you the context once the declarative scene is built and running, so you can drive it imperatively from
-there.
+**The two styles compose through `@ref`, not through the context.** `OnReady` still fires on a canvas
+that has a component tree - after the declarative scene is built and running - and it is how you reach
+the `ThreeContext` to flush, to subscribe to `OnError`, or to attach `OrbitControls`. What it does not
+hand you is the scene: the scene root is internal, and `SetActiveSceneAsync` would *replace* the
+declarative scene rather than let you into it. The route into a declaratively built object is an
+`@ref` on the component that owns it, whose `Object` property **is** the mirrored object.
+
+```razor
+@using Kebechet.Blazor.ThreeJS.Addons
+@using Kebechet.Blazor.ThreeJS.Components
+@using Kebechet.Blazor.ThreeJS.Core
+@using Kebechet.Blazor.ThreeJS.Math
+
+<ThreeCanvas Style="width: 100%; height: 400px;" OnReady="DriveTheSceneAsync">
+    <ThreePerspectiveCamera @ref="_cameraNode" Fov="75f" Position="new(0f, 0f, 5f)" />
+    <ThreeAmbientLight Color="Color.White" Intensity="0.6f" />
+    <ThreeMesh @ref="_meshNode">
+        <ThreeBoxGeometry Width="1f" Height="1f" Depth="1f" />
+        <ThreeMeshStandardMaterial Color="Color.White" />
+    </ThreeMesh>
+</ThreeCanvas>
+
+@code {
+    private ThreePerspectiveCamera? _cameraNode;
+    private ThreeMesh? _meshNode;
+
+    private async Task DriveTheSceneAsync(ThreeContext threeContext)
+    {
+        if (_cameraNode is null || _meshNode is null)
+        {
+            return;
+        }
+
+        await OrbitControls.AttachAsync(threeContext, _cameraNode.Object);
+
+        _meshNode.Object.Rotation.Y = 0.4f;
+        await threeContext.FlushAsync();
+    }
+}
+```
+
+`Object` is built when the component initializes, so it is there by the time `OnReady` fires; reading
+it earlier throws rather than answering with a placeholder. One thing to keep in mind: a parameter
+written in the markup is re-applied on **every** render, so an imperative write to a value the markup
+also sets is overwritten by the next one. Leave the parameter off - as `Rotation` is left off the mesh
+above - for state you mean to drive from C#.
 
 What is shipped as components today: `<ThreeGroup>`, `<ThreeMesh>`, `<ThreePoints>`,
 `<ThreePerspectiveCamera>`, `<ThreeOrthographicCamera>`, `<ThreeAmbientLight>`,
@@ -130,6 +173,39 @@ await threeContext.FlushAsync();
 ```
 
 Reads never leave C#, and a tick that changes nothing makes no interop call.
+
+### When a C# value is authoritative
+
+The C# objects are a **mirror** of the three.js objects rather than a live view of them - nothing is
+read back unless you ask for it - so it is worth being precise about when what C# reports is the truth.
+
+> **A C# value is authoritative exactly when C# last wrote it through a typed member.** It is stale
+> when JavaScript wrote it (`OrbitControls`), when C# wrote it by a route the mirror does not track (a
+> raw `Set`, or a command like `lookAt`), or when nothing mirrored it at all (a loaded geometry).
+
+Each of those three is documented where you meet it - [orbiting the camera](#orbiting-the-camera),
+[the escape hatch](#reaching-a-class-the-mirror-does-not-wrap), and
+[what a loaded object knows](#loading-a-gltf-model). What they have in common is the rule above.
+
+⚠️ **A stale value is worse than a wrong reading, because writing it back records nothing.** Every
+typed property elides a write of the value it already holds - that is what makes a per-frame
+assignment free - so assigning the value C# still believes is current is a no-op, and three.js keeps
+the one it got from elsewhere. Write a *different* value, or use the read-back the relevant section
+names.
+
+Inside the typed surface this has one shape: a three.js **command** that writes state the mirror also
+holds as a **property**. `Object3D.LookAt` is the one on the scene-graph base - it orients the object
+without touching `Rotation` or `Quaternion`. The generated classes carry nine more, each a `SetX`
+beside an `X`: `Audio.SetLoopStart` / `LoopStart`, `Audio.SetLoopEnd` / `LoopEnd`,
+`FileLoader.SetResponseType` / `ResponseType`, `FileLoader.SetMimeType` / `MimeType`,
+`Loader.SetCrossOrigin` / `CrossOrigin`, `Loader.SetWithCredentials` / `WithCredentials`,
+`Loader.SetPath` / `Path`, `Loader.SetResourcePath` / `ResourcePath`, and
+`UniformsGroup.SetUsage` / `Usage`. Each one says so in its own documentation. Where a property
+exists, write the property.
+
+A glTF model is **not** a fourth case. `LoadedObject3D` seeds its transform from the browser at load
+time and mirrors it normally from then on, so those values are authoritative; what it does not have is
+a `Children` list, and that is a coverage limit rather than a staleness one.
 
 ### Clicking objects
 
@@ -224,9 +300,10 @@ user holds the mouse down.
 
 **⚠️ That makes `camera.Position` stale, on purpose.** While controls are attached the camera's
 transform belongs to JavaScript, and the C# mirror goes on reporting the last value C# wrote to it -
-the one you passed before attaching. This is the one place in the package where the mirror is
-knowingly not authoritative, and it is not papered over: nothing reads the camera back per frame,
-because that is exactly the traffic the controls exist to avoid. Ask when you need to know:
+the one you passed before attaching. This is the JavaScript-wrote-it case of
+[the authority rule](#when-a-c-value-is-authoritative), and it is not papered over: nothing reads the
+camera back per frame, because that is exactly the traffic the controls exist to avoid. Ask when you
+need to know:
 
 ```csharp
 var cameraPosition = await controls.GetCameraPositionAsync();

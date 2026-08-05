@@ -16,10 +16,11 @@ namespace Kebechet.Blazor.ThreeJS.Addons;
 /// ⚠️ <b>That makes the camera's mirror stale, on purpose.</b> While controls are attached, the
 /// camera's transform is JavaScript's to write. <c>camera.Position</c> goes on reporting whatever C#
 /// last wrote to it — the value you passed before attaching, most likely — and not where the camera
-/// actually is. This is the one place in the package where the mirror is knowingly not authoritative,
-/// and it is not papered over: nothing reads the camera back per frame, because doing so would
-/// reintroduce exactly the per-frame traffic the controls exist to avoid. When you need the real
-/// figures, ask for them: <see cref="GetCameraPositionAsync"/>, <see cref="GetDistanceAsync"/>,
+/// actually is. A C# value is authoritative exactly when C# last wrote it through a typed member, and
+/// this is the case where JavaScript wrote it instead. It is not papered over: nothing reads the
+/// camera back per frame, because doing so would reintroduce exactly the per-frame traffic the
+/// controls exist to avoid. When you need the real figures, ask for them:
+/// <see cref="GetCameraPositionAsync"/>, <see cref="GetDistanceAsync"/>,
 /// <see cref="GetPolarAngleAsync"/> and <see cref="GetAzimuthalAngleAsync"/> each cost one interop
 /// call, at a moment you choose.
 /// </para>

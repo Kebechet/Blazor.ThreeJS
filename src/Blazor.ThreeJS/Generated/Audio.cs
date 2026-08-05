@@ -161,7 +161,9 @@ public class Audio : Object3D
 
 	/// <summary>
 	/// Sets the loop start value which defines where in the audio buffer the replay should start, in
-	/// seconds.
+	/// seconds. This writes the same three.js state as <see cref="LoopStart"/> and the mirror does not
+	/// learn from it: afterwards <c>LoopStart</c> still reports its previous value, and writing that
+	/// value back records nothing at all. Where the property exists, write the property.
 	/// </summary>
 	/// <param name="value">The loop start value.</param>
 	public void SetLoopStart(float value)
@@ -171,7 +173,9 @@ public class Audio : Object3D
 
 	/// <summary>
 	/// Sets the loop end value which defines where in the audio buffer the replay should stop, in
-	/// seconds.
+	/// seconds. This writes the same three.js state as <see cref="LoopEnd"/> and the mirror does not
+	/// learn from it: afterwards <c>LoopEnd</c> still reports its previous value, and writing that
+	/// value back records nothing at all. Where the property exists, write the property.
 	/// </summary>
 	/// <param name="value">The loop end value.</param>
 	public void SetLoopEnd(float value)

@@ -500,6 +500,15 @@ public abstract class Object3D : ThreeObject
 	/// overloads to the first signature, which upstream is the <c>Vector3</c> one — and this component
 	/// spelling is the shape already published.
 	/// </para>
+	/// <para>
+	/// ⚠️ <b>This leaves the mirror stale.</b> three.js computes the new orientation into the object's
+	/// <c>rotation</c> and <c>quaternion</c>; the call records a command and nothing reads the result
+	/// back, so <see cref="Rotation"/> and <see cref="Quaternion"/> go on reporting their pre-call
+	/// values. Writing one of those values back therefore records <b>nothing</b> — the mirror sees the
+	/// value it already holds and elides the write — and three.js keeps the <c>lookAt</c> orientation
+	/// permanently. Write a different value, or set <see cref="Rotation"/> instead of calling this.
+	/// Pinned by <c>Object3DTests.Object3D_LookAtThenRewritingTheRotationTheMirrorStillHolds_RecordsNothing</c>.
+	/// </para>
 	/// </summary>
 	/// <param name="x">X coordinate of the point to look at.</param>
 	/// <param name="y">Y coordinate of the point to look at.</param>

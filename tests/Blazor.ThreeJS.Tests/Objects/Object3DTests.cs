@@ -1,4 +1,5 @@
 using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Math;
 using Kebechet.Blazor.ThreeJS.Objects;
 using Shouldly;
 
@@ -232,6 +233,61 @@ public class Object3DTests
 
 		var reference = opsList[setIndex].Value.ShouldBeOfType<ThreeValue.HandleReference>();
 		reference.Handle.ShouldBe(material.Handle);
+	}
+
+	/// <summary>
+	/// Pins the documented sharp edge on <c>LookAt</c> rather than describing it: the command writes
+	/// three.js's <c>rotation</c> and <c>quaternion</c> and the mirror never learns, so the typed
+	/// property's own "value unchanged, record nothing" guard leaves three.js holding the <c>lookAt</c>
+	/// orientation.
+	/// </summary>
+	[Fact]
+	public void Object3D_LookAtThenRewritingTheRotationTheMirrorStillHolds_RecordsNothing()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+		var group = new Group();
+		group.Rotation.Set(0.4f, 0f, 0f, EulerOrder.XYZ);
+		group.AttachTo(batch);
+		batch.Drain();
+
+		// Act
+		group.LookAt(1f, 2f, 3f);
+		group.Rotation.Set(0.4f, 0f, 0f, EulerOrder.XYZ);
+		var ops = batch.Drain().ToList();
+
+		// Assert
+		ops.Count(x => x.Kind == ThreeOpKind.Call && x.Member == "lookAt").ShouldBe(1);
+		var transformWrites = ops
+			.Where(x => x.Kind == ThreeOpKind.Set)
+			.Select(x => x.Member)
+			.ToList();
+		transformWrites.ShouldNotContain("rotation");
+		transformWrites.ShouldNotContain("quaternion");
+		group.Rotation.ToArray().ShouldBe([0.4f, 0f, 0f]);
+	}
+
+	/// <summary>
+	/// The other half of the same edge: a rebuild replays the mirror, and the mirror never saw the
+	/// <c>lookAt</c>, so the replayed <c>rotation</c> is the orientation from before the call.
+	/// </summary>
+	[Fact]
+	public void Object3D_LookAtCalledBeforeAttach_ReplaysThePreCallRotation()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+		var group = new Group();
+		group.Rotation.Set(0.4f, 0f, 0f, EulerOrder.XYZ);
+
+		// Act
+		group.LookAt(1f, 2f, 3f);
+		group.AttachTo(batch);
+		var ops = batch.Drain().ToList();
+
+		// Assert
+		var rotationOp = ops.Single(x => x.Kind == ThreeOpKind.Set && x.Member == "rotation");
+		var rotationValue = rotationOp.Value.ShouldBeOfType<ThreeValue.TaggedValue>();
+		rotationValue.Values.ShouldBe([0.4f, 0f, 0f]);
 	}
 
 	[Fact]

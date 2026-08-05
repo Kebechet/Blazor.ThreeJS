@@ -78,14 +78,24 @@ public sealed class FileLoader : Loader
 		}
 	}
 
-	/// <summary>Records a call to <c>setResponseType</c> on the JavaScript-side object.</summary>
+	/// <summary>
+	/// Records a call to <c>setResponseType</c> on the JavaScript-side object. This writes the same
+	/// three.js state as <see cref="ResponseType"/> and the mirror does not learn from it: afterwards
+	/// <c>ResponseType</c> still reports its previous value, and writing that value back records
+	/// nothing at all. Where the property exists, write the property.
+	/// </summary>
 	/// <param name="value">Value forwarded to the <c>value</c> argument.</param>
 	public void SetResponseType(string value)
 	{
 		RecordCall("setResponseType", value);
 	}
 
-	/// <summary>Records a call to <c>setMimeType</c> on the JavaScript-side object.</summary>
+	/// <summary>
+	/// Records a call to <c>setMimeType</c> on the JavaScript-side object. This writes the same
+	/// three.js state as <see cref="MimeType"/> and the mirror does not learn from it: afterwards
+	/// <c>MimeType</c> still reports its previous value, and writing that value back records nothing at
+	/// all. Where the property exists, write the property.
+	/// </summary>
 	/// <param name="value">Value forwarded to the <c>value</c> argument.</param>
 	public void SetMimeType(string value)
 	{

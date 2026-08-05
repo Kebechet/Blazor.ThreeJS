@@ -97,9 +97,10 @@ public sealed class DemoFixture : IAsyncLifetime
 	/// </summary>
 	/// <param name="storyId">BlazingStory story id, for example <c>components-threecanvas--rotating-cube</c>.</param>
 	/// <param name="devicePixelRatio">Device pixel ratio the page should report.</param>
-	internal async Task<StoryPage> OpenStoryAsync(string storyId, double devicePixelRatio = 1)
+	/// <param name="colorScheme">Colour scheme the page reports a preference for, or null for the default.</param>
+	internal async Task<StoryPage> OpenStoryAsync(string storyId, double devicePixelRatio = 1, ColorScheme? colorScheme = null)
 	{
-		var browserContext = await CreateContextAsync(devicePixelRatio);
+		var browserContext = await CreateContextAsync(devicePixelRatio, colorScheme);
 		var storyPage = await StoryPage.OpenAsync(browserContext, BaseUrl, storyId);
 		return storyPage;
 	}
@@ -107,9 +108,10 @@ public sealed class DemoFixture : IAsyncLifetime
 	/// <summary>
 	/// Opens the storybook shell — the page a human actually lands on — rather than a story canvas.
 	/// </summary>
-	public async Task<IBrowserContext> OpenShellContextAsync()
+	/// <param name="colorScheme">Colour scheme the page reports a preference for, or null for the default.</param>
+	public async Task<IBrowserContext> OpenShellContextAsync(ColorScheme? colorScheme = null)
 	{
-		return await CreateContextAsync(devicePixelRatio: 1);
+		return await CreateContextAsync(devicePixelRatio: 1, colorScheme);
 	}
 
 	/// <summary>
@@ -123,13 +125,15 @@ public sealed class DemoFixture : IAsyncLifetime
 	/// asset, which is the one thing these tests exist to notice.
 	/// </remarks>
 	/// <param name="devicePixelRatio">Device pixel ratio the pages in this context report.</param>
-	private async Task<IBrowserContext> CreateContextAsync(double devicePixelRatio)
+	/// <param name="colorScheme">Colour scheme the pages report a preference for, or null for the default.</param>
+	private async Task<IBrowserContext> CreateContextAsync(double devicePixelRatio, ColorScheme? colorScheme = null)
 	{
 		var browser = _browser ?? throw new InvalidOperationException("The browser was not started.");
 		var browserContext = await browser.NewContextAsync(new BrowserNewContextOptions
 		{
 			ViewportSize = DefaultViewport,
-			DeviceScaleFactor = (float) devicePixelRatio
+			DeviceScaleFactor = (float) devicePixelRatio,
+			ColorScheme = colorScheme
 		});
 
 		await browserContext.RouteAsync("**/favicon.ico", route => route.FulfillAsync(new RouteFulfillOptions

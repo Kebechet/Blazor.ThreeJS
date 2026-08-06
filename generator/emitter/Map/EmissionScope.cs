@@ -218,7 +218,7 @@ internal sealed class EmissionScope
 			Exclude(
 				result,
 				$"a `{EmitterConfig.MathSourcePrefix}**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. " +
-				$"Five are hand-written ({string.Join(", ", EmitterConfig.MathTypeNames.Order(StringComparer.Ordinal).Select(x => $"`{x}`"))}) and are never regenerated; " +
+				$"{EmitterConfig.MathTypeNames.Count} are hand-written ({string.Join(", ", EmitterConfig.MathTypeNames.Order(StringComparer.Ordinal).Select(x => $"`{x}`"))}) and are never regenerated; " +
 				$"giving the rest a representation is a public-API decision, not a mapping one",
 				SkipCategory.MathValueType);
 			return;

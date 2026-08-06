@@ -27,6 +27,18 @@ public class CurvePath : ThreeObject
 	{
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>CurvePath</c> under the handle the browser minted for it.
+	/// No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal CurvePath(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.CurvePath</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -83,6 +95,27 @@ public class CurvePath : ThreeObject
 	}
 
 	/// <summary>
+	/// Adds a <see cref="LineCurve">lineCurve</see> to close the path. Records a read op, sends it
+	/// behind every write already pending, and completes with what <c>closePath</c> returned.
+	/// </summary>
+	/// <returns>The value <c>closePath</c> returned, once the JavaScript side has answered.</returns>
+	public Task<CurvePath?> ClosePathAsync()
+	{
+		return RecordReadObject<CurvePath>("closePath", (adoptedBatch, adoptedHandle) => new CurvePath(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
+	/// Get list of cumulative curve lengths of the curves in the <c>.curves</c> array. Records a read
+	/// op, sends it behind every write already pending, and completes with what <c>getCurveLengths</c>
+	/// returned.
+	/// </summary>
+	/// <returns>The value <c>getCurveLengths</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float[]> GetCurveLengthsAsync()
+	{
+		return RecordRead<float[]>("getCurveLengths");
+	}
+
+	/// <summary>
 	/// Get total <c>Curve</c> arc length. Records a read op, sends it behind every write already
 	/// pending, and completes with what <c>getLength</c> returned.
 	/// </summary>
@@ -90,6 +123,17 @@ public class CurvePath : ThreeObject
 	public Task<float> GetLengthAsync()
 	{
 		return RecordRead<float>("getLength");
+	}
+
+	/// <summary>
+	/// Get list of cumulative segment lengths. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getLengths</c> returned.
+	/// </summary>
+	/// <param name="divisions"></param>
+	/// <returns>The value <c>getLengths</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float[]> GetLengthsAsync(int divisions)
+	{
+		return RecordRead<float[]>("getLengths", divisions);
 	}
 
 	/// <summary>
@@ -102,6 +146,16 @@ public class CurvePath : ThreeObject
 	public Task<float> GetUtoTmappingAsync(float u, float distance)
 	{
 		return RecordRead<float>("getUtoTmapping", u, distance);
+	}
+
+	/// <summary>
+	/// Creates a clone of this instance. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>clone</c> returned.
+	/// </summary>
+	/// <returns>The value <c>clone</c> returned, once the JavaScript side has answered.</returns>
+	public Task<CurvePath?> CloneAsync()
+	{
+		return RecordReadObject<CurvePath>("clone", (adoptedBatch, adoptedHandle) => new CurvePath(adoptedBatch, adoptedHandle));
 	}
 
 	/// <summary>

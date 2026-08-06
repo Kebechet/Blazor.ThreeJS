@@ -39,6 +39,13 @@ internal sealed class TypeMapping
 	/// <summary>How the numeric type was chosen, on a <c>number</c> mapping.</summary>
 	public NumericResolution? Numeric { get; init; }
 
+	/// <summary>
+	/// On a <see cref="TypeMappingKind.Sequence"/>, how the element type resolved. An array is only as
+	/// expressible as its elements, and readability in particular does not follow from the array: an
+	/// array of handle-backed objects can be sent but not read back.
+	/// </summary>
+	public TypeMapping? ElementMapping { get; init; }
+
 	/// <summary>Builds a successful mapping.</summary>
 	/// <param name="cSharpTypeName">Resolved C# type name.</param>
 	/// <param name="kind">What the resolved type is.</param>
@@ -51,7 +58,8 @@ internal sealed class TypeMapping
 		TypeMappingKind kind,
 		string? requiredGeneratedTypeName = null,
 		bool isExplicitlyNullable = false,
-		NumericResolution? numeric = null)
+		NumericResolution? numeric = null,
+		TypeMapping? elementMapping = null)
 	{
 		return new TypeMapping
 		{
@@ -59,7 +67,8 @@ internal sealed class TypeMapping
 			Kind = kind,
 			RequiredGeneratedTypeName = requiredGeneratedTypeName,
 			IsExplicitlyNullable = isExplicitlyNullable,
-			Numeric = numeric
+			Numeric = numeric,
+			ElementMapping = elementMapping
 		};
 	}
 
@@ -92,6 +101,19 @@ internal enum TypeMappingKind : byte
 
 	/// <summary>A generated enum over three.js's numeric constants.</summary>
 	GeneratedEnum,
+
+	/// <summary>
+	/// One of the hand-written typed arrays. Encoded by value like a math type, but not owned or
+	/// mutated in place: three.js reassigns a typed array rather than writing into it, so there is no
+	/// live instance for the mirror to hang a change callback off.
+	/// </summary>
+	HandWrittenTypedArray,
+
+	/// <summary>
+	/// A C# array. Encoded element by element, so what it can carry — and whether it can be read back
+	/// at all — is decided by <see cref="TypeMapping.ElementMapping"/> rather than by the array itself.
+	/// </summary>
+	Sequence,
 
 	/// <summary>Nothing in C# mirrors it; <see cref="TypeMapping.SkipReason"/> says what and why.</summary>
 	Skipped
@@ -180,15 +202,8 @@ internal enum SkipCategory : byte
 	NotInstanceApi,
 
 	/// <summary>
-	/// Read-only in three.js. The read op invokes a method, so a property has nothing to route through
-	/// it — exposing one as an async method would change the shape of the mirrored API rather than its
-	/// coverage.
-	/// </summary>
-	ReadOnlyProperty,
-
-	/// <summary>
-	/// Its result is a JavaScript object rather than a value. The read op carries values — numbers,
-	/// booleans, strings, the five tagged math types — and no op mints a handle for an object the
+	/// Its result is a JavaScript object rather than a value. The read and get ops carry values —
+	/// numbers, booleans, strings, the tagged math types — and no op mints a handle for an object the
 	/// browser created, so there is nothing to hand back.
 	/// </summary>
 	NoHandleForResult,

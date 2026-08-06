@@ -26,6 +26,18 @@ public sealed class LOD : Object3D
 	{
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>LOD</c> under the handle the browser minted for it. No
+	/// create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal LOD(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.LOD</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -79,6 +91,17 @@ public sealed class LOD : Object3D
 	}
 
 	/// <summary>
+	/// Read-only flag to check if a given object is of type <see cref="LOD"/>. Read-only in three.js,
+	/// so it is read on demand rather than mirrored: records a get op, sends it behind every write
+	/// already pending, and completes with the value <c>isLOD</c> held.
+	/// </summary>
+	/// <returns>The value <c>isLOD</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsLODAsync()
+	{
+		return GetAsync<bool>("isLOD");
+	}
+
+	/// <summary>
 	/// Removes an existing level, based on the distance from the camera. Returns <c>true</c> when the
 	/// level has been removed. Otherwise <c>false</c>. Records a read op, sends it behind every write
 	/// already pending, and completes with what <c>removeLevel</c> returned.
@@ -98,6 +121,18 @@ public sealed class LOD : Object3D
 	public Task<float> GetCurrentLevelAsync()
 	{
 		return RecordRead<float>("getCurrentLevel");
+	}
+
+	/// <summary>
+	/// Get a reference to the first <c>Object3D</c> (mesh) that is greater than <c>distance</c>.
+	/// Records a read op, sends it behind every write already pending, and completes with what
+	/// <c>getObjectForDistance</c> returned.
+	/// </summary>
+	/// <param name="distance"></param>
+	/// <returns>The value <c>getObjectForDistance</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Object3D?> GetObjectForDistanceAsync(float distance)
+	{
+		return RecordReadObject<Object3D>("getObjectForDistance", (adoptedBatch, adoptedHandle) => new PrimitiveObject3D(adoptedBatch, adoptedHandle, "Object3D"), distance);
 	}
 
 	/// <summary>

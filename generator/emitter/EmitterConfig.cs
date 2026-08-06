@@ -121,10 +121,16 @@ internal static class EmitterConfig
 	/// a consumer instantiates, and emitting them would put roughly a hundred classes of plumbing into
 	/// the coverage table as if they were API.
 	/// <para>
-	/// The consumer-facing renderer types are not under either prefix — <c>WebGLRenderer</c> and every
-	/// <c>WebGL*RenderTarget</c> live directly in <c>src/renderers/</c> — so they survive this rule.
-	/// <see cref="ConsumerFacingRendererClassNames"/> pins that, so a future upstream file move shows
-	/// up as a failed expectation rather than as a silently smaller API.
+	/// The consumer-facing renderer types are not under either prefix — <c>WebGPURenderer</c> lives in
+	/// <c>src/renderers/webgpu/</c> and the render targets in <c>src/renderers/common/</c> — so they
+	/// survive this rule. <see cref="ConsumerFacingRendererClassNames"/> pins that, so a future upstream
+	/// file move shows up as a failed expectation rather than as a silently smaller API.
+	/// </para>
+	/// <para>
+	/// ⚠️ <c>src/renderers/webgl/</c> is now dead weight rather than a live renderer: this package ships
+	/// three.js's WebGPU build, which does not export <c>WebGLRenderer</c> at all. Its 25 classes are
+	/// kept excluded for the same reason they always were, and the extractor now also reports them
+	/// unexported, so nothing could reach them either way.
 	/// </para>
 	/// </summary>
 	public static readonly IReadOnlyList<string> ExcludedSourcePrefixes = ["src/renderers/webgl/", "src/renderers/webxr/"];
@@ -136,18 +142,19 @@ internal static class EmitterConfig
 	/// </summary>
 	public static readonly IReadOnlyList<string> ConsumerFacingRendererClassNames =
 	[
+		"CubeRenderTarget",
+		"RenderTarget",
 		"WebGL3DRenderTarget",
 		"WebGLArrayRenderTarget",
-		"WebGLCubeRenderTarget",
 		"WebGLRenderTarget",
-		"WebGLRenderer"
+		"WebGPURenderer"
 	];
 
 	/// <summary>
 	/// Source prefix of three.js's math types. Everything under it is a by-value type, encoded inline
 	/// on the wire rather than referenced by handle, so it is out of the generated surface entirely:
-	/// five are hand-written (<see cref="MathTypeNames"/>) and giving the rest a C# representation is
-	/// a public-API decision rather than a mapping one.
+	/// the hand-written ones (<see cref="MathTypeNames"/>) ship, and giving the rest a C# representation
+	/// is a public-API decision rather than a mapping one.
 	/// </summary>
 	public const string MathSourcePrefix = "src/math/";
 
@@ -163,18 +170,52 @@ internal static class EmitterConfig
 	public const string ColorTypeName = "Color";
 
 	/// <summary>
+	/// three.js's structural stand-ins for its own math types, keyed by interface name and valued by
+	/// the hand-written C# type that satisfies them.
+	/// <para>
+	/// <c>Vector3Like</c> is <c>{ x: number; y: number; z: number }</c> — the shape a real
+	/// <c>Vector3</c> has, declared separately so a caller can pass a plain object literal. The mirror
+	/// has no plain object literals, so the concrete type is the only thing it could ever send, and
+	/// what arrives is a genuine <c>THREE.Vector3</c>: strictly more than the parameter asks for.
+	/// Mapping them is therefore exact rather than a narrowing, which is why they are here and the
+	/// serialization shapes (<c>CurveJSON</c>, <c>LightShadowJSON</c>) are not.
+	/// </para>
+	/// </summary>
+	public static readonly IReadOnlyDictionary<string, string> StructuralMathInterfaceNames = new Dictionary<string, string>(StringComparer.Ordinal)
+	{
+		["Vector2Like"] = "Vector2",
+		["Vector3Like"] = "Vector3",
+		["Vector4Like"] = "Vector4",
+		["QuaternionLike"] = "Quaternion"
+	};
+
+	/// <summary>
 	/// C# types the package provides by hand, which generated code may reference without generating
 	/// them.
 	/// </summary>
 	public static readonly IReadOnlySet<string> ExistingCSharpTypeNames = new HashSet<string>(StringComparer.Ordinal)
 	{
+		"Box2",
+		"Box3",
 		"Color",
+		"Cylindrical",
 		"Euler",
+		"Frustum",
+		"Line3",
+		"Matrix3",
 		"Matrix4",
 		"Object3D",
+		"Plane",
 		"Quaternion",
+		"Ray",
+		"Sphere",
+		"Spherical",
+		"SphericalHarmonics3",
 		"ThreeObject",
-		"Vector3"
+		"Triangle",
+		"Vector2",
+		"Vector3",
+		"Vector4"
 	};
 
 	/// <summary>
@@ -201,16 +242,137 @@ internal static class EmitterConfig
 	}
 
 	/// <summary>
+	/// JavaScript's typed arrays, each of which the package hand-writes a C# class for in the core
+	/// namespace. They resolve ahead of the lib-type refusal because three.js hands one straight to
+	/// WebGL — a <c>BufferAttribute</c>'s vertex data, a <c>DataTexture</c>'s pixels — so a plain array
+	/// cannot stand in for one. The names are JavaScript's own global constructors, which is what the
+	/// applier resolves them by.
+	/// <para>
+	/// <c>BigInt64Array</c> and <c>BigUint64Array</c> are deliberately absent: three.js's own
+	/// <c>TypedArray</c> alias does not include them, so nothing in the surface can ask for one.
+	/// </para>
+	/// </summary>
+	public static readonly IReadOnlySet<string> TypedArrayTypeNames = new HashSet<string>(StringComparer.Ordinal)
+	{
+		"Float32Array",
+		"Float64Array",
+		"Int8Array",
+		"Int16Array",
+		"Int32Array",
+		"Uint8Array",
+		"Uint8ClampedArray",
+		"Uint16Array",
+		"Uint32Array"
+	};
+
+	/// <summary>Name of the hand-written abstract base every typed array derives from.</summary>
+	public const string TypedArrayBaseTypeName = "TypedArray";
+
+	/// <summary>
+	/// Blocked classes whose capability is reachable another way, and how.
+	/// <para>
+	/// A blocked class is not automatically a lost feature, and the coverage table said nothing about
+	/// the difference. Most of what is blocked here is an abstract base whose concrete subclasses all
+	/// generate, or a convenience subclass that only rearranges arguments —
+	/// <c>new Float32BufferAttribute(values, 3)</c> is <c>new BufferAttribute(new Float32Array(values), 3)</c>,
+	/// verified equal on the runtime bundle rather than assumed.
+	/// </para>
+	/// <para>
+	/// The report renders only entries whose class is still blocked, and names any entry that is not,
+	/// so a note cannot outlive the limitation it describes.
+	/// </para>
+	/// </summary>
+	public static readonly IReadOnlyDictionary<string, string> BlockedClassWorkarounds = new Dictionary<string, string>(StringComparer.Ordinal)
+	{
+		["Curve"] = "abstract in three.js; every concrete curve (`LineCurve`, `SplineCurve`, `CatmullRomCurve3`, …) generates",
+		["KeyframeTrack"] = "abstract in three.js; all six concrete tracks (`VectorKeyframeTrack`, `NumberKeyframeTrack`, …) generate",
+		["Light"] = "abstract in three.js; every concrete light generates",
+		["Controls"] = "abstract in three.js; `OrbitControls` ships as a hand-written addon",
+		["DataTextureLoader"] = "abstract in three.js; concrete loaders generate",
+		["Float16BufferAttribute"] = "`new BufferAttribute(new Uint16Array(values), itemSize)` — the subclass only wraps the array",
+		["Float32BufferAttribute"] = "`new BufferAttribute(new Float32Array(values), itemSize)` — the subclass only wraps the array",
+		["Int8BufferAttribute"] = "`new BufferAttribute(new Int8Array(values), itemSize)` — the subclass only wraps the array",
+		["Int16BufferAttribute"] = "`new BufferAttribute(new Int16Array(values), itemSize)` — the subclass only wraps the array",
+		["Int32BufferAttribute"] = "`new BufferAttribute(new Int32Array(values), itemSize)` — the subclass only wraps the array",
+		["Uint8BufferAttribute"] = "`new BufferAttribute(new Uint8Array(values), itemSize)` — the subclass only wraps the array",
+		["Uint8ClampedBufferAttribute"] = "`new BufferAttribute(new Uint8ClampedArray(values), itemSize)` — the subclass only wraps the array",
+		["Uint16BufferAttribute"] = "`new BufferAttribute(new Uint16Array(values), itemSize)` — the subclass only wraps the array",
+		["Uint32BufferAttribute"] = "`new BufferAttribute(new Uint32Array(values), itemSize)` — the subclass only wraps the array",
+		["PositionalAudio"] = "`new PrimitiveObject3D(\"PositionalAudio\", audioListener)` — its C# base needs constructor arguments a generated subclass cannot supply",
+		["InstancedBufferAttribute"] = "`new Primitive(\"InstancedBufferAttribute\", array, itemSize)` — same base-constructor limitation",
+		["InstancedInterleavedBuffer"] = "`new Primitive(\"InstancedInterleavedBuffer\", array, stride)` — same base-constructor limitation",
+		["CubeCamera"] = "`new PrimitiveObject3D(\"CubeCamera\", near, far, renderTarget)`",
+		["VideoTexture"] = "`new Primitive(\"VideoTexture\", videoElement)` — it takes an `HTMLVideoElement`, which C# never holds",
+		["GLBufferAttribute"] = "`new Primitive(\"GLBufferAttribute\", buffer, type, itemSize, elementSize, count)` — it takes a raw WebGL buffer",
+		["Uniform"] = "`new Primitive(\"Uniform\", value)` — its `value` is declared `any`",
+		["PMREMGenerator"] = "`new Primitive(\"PMREMGenerator\", renderer)` — two three.js classes share this name",
+		["Source"] = "`new Primitive(\"Source\", data)`",
+		["CompressedTexture"] = "`new Primitive(\"CompressedTexture\", mipmaps, width, height)` — compressed formats need data C# does not produce",
+		["CompressedArrayTexture"] = "`new Primitive(\"CompressedArrayTexture\", mipmaps, width, height, depth)`",
+		["CompressedCubeTexture"] = "`new Primitive(\"CompressedCubeTexture\", images, format, type)`"
+	};
+
+	/// <summary>
+	/// TypeScript's structural array interfaces. A plain JavaScript array satisfies all of them, and a
+	/// plain JavaScript array is what the sequence encoder produces, so a parameter declared with one
+	/// takes a C# array exactly rather than approximately.
+	/// <para>
+	/// They resolve ahead of the lib-type refusal because they are shapes rather than browser objects:
+	/// <c>ArrayLike&lt;number&gt;</c> is how every <c>KeyframeTrack</c> declares its times and values,
+	/// and refusing it blocked the entire animation stack over something the wire already carries.
+	/// </para>
+	/// </summary>
+	public static readonly IReadOnlySet<string> StructuralSequenceTypeNames = new HashSet<string>(StringComparer.Ordinal)
+	{
+		"ArrayLike",
+		"Iterable",
+		"ReadonlyArray"
+	};
+
+	/// <summary>
+	/// Concrete type to build when a read answers with a handle whose declared type cannot itself be
+	/// constructed, keyed by that declared type.
+	/// <para>
+	/// <c>Object3D</c> is abstract in C# — it is the scene-graph base every mirrored node derives from,
+	/// not a node. A method declared to return one (<c>LOD.getObjectForDistance</c>) still has to answer
+	/// with something, and the escape-hatch scene-graph wrapper is exactly that: it satisfies the
+	/// declared type and carries three.js's own name for what actually came back.
+	/// </para>
+	/// </summary>
+	public static readonly IReadOnlyDictionary<string, string> AdoptionSubstituteTypeNames = new Dictionary<string, string>(StringComparer.Ordinal)
+	{
+		["Object3D"] = "PrimitiveObject3D",
+
+		// The root of the mirror, which a union of mirrored classes resolves to. Also abstract, and its
+		// concrete escape-hatch wrapper is what a read of one answers with.
+		[RootBaseTypeName] = "Primitive"
+	};
+
+	/// <summary>
 	/// Hand-written math types, which live in a different namespace from the generated classes and so
 	/// pull in an extra <c>using</c> when referenced.
 	/// </summary>
 	public static readonly IReadOnlySet<string> MathTypeNames = new HashSet<string>(StringComparer.Ordinal)
 	{
+		"Box2",
+		"Box3",
 		"Color",
+		"Cylindrical",
 		"Euler",
+		"Frustum",
+		"Line3",
+		"Matrix3",
 		"Matrix4",
+		"Plane",
 		"Quaternion",
-		"Vector3"
+		"Ray",
+		"Sphere",
+		"Spherical",
+		"SphericalHarmonics3",
+		"Triangle",
+		"Vector2",
+		"Vector3",
+		"Vector4"
 	};
 
 	/// <summary>
@@ -225,13 +387,19 @@ internal static class EmitterConfig
 	};
 
 	/// <summary>
-	/// Hand-written math types that cannot report a change. <c>Matrix4</c> hands its <c>Elements</c>
+	/// Hand-written math types that cannot report a change. Both matrices hand their <c>Elements</c>
 	/// array out directly, so <c>m.Elements[0] = 1f</c> is a legal mutation nothing can observe — there
 	/// is no hook to hang a property write off. A matrix-typed property is therefore not mirrored at
 	/// all, rather than mirrored as state that silently stops tracking.
+	/// <para>
+	/// Every other hand-written math type routes its components through property setters, including
+	/// the composite ones: <c>Box3</c>, <c>Frustum</c> and the rest hang a callback off each child they
+	/// own, which is why they copy their constructor arguments instead of retaining them.
+	/// </para>
 	/// </summary>
 	public static readonly IReadOnlySet<string> MathTypeNamesWithoutChangeNotification = new HashSet<string>(StringComparer.Ordinal)
 	{
+		"Matrix3",
 		"Matrix4"
 	};
 

@@ -12,6 +12,7 @@
   <ItemGroup>
     <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\wire-format-fixture.json" Link="wire-format-fixture.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\math-values-fixture.json" Link="math-values-fixture.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

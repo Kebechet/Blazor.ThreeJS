@@ -1,0 +1,196 @@
+@attribute [Stories("Catalogue/Custom geometry")]
+@using System.Globalization
+@implements IDisposable
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="A mesh built from raw vertex data">
+        <Template>
+            <p>
+                Every other geometry in the catalogue is built by three.js from a handful of numbers.
+                This one is built in C#: @_vertexCount vertices and @_triangleCount triangles, computed
+                here and uploaded as a <code>Float32Array</code> of positions and a
+                <code>Uint16Array</code> of indices.
+            </p>
+            <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildSurfaceAsync" />
+            <p>
+                A typed array is its own wire form - <code>{"$ta": "Float32Array", …}</code> - rather
+                than a plain JSON array, because three.js hands a <code>BufferAttribute</code>'s data
+                straight to WebGL and the GPU upload needs the real thing.
+            </p>
+            <p>
+                <strong>Read back from three.js after <code>computeBoundingSphere()</code>:</strong>
+                @if (_boundingSphere is null)
+                {
+                    <em>reading…</em>
+                }
+                else
+                {
+                    <code>centre @Format(_boundingSphere.Center), radius @_boundingSphere.Radius.ToString("F2", CultureInfo.InvariantCulture)</code>
+                }
+            </p>
+            <p>
+                ⚠️ That radius is <em>read</em>, not mirrored. <code>BoundingSphere</code> is a property
+                C# owns an instance of, but three.js is what computes it, so the mirror's own copy is
+                still the default until something asks - which is what
+                <code>GetAsync&lt;Sphere&gt;</code> above does. See <em>Architecture/Mirror authority</em>
+                for the general rule.
+            </p>
+            <p>
+                The surface is uploaded once and then only rotated. Recomputing the wave every frame
+                would mean re-sending @(_vertexCount * 3) floats per frame, which is exactly the kind of
+                traffic the batching design exists to avoid - see <em>Architecture/Interop budget</em>.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private const float RadiansPerFrame = 0.004f;
+
+    /// <summary>Cells per side. 41² vertices stays well inside a <c>Uint16Array</c> index's 65 535 ceiling.</summary>
+    private const int GridSegments = 40;
+    private const float SurfaceSize = 6f;
+    private const float WaveHeight = 0.85f;
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+    private int _vertexCount;
+    private int _triangleCount;
+    private Sphere? _boundingSphere;
+
+    private async Task BuildSurfaceAsync(ThreeContext threeContext)
+    {
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 4.2f, 7.5f);
+        camera.LookAt(0f, 0f, 0f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.45f));
+
+        var keyLight = new DirectionalLight(Color.White, 2f);
+        keyLight.Position.Set(4f, 8f, 5f);
+        scene.Add(keyLight);
+
+        var geometry = BuildWaveGeometry();
+
+        var material = new MeshStandardMaterial();
+        material.Color.SetHex(0x5b8dd9);
+        material.Roughness = 0.35f;
+        material.Metalness = 0.1f;
+        // The wave has front and back faces the camera can both see as it turns.
+        material.Side = Side.DoubleSide;
+
+        var surface = new Mesh(geometry, material);
+        scene.Add(surface);
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        // Asked for after the scene is live, so the value read back is the one three.js computed from
+        // the vertices actually uploaded rather than from anything C# assumed.
+        geometry.ComputeBoundingSphere();
+        _boundingSphere = await geometry.GetAsync<Sphere>("boundingSphere");
+        StateHasChanged();
+
+        _ = AnimateAsync(threeContext, surface);
+    }
+
+    /// <summary>
+    /// Builds the wave surface as raw buffers. Positions are a flat XYZ triple per vertex and indices
+    /// are two triangles per grid cell, which is the layout <c>BufferAttribute</c> expects - the item
+    /// size tells three.js how to read the flat run back as vectors.
+    /// </summary>
+    private BufferGeometry BuildWaveGeometry()
+    {
+        var verticesPerSide = GridSegments + 1;
+        var positions = new float[verticesPerSide * verticesPerSide * 3];
+        var component = 0;
+
+        foreach (var row in Enumerable.Range(0, verticesPerSide))
+        {
+            foreach (var column in Enumerable.Range(0, verticesPerSide))
+            {
+                var x = ((float) column / GridSegments - 0.5f) * SurfaceSize;
+                var z = ((float) row / GridSegments - 0.5f) * SurfaceSize;
+                var distance = MathF.Sqrt((x * x) + (z * z));
+
+                positions[component++] = x;
+                positions[component++] = MathF.Sin(distance * 2.6f) * WaveHeight / (1f + distance);
+                positions[component++] = z;
+            }
+        }
+
+        var indices = new ushort[GridSegments * GridSegments * 6];
+        var indexPosition = 0;
+
+        foreach (var row in Enumerable.Range(0, GridSegments))
+        {
+            foreach (var column in Enumerable.Range(0, GridSegments))
+            {
+                var topLeft = (ushort) ((row * verticesPerSide) + column);
+                var topRight = (ushort) (topLeft + 1);
+                var bottomLeft = (ushort) (topLeft + verticesPerSide);
+                var bottomRight = (ushort) (bottomLeft + 1);
+
+                indices[indexPosition++] = topLeft;
+                indices[indexPosition++] = bottomLeft;
+                indices[indexPosition++] = topRight;
+                indices[indexPosition++] = topRight;
+                indices[indexPosition++] = bottomLeft;
+                indices[indexPosition++] = bottomRight;
+            }
+        }
+
+        _vertexCount = positions.Length / 3;
+        _triangleCount = indices.Length / 3;
+
+        var geometry = new BufferGeometry();
+
+        // Through Call rather than a typed method: setAttribute takes
+        // `BufferAttribute | InterleavedBufferAttribute | GLBufferAttribute`, and one C# parameter
+        // cannot express that union, so the generator refuses it. See Architecture/Escape hatch.
+        geometry.Call("setAttribute", "position", new BufferAttribute(new Float32Array(positions), 3f));
+        geometry.Index = new BufferAttribute(new Uint16Array(indices), 1f);
+
+        // Normals are three.js's to derive: it has the vertices now, and shipping a second float per
+        // component from C# would double the upload for something the GPU side can compute exactly.
+        geometry.ComputeVertexNormals();
+        return geometry;
+    }
+
+    private static string Format(Vector3 vector)
+    {
+        return $"({vector.X.ToString("F2", CultureInfo.InvariantCulture)}, " +
+            $"{vector.Y.ToString("F2", CultureInfo.InvariantCulture)}, " +
+            $"{vector.Z.ToString("F2", CultureInfo.InvariantCulture)})";
+    }
+
+    private async Task AnimateAsync(ThreeContext threeContext, Object3D surface)
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                var nextRotationY = surface.Rotation.Y + RadiansPerFrame;
+                surface.Rotation.Y = nextRotationY >= MathF.Tau ? nextRotationY - MathF.Tau : nextRotationY;
+                await threeContext.FlushAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // See Cube.stories.razor for why this is what stops the loop when a story is swapped.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+}

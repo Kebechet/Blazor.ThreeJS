@@ -2,6 +2,7 @@
 // Re-run `npm run emit` after changing the emitter or generator/three-api.json.
 
 using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Math;
 
 namespace Kebechet.Blazor.ThreeJS.Objects;
 
@@ -13,10 +14,42 @@ public class Camera : Object3D
 {
 	private CoordinateSystem _coordinateSystem;
 	private bool _isCoordinateSystemWritten;
+	private bool _isViewportWritten;
+
+	/// <summary>
+	/// The <c>viewport</c> property of the JavaScript-side object. Mirrored as an instance this object
+	/// owns: mutating it records a write of <c>viewport</c>.
+	/// </summary>
+	public Vector4 Viewport { get; }
 
 	/// <summary>Initializes a new <see cref="Camera"/>.</summary>
 	public Camera()
 	{
+		Viewport = new Vector4();
+		Viewport.OnChange = () =>
+		{
+			_isViewportWritten = true;
+			RecordSet("viewport", Viewport);
+		};
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>Camera</c> under the handle the browser minted for it. No
+	/// create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal Camera(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		Viewport = new Vector4();
+		Viewport.OnChange = () =>
+		{
+			_isViewportWritten = true;
+			RecordSet("viewport", Viewport);
+		};
+
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.Camera</c>.</summary>
@@ -46,6 +79,28 @@ public class Camera : Object3D
 	}
 
 	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isCamera</c> held.
+	/// </summary>
+	/// <returns>The value <c>isCamera</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsCameraAsync()
+	{
+		return GetAsync<bool>("isCamera");
+	}
+
+	/// <summary>
+	/// The flag that indicates whether the camera uses a reversed depth buffer. Read-only in three.js,
+	/// so it is read on demand rather than mirrored: records a get op, sends it behind every write
+	/// already pending, and completes with the value <c>reversedDepth</c> held.
+	/// </summary>
+	/// <returns>The value <c>reversedDepth</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> ReversedDepthAsync()
+	{
+		return GetAsync<bool>("reversedDepth");
+	}
+
+	/// <summary>
 	/// Replays every property written before this object was attached, so construction order never
 	/// matters to the caller. A property the caller never wrote is left alone: three.js's own default
 	/// is the truth for it, and the mirror has never read anything back to improve on that.
@@ -58,6 +113,11 @@ public class Camera : Object3D
 		if (_isCoordinateSystemWritten)
 		{
 			batch.Set(Handle, "coordinateSystem", ThreeValue.Encode(_coordinateSystem));
+		}
+
+		if (_isViewportWritten)
+		{
+			batch.Set(Handle, "viewport", ThreeValue.Encode(Viewport));
 		}
 	}
 }

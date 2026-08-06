@@ -28,9 +28,9 @@ internal static class ThreeValue
 	private static readonly JsonSerializerOptions _readOptions = new(JsonSerializerDefaults.Web);
 
 	/// <summary>
-	/// Converts a value into its wire representation. Math types (<see cref="Vector3"/>,
-	/// <see cref="Euler"/>, <see cref="Quaternion"/>, <see cref="Color"/>, <see cref="Matrix4"/>)
-	/// become a <see cref="TaggedValue"/>, <see cref="ThreeObject"/> instances become a
+	/// Converts a value into its wire representation. A hand-written math type (<see cref="Vector3"/>,
+	/// <see cref="Box3"/>, <see cref="Frustum"/> and the rest of <c>Math/</c>)
+	/// becomes a <see cref="TaggedValue"/>, <see cref="ThreeObject"/> instances become a
 	/// <see cref="HandleReference"/>, <see cref="Unspecified"/> stays the sentinel the applier turns
 	/// back into <c>undefined</c>, an <see cref="Enum"/> value is cast to its numeric backing
 	/// value so a future <c>JsonStringEnumConverter</c> reaching these options cannot silently turn
@@ -63,14 +63,58 @@ internal static class ThreeValue
 				return new TaggedValue { Tag = ThreeWireFormat.ColorTag, Values = color.ToArray() };
 			case Matrix4 matrix:
 				return new TaggedValue { Tag = ThreeWireFormat.Matrix4Tag, Values = matrix.ToArray() };
+			case Vector2 vector2:
+				return new TaggedValue { Tag = ThreeWireFormat.Vector2Tag, Values = vector2.ToArray() };
+			case Vector4 vector4:
+				return new TaggedValue { Tag = ThreeWireFormat.Vector4Tag, Values = vector4.ToArray() };
+			case Matrix3 matrix3:
+				return new TaggedValue { Tag = ThreeWireFormat.Matrix3Tag, Values = matrix3.ToArray() };
+			case Box2 box2:
+				return new TaggedValue { Tag = ThreeWireFormat.Box2Tag, Values = box2.ToArray() };
+			case Box3 box3:
+				return new TaggedValue { Tag = ThreeWireFormat.Box3Tag, Values = box3.ToArray() };
+			case Sphere sphere:
+				return new TaggedValue { Tag = ThreeWireFormat.SphereTag, Values = sphere.ToArray() };
+			case Plane plane:
+				return new TaggedValue { Tag = ThreeWireFormat.PlaneTag, Values = plane.ToArray() };
+			case Ray ray:
+				return new TaggedValue { Tag = ThreeWireFormat.RayTag, Values = ray.ToArray() };
+			case Line3 line:
+				return new TaggedValue { Tag = ThreeWireFormat.Line3Tag, Values = line.ToArray() };
+			case Triangle triangle:
+				return new TaggedValue { Tag = ThreeWireFormat.TriangleTag, Values = triangle.ToArray() };
+			case Spherical spherical:
+				return new TaggedValue { Tag = ThreeWireFormat.SphericalTag, Values = spherical.ToArray() };
+			case Cylindrical cylindrical:
+				return new TaggedValue { Tag = ThreeWireFormat.CylindricalTag, Values = cylindrical.ToArray() };
+			case Frustum frustum:
+				return new TaggedValue { Tag = ThreeWireFormat.FrustumTag, Values = frustum.ToArray() };
+			case SphericalHarmonics3 sphericalHarmonics:
+				return new TaggedValue { Tag = ThreeWireFormat.SphericalHarmonics3Tag, Values = sphericalHarmonics.ToArray() };
 			case ThreeObject threeObject:
 				return new HandleReference { Handle = threeObject.Handle };
 			case UnspecifiedValue unspecified:
 				return unspecified;
 			case Enum enumValue:
 				return Convert.ChangeType(enumValue, enumValue.GetTypeCode());
+			case TypedArray typedArray:
+				return new TypedArrayValue
+				{
+					ConstructorName = typedArray.JavaScriptConstructorName,
+					Values = typedArray.Components
+				};
+			case float single when NonFiniteToken(single) is { } singleToken:
+				return new NonFiniteValue { Token = singleToken };
+			case double precise when NonFiniteToken(precise) is { } preciseToken:
+				return new NonFiniteValue { Token = preciseToken };
+			case string text:
+				// Ahead of the sequence arm below, which a string would otherwise fall into as a
+				// sequence of characters.
+				return text;
+			case System.Collections.IEnumerable sequence:
+				return EncodeSequence(sequence);
 			default:
-				if (value is string || value.GetType().IsValueType)
+				if (value.GetType().IsValueType)
 				{
 					return value;
 				}
@@ -105,7 +149,33 @@ internal static class ThreeValue
 			return default!;
 		}
 
-		if (value.ValueKind != JsonValueKind.Object || !value.TryGetProperty(ThreeWireFormat.TagKey, out var tag))
+		// Element by element, because the plain deserializer cannot see through a tagged value: an array
+		// of Vector2 arrives as [{"$t":"Vector2","v":[…]}, …], and deserializing that onto Vector2[]
+		// binds nothing and yields an array of zeroed instances — a fabricated answer with no error.
+		if (value.ValueKind == JsonValueKind.Array && typeof(TValue).IsArray)
+		{
+			return (TValue) DecodeArray(typeof(TValue).GetElementType()!, value);
+		}
+
+		if (value.ValueKind != JsonValueKind.Object)
+		{
+			return value.Deserialize<TValue>(_readOptions)!;
+		}
+
+		if (value.TryGetProperty(ThreeWireFormat.NonFiniteKey, out var nonFinite))
+		{
+			var scalar = ParseComponentToken(nonFinite.GetString());
+			return typeof(TValue) == typeof(float)
+				? (TValue) (object) (float) scalar
+				: (TValue) Convert.ChangeType(scalar, typeof(TValue));
+		}
+
+		if (value.TryGetProperty(ThreeWireFormat.TypedArrayKey, out var constructorName))
+		{
+			return (TValue) DecodeTypedArray(constructorName.GetString(), value);
+		}
+
+		if (!value.TryGetProperty(ThreeWireFormat.TagKey, out var tag))
 		{
 			return value.Deserialize<TValue>(_readOptions)!;
 		}
@@ -119,6 +189,29 @@ internal static class ThreeValue
 		throw new InvalidOperationException(
 			$"The applier read back a '{tag.GetString()}' value, which cannot be held as '{typeof(TValue).FullName}'. " +
 			$"The query's declared return type and the value three.js actually produced have diverged.");
+	}
+
+	/// <summary>
+	/// Encodes each element of a sequence, so an array crosses the wire as a JSON array of already
+	/// encoded values rather than as its own serialized shape.
+	/// <para>
+	/// Elements go through <see cref="Encode"/> individually, which is what lets an array of mirrored
+	/// objects arrive as an array of <c>$ref</c> handles and an array of math values as an array of
+	/// tagged values. It also means an element with no encoding throws with its own type named, rather
+	/// than the array's.
+	/// </para>
+	/// </summary>
+	/// <param name="sequence">The sequence to encode.</param>
+	/// <returns>The encoded elements, in order.</returns>
+	private static object?[] EncodeSequence(System.Collections.IEnumerable sequence)
+	{
+		var encoded = new List<object?>();
+		foreach (var element in sequence)
+		{
+			encoded.Add(Encode(element));
+		}
+
+		return encoded.ToArray();
 	}
 
 	/// <summary>
@@ -153,7 +246,7 @@ internal static class ThreeValue
 	}
 
 	/// <summary>
-	/// Rebuilds one of the five hand-written math types from its tagged wire form.
+	/// Rebuilds one of the hand-written math types from its tagged wire form.
 	/// </summary>
 	/// <param name="tag">The <c>$t</c> tag naming which math type was encoded.</param>
 	/// <param name="value">The whole tagged object, read for its components and rotation order.</param>
@@ -188,6 +281,36 @@ internal static class ThreeValue
 				}
 
 				return matrix;
+			case ThreeWireFormat.Vector2Tag:
+				return new Vector2(Component(components, 0), Component(components, 1));
+			case ThreeWireFormat.Vector4Tag:
+				return new Vector4(Component(components, 0), Component(components, 1), Component(components, 2), Component(components, 3));
+			case ThreeWireFormat.Matrix3Tag:
+				// Column-major on the wire, which is how Elements already stores them. See the Matrix4
+				// arm above for why this must not route through Set.
+				return new Matrix3().FromArray(Components(components, 9));
+			case ThreeWireFormat.Box2Tag:
+				return new Box2().FromArray(Components(components, 4));
+			case ThreeWireFormat.Box3Tag:
+				return new Box3().FromArray(Components(components, 6));
+			case ThreeWireFormat.SphereTag:
+				return new Sphere().FromArray(Components(components, 4));
+			case ThreeWireFormat.PlaneTag:
+				return new Plane().FromArray(Components(components, 4));
+			case ThreeWireFormat.RayTag:
+				return new Ray().FromArray(Components(components, 6));
+			case ThreeWireFormat.Line3Tag:
+				return new Line3().FromArray(Components(components, 6));
+			case ThreeWireFormat.TriangleTag:
+				return new Triangle().FromArray(Components(components, 9));
+			case ThreeWireFormat.SphericalTag:
+				return new Spherical().FromArray(Components(components, 3));
+			case ThreeWireFormat.CylindricalTag:
+				return new Cylindrical().FromArray(Components(components, 3));
+			case ThreeWireFormat.FrustumTag:
+				return new Frustum().FromArray(Components(components, Frustum.PlaneCount * 4));
+			case ThreeWireFormat.SphericalHarmonics3Tag:
+				return new SphericalHarmonics3().FromArray(Components(components, SphericalHarmonics3.CoefficientCount * 3));
 			default:
 				throw new NotSupportedException(
 					$"{nameof(ThreeValue)}.{nameof(Decode)} has no arm for the '{tag}' wire tag. " +
@@ -195,13 +318,115 @@ internal static class ThreeValue
 		}
 	}
 
-	/// <summary>Reads one component of a tagged math value's array.</summary>
+	/// <summary>
+	/// Rebuilds a C# array from a JSON array, decoding each element the same way a lone value is
+	/// decoded so a tagged element becomes the math value it names.
+	/// </summary>
+	/// <param name="elementType">C# type of one element.</param>
+	/// <param name="array">The JSON array the applier sent back.</param>
+	/// <returns>The decoded array, boxed as <see cref="object"/> for the generic caller to cast.</returns>
+	private static object DecodeArray(Type elementType, JsonElement array)
+	{
+		var decoded = Array.CreateInstance(elementType, array.GetArrayLength());
+		var index = 0;
+		foreach (var element in array.EnumerateArray())
+		{
+			decoded.SetValue(DecodeElement(elementType, element), index);
+			index++;
+		}
+
+		return decoded;
+	}
+
+	/// <summary>Decodes one element of an array: a tagged math value, or anything the plain deserializer handles.</summary>
+	/// <param name="elementType">C# type of the element.</param>
+	/// <param name="element">The element as it arrived.</param>
+	/// <returns>The decoded element.</returns>
+	private static object? DecodeElement(Type elementType, JsonElement element)
+	{
+		if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty(ThreeWireFormat.TagKey, out var tag))
+		{
+			return DecodeMathValue(tag.GetString(), element);
+		}
+
+		return element.Deserialize(elementType, _readOptions);
+	}
+
+	/// <summary>
+	/// Rebuilds a typed array from its <c>$ta</c>-tagged wire form, as the C# class matching the
+	/// JavaScript constructor the applier named.
+	/// </summary>
+	/// <param name="constructorName">JavaScript constructor name carried on the wire.</param>
+	/// <param name="value">The whole tagged object, read for its components.</param>
+	/// <returns>The reconstructed typed array.</returns>
+	/// <exception cref="NotSupportedException">Thrown for a constructor name with no C# class here.</exception>
+	private static object DecodeTypedArray(string? constructorName, JsonElement value)
+	{
+		var components = value.GetProperty(ThreeWireFormat.ValuesKey);
+		var elements = new double[components.GetArrayLength()];
+		for (var index = 0; index < elements.Length; index++)
+		{
+			elements[index] = Component(components, index);
+		}
+
+		return constructorName switch
+		{
+			nameof(Float32Array) => new Float32Array(Array.ConvertAll(elements, x => (float) x)),
+			nameof(Float64Array) => new Float64Array(elements),
+			nameof(Int8Array) => new Int8Array(Array.ConvertAll(elements, x => (sbyte) x)),
+			nameof(Int16Array) => new Int16Array(Array.ConvertAll(elements, x => (short) x)),
+			nameof(Int32Array) => new Int32Array(Array.ConvertAll(elements, x => (int) x)),
+			nameof(Uint8Array) => new Uint8Array(Array.ConvertAll(elements, x => (byte) x)),
+			nameof(Uint8ClampedArray) => new Uint8ClampedArray(Array.ConvertAll(elements, x => (byte) x)),
+			nameof(Uint16Array) => new Uint16Array(Array.ConvertAll(elements, x => (ushort) x)),
+			nameof(Uint32Array) => new Uint32Array(Array.ConvertAll(elements, x => (uint) x)),
+			_ => throw new NotSupportedException(
+				$"{nameof(ThreeValue)}.{nameof(Decode)} has no arm for the '{constructorName}' typed array. " +
+				$"Add one here and a matching class in {nameof(TypedArray)}.cs.")
+		};
+	}
+
+	/// <summary>Reads the leading components of a tagged math value's array.</summary>
+	/// <param name="components">The <c>v</c> array of a tagged value.</param>
+	/// <param name="count">How many components the tag's type is built from.</param>
+	/// <returns>The components as a <see cref="float"/> array.</returns>
+	private static float[] Components(JsonElement components, int count)
+	{
+		var values = new float[count];
+		for (var index = 0; index < count; index++)
+		{
+			values[index] = Component(components, index);
+		}
+
+		return values;
+	}
+
+	/// <summary>
+	/// Reads one component of a tagged math value's array. A component arrives as a JSON string when
+	/// it is not finite, because JSON has no numeric form for one - see
+	/// <see cref="ThreeWireFormat.PositiveInfinityToken"/>.
+	/// </summary>
 	/// <param name="components">The <c>v</c> array of a tagged value.</param>
 	/// <param name="index">Position to read.</param>
 	/// <returns>The component as a <see cref="float"/>.</returns>
+	/// <exception cref="NotSupportedException">Thrown for a string component that names no known token.</exception>
 	private static float Component(JsonElement components, int index)
 	{
-		return components[index].GetSingle();
+		var component = components[index];
+		if (component.ValueKind != JsonValueKind.String)
+		{
+			return component.GetSingle();
+		}
+
+		return component.GetString() switch
+		{
+			ThreeWireFormat.PositiveInfinityToken => float.PositiveInfinity,
+			ThreeWireFormat.NegativeInfinityToken => float.NegativeInfinity,
+			ThreeWireFormat.NotANumberToken => float.NaN,
+			var token => throw new NotSupportedException(
+				$"A tagged math value carried the component '{token}', which is not a number and names no " +
+				$"non-finite token. The wire format's component encoding has diverged between the two sides.")
+		};
 	}
 
 	/// <summary>
@@ -233,6 +458,7 @@ internal static class ThreeValue
 
 		/// <summary>The raw component values, e.g. [x, y, z] for a vector.</summary>
 		[JsonPropertyName(ThreeWireFormat.ValuesKey)]
+		[JsonConverter(typeof(ComponentArrayConverter))]
 		public required float[] Values { get; init; }
 
 		/// <summary>
@@ -243,6 +469,208 @@ internal static class ThreeValue
 		[JsonPropertyName(ThreeWireFormat.OrderKey)]
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
 		public byte? Order { get; init; }
+	}
+
+	/// <summary>
+	/// Writes a tagged value's component array, spelling a non-finite component as a string.
+	/// <para>
+	/// Without this every component would go through <c>Utf8JsonWriter.WriteNumberValue</c>, which
+	/// throws <c>ArgumentException</c> on an infinity or a NaN rather than producing invalid JSON. That
+	/// is not a hypothetical: three.js seeds an empty <see cref="Box3"/> at ±infinity, so a
+	/// default-constructed one would fail on its first flush. See
+	/// <see cref="ThreeWireFormat.PositiveInfinityToken"/> for the tokens and why the applier can read
+	/// them back with a plain <c>Number(...)</c>.
+	/// </para>
+	/// </summary>
+	private sealed class ComponentArrayConverter : JsonConverter<float[]>
+	{
+		/// <summary>Reads a component array back. Present to satisfy the base class; nothing deserializes
+		/// a <see cref="TaggedValue"/>, because a value read back is decoded from its
+		/// <see cref="JsonElement"/> by <see cref="Decode{TValue}"/> instead.</summary>
+		/// <param name="reader">The JSON reader.</param>
+		/// <param name="typeToConvert">The requested type.</param>
+		/// <param name="options">Serializer options.</param>
+		/// <returns>The decoded component array.</returns>
+		public override float[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		{
+			var values = new List<float>();
+			while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+			{
+				values.Add(reader.TokenType == JsonTokenType.String
+					? ParseToken(reader.GetString())
+					: reader.GetSingle());
+			}
+
+			return values.ToArray();
+		}
+
+		/// <summary>Writes a component array, spelling non-finite components as strings.</summary>
+		/// <param name="writer">The JSON writer.</param>
+		/// <param name="values">The components to write.</param>
+		/// <param name="options">Serializer options.</param>
+		public override void Write(Utf8JsonWriter writer, float[] values, JsonSerializerOptions options)
+		{
+			writer.WriteStartArray();
+			foreach (var value in values)
+			{
+				WriteComponent(writer, value);
+			}
+
+			writer.WriteEndArray();
+		}
+
+		private static float ParseToken(string? token)
+		{
+			return (float) ParseComponentToken(token);
+		}
+	}
+
+	/// <summary>
+	/// Writes a typed array's components. Separate from <see cref="ComponentArrayConverter"/> only
+	/// because the element type differs — a typed array widens every element to <see cref="double"/>
+	/// so one wire encoding covers all nine — and both delegate to the same writer so the non-finite
+	/// spelling cannot drift between them.
+	/// </summary>
+	private sealed class TypedArrayComponentConverter : JsonConverter<double[]>
+	{
+		/// <summary>Reads a component array back. Present to satisfy the base class; nothing deserializes
+		/// a <see cref="TypedArrayValue"/>.</summary>
+		/// <param name="reader">The JSON reader.</param>
+		/// <param name="typeToConvert">The requested type.</param>
+		/// <param name="options">Serializer options.</param>
+		/// <returns>The decoded component array.</returns>
+		public override double[] Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		{
+			var values = new List<double>();
+			while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+			{
+				values.Add(reader.TokenType == JsonTokenType.String
+					? ParseComponentToken(reader.GetString())
+					: reader.GetDouble());
+			}
+
+			return values.ToArray();
+		}
+
+		/// <summary>Writes a component array, spelling non-finite components as strings.</summary>
+		/// <param name="writer">The JSON writer.</param>
+		/// <param name="values">The components to write.</param>
+		/// <param name="options">Serializer options.</param>
+		public override void Write(Utf8JsonWriter writer, double[] values, JsonSerializerOptions options)
+		{
+			writer.WriteStartArray();
+			foreach (var value in values)
+			{
+				WriteComponent(writer, value);
+			}
+
+			writer.WriteEndArray();
+		}
+	}
+
+	/// <summary>
+	/// Writes one <see cref="float"/> component.
+	/// <para>
+	/// ⚠️ Deliberately not routed through the <see cref="double"/> overload. <c>Utf8JsonWriter</c> writes
+	/// the shortest text that round-trips the type it is given, and widening first defeats that:
+	/// <c>0.3f</c> as a double is <c>0.30000001192092896</c>, which is nineteen bytes of payload per
+	/// component and a different wire byte sequence.
+	/// </para>
+	/// </summary>
+	/// <param name="writer">The JSON writer.</param>
+	/// <param name="value">The component to write.</param>
+	private static void WriteComponent(Utf8JsonWriter writer, float value)
+	{
+		if (NonFiniteToken(value) is { } token)
+		{
+			writer.WriteStringValue(token);
+			return;
+		}
+
+		writer.WriteNumberValue(value);
+	}
+
+	/// <summary>Writes one <see cref="double"/> component. See the <see cref="float"/> overload for why
+	/// the two do not share their number write.</summary>
+	/// <param name="writer">The JSON writer.</param>
+	/// <param name="value">The component to write.</param>
+	private static void WriteComponent(Utf8JsonWriter writer, double value)
+	{
+		if (NonFiniteToken(value) is { } token)
+		{
+			writer.WriteStringValue(token);
+			return;
+		}
+
+		writer.WriteNumberValue(value);
+	}
+
+	/// <summary>
+	/// Names the token a non-finite value travels as, or <see langword="null"/> when the value is a
+	/// number JSON can carry. The single owner of that rule, so the component converters cannot spell
+	/// it differently. Taking a double covers float too: widening preserves both infinities and NaN.
+	/// </summary>
+	/// <param name="value">The component to classify.</param>
+	/// <returns>The token, or <see langword="null"/> for a finite value.</returns>
+	private static string? NonFiniteToken(double value)
+	{
+		if (double.IsPositiveInfinity(value))
+		{
+			return ThreeWireFormat.PositiveInfinityToken;
+		}
+
+		if (double.IsNegativeInfinity(value))
+		{
+			return ThreeWireFormat.NegativeInfinityToken;
+		}
+
+		return double.IsNaN(value)
+			? ThreeWireFormat.NotANumberToken
+			: null;
+	}
+
+	/// <summary>Turns a non-finite component token back into the value it names.</summary>
+	/// <param name="token">The token read off the wire.</param>
+	/// <returns>The non-finite value.</returns>
+	/// <exception cref="NotSupportedException">Thrown for a string that names no known token.</exception>
+	private static double ParseComponentToken(string? token)
+	{
+		return token switch
+		{
+			ThreeWireFormat.PositiveInfinityToken => double.PositiveInfinity,
+			ThreeWireFormat.NegativeInfinityToken => double.NegativeInfinity,
+			ThreeWireFormat.NotANumberToken => double.NaN,
+			_ => throw new NotSupportedException(
+				$"A tagged value carried the component '{token}', which is not a number and names no " +
+				$"non-finite token. The wire format's component encoding has diverged between the two sides.")
+		};
+	}
+
+	/// <summary>
+	/// Wire representation of a lone non-finite number. See <see cref="ThreeWireFormat.NonFiniteKey"/>
+	/// for why it is tagged rather than sent as a bare string.
+	/// </summary>
+	internal sealed class NonFiniteValue
+	{
+		/// <summary>One of the non-finite tokens naming which value this is.</summary>
+		[JsonPropertyName(ThreeWireFormat.NonFiniteKey)]
+		public required string Token { get; init; }
+	}
+
+	/// <summary>
+	/// Wire representation of a typed array: the JavaScript constructor to rebuild it with, plus its
+	/// elements. See <see cref="ThreeWireFormat.TypedArrayKey"/> for why a plain JSON array will not do.
+	/// </summary>
+	internal sealed class TypedArrayValue
+	{
+		/// <summary>Name of the JavaScript typed-array constructor, resolved off the global object.</summary>
+		[JsonPropertyName(ThreeWireFormat.TypedArrayKey)]
+		public required string ConstructorName { get; init; }
+
+		/// <summary>The elements, widened to double.</summary>
+		[JsonPropertyName(ThreeWireFormat.ValuesKey)]
+		[JsonConverter(typeof(TypedArrayComponentConverter))]
+		public required double[] Values { get; init; }
 	}
 
 	/// <summary>

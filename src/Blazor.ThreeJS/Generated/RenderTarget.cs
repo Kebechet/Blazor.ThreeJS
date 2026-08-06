@@ -2,6 +2,7 @@
 // Re-run `npm run emit` after changing the emitter or generator/three-api.json.
 
 using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Math;
 
 namespace Kebechet.Blazor.ThreeJS.Objects;
 
@@ -12,6 +13,7 @@ public class RenderTarget : EventDispatcher
 	private float? _height;
 	private float _depth;
 	private bool _scissorTest = false;
+	private Texture?[] _textures = [];
 	private bool _depthBuffer = true;
 	private bool _stencilBuffer = false;
 	private bool _resolveDepthBuffer = true;
@@ -19,11 +21,15 @@ public class RenderTarget : EventDispatcher
 	private float _samples = 0f;
 	private bool _multiview = false;
 	private bool _useArrayDepthTexture = false;
+	private Texture? _texture;
 	private DepthTexture? _depthTexture;
 	private bool _isWidthWritten;
 	private bool _isHeightWritten;
 	private bool _isDepthWritten;
+	private bool _isScissorWritten;
 	private bool _isScissorTestWritten;
+	private bool _isViewportWritten;
+	private bool _isTexturesWritten;
 	private bool _isDepthBufferWritten;
 	private bool _isStencilBufferWritten;
 	private bool _isResolveDepthBufferWritten;
@@ -31,7 +37,20 @@ public class RenderTarget : EventDispatcher
 	private bool _isSamplesWritten;
 	private bool _isMultiviewWritten;
 	private bool _isUseArrayDepthTextureWritten;
+	private bool _isTextureWritten;
 	private bool _isDepthTextureWritten;
+
+	/// <summary>
+	/// The <c>scissor</c> property of the JavaScript-side object. Mirrored as an instance this object
+	/// owns: mutating it records a write of <c>scissor</c>.
+	/// </summary>
+	public Vector4 Scissor { get; }
+
+	/// <summary>
+	/// The <c>viewport</c> property of the JavaScript-side object. Mirrored as an instance this object
+	/// owns: mutating it records a write of <c>viewport</c>.
+	/// </summary>
+	public Vector4 Viewport { get; }
 
 	/// <summary>Initializes a new <see cref="RenderTarget"/>.</summary>
 	/// <param name="width">Value forwarded to the <c>width</c> constructor argument.</param>
@@ -40,6 +59,46 @@ public class RenderTarget : EventDispatcher
 	{
 		_width = width;
 		_height = height;
+
+		Scissor = new Vector4();
+		Scissor.OnChange = () =>
+		{
+			_isScissorWritten = true;
+			RecordSet("scissor", Scissor);
+		};
+
+		Viewport = new Vector4();
+		Viewport.OnChange = () =>
+		{
+			_isViewportWritten = true;
+			RecordSet("viewport", Viewport);
+		};
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>RenderTarget</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal RenderTarget(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		Scissor = new Vector4();
+		Scissor.OnChange = () =>
+		{
+			_isScissorWritten = true;
+			RecordSet("scissor", Scissor);
+		};
+
+		Viewport = new Vector4();
+		Viewport.OnChange = () =>
+		{
+			_isViewportWritten = true;
+			RecordSet("viewport", Viewport);
+		};
+
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.RenderTarget</c>.</summary>
@@ -143,6 +202,26 @@ public class RenderTarget : EventDispatcher
 			_scissorTest = value;
 			_isScissorTestWritten = true;
 			RecordSet("scissorTest", value);
+		}
+	}
+
+	/// <summary>
+	/// The <c>textures</c> property of the JavaScript-side object. Writing it records a <c>textures</c>
+	/// property write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public Texture?[] Textures
+	{
+		get { return _textures; }
+		set
+		{
+			if (_textures == value)
+			{
+				return;
+			}
+
+			_textures = value;
+			_isTexturesWritten = true;
+			RecordSet("textures", value);
 		}
 	}
 
@@ -295,6 +374,31 @@ public class RenderTarget : EventDispatcher
 	}
 
 	/// <summary>
+	/// The <c>texture</c> property of the JavaScript-side object. Writing it records a <c>texture</c>
+	/// property write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public Texture? Texture
+	{
+		get { return _texture; }
+		set
+		{
+			if (ReferenceEquals(_texture, value))
+			{
+				return;
+			}
+
+			_texture = value;
+			_isTextureWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("texture", value);
+		}
+	}
+
+	/// <summary>
 	/// The <c>depthTexture</c> property of the JavaScript-side object. Writing it records a
 	/// <c>depthTexture</c> property write once this object is attached; writing the value already held
 	/// records nothing.
@@ -343,6 +447,27 @@ public class RenderTarget : EventDispatcher
 	}
 
 	/// <summary>
+	/// Reads <c>isRenderTarget</c> back from the JavaScript-side object. Read-only in three.js, so it
+	/// is read on demand rather than mirrored: records a get op, sends it behind every write already
+	/// pending, and completes with the value <c>isRenderTarget</c> held.
+	/// </summary>
+	/// <returns>The value <c>isRenderTarget</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsRenderTargetAsync()
+	{
+		return GetAsync<bool>("isRenderTarget");
+	}
+
+	/// <summary>
+	/// Reads <c>clone</c> back from the JavaScript-side object. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>clone</c> returned.
+	/// </summary>
+	/// <returns>The value <c>clone</c> returned, once the JavaScript side has answered.</returns>
+	public Task<RenderTarget?> CloneAsync()
+	{
+		return RecordReadObject<RenderTarget>("clone", (adoptedBatch, adoptedHandle) => new RenderTarget(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
 	/// Emits the create op for <c>THREE.RenderTarget</c>, then replays every property written before
 	/// this object was attached. A replayed value that is itself a mirrored object is attached first,
 	/// so its create op reaches the batch before the write that references it by handle.
@@ -367,9 +492,24 @@ public class RenderTarget : EventDispatcher
 			batch.Set(Handle, "depth", ThreeValue.Encode(_depth));
 		}
 
+		if (_isScissorWritten)
+		{
+			batch.Set(Handle, "scissor", ThreeValue.Encode(Scissor));
+		}
+
 		if (_isScissorTestWritten)
 		{
 			batch.Set(Handle, "scissorTest", ThreeValue.Encode(_scissorTest));
+		}
+
+		if (_isViewportWritten)
+		{
+			batch.Set(Handle, "viewport", ThreeValue.Encode(Viewport));
+		}
+
+		if (_isTexturesWritten)
+		{
+			batch.Set(Handle, "textures", ThreeValue.Encode(_textures));
 		}
 
 		if (_isDepthBufferWritten)
@@ -405,6 +545,12 @@ public class RenderTarget : EventDispatcher
 		if (_isUseArrayDepthTextureWritten)
 		{
 			batch.Set(Handle, "useArrayDepthTexture", ThreeValue.Encode(_useArrayDepthTexture));
+		}
+
+		if (_isTextureWritten)
+		{
+			_texture?.AttachTo(batch);
+			batch.Set(Handle, "texture", ThreeValue.Encode(_texture));
 		}
 
 		if (_isDepthTextureWritten)

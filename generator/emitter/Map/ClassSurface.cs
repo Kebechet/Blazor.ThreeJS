@@ -84,9 +84,10 @@ internal sealed class ClassSurfaceResolver
 
 		var current = irClass;
 		var origin = MemberOrigin.Declared;
+		IReadOnlyList<IrTypeParameter> typeParameters = current.TypeParameters;
 		while (true)
 		{
-			CollectDeclaration(current.Name, current.TypeParameters, current.Properties, current.Methods, origin, members, takenNames);
+			CollectDeclaration(current.Name, typeParameters, current.Properties, current.Methods, origin, members, takenNames);
 
 			var baseName = current.Extends?.Name;
 			if (baseName is null)
@@ -105,6 +106,7 @@ internal sealed class ClassSurfaceResolver
 				break;
 			}
 
+			typeParameters = BindTypeArguments(baseClass.TypeParameters, current.Extends, typeParameters);
 			flattenedAncestors.Add(baseName);
 			current = baseClass;
 			origin = MemberOrigin.FlattenedAncestor;
@@ -125,6 +127,63 @@ internal sealed class ClassSurfaceResolver
 
 		_surfacesByName[irClass.Name] = surface;
 		return surface;
+	}
+
+	/// <summary>
+	/// Rewrites a base class's type parameters so each carries the concrete type its subclass supplied,
+	/// as the parameter's default.
+	/// <para>
+	/// Without this a flattened member erases a type parameter to its <b>constraint</b>, which for
+	/// <c>Curve&lt;TVector extends Vector2 | Vector3&gt;</c> is a union no single C# type expresses — so
+	/// every inherited curve member was refused, on every curve. The subclass has already answered the
+	/// question: <c>SplineCurve extends Curve&lt;Vector2&gt;</c> means <c>TVector</c> is <c>Vector2</c>
+	/// there and <c>Vector3</c> on <c>CatmullRomCurve3</c>. Binding it as the default is enough, because
+	/// erasure already prefers a default over a constraint.
+	/// </para>
+	/// </summary>
+	/// <param name="baseTypeParameters">Type parameters the base class declares.</param>
+	/// <param name="extends">The subclass's <c>extends</c> clause, carrying the type arguments it passed.</param>
+	/// <param name="outerTypeParameters">
+	/// Bindings already in scope on the subclass, so a chain that forwards its own parameter
+	/// (<c>A&lt;T&gt; extends B&lt;T&gt;</c>) resolves to whatever <c>T</c> was bound to further out
+	/// rather than stopping at the name.
+	/// </param>
+	/// <returns>The base's type parameters, with any supplied argument bound as the default.</returns>
+	private static IReadOnlyList<IrTypeParameter> BindTypeArguments(
+		IReadOnlyList<IrTypeParameter> baseTypeParameters,
+		IrType? extends,
+		IReadOnlyList<IrTypeParameter> outerTypeParameters)
+	{
+		var typeArguments = extends?.TypeArguments;
+		if (baseTypeParameters.Count == 0 || typeArguments is null || typeArguments.Count == 0)
+		{
+			return baseTypeParameters;
+		}
+
+		var bound = new List<IrTypeParameter>(baseTypeParameters.Count);
+		foreach (var (index, baseTypeParameter) in baseTypeParameters.Index())
+		{
+			var argument = index < typeArguments.Count ? typeArguments[index] : null;
+
+			// An argument that is itself a type parameter name carries no concrete type of its own; the
+			// binding it already has further out is the answer.
+			if (argument is { Kind: "reference" } && outerTypeParameters.FirstOrDefault(x => x.Name == argument.Name) is { } forwarded)
+			{
+				argument = forwarded.Default ?? forwarded.Constraint;
+			}
+
+			// A copy rather than a mutation: the IR's own instance is shared by every subclass of this
+			// base, so writing the default onto it would bind Curve's TVector to whichever subclass was
+			// resolved last.
+			bound.Add(new IrTypeParameter
+			{
+				Name = baseTypeParameter.Name,
+				Constraint = baseTypeParameter.Constraint,
+				Default = argument ?? baseTypeParameter.Default
+			});
+		}
+
+		return bound;
 	}
 
 	/// <summary>

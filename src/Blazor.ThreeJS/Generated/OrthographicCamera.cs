@@ -52,6 +52,25 @@ public sealed class OrthographicCamera : Camera
 		_far = far;
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>OrthographicCamera</c> under the handle the browser minted
+	/// for it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal OrthographicCamera(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		_left = default!;
+		_right = default!;
+		_top = default!;
+		_bottom = default!;
+		_near = default!;
+		_far = default!;
+
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.OrthographicCamera</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -238,6 +257,17 @@ public sealed class OrthographicCamera : Camera
 	public void UpdateProjectionMatrix()
 	{
 		RecordCall("updateProjectionMatrix");
+	}
+
+	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isOrthographicCamera</c> held.
+	/// </summary>
+	/// <returns>The value <c>isOrthographicCamera</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsOrthographicCameraAsync()
+	{
+		return GetAsync<bool>("isOrthographicCamera");
 	}
 
 	/// <summary>

@@ -35,6 +35,20 @@ public sealed class AnimationClip : ThreeObject
 		_duration = duration;
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>AnimationClip</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal AnimationClip(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		_duration = default!;
+
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.AnimationClip</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -113,6 +127,38 @@ public sealed class AnimationClip : ThreeObject
 	}
 
 	/// <summary>
+	/// The UUID of the animation clip. Read-only in three.js, so it is read on demand rather than
+	/// mirrored: records a get op, sends it behind every write already pending, and completes with the
+	/// value <c>uuid</c> held.
+	/// </summary>
+	/// <returns>The value <c>uuid</c> held, once the JavaScript side has answered.</returns>
+	public Task<string> UuidAsync()
+	{
+		return GetAsync<string>("uuid");
+	}
+
+	/// <summary>
+	/// Sets the duration of this clip to the duration of its longest keyframe track. Records a read op,
+	/// sends it behind every write already pending, and completes with what <c>resetDuration</c>
+	/// returned.
+	/// </summary>
+	/// <returns>The value <c>resetDuration</c> returned, once the JavaScript side has answered.</returns>
+	public Task<AnimationClip?> ResetDurationAsync()
+	{
+		return RecordReadObject<AnimationClip>("resetDuration", (adoptedBatch, adoptedHandle) => new AnimationClip(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
+	/// Trims all tracks to the clip's duration. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>trim</c> returned.
+	/// </summary>
+	/// <returns>The value <c>trim</c> returned, once the JavaScript side has answered.</returns>
+	public Task<AnimationClip?> TrimAsync()
+	{
+		return RecordReadObject<AnimationClip>("trim", (adoptedBatch, adoptedHandle) => new AnimationClip(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
 	/// Performs minimal validation on each track in the clip. Returns <c>true</c> if all tracks are
 	/// valid. Records a read op, sends it behind every write already pending, and completes with what
 	/// <c>validate</c> returned.
@@ -121,6 +167,27 @@ public sealed class AnimationClip : ThreeObject
 	public Task<bool> ValidateAsync()
 	{
 		return RecordRead<bool>("validate");
+	}
+
+	/// <summary>
+	/// Optimizes each track by removing equivalent sequential keys (which are common in morph target
+	/// sequences). Records a read op, sends it behind every write already pending, and completes with
+	/// what <c>optimize</c> returned.
+	/// </summary>
+	/// <returns>The value <c>optimize</c> returned, once the JavaScript side has answered.</returns>
+	public Task<AnimationClip?> OptimizeAsync()
+	{
+		return RecordReadObject<AnimationClip>("optimize", (adoptedBatch, adoptedHandle) => new AnimationClip(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
+	/// Returns a new animation clip with copied values from this instance. Records a read op, sends it
+	/// behind every write already pending, and completes with what <c>clone</c> returned.
+	/// </summary>
+	/// <returns>The value <c>clone</c> returned, once the JavaScript side has answered.</returns>
+	public Task<AnimationClip?> CloneAsync()
+	{
+		return RecordReadObject<AnimationClip>("clone", (adoptedBatch, adoptedHandle) => new AnimationClip(adoptedBatch, adoptedHandle));
 	}
 
 	/// <summary>

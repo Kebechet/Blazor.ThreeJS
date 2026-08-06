@@ -88,6 +88,68 @@ public sealed class ThreeContext : IAsyncDisposable
 		_module = module;
 		_contextId = contextId;
 		Batch.Context = this;
+		Renderer = new WebGPURenderer(Batch, ThreeWireFormat.RendererHandle);
+	}
+
+	/// <summary>
+	/// The renderer drawing this canvas, which the browser built and this mirror only names.
+	/// <para>
+	/// A <c>WebGPURenderer</c>, which runs on a WebGPU backend where the browser has one and falls back
+	/// to a WebGL2 backend where it does not. Both are the same C# type and the same scene API; what
+	/// differs is only what it talks to underneath.
+	/// </para>
+	/// <para>
+	/// Everything else in a scene is reachable from the scene graph; the renderer is not, so without
+	/// this there is no way to enable shadow maps, choose a tone mapping, or set the clear colour from
+	/// C# at all. Writes go through the same batch as any other object's.
+	/// </para>
+	/// <para>
+	/// ⚠️ Adopted, not created: it carries no create op, and the mirror knows only what C# has written
+	/// to it. Reading a property back that C# never set answers with the C# default rather than what
+	/// three.js holds — use <c>GetAsync</c> for the browser's own value.
+	/// </para>
+	/// </summary>
+	public WebGPURenderer Renderer { get; }
+
+	/// <summary>
+	/// Every mirrored object this context has attached, by handle. The C# counterpart of the applier's
+	/// own object-to-handle map, and needed for the same reason: a member whose result is an object
+	/// answers with a handle, and that handle is often one C# already has a mirror for —
+	/// <c>mesh.geometry</c> answers with the geometry the caller passed in. Building a second C# object
+	/// for it would leave two mirrors of one three.js object, and a write through either invisible to
+	/// the other.
+	/// <para>
+	/// Weak, so registering an object here never keeps it alive: the scene graph owns the references,
+	/// and an entry whose object has been collected resolves to nothing rather than resurrecting it.
+	/// </para>
+	/// </summary>
+	private readonly Dictionary<int, WeakReference<ThreeObject>> _mirroredObjectsByHandle = [];
+
+	/// <summary>Records a mirrored object so a handle answered by a read can resolve back to it.</summary>
+	/// <param name="mirroredObject">The object being attached.</param>
+	internal void Register(ThreeObject mirroredObject)
+	{
+		_mirroredObjectsByHandle[mirroredObject.Handle] = new WeakReference<ThreeObject>(mirroredObject);
+	}
+
+	/// <summary>Finds the mirror already holding a handle, if this context has one.</summary>
+	/// <param name="handle">Handle the applier answered with.</param>
+	/// <returns>The existing mirror, or <see langword="null"/> when nothing here holds that handle.</returns>
+	internal ThreeObject? Resolve(int handle)
+	{
+		if (!_mirroredObjectsByHandle.TryGetValue(handle, out var reference))
+		{
+			return null;
+		}
+
+		if (reference.TryGetTarget(out var mirroredObject))
+		{
+			return mirroredObject;
+		}
+
+		// Collected since it was registered, so the entry is dead weight rather than an answer.
+		_mirroredObjectsByHandle.Remove(handle);
+		return null;
 	}
 
 	/// <summary>
@@ -167,14 +229,15 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// <param name="handle">Handle of the object to read from.</param>
 	/// <param name="member">Name of the three.js method to invoke.</param>
 	/// <param name="encodedArgs">Positional arguments, already in wire form.</param>
+	/// <param name="mintsHandle">Whether the applier should answer with a handle instead of a value.</param>
 	/// <returns>The decoded return value.</returns>
 	/// <exception cref="TimeoutException">Thrown when no response arrives within <see cref="ReadTimeout"/>.</exception>
 	/// <exception cref="InvalidOperationException">
 	/// Thrown when the applier rejected the read, or answered the batch without a row for it.
 	/// </exception>
-	internal Task<TValue> ReadAsync<TValue>(int handle, string member, object?[] encodedArgs)
+	internal Task<TValue> ReadAsync<TValue>(int handle, string member, object?[] encodedArgs, bool mintsHandle = false)
 	{
-		return AwaitValueAsync<TValue>(Batch.Read(handle, member, encodedArgs), handle, member);
+		return AwaitValueAsync<TValue>(Batch.Read(handle, member, encodedArgs, mintsHandle), handle, member);
 	}
 
 	/// <summary>
@@ -191,15 +254,16 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// <typeparam name="TValue">C# type the caller declares the property holds.</typeparam>
 	/// <param name="handle">Handle of the object to read from.</param>
 	/// <param name="member">Name of the three.js property to read.</param>
+	/// <param name="mintsHandle">Whether the applier should answer with a handle instead of a value.</param>
 	/// <returns>The decoded value.</returns>
 	/// <exception cref="TimeoutException">Thrown when no response arrives within <see cref="ReadTimeout"/>.</exception>
 	/// <exception cref="InvalidOperationException">
 	/// Thrown when the applier rejected the read, answered the batch without a row for it, or sent back
 	/// a value <typeparamref name="TValue"/> cannot hold.
 	/// </exception>
-	internal Task<TValue> GetAsync<TValue>(int handle, string member)
+	internal Task<TValue> GetAsync<TValue>(int handle, string member, bool mintsHandle = false)
 	{
-		return AwaitValueAsync<TValue>(Batch.Get(handle, member), handle, member);
+		return AwaitValueAsync<TValue>(Batch.Get(handle, member, mintsHandle), handle, member);
 	}
 
 	/// <summary>
@@ -299,10 +363,14 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// </para>
 	/// </summary>
 	/// <param name="url">URL of the file, as the browser will fetch it.</param>
+	/// <param name="progressReference">
+	/// Reference the browser reports fetch progress to, or <see langword="null"/> when the caller asked
+	/// for none. Owned by the caller, which disposes it once the load has settled.
+	/// </param>
 	/// <returns>One row per mirrored node of the loaded graph.</returns>
-	internal async Task<GLTFLoadResponse> LoadGltfAsync(string url)
+	internal async Task<GLTFLoadResponse> LoadGltfAsync(string url, DotNetObjectReference<GltfProgressReporter>? progressReference)
 	{
-		return await _module.InvokeAsync<GLTFLoadResponse>("loadGltf", _contextId, url);
+		return await _module.InvokeAsync<GLTFLoadResponse>("loadGltf", _contextId, url, progressReference);
 	}
 
 	/// <summary>

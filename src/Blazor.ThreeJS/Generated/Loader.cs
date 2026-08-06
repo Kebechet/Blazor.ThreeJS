@@ -26,6 +26,18 @@ public class Loader : ThreeObject
 		_manager = manager;
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>Loader</c> under the handle the browser minted for it. No
+	/// create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal Loader(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.Loader</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -196,6 +208,16 @@ public class Loader : ThreeObject
 	public void SetResourcePath(string resourcePath)
 	{
 		RecordCall("setResourcePath", resourcePath);
+	}
+
+	/// <summary>
+	/// Reads <c>abort</c> back from the JavaScript-side object. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>abort</c> returned.
+	/// </summary>
+	/// <returns>The value <c>abort</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Loader?> AbortAsync()
+	{
+		return RecordReadObject<Loader>("abort", (adoptedBatch, adoptedHandle) => new Loader(adoptedBatch, adoptedHandle));
 	}
 
 	/// <summary>

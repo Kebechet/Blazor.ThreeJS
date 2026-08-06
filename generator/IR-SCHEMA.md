@@ -99,7 +99,7 @@ rather than a run that looks entirely normal.
 ```jsonc
 {
   "barrel": "src/Three.d.ts",
-  "runtimeBundle": "src/Blazor.ThreeJS/wwwroot/three.module.min.js",
+  "runtimeBundle": "src/Blazor.ThreeJS/wwwroot/three.webgpu.min.js",
   "barrelFiles": 212,      // files reachable through the barrel graph
   "valueExports": 443,     // names the barrel publishes as values
   "typeOnlyExports": 235,  // names it publishes `type`-only

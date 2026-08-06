@@ -2,6 +2,7 @@
 // Re-run `npm run emit` after changing the emitter or generator/three-api.json.
 
 using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Math;
 
 namespace Kebechet.Blazor.ThreeJS.Objects;
 
@@ -41,6 +42,23 @@ public class PerspectiveCamera : Camera
 		_aspect = aspect;
 		_near = near;
 		_far = far;
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>PerspectiveCamera</c> under the handle the browser minted
+	/// for it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal PerspectiveCamera(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		_fov = default!;
+		_aspect = default!;
+		_near = default!;
+		_far = default!;
+
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.PerspectiveCamera</c>.</summary>
@@ -239,6 +257,19 @@ public class PerspectiveCamera : Camera
 	}
 
 	/// <summary>
+	/// Computes the 2D bounds of the camera's viewable rectangle at a given distance along the viewing
+	/// direction. Sets <c>minTarget</c> and <c>maxTarget</c> to the coordinates of the lower-left and
+	/// upper-right corners of the view rectangle.
+	/// </summary>
+	/// <param name="distance">The viewing distance.</param>
+	/// <param name="minTarget">The lower-left corner of the view rectangle is written into this vector.</param>
+	/// <param name="maxTarget">The upper-right corner of the view rectangle is written into this vector.</param>
+	public void GetViewBounds(float distance, Vector2 minTarget, Vector2 maxTarget)
+	{
+		RecordCall("getViewBounds", distance, minTarget, maxTarget);
+	}
+
+	/// <summary>
 	/// Sets an offset in a larger frustum. This is useful for multi-window or
 	/// multi-monitor/multi-machine setups. For example, if you have 3x2 monitors and each monitor is
 	/// 1920x1080 and the monitors are in grid like this then for each monitor you would call it like
@@ -267,6 +298,17 @@ public class PerspectiveCamera : Camera
 	public void UpdateProjectionMatrix()
 	{
 		RecordCall("updateProjectionMatrix");
+	}
+
+	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isPerspectiveCamera</c> held.
+	/// </summary>
+	/// <returns>The value <c>isPerspectiveCamera</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsPerspectiveCameraAsync()
+	{
+		return GetAsync<bool>("isPerspectiveCamera");
 	}
 
 	/// <summary>
@@ -313,6 +355,21 @@ public class PerspectiveCamera : Camera
 	public Task<float> GetFilmHeightAsync()
 	{
 		return RecordRead<float>("getFilmHeight");
+	}
+
+	/// <summary>
+	/// Computes the width and height of the camera's viewable rectangle at a given distance along the
+	/// viewing direction. Records a read op, sends it behind every write already pending, and completes
+	/// with what <c>getViewSize</c> returned.
+	/// </summary>
+	/// <param name="distance">The viewing distance.</param>
+	/// <param name="target">
+	/// The target vector that is used to store result where x is width and y is height.
+	/// </param>
+	/// <returns>The value <c>getViewSize</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Vector2> GetViewSizeAsync(float distance, Vector2 target)
+	{
+		return RecordRead<Vector2>("getViewSize", distance, target);
 	}
 
 	/// <summary>

@@ -44,6 +44,33 @@ internal static class Stories
 	/// <summary>Scene and light helpers drawn together.</summary>
 	public const string CatalogueHelpers = "catalogue-helpers--scene-and-light-helpers";
 
+	/// <summary>A mesh built in C# from a typed-array vertex buffer and index buffer.</summary>
+	public const string CatalogueCustomGeometry = "catalogue-custom-geometry--a-mesh-built-from-raw-vertex-data";
+
+	/// <summary>A Vector2 spline and a Vector3 Catmull-Rom curve, sampled by three.js.</summary>
+	public const string CatalogueCurves = "catalogue-curves--two-dimensional-and-three-dimensional-curves";
+
+	/// <summary>A DataTexture whose pixels are generated in C#.</summary>
+	public const string CatalogueTextures = "catalogue-textures--a-texture-built-from-a-byte-buffer";
+
+	/// <summary>Box3, Plane and a read-back Sphere, drawn where three.js can show them.</summary>
+	public const string CatalogueMathValues = "catalogue-math-values--bounds-planes-and-spheres";
+
+	/// <summary>Every way a value comes back from three.js, beside a mirrored one.</summary>
+	public const string ReadingState = "architecture-reading-state-back--asking-three-js-what-it-holds";
+
+	/// <summary>The adopted WebGLRenderer: tone mapping, exposure and clear colour from C#.</summary>
+	public const string Renderer = "architecture-the-renderer--reaching-the-renderer-itself";
+
+	/// <summary>Shadow casting, reached by adopting the renderer's nested shadow map.</summary>
+	public const string CatalogueShadows = "catalogue-shadows--casting-and-receiving-shadows";
+
+	/// <summary>Linear and exponential fog, assigned through a union-typed scene property.</summary>
+	public const string CatalogueFog = "catalogue-fog--linear-and-exponential-fog";
+
+	/// <summary>A keyframe clip built in C# and played through an AnimationMixer.</summary>
+	public const string CatalogueAnimation = "catalogue-animation--a-keyframe-clip-built-in-code";
+
 	/// <summary>Live interop counters against an orbiting, then C#-driven, scene.</summary>
 	public const string InteropBudget = "architecture-interop-budget--an-idle-scene-costs-nothing";
 
@@ -68,6 +95,15 @@ internal static class Stories
 		CatalogueCameras,
 		CatalogueObjectTypes,
 		CatalogueHelpers,
+		CatalogueCustomGeometry,
+		CatalogueCurves,
+		CatalogueTextures,
+		CatalogueMathValues,
+		CatalogueShadows,
+		CatalogueFog,
+		CatalogueAnimation,
+		ReadingState,
+		Renderer,
 		InteropBudget,
 		EscapeHatch,
 		MirrorAuthority

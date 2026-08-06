@@ -9,15 +9,15 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// A material rendered with custom shaders. A shader is a small program written in GLSL. that runs
 /// on the GPU. You may want to use a custom shader if you need to implement an effect not included
 /// with any of the built-in materials. There are the following notes to bear in mind when using a
-/// <c>ShaderMaterial</c>: - <c>ShaderMaterial</c> can only be used with
-/// <see cref="WebGLRenderer"/>. - Built in attributes and uniforms are passed to the shaders along
-/// with your code. If you don't want that, use <see cref="RawShaderMaterial"/> instead. - You can
-/// use the directive <c>#pragma unroll_loop_start</c> and <c>#pragma unroll_loop_end</c> in order
-/// to unroll a <c>for</c> loop in GLSL by the shader preprocessor. The directive has to be placed
-/// right above the loop. The loop formatting has to correspond to a defined standard. - The loop
-/// has to be [normalized](https://en.wikipedia.org/wiki/Normalized_loop). - The loop variable has
-/// to be *i*. - The value <c>UNROLLED_LOOP_INDEX</c> will be replaced with the explicitly value of
-/// *i* for the given iteration and can be used in preprocessor statements. The JavaScript-side
+/// <c>ShaderMaterial</c>: - <c>ShaderMaterial</c> can only be used with <c>WebGLRenderer</c>. -
+/// Built in attributes and uniforms are passed to the shaders along with your code. If you don't
+/// want that, use <see cref="RawShaderMaterial"/> instead. - You can use the directive <c>#pragma
+/// unroll_loop_start</c> and <c>#pragma unroll_loop_end</c> in order to unroll a <c>for</c> loop in
+/// GLSL by the shader preprocessor. The directive has to be placed right above the loop. The loop
+/// formatting has to correspond to a defined standard. - The loop has to be
+/// [normalized](https://en.wikipedia.org/wiki/Normalized_loop). - The loop variable has to be *i*.
+/// - The value <c>UNROLLED_LOOP_INDEX</c> will be replaced with the explicitly value of *i* for the
+/// given iteration and can be used in preprocessor statements. The JavaScript-side
 /// <c>THREE.ShaderMaterial</c>.
 /// </summary>
 public class ShaderMaterial : Material
@@ -46,6 +46,18 @@ public class ShaderMaterial : Material
 	/// <summary>Constructs a new shader material.</summary>
 	public ShaderMaterial()
 	{
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>ShaderMaterial</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal ShaderMaterial(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.ShaderMaterial</c>.</summary>
@@ -265,6 +277,17 @@ public class ShaderMaterial : Material
 			_isUniformsNeedUpdateWritten = true;
 			RecordSet("uniformsNeedUpdate", value);
 		}
+	}
+
+	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isShaderMaterial</c> held.
+	/// </summary>
+	/// <returns>The value <c>isShaderMaterial</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsShaderMaterialAsync()
+	{
+		return GetAsync<bool>("isShaderMaterial");
 	}
 
 	/// <summary>

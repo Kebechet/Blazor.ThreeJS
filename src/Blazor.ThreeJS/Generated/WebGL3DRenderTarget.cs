@@ -26,6 +26,23 @@ public sealed class WebGL3DRenderTarget : WebGLRenderTarget
 		_depth = depth;
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>WebGL3DRenderTarget</c> under the handle the browser
+	/// minted for it. No create op is emitted: the object already exists, and this mirror's job is to
+	/// name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal WebGL3DRenderTarget(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		_width = default!;
+		_height = default!;
+		_depth = default!;
+
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.WebGL3DRenderTarget</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -38,5 +55,16 @@ public sealed class WebGL3DRenderTarget : WebGLRenderTarget
 	protected override object?[] ConstructorArgs
 	{
 		get { return [_width, _height, _depth]; }
+	}
+
+	/// <summary>
+	/// Reads <c>isWebGL3DRenderTarget</c> back from the JavaScript-side object. Read-only in three.js,
+	/// so it is read on demand rather than mirrored: records a get op, sends it behind every write
+	/// already pending, and completes with the value <c>isWebGL3DRenderTarget</c> held.
+	/// </summary>
+	/// <returns>The value <c>isWebGL3DRenderTarget</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsWebGL3DRenderTargetAsync()
+	{
+		return GetAsync<bool>("isWebGL3DRenderTarget");
 	}
 }

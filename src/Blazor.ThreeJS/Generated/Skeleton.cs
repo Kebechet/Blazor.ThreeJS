@@ -2,6 +2,7 @@
 // Re-run `npm run emit` after changing the emitter or generator/three-api.json.
 
 using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Math;
 
 namespace Kebechet.Blazor.ThreeJS.Objects;
 
@@ -13,22 +14,61 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// <seealso href="https://github.com/mrdoob/three.js/blob/master/src/objects/Skeleton.js">Source</seealso>
 public sealed class Skeleton : ThreeObject
 {
+	private Bone?[]? _bones;
+	private Matrix4[]? _boneInverses;
 	private string _uuid = string.Empty;
+	private Float32Array? _boneMatrices;
 	private DataTexture? _boneTexture;
 	private float _frame;
 	private bool _isUuidWritten;
+	private bool _isBonesWritten;
+	private bool _isBoneInversesWritten;
+	private bool _isBoneMatricesWritten;
 	private bool _isBoneTextureWritten;
 	private bool _isFrameWritten;
 
 	/// <summary>Creates a new Skeleton.</summary>
-	public Skeleton()
+	/// <param name="bones">The array of <c>bones</c>.</param>
+	/// <param name="boneInverses">An array of <c>Matrix4s</c>.</param>
+	public Skeleton(Bone?[]? bones = null, Matrix4[]? boneInverses = null)
 	{
+		_bones = bones;
+		_boneInverses = boneInverses;
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>Skeleton</c> under the handle the browser minted for it.
+	/// No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal Skeleton(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.Skeleton</c>.</summary>
 	protected override string ThreeTypeName
 	{
 		get { return "Skeleton"; }
+	}
+
+	/// <summary>
+	/// Constructor arguments forwarded to <c>THREE.Skeleton</c>: bones, boneInverses. An argument the
+	/// caller left unspecified travels as the wire's not-supplied sentinel, or is trimmed when nothing
+	/// supplied follows it, so three.js applies its own default.
+	/// </summary>
+	protected override object?[] ConstructorArgs
+	{
+		get
+		{
+			return ThreeValue.TrimUnspecifiedTail(
+			[
+				ThreeValue.OrUnspecified(_bones),
+				ThreeValue.OrUnspecified(_boneInverses)
+			]);
+		}
 	}
 
 	/// <summary>
@@ -49,6 +89,68 @@ public sealed class Skeleton : ThreeObject
 			_uuid = value;
 			_isUuidWritten = true;
 			RecordSet("uuid", value);
+		}
+	}
+
+	/// <summary>
+	/// The array of <c>Bones</c>. Writing it records a <c>bones</c> property write once this object is
+	/// attached; writing the value already held records nothing.
+	/// </summary>
+	public Bone?[]? Bones
+	{
+		get { return _bones; }
+		set
+		{
+			if (_bones == value)
+			{
+				return;
+			}
+
+			_bones = value;
+			_isBonesWritten = true;
+			RecordSet("bones", value);
+		}
+	}
+
+	/// <summary>
+	/// An array of <see cref="Matrix4">Matrix4s</see> that represent the inverse of the
+	/// <c>matrixWorld</c> of the individual bones. Writing it records a <c>boneInverses</c> property
+	/// write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public Matrix4[]? BoneInverses
+	{
+		get { return _boneInverses; }
+		set
+		{
+			if (_boneInverses == value)
+			{
+				return;
+			}
+
+			_boneInverses = value;
+			_isBoneInversesWritten = true;
+			RecordSet("boneInverses", value);
+		}
+	}
+
+	/// <summary>
+	/// The array buffer holding the bone data when using a vertex texture. Writing it records a
+	/// <c>boneMatrices</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public Float32Array? BoneMatrices
+	{
+		get { return _boneMatrices; }
+		set
+		{
+			if (_boneMatrices == value)
+			{
+				return;
+			}
+
+			_boneMatrices = value;
+			_isBoneMatricesWritten = true;
+			RecordSet("boneMatrices", value);
 		}
 	}
 
@@ -129,6 +231,39 @@ public sealed class Skeleton : ThreeObject
 	}
 
 	/// <summary>
+	/// Computes an instance of <c>DataTexture</c> in order to pass the bone data more efficiently to
+	/// the shader. Records a read op, sends it behind every write already pending, and completes with
+	/// what <c>computeBoneTexture</c> returned.
+	/// </summary>
+	/// <returns>The value <c>computeBoneTexture</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Skeleton?> ComputeBoneTextureAsync()
+	{
+		return RecordReadObject<Skeleton>("computeBoneTexture", (adoptedBatch, adoptedHandle) => new Skeleton(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
+	/// Returns a clone of this <see cref="Skeleton"/> object. Records a read op, sends it behind every
+	/// write already pending, and completes with what <c>clone</c> returned.
+	/// </summary>
+	/// <returns>The value <c>clone</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Skeleton?> CloneAsync()
+	{
+		return RecordReadObject<Skeleton>("clone", (adoptedBatch, adoptedHandle) => new Skeleton(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
+	/// Searches through the skeleton's bone array and returns the first with a matching name. Records a
+	/// read op, sends it behind every write already pending, and completes with what
+	/// <c>getBoneByName</c> returned.
+	/// </summary>
+	/// <param name="name">String to match to the Bone's <c>.name</c> property.</param>
+	/// <returns>The value <c>getBoneByName</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Bone?> GetBoneByNameAsync(string name)
+	{
+		return RecordReadObject<Bone>("getBoneByName", (adoptedBatch, adoptedHandle) => new Bone(adoptedBatch, adoptedHandle), name);
+	}
+
+	/// <summary>
 	/// Emits the create op for <c>THREE.Skeleton</c>, then replays every property written before this
 	/// object was attached. A replayed value that is itself a mirrored object is attached first, so its
 	/// create op reaches the batch before the write that references it by handle.
@@ -141,6 +276,21 @@ public sealed class Skeleton : ThreeObject
 		if (_isUuidWritten)
 		{
 			batch.Set(Handle, "uuid", ThreeValue.Encode(_uuid));
+		}
+
+		if (_isBonesWritten)
+		{
+			batch.Set(Handle, "bones", ThreeValue.Encode(_bones));
+		}
+
+		if (_isBoneInversesWritten)
+		{
+			batch.Set(Handle, "boneInverses", ThreeValue.Encode(_boneInverses));
+		}
+
+		if (_isBoneMatricesWritten)
+		{
+			batch.Set(Handle, "boneMatrices", ThreeValue.Encode(_boneMatrices));
 		}
 
 		if (_isBoneTextureWritten)

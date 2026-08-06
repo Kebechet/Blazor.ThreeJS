@@ -31,6 +31,20 @@ public class Audio : Object3D
 		_listener = listener;
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>Audio</c> under the handle the browser minted for it. No
+	/// create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal Audio(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		_listener = default!;
+
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.Audio</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -188,6 +202,75 @@ public class Audio : Object3D
 	public void SetVolume(float value)
 	{
 		RecordCall("setVolume", value);
+	}
+
+	/// <summary>
+	/// Modify pitch, measured in cents. +/- 100 is a semitone. +/- 1200 is an octave. Defined via
+	/// <c>Audio#setDetune</c>. Read-only in three.js, so it is read on demand rather than mirrored:
+	/// records a get op, sends it behind every write already pending, and completes with the value
+	/// <c>detune</c> held.
+	/// </summary>
+	/// <returns>The value <c>detune</c> held, once the JavaScript side has answered.</returns>
+	public Task<float> DetuneAsync()
+	{
+		return GetAsync<float>("detune");
+	}
+
+	/// <summary>
+	/// Whether the audio should loop or not. Defined via <c>Audio#setLoop</c>. Read-only in three.js,
+	/// so it is read on demand rather than mirrored: records a get op, sends it behind every write
+	/// already pending, and completes with the value <c>loop</c> held.
+	/// </summary>
+	/// <returns>The value <c>loop</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> LoopAsync()
+	{
+		return GetAsync<bool>("loop");
+	}
+
+	/// <summary>
+	/// The playback speed. Defined via <c>Audio#setPlaybackRate</c>. Read-only in three.js, so it is
+	/// read on demand rather than mirrored: records a get op, sends it behind every write already
+	/// pending, and completes with the value <c>playbackRate</c> held.
+	/// </summary>
+	/// <returns>The value <c>playbackRate</c> held, once the JavaScript side has answered.</returns>
+	public Task<float> PlaybackRateAsync()
+	{
+		return GetAsync<float>("playbackRate");
+	}
+
+	/// <summary>
+	/// Indicates whether the audio is playing or not. This flag will be automatically set when using
+	/// <c>Audio#play</c>, <c>Audio#pause</c>, <c>Audio#stop</c>. Read-only in three.js, so it is read
+	/// on demand rather than mirrored: records a get op, sends it behind every write already pending,
+	/// and completes with the value <c>isPlaying</c> held.
+	/// </summary>
+	/// <returns>The value <c>isPlaying</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsPlayingAsync()
+	{
+		return GetAsync<bool>("isPlaying");
+	}
+
+	/// <summary>
+	/// Indicates whether the audio playback can be controlled with method like <c>Audio#play</c> or
+	/// <c>Audio#pause</c>. This flag will be automatically set when audio sources are defined.
+	/// Read-only in three.js, so it is read on demand rather than mirrored: records a get op, sends it
+	/// behind every write already pending, and completes with the value <c>hasPlaybackControl</c> held.
+	/// </summary>
+	/// <returns>The value <c>hasPlaybackControl</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> HasPlaybackControlAsync()
+	{
+		return GetAsync<bool>("hasPlaybackControl");
+	}
+
+	/// <summary>
+	/// Connects to the audio source. This is used internally on initialisation and when setting /
+	/// removing filters. Records a read op, sends it behind every write already pending, and completes
+	/// with what <c>connect</c> returned.
+	/// </summary>
+	/// <returns>The value <c>connect</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Audio?> ConnectAsync()
+	{
+		return RecordReadObject<Audio>("connect", (adoptedBatch, adoptedHandle) => new Audio(adoptedBatch, adoptedHandle));
 	}
 
 	/// <summary>

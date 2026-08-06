@@ -1,0 +1,188 @@
+@attribute [Stories("Catalogue/Textures")]
+@implements IDisposable
+
+<Stories TComponent="ThreeCanvas">
+    @* Named without a '#': BlazingStory slugs a story name into its id, and a trailing punctuation
+       character leaves a trailing hyphen that reads like a typo in every link to it. *@
+    <Story Name="A texture built from a byte buffer">
+        <Template>
+            <p>
+                The pixels on these two objects were not loaded from a file. They are a
+                <code>@TextureSize</code>×<code>@TextureSize</code> RGBA buffer built in C# and handed
+                to a <code>DataTexture</code> as a <code>Uint8Array</code> - four bytes per texel,
+                @(TextureSize * TextureSize * BytesPerTexel) bytes in one upload.
+            </p>
+            <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildTexturedSceneAsync" />
+            <p>
+                The checker is on <code>MeshStandardMaterial.Map</code>, tiled by setting the texture's
+                <code>Repeat</code> - a <code>Vector2</code> the mirror owns, so writing
+                <code>Repeat.Set(…)</code> records one write rather than replacing the texture.
+                <code>MagFilter</code> is <code>NearestFilter</code>, which is what keeps the squares
+                square instead of blurring them.
+            </p>
+            <p>
+                ⚠️ A <code>DataTexture</code> needs <code>NeedsUpdate = true</code> before three.js will
+                upload it. three.js sets that flag itself for textures it loads; one built from a buffer
+                has no load to hang it off, so it is the caller's to set - and forgetting it renders
+                black with no error anywhere.
+            </p>
+            <p>
+                <code>Texture</code> reaching the generated surface at all is recent: it declares two
+                constructor overloads, which used to block it, and blocking it blocked every
+                texture-typed material property with it - <code>Map</code>, <code>NormalMap</code>,
+                <code>RoughnessMap</code> and the rest across every material.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private const float RadiansPerFrame = 0.006f;
+
+    /// <summary>Texels per side of the generated texture.</summary>
+    private const int TextureSize = 64;
+
+    /// <summary>RGBA, which is <c>DataTexture</c>'s own default pixel format.</summary>
+    private const int BytesPerTexel = 4;
+
+    /// <summary>Texels per checker square.</summary>
+    private const int CheckerSize = 8;
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+
+    private async Task BuildTexturedSceneAsync(ThreeContext threeContext)
+    {
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 1.6f, 7f);
+        camera.LookAt(0f, 0f, 0f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.55f));
+
+        var keyLight = new DirectionalLight(Color.White, 1.8f);
+        keyLight.Position.Set(4f, 6f, 6f);
+        scene.Add(keyLight);
+
+        var checkerTexture = BuildCheckerTexture();
+        checkerTexture.MagFilter = MagnificationTextureFilter.NearestFilter;
+        checkerTexture.WrapS = Wrapping.RepeatWrapping;
+        checkerTexture.WrapT = Wrapping.RepeatWrapping;
+        checkerTexture.Repeat.Set(2f, 2f);
+
+        var checkerMaterial = new MeshStandardMaterial();
+        checkerMaterial.Map = checkerTexture;
+        checkerMaterial.Roughness = 0.5f;
+
+        var box = new Mesh(new BoxGeometry(2.2f, 2.2f, 2.2f), checkerMaterial);
+        box.Position.Set(-1.9f, 0f, 0f);
+        scene.Add(box);
+
+        var gradientTexture = BuildGradientTexture();
+
+        var gradientMaterial = new MeshStandardMaterial();
+        gradientMaterial.Map = gradientTexture;
+        gradientMaterial.Roughness = 0.3f;
+        gradientMaterial.Metalness = 0.25f;
+
+        var sphere = new Mesh(new SphereGeometry(1.35f, 48, 32), gradientMaterial);
+        sphere.Position.Set(1.9f, 0f, 0f);
+        scene.Add(sphere);
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        _ = AnimateAsync(threeContext, [box, sphere]);
+    }
+
+    /// <summary>Two-tone checkerboard, the classic test pattern for UV orientation and tiling.</summary>
+    /// <returns>The texture, ready to be assigned to a material slot.</returns>
+    private static DataTexture BuildCheckerTexture()
+    {
+        return BuildTexture((x, y) =>
+        {
+            var isLight = ((x / CheckerSize) + (y / CheckerSize)) % 2 == 0;
+            return isLight
+                ? ((byte) 0xe0, (byte) 0xe4, (byte) 0xe8)
+                : ((byte) 0x33, (byte) 0x5b, (byte) 0x8d);
+        });
+    }
+
+    /// <summary>A diagonal two-axis gradient, which shows filtering and wrapping more clearly than flat colour.</summary>
+    /// <returns>The texture, ready to be assigned to a material slot.</returns>
+    private static DataTexture BuildGradientTexture()
+    {
+        return BuildTexture((x, y) =>
+        {
+            var across = (byte) (x * 255 / (TextureSize - 1));
+            var down = (byte) (y * 255 / (TextureSize - 1));
+            return (across, (byte) (255 - down), (byte) 0xb0);
+        });
+    }
+
+    /// <summary>
+    /// Fills an RGBA buffer from a per-texel colour function and wraps it in a <c>DataTexture</c>.
+    /// Alpha is fully opaque throughout; the format is <c>DataTexture</c>'s default RGBA, so the
+    /// channel has to be written even where nothing varies it.
+    /// </summary>
+    /// <param name="colorAt">Returns the red, green and blue bytes for a texel.</param>
+    /// <returns>The texture, with its upload flag already set.</returns>
+    private static DataTexture BuildTexture(Func<int, int, (byte Red, byte Green, byte Blue)> colorAt)
+    {
+        var pixels = new byte[TextureSize * TextureSize * BytesPerTexel];
+        var offset = 0;
+
+        foreach (var y in Enumerable.Range(0, TextureSize))
+        {
+            foreach (var x in Enumerable.Range(0, TextureSize))
+            {
+                var (red, green, blue) = colorAt(x, y);
+                pixels[offset++] = red;
+                pixels[offset++] = green;
+                pixels[offset++] = blue;
+                pixels[offset++] = 0xff;
+            }
+        }
+
+        var texture = new DataTexture(new Uint8Array(pixels), TextureSize, TextureSize);
+
+        // three.js uploads a texture it loaded on its own; one built from a buffer has no load event to
+        // hang that off, so the flag is the caller's to set. Without it the material renders black.
+        texture.NeedsUpdate = true;
+        return texture;
+    }
+
+    private async Task AnimateAsync(ThreeContext threeContext, IReadOnlyList<Object3D> objects)
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                foreach (var mirroredObject in objects)
+                {
+                    var nextRotationY = mirroredObject.Rotation.Y + RadiansPerFrame;
+                    mirroredObject.Rotation.Y = nextRotationY >= MathF.Tau ? nextRotationY - MathF.Tau : nextRotationY;
+                    mirroredObject.Rotation.X = 0.3f;
+                }
+
+                await threeContext.FlushAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // See Cube.stories.razor for why this is what stops the loop when a story is swapped.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+}

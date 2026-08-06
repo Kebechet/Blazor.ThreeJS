@@ -28,6 +28,21 @@ public sealed class FogExp2 : ThreeObject
 		_density = density;
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>FogExp2</c> under the handle the browser minted for it. No
+	/// create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal FogExp2(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		_color = default!;
+		_density = default!;
+
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.FogExp2</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -78,6 +93,27 @@ public sealed class FogExp2 : ThreeObject
 			_isDensityWritten = true;
 			RecordSet("density", value);
 		}
+	}
+
+	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isFogExp2</c> held.
+	/// </summary>
+	/// <returns>The value <c>isFogExp2</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsFogExp2Async()
+	{
+		return GetAsync<bool>("isFogExp2");
+	}
+
+	/// <summary>
+	/// Returns a new fog with copied values from this instance. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>clone</c> returned.
+	/// </summary>
+	/// <returns>The value <c>clone</c> returned, once the JavaScript side has answered.</returns>
+	public Task<FogExp2?> CloneAsync()
+	{
+		return RecordReadObject<FogExp2>("clone", (adoptedBatch, adoptedHandle) => new FogExp2(adoptedBatch, adoptedHandle));
 	}
 
 	/// <summary>

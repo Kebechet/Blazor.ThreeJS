@@ -18,7 +18,22 @@ const HERE = path.dirname(url.fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HERE, "..", "..");
 const TYPES_PACKAGE = path.join(REPO_ROOT, "node_modules", "@types", "three");
 const SOURCE_ROOT = path.join(TYPES_PACKAGE, "src");
-/** Directories under `src/` that are out of scope: the TSL / WebGPU node stack. */
+/**
+ * Directories under `src/` that are out of scope: the TSL node stack.
+ *
+ * ⚠️ The reason changed with the WebGPU build and is no longer "the bundle does not carry them".
+ * It does. Including them was tried and measured: 118 classes come into scope, 59 generate, and they
+ * carry 89 members between them — `AONode` emits a constructor and one boolean query, and nothing
+ * else. A TSL node is written by *composing* it (`positionLocal.add(vec3(0, 1, 0))`), and the whole
+ * composition API is 638 free **functions** — `vec3`, `float`, `uniform`, `Fn` — which live in a
+ * separate bundle (`three.tsl.min.js`) that this package does not vendor, and which the emitter could
+ * not generate anyway: it emits classes and enums, not free functions.
+ *
+ * So the classes alone are constructible shells with nothing to do. Reaching TSL properly means
+ * vendoring that second bundle, teaching the emitter free functions, and modelling the chaining API —
+ * at which point this exclusion comes off. Until then it stays, and the cost of removing it is a
+ * `three-api.json` that doubles to ~10 MB for no reachable capability.
+ */
 const EXCLUDED_DIRECTORIES = ["nodes"];
 /**
  * The addons - `GLTFLoader`, `OrbitControls`, every post-processing pass. They live outside `src/`,
@@ -28,17 +43,21 @@ const EXCLUDED_DIRECTORIES = ["nodes"];
 const ADDONS_DIRECTORY = "examples/jsm";
 const DEFAULT_OUTPUT = path.join(REPO_ROOT, "generator", "three-api.json");
 /**
- * The barrel `index.d.ts` re-exports, and therefore the public export surface of the WebGL build this
- * package ships. `src/Three.WebGPU.d.ts` is the barrel for the build it does not, so a name reachable
- * only from there is not a name a consumer of this package can use.
+ * The public export surface of the build this package ships.
+ * <p>
+ * This is `Three.WebGPU.d.ts` rather than `Three.d.ts` because the vendored bundle is
+ * `three.webgpu.min.js`. The two barrels describe genuinely different surfaces: the WebGPU one adds
+ * `WebGPURenderer`, the node materials and the TSL stack, and drops `WebGLRenderer`. Reading the wrong
+ * one produces a coverage report that is confidently wrong in both directions — classes marked
+ * unreachable that the bundle exports, and classes marked reachable that it does not.
  */
-const PUBLIC_BARREL = "Three.d.ts";
+const PUBLIC_BARREL = "Three.WebGPU.d.ts";
 /**
  * The three.js bundle that ships inside the package. `three-interop.js` resolves every constructor
  * against this module's namespace (`THREE[op.t]`), so a class absent from it cannot be created at
  * runtime no matter what `@types/three` declares.
  */
-const RUNTIME_BUNDLE_PATH = path.join(REPO_ROOT, "src", "Blazor.ThreeJS", "wwwroot", "three.module.min.js");
+const RUNTIME_BUNDLE_PATH = path.join(REPO_ROOT, "src", "Blazor.ThreeJS", "wwwroot", "three.webgpu.min.js");
 
 function byText(a, b) {
 	if (a === b) {

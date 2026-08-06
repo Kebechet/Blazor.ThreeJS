@@ -68,6 +68,32 @@ internal sealed class CoverageTotalsJson
 
 	/// <summary>Members skipped, with a reason recorded against each.</summary>
 	public required int SkippedMembers { get; init; }
+
+	/// <summary>
+	/// Members belonging to a class the generator emits. The denominator that can actually move:
+	/// covering more of the API means covering more of this, not of <see cref="Members"/>.
+	/// <para>
+	/// ⚠️ <see cref="MirroredState"/>, <see cref="Commands"/> and <see cref="AsyncQueries"/> are counted
+	/// over <b>every</b> class, including blocked ones whose members are classified but never emitted.
+	/// Summing those three overstates what ships; <see cref="GeneratedMembers"/> is the honest numerator
+	/// and this is its denominator.
+	/// </para>
+	/// </summary>
+	public required int ReachableMembers { get; init; }
+
+	/// <summary>
+	/// Members that actually reach generated C#: classified into a bucket <b>and</b> sitting on a class
+	/// the generator emits.
+	/// </summary>
+	public required int GeneratedMembers { get; init; }
+
+	/// <summary>
+	/// Members belonging to a class that is not emitted, which no mapping rule can expose because there
+	/// is no C# type to put them on. For the largest blocking reason, <c>NotExported</c>, there is no
+	/// runtime value either — those classes are absent from the shipped three.js bundle, so even the
+	/// escape hatch's <c>THREE[name]</c> lookup would fail.
+	/// </summary>
+	public required int StrandedMembers { get; init; }
 }
 
 /// <summary>One class's verdict.</summary>

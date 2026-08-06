@@ -2,6 +2,7 @@ using Kebechet.Blazor.ThreeJS.Addons;
 using Kebechet.Blazor.ThreeJS.Core;
 using Kebechet.Blazor.ThreeJS.Math;
 using Kebechet.Blazor.ThreeJS.Objects;
+using Microsoft.JSInterop;
 using Shouldly;
 
 namespace Blazor.ThreeJS.Tests.Addons;
@@ -27,7 +28,67 @@ public class GLTFLoaderTests
 
 		// Assert
 		var invocation = module.Invocations.Single(x => x.Identifier == "loadGltf");
-		invocation.Arguments.ShouldBe([4, ModelUrl]);
+
+		// The trailing null is the progress reference the caller did not ask for. Passed rather than
+		// omitted, because the applier's parameter list is positional and a missing argument would make
+		// the URL land in it.
+		invocation.Arguments.ShouldBe([4, ModelUrl, null]);
+	}
+
+	[Fact]
+	public async Task GLTFLoader_LoadWithoutProgress_PassesNoReference()
+	{
+		// Arrange
+		var module = new AddonJsObjectReference { LoadResponse = FigureResponse() };
+		var context = new ThreeContext(module, contextId: 4);
+
+		// Act
+		await new GLTFLoader(context).LoadAsync(ModelUrl);
+
+		// Assert
+		// Nothing to keep alive in the browser's reference table when nobody is listening.
+		var invocation = module.Invocations.Single(x => x.Identifier == "loadGltf");
+		invocation.Arguments.Last().ShouldBeNull();
+	}
+
+	[Fact]
+	public async Task GLTFLoader_LoadWithProgress_PassesAReferenceTheBrowserCanReportTo()
+	{
+		// Arrange
+		var module = new AddonJsObjectReference { LoadResponse = FigureResponse() };
+		var context = new ThreeContext(module, contextId: 4);
+		var reports = new List<GltfLoadProgress>();
+
+		// Act
+		await new GLTFLoader(context).LoadAsync(ModelUrl, new Progress<GltfLoadProgress>(reports.Add));
+
+		// Assert
+		var invocation = module.Invocations.Single(x => x.Identifier == "loadGltf");
+		invocation.Arguments.Last().ShouldBeOfType<DotNetObjectReference<GltfProgressReporter>>();
+	}
+
+	[Theory]
+	[InlineData(512L, 2048L, 0.25d)]
+	[InlineData(2048L, 2048L, 1d)]
+	public void GltfLoadProgress_TotalKnown_ReportsAFraction(long loaded, long total, double expected)
+	{
+		// Arrange & Act
+		var progress = new GltfLoadProgress { BytesLoaded = loaded, BytesTotal = total };
+
+		// Assert
+		progress.Fraction.ShouldBe(expected);
+	}
+
+	[Fact]
+	public void GltfLoadProgress_TotalUnknown_ReportsNoFraction()
+	{
+		// Arrange & Act
+		var progress = new GltfLoadProgress { BytesLoaded = 512L, BytesTotal = null };
+
+		// Assert
+		// Not zero: a server that streams without a Content-Length reports no total, and answering
+		// "0% forever" would drive a determinate progress bar that never moves. Null says "indeterminate".
+		progress.Fraction.ShouldBeNull();
 	}
 
 	[Fact]

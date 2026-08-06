@@ -29,6 +29,22 @@ public sealed class InstancedMesh : Mesh
 	private readonly int _count;
 	private DataTexture? _morphTexture;
 	private bool _isMorphTextureWritten;
+	private bool _isBoundingBoxWritten;
+	private bool _isBoundingSphereWritten;
+
+	/// <summary>
+	/// This bounding box encloses all instances of the <see cref="InstancedMesh"/>,, which can be
+	/// calculated with <c>.computeBoundingBox()</c>. Mirrored as an instance this object owns: mutating
+	/// it records a write of <c>boundingBox</c>.
+	/// </summary>
+	public Box3 BoundingBox { get; }
+
+	/// <summary>
+	/// This bounding sphere encloses all instances of the <see cref="InstancedMesh"/>, which can be
+	/// calculated with <c>.computeBoundingSphere()</c>. Mirrored as an instance this object owns:
+	/// mutating it records a write of <c>boundingSphere</c>.
+	/// </summary>
+	public Sphere BoundingSphere { get; }
 
 	/// <summary>Create a new instance of <see cref="InstancedMesh"/>.</summary>
 	/// <param name="geometry">An instance of <see cref="BufferGeometry"/>.</param>
@@ -42,6 +58,48 @@ public sealed class InstancedMesh : Mesh
 		_geometry = geometry;
 		_material = material;
 		_count = count;
+
+		BoundingBox = new Box3();
+		BoundingBox.OnChange = () =>
+		{
+			_isBoundingBoxWritten = true;
+			RecordSet("boundingBox", BoundingBox);
+		};
+
+		BoundingSphere = new Sphere();
+		BoundingSphere.OnChange = () =>
+		{
+			_isBoundingSphereWritten = true;
+			RecordSet("boundingSphere", BoundingSphere);
+		};
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>InstancedMesh</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal InstancedMesh(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		_count = default!;
+
+		BoundingBox = new Box3();
+		BoundingBox.OnChange = () =>
+		{
+			_isBoundingBoxWritten = true;
+			RecordSet("boundingBox", BoundingBox);
+		};
+
+		BoundingSphere = new Sphere();
+		BoundingSphere.OnChange = () =>
+		{
+			_isBoundingSphereWritten = true;
+			RecordSet("boundingSphere", BoundingSphere);
+		};
+
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.InstancedMesh</c>.</summary>
@@ -156,6 +214,17 @@ public sealed class InstancedMesh : Mesh
 	}
 
 	/// <summary>
+	/// Read-only flag to check if a given object is of type <see cref="InstancedMesh"/>. Read-only in
+	/// three.js, so it is read on demand rather than mirrored: records a get op, sends it behind every
+	/// write already pending, and completes with the value <c>isInstancedMesh</c> held.
+	/// </summary>
+	/// <returns>The value <c>isInstancedMesh</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsInstancedMeshAsync()
+	{
+		return GetAsync<bool>("isInstancedMesh");
+	}
+
+	/// <summary>
 	/// Get the color of the defined instance. Records a read op, sends it behind every write already
 	/// pending, and completes with what <c>getColorAt</c> returned.
 	/// </summary>
@@ -210,6 +279,16 @@ public sealed class InstancedMesh : Mesh
 		{
 			_morphTexture?.AttachTo(batch);
 			batch.Set(Handle, "morphTexture", ThreeValue.Encode(_morphTexture));
+		}
+
+		if (_isBoundingBoxWritten)
+		{
+			batch.Set(Handle, "boundingBox", ThreeValue.Encode(BoundingBox));
+		}
+
+		if (_isBoundingSphereWritten)
+		{
+			batch.Set(Handle, "boundingSphere", ThreeValue.Encode(BoundingSphere));
 		}
 	}
 }

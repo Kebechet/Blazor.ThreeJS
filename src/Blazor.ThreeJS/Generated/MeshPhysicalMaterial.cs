@@ -27,14 +27,26 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 public sealed class MeshPhysicalMaterial : MeshStandardMaterial
 {
 	private float _anisotropyRotation = 1f;
+	private Texture? _anisotropyMap = null;
+	private Texture? _clearcoatMap = null;
 	private float _clearcoatRoughness = 0f;
+	private Texture? _clearcoatRoughnessMap = null;
+	private Texture? _clearcoatNormalMap = null;
 	private float _ior = 1.5f;
 	private float _reflectivity = 0.5f;
+	private Texture? _iridescenceMap = null;
 	private float _iridescenceIOR = 1.3f;
+	private Texture? _iridescenceThicknessMap = null;
+	private Texture? _sheenColorMap = null;
 	private float _sheenRoughness = 1f;
+	private Texture? _sheenRoughnessMap = null;
+	private Texture? _transmissionMap = null;
 	private float _thickness = 0f;
+	private Texture? _thicknessMap = null;
 	private float _attenuationDistance;
 	private float _specularIntensity = 1f;
+	private Texture? _specularIntensityMap = null;
+	private Texture? _specularColorMap = null;
 	private float _anisotropy;
 	private float _clearcoat;
 	private float _iridescence;
@@ -42,23 +54,43 @@ public sealed class MeshPhysicalMaterial : MeshStandardMaterial
 	private float _sheen;
 	private float _transmission;
 	private bool _isAnisotropyRotationWritten;
+	private bool _isAnisotropyMapWritten;
+	private bool _isClearcoatMapWritten;
 	private bool _isClearcoatRoughnessWritten;
+	private bool _isClearcoatRoughnessMapWritten;
+	private bool _isClearcoatNormalScaleWritten;
+	private bool _isClearcoatNormalMapWritten;
 	private bool _isIorWritten;
 	private bool _isReflectivityWritten;
+	private bool _isIridescenceMapWritten;
 	private bool _isIridescenceIORWritten;
+	private bool _isIridescenceThicknessMapWritten;
 	private bool _isSheenColorWritten;
+	private bool _isSheenColorMapWritten;
 	private bool _isSheenRoughnessWritten;
+	private bool _isSheenRoughnessMapWritten;
+	private bool _isTransmissionMapWritten;
 	private bool _isThicknessWritten;
+	private bool _isThicknessMapWritten;
 	private bool _isAttenuationDistanceWritten;
 	private bool _isAttenuationColorWritten;
 	private bool _isSpecularIntensityWritten;
+	private bool _isSpecularIntensityMapWritten;
 	private bool _isSpecularColorWritten;
+	private bool _isSpecularColorMapWritten;
 	private bool _isAnisotropyWritten;
 	private bool _isClearcoatWritten;
 	private bool _isIridescenceWritten;
 	private bool _isDispersionWritten;
 	private bool _isSheenWritten;
 	private bool _isTransmissionWritten;
+
+	/// <summary>
+	/// How much <c>clearcoatNormalMap</c> affects the clear coat layer, from <c>(0,0)</c> to
+	/// <c>(1,1)</c>. Mirrored as an instance this object owns: mutating it records a write of
+	/// <c>clearcoatNormalScale</c>.
+	/// </summary>
+	public Vector2 ClearcoatNormalScale { get; }
 
 	/// <summary>
 	/// The sheen tint. Mirrored as an instance this object owns: mutating it records a write of
@@ -82,6 +114,13 @@ public sealed class MeshPhysicalMaterial : MeshStandardMaterial
 	/// <summary>Initializes a new <see cref="MeshPhysicalMaterial"/>.</summary>
 	public MeshPhysicalMaterial()
 	{
+		ClearcoatNormalScale = new Vector2();
+		ClearcoatNormalScale.OnChange = () =>
+		{
+			_isClearcoatNormalScaleWritten = true;
+			RecordSet("clearcoatNormalScale", ClearcoatNormalScale);
+		};
+
 		SheenColor = new Color(0f, 0f, 0f);
 		SheenColor.OnChange = () =>
 		{
@@ -102,6 +141,47 @@ public sealed class MeshPhysicalMaterial : MeshStandardMaterial
 			_isSpecularColorWritten = true;
 			RecordSet("specularColor", SpecularColor);
 		};
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>MeshPhysicalMaterial</c> under the handle the browser
+	/// minted for it. No create op is emitted: the object already exists, and this mirror's job is to
+	/// name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal MeshPhysicalMaterial(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		ClearcoatNormalScale = new Vector2();
+		ClearcoatNormalScale.OnChange = () =>
+		{
+			_isClearcoatNormalScaleWritten = true;
+			RecordSet("clearcoatNormalScale", ClearcoatNormalScale);
+		};
+
+		SheenColor = new Color(0f, 0f, 0f);
+		SheenColor.OnChange = () =>
+		{
+			_isSheenColorWritten = true;
+			RecordSet("sheenColor", SheenColor);
+		};
+
+		AttenuationColor = new Color(1f, 1f, 1f);
+		AttenuationColor.OnChange = () =>
+		{
+			_isAttenuationColorWritten = true;
+			RecordSet("attenuationColor", AttenuationColor);
+		};
+
+		SpecularColor = new Color(1f, 1f, 1f);
+		SpecularColor.OnChange = () =>
+		{
+			_isSpecularColorWritten = true;
+			RecordSet("specularColor", SpecularColor);
+		};
+
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.MeshPhysicalMaterial</c>.</summary>
@@ -134,6 +214,63 @@ public sealed class MeshPhysicalMaterial : MeshStandardMaterial
 	}
 
 	/// <summary>
+	/// Red and green channels represent the anisotropy direction in <c>[-1, 1]</c> tangent, bitangent
+	/// space, to be rotated by <c>anisotropyRotation</c>. The blue channel contains strength as <c>[0,
+	/// 1]</c> to be multiplied by <c>anisotropy</c>. <c>anisotropyMap</c> represents non-color data.
+	/// Any texture assigned must have <c>texture.colorSpace = NoColorSpace</c> (default). Writing it
+	/// records a <c>anisotropyMap</c> property write once this object is attached; writing the value
+	/// already held records nothing.
+	/// </summary>
+	public Texture? AnisotropyMap
+	{
+		get { return _anisotropyMap; }
+		set
+		{
+			if (ReferenceEquals(_anisotropyMap, value))
+			{
+				return;
+			}
+
+			_anisotropyMap = value;
+			_isAnisotropyMapWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("anisotropyMap", value);
+		}
+	}
+
+	/// <summary>
+	/// The red channel of this texture is multiplied against <c>clearcoat</c>, for per-pixel control
+	/// over a coating's intensity. <c>clearcoatMap</c> represents non-color data. Any texture assigned
+	/// must have <c>texture.colorSpace = NoColorSpace</c> (default). Writing it records a
+	/// <c>clearcoatMap</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public Texture? ClearcoatMap
+	{
+		get { return _clearcoatMap; }
+		set
+		{
+			if (ReferenceEquals(_clearcoatMap, value))
+			{
+				return;
+			}
+
+			_clearcoatMap = value;
+			_isClearcoatMapWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("clearcoatMap", value);
+		}
+	}
+
+	/// <summary>
 	/// Roughness of the clear coat layer, from <c>0.0</c> to <c>1.0</c>. Writing it records a
 	/// <c>clearcoatRoughness</c> property write once this object is attached; writing the value already
 	/// held records nothing.
@@ -151,6 +288,61 @@ public sealed class MeshPhysicalMaterial : MeshStandardMaterial
 			_clearcoatRoughness = value;
 			_isClearcoatRoughnessWritten = true;
 			RecordSet("clearcoatRoughness", value);
+		}
+	}
+
+	/// <summary>
+	/// The green channel of this texture is multiplied against <c>clearcoatRoughness</c>, for per-pixel
+	/// control over a coating's roughness. <c>clearcoatRoughnessMap</c> represents non-color data. Any
+	/// texture assigned must have <c>texture.colorSpace = NoColorSpace</c> (default). Writing it
+	/// records a <c>clearcoatRoughnessMap</c> property write once this object is attached; writing the
+	/// value already held records nothing.
+	/// </summary>
+	public Texture? ClearcoatRoughnessMap
+	{
+		get { return _clearcoatRoughnessMap; }
+		set
+		{
+			if (ReferenceEquals(_clearcoatRoughnessMap, value))
+			{
+				return;
+			}
+
+			_clearcoatRoughnessMap = value;
+			_isClearcoatRoughnessMapWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("clearcoatRoughnessMap", value);
+		}
+	}
+
+	/// <summary>
+	/// Can be used to enable independent normals for the clear coat layer. <c>clearcoatNormalMap</c>
+	/// represents non-color data. Any texture assigned must have <c>texture.colorSpace =
+	/// NoColorSpace</c> (default). Writing it records a <c>clearcoatNormalMap</c> property write once
+	/// this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public Texture? ClearcoatNormalMap
+	{
+		get { return _clearcoatNormalMap; }
+		set
+		{
+			if (ReferenceEquals(_clearcoatNormalMap, value))
+			{
+				return;
+			}
+
+			_clearcoatNormalMap = value;
+			_isClearcoatNormalMapWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("clearcoatNormalMap", value);
 		}
 	}
 
@@ -198,6 +390,34 @@ public sealed class MeshPhysicalMaterial : MeshStandardMaterial
 	}
 
 	/// <summary>
+	/// The red channel of this texture is multiplied against <c>iridescence</c>, for per-pixel control
+	/// over iridescence. <c>iridescenceMap</c> represents non-color data. Any texture assigned must
+	/// have <c>texture.colorSpace = NoColorSpace</c> (default). Writing it records a
+	/// <c>iridescenceMap</c> property write once this object is attached; writing the value already
+	/// held records nothing.
+	/// </summary>
+	public Texture? IridescenceMap
+	{
+		get { return _iridescenceMap; }
+		set
+		{
+			if (ReferenceEquals(_iridescenceMap, value))
+			{
+				return;
+			}
+
+			_iridescenceMap = value;
+			_isIridescenceMapWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("iridescenceMap", value);
+		}
+	}
+
+	/// <summary>
 	/// Strength of the iridescence RGB color shift effect, represented by an index-of-refraction.
 	/// Between <c>1.0</c> to <c>2.333</c>. Writing it records a <c>iridescenceIOR</c> property write
 	/// once this object is attached; writing the value already held records nothing.
@@ -215,6 +435,66 @@ public sealed class MeshPhysicalMaterial : MeshStandardMaterial
 			_iridescenceIOR = value;
 			_isIridescenceIORWritten = true;
 			RecordSet("iridescenceIOR", value);
+		}
+	}
+
+	/// <summary>
+	/// A texture that defines the thickness of the iridescence layer, stored in the green channel.
+	/// Minimum and maximum values of thickness are defined by <c>iridescenceThicknessRange</c> array: -
+	/// <c>0.0</c> in the green channel will result in thickness equal to first element of the array. -
+	/// <c>1.0</c> in the green channel will result in thickness equal to second element of the array. -
+	/// Values in-between will linearly interpolate between the elements of the array.
+	/// <c>iridescenceThicknessMap</c> represents non-color data. Any texture assigned must have
+	/// <c>texture.colorSpace = NoColorSpace</c> (default). Writing it records a
+	/// <c>iridescenceThicknessMap</c> property write once this object is attached; writing the value
+	/// already held records nothing.
+	/// </summary>
+	public Texture? IridescenceThicknessMap
+	{
+		get { return _iridescenceThicknessMap; }
+		set
+		{
+			if (ReferenceEquals(_iridescenceThicknessMap, value))
+			{
+				return;
+			}
+
+			_iridescenceThicknessMap = value;
+			_isIridescenceThicknessMapWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("iridescenceThicknessMap", value);
+		}
+	}
+
+	/// <summary>
+	/// The RGB channels of this texture are multiplied against <c>sheenColor</c>, for per-pixel control
+	/// over sheen tint. <c>sheenColorMap</c> represents color data, and the texture must be assigned a
+	/// <c>Texture#colorSpace</c>. Most <c>sheenColorMap</c> textures set <c>texture.colorSpace =
+	/// SRGBColorSpace</c>. Writing it records a <c>sheenColorMap</c> property write once this object is
+	/// attached; writing the value already held records nothing.
+	/// </summary>
+	public Texture? SheenColorMap
+	{
+		get { return _sheenColorMap; }
+		set
+		{
+			if (ReferenceEquals(_sheenColorMap, value))
+			{
+				return;
+			}
+
+			_sheenColorMap = value;
+			_isSheenColorMapWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("sheenColorMap", value);
 		}
 	}
 
@@ -240,6 +520,62 @@ public sealed class MeshPhysicalMaterial : MeshStandardMaterial
 	}
 
 	/// <summary>
+	/// The alpha channel of this texture is multiplied against <c>sheenRoughness</c>, for per-pixel
+	/// control over sheen roughness. <c>sheenRoughnessMap</c> represents non-color data. Any texture
+	/// assigned must have <c>texture.colorSpace = NoColorSpace</c> (default). Writing it records a
+	/// <c>sheenRoughnessMap</c> property write once this object is attached; writing the value already
+	/// held records nothing.
+	/// </summary>
+	public Texture? SheenRoughnessMap
+	{
+		get { return _sheenRoughnessMap; }
+		set
+		{
+			if (ReferenceEquals(_sheenRoughnessMap, value))
+			{
+				return;
+			}
+
+			_sheenRoughnessMap = value;
+			_isSheenRoughnessMapWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("sheenRoughnessMap", value);
+		}
+	}
+
+	/// <summary>
+	/// The red channel of this texture is multiplied against <c>transmission</c>, for per-pixel control
+	/// over optical transparency. <c>transmissionMap</c> represents non-color data. Any texture
+	/// assigned must have <c>texture.colorSpace = NoColorSpace</c> (default). Writing it records a
+	/// <c>transmissionMap</c> property write once this object is attached; writing the value already
+	/// held records nothing.
+	/// </summary>
+	public Texture? TransmissionMap
+	{
+		get { return _transmissionMap; }
+		set
+		{
+			if (ReferenceEquals(_transmissionMap, value))
+			{
+				return;
+			}
+
+			_transmissionMap = value;
+			_isTransmissionMapWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("transmissionMap", value);
+		}
+	}
+
+	/// <summary>
 	/// The thickness of the volume beneath the surface. The value is given in the coordinate space of
 	/// the mesh. If the value is <c>0</c> the material is thin-walled. Otherwise the material is a
 	/// volume boundary. Writing it records a <c>thickness</c> property write once this object is
@@ -258,6 +594,33 @@ public sealed class MeshPhysicalMaterial : MeshStandardMaterial
 			_thickness = value;
 			_isThicknessWritten = true;
 			RecordSet("thickness", value);
+		}
+	}
+
+	/// <summary>
+	/// A texture that defines the thickness, stored in the green channel. This will be multiplied by
+	/// <c>thickness</c>. <c>thicknessMap</c> represents non-color data. Any texture assigned must have
+	/// <c>texture.colorSpace = NoColorSpace</c> (default). Writing it records a <c>thicknessMap</c>
+	/// property write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public Texture? ThicknessMap
+	{
+		get { return _thicknessMap; }
+		set
+		{
+			if (ReferenceEquals(_thicknessMap, value))
+			{
+				return;
+			}
+
+			_thicknessMap = value;
+			_isThicknessMapWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("thicknessMap", value);
 		}
 	}
 
@@ -302,6 +665,62 @@ public sealed class MeshPhysicalMaterial : MeshStandardMaterial
 			_specularIntensity = value;
 			_isSpecularIntensityWritten = true;
 			RecordSet("specularIntensity", value);
+		}
+	}
+
+	/// <summary>
+	/// The alpha channel of this texture is multiplied against <c>specularIntensity</c>, for per-pixel
+	/// control over specular intensity. <c>specularIntensityMap</c> represents non-color data. Any
+	/// texture assigned must have <c>texture.colorSpace = NoColorSpace</c> (default). Writing it
+	/// records a <c>specularIntensityMap</c> property write once this object is attached; writing the
+	/// value already held records nothing.
+	/// </summary>
+	public Texture? SpecularIntensityMap
+	{
+		get { return _specularIntensityMap; }
+		set
+		{
+			if (ReferenceEquals(_specularIntensityMap, value))
+			{
+				return;
+			}
+
+			_specularIntensityMap = value;
+			_isSpecularIntensityMapWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("specularIntensityMap", value);
+		}
+	}
+
+	/// <summary>
+	/// The RGB channels of this texture are multiplied against <c>specularColor</c>, for per-pixel
+	/// control over specular color. <c>specularColorMap</c> represents color data, and the texture must
+	/// be assigned a <c>Texture#colorSpace</c>. Most <c>specularColorMap</c> textures set
+	/// <c>texture.colorSpace = SRGBColorSpace</c>. Writing it records a <c>specularColorMap</c>
+	/// property write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public Texture? SpecularColorMap
+	{
+		get { return _specularColorMap; }
+		set
+		{
+			if (ReferenceEquals(_specularColorMap, value))
+			{
+				return;
+			}
+
+			_specularColorMap = value;
+			_isSpecularColorMapWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("specularColorMap", value);
 		}
 	}
 
@@ -431,8 +850,20 @@ public sealed class MeshPhysicalMaterial : MeshStandardMaterial
 	}
 
 	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isMeshPhysicalMaterial</c> held.
+	/// </summary>
+	/// <returns>The value <c>isMeshPhysicalMaterial</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsMeshPhysicalMaterialAsync()
+	{
+		return GetAsync<bool>("isMeshPhysicalMaterial");
+	}
+
+	/// <summary>
 	/// Emits the create op for <c>THREE.MeshPhysicalMaterial</c>, then replays every property written
-	/// before this object was attached.
+	/// before this object was attached. A replayed value that is itself a mirrored object is attached
+	/// first, so its create op reaches the batch before the write that references it by handle.
 	/// </summary>
 	/// <param name="batch">Batch to record the ops into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
@@ -444,9 +875,38 @@ public sealed class MeshPhysicalMaterial : MeshStandardMaterial
 			batch.Set(Handle, "anisotropyRotation", ThreeValue.Encode(_anisotropyRotation));
 		}
 
+		if (_isAnisotropyMapWritten)
+		{
+			_anisotropyMap?.AttachTo(batch);
+			batch.Set(Handle, "anisotropyMap", ThreeValue.Encode(_anisotropyMap));
+		}
+
+		if (_isClearcoatMapWritten)
+		{
+			_clearcoatMap?.AttachTo(batch);
+			batch.Set(Handle, "clearcoatMap", ThreeValue.Encode(_clearcoatMap));
+		}
+
 		if (_isClearcoatRoughnessWritten)
 		{
 			batch.Set(Handle, "clearcoatRoughness", ThreeValue.Encode(_clearcoatRoughness));
+		}
+
+		if (_isClearcoatRoughnessMapWritten)
+		{
+			_clearcoatRoughnessMap?.AttachTo(batch);
+			batch.Set(Handle, "clearcoatRoughnessMap", ThreeValue.Encode(_clearcoatRoughnessMap));
+		}
+
+		if (_isClearcoatNormalScaleWritten)
+		{
+			batch.Set(Handle, "clearcoatNormalScale", ThreeValue.Encode(ClearcoatNormalScale));
+		}
+
+		if (_isClearcoatNormalMapWritten)
+		{
+			_clearcoatNormalMap?.AttachTo(batch);
+			batch.Set(Handle, "clearcoatNormalMap", ThreeValue.Encode(_clearcoatNormalMap));
 		}
 
 		if (_isIorWritten)
@@ -459,9 +919,21 @@ public sealed class MeshPhysicalMaterial : MeshStandardMaterial
 			batch.Set(Handle, "reflectivity", ThreeValue.Encode(_reflectivity));
 		}
 
+		if (_isIridescenceMapWritten)
+		{
+			_iridescenceMap?.AttachTo(batch);
+			batch.Set(Handle, "iridescenceMap", ThreeValue.Encode(_iridescenceMap));
+		}
+
 		if (_isIridescenceIORWritten)
 		{
 			batch.Set(Handle, "iridescenceIOR", ThreeValue.Encode(_iridescenceIOR));
+		}
+
+		if (_isIridescenceThicknessMapWritten)
+		{
+			_iridescenceThicknessMap?.AttachTo(batch);
+			batch.Set(Handle, "iridescenceThicknessMap", ThreeValue.Encode(_iridescenceThicknessMap));
 		}
 
 		if (_isSheenColorWritten)
@@ -469,14 +941,38 @@ public sealed class MeshPhysicalMaterial : MeshStandardMaterial
 			batch.Set(Handle, "sheenColor", ThreeValue.Encode(SheenColor));
 		}
 
+		if (_isSheenColorMapWritten)
+		{
+			_sheenColorMap?.AttachTo(batch);
+			batch.Set(Handle, "sheenColorMap", ThreeValue.Encode(_sheenColorMap));
+		}
+
 		if (_isSheenRoughnessWritten)
 		{
 			batch.Set(Handle, "sheenRoughness", ThreeValue.Encode(_sheenRoughness));
 		}
 
+		if (_isSheenRoughnessMapWritten)
+		{
+			_sheenRoughnessMap?.AttachTo(batch);
+			batch.Set(Handle, "sheenRoughnessMap", ThreeValue.Encode(_sheenRoughnessMap));
+		}
+
+		if (_isTransmissionMapWritten)
+		{
+			_transmissionMap?.AttachTo(batch);
+			batch.Set(Handle, "transmissionMap", ThreeValue.Encode(_transmissionMap));
+		}
+
 		if (_isThicknessWritten)
 		{
 			batch.Set(Handle, "thickness", ThreeValue.Encode(_thickness));
+		}
+
+		if (_isThicknessMapWritten)
+		{
+			_thicknessMap?.AttachTo(batch);
+			batch.Set(Handle, "thicknessMap", ThreeValue.Encode(_thicknessMap));
 		}
 
 		if (_isAttenuationDistanceWritten)
@@ -494,9 +990,21 @@ public sealed class MeshPhysicalMaterial : MeshStandardMaterial
 			batch.Set(Handle, "specularIntensity", ThreeValue.Encode(_specularIntensity));
 		}
 
+		if (_isSpecularIntensityMapWritten)
+		{
+			_specularIntensityMap?.AttachTo(batch);
+			batch.Set(Handle, "specularIntensityMap", ThreeValue.Encode(_specularIntensityMap));
+		}
+
 		if (_isSpecularColorWritten)
 		{
 			batch.Set(Handle, "specularColor", ThreeValue.Encode(SpecularColor));
+		}
+
+		if (_isSpecularColorMapWritten)
+		{
+			_specularColorMap?.AttachTo(batch);
+			batch.Set(Handle, "specularColorMap", ThreeValue.Encode(_specularColorMap));
 		}
 
 		if (_isAnisotropyWritten)

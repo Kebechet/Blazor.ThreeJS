@@ -35,6 +35,25 @@ public sealed class ShadowMaterial : Material
 		};
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>ShadowMaterial</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal ShadowMaterial(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		Color = new Color(0f, 0f, 0f);
+		Color.OnChange = () =>
+		{
+			_isColorWritten = true;
+			RecordSet("color", Color);
+		};
+
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.ShadowMaterial</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -79,6 +98,17 @@ public sealed class ShadowMaterial : Material
 			_isLightsWritten = true;
 			RecordSet("lights", value);
 		}
+	}
+
+	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isShadowMaterial</c> held.
+	/// </summary>
+	/// <returns>The value <c>isShadowMaterial</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsShadowMaterialAsync()
+	{
+		return GetAsync<bool>("isShadowMaterial");
 	}
 
 	/// <summary>

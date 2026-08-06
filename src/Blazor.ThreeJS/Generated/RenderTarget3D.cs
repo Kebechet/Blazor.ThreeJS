@@ -23,6 +23,18 @@ public sealed class RenderTarget3D : RenderTarget
 		_depth = depth;
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>RenderTarget3D</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal RenderTarget3D(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.RenderTarget3D</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -45,5 +57,16 @@ public sealed class RenderTarget3D : RenderTarget
 				ThreeValue.OrUnspecified(_depth)
 			]);
 		}
+	}
+
+	/// <summary>
+	/// Reads <c>isRenderTarget3D</c> back from the JavaScript-side object. Read-only in three.js, so it
+	/// is read on demand rather than mirrored: records a get op, sends it behind every write already
+	/// pending, and completes with the value <c>isRenderTarget3D</c> held.
+	/// </summary>
+	/// <returns>The value <c>isRenderTarget3D</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsRenderTarget3DAsync()
+	{
+		return GetAsync<bool>("isRenderTarget3D");
 	}
 }

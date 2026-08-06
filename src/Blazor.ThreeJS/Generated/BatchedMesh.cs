@@ -23,8 +23,24 @@ public sealed class BatchedMesh : Mesh
 	private readonly Material? _material;
 	private bool _perObjectFrustumCulled = true;
 	private bool _sortObjects = true;
+	private bool _isBoundingBoxWritten;
+	private bool _isBoundingSphereWritten;
 	private bool _isPerObjectFrustumCulledWritten;
 	private bool _isSortObjectsWritten;
+
+	/// <summary>
+	/// This bounding box encloses all instances of the <see cref="BatchedMesh"/>. Can be calculated
+	/// with <c>.computeBoundingBox()</c>. Mirrored as an instance this object owns: mutating it records
+	/// a write of <c>boundingBox</c>.
+	/// </summary>
+	public Box3 BoundingBox { get; }
+
+	/// <summary>
+	/// This bounding sphere encloses all instances of the <see cref="BatchedMesh"/>. Can be calculated
+	/// with <c>.computeBoundingSphere()</c>. Mirrored as an instance this object owns: mutating it
+	/// records a write of <c>boundingSphere</c>.
+	/// </summary>
+	public Sphere BoundingSphere { get; }
 
 	/// <summary>Initializes a new <see cref="BatchedMesh"/>.</summary>
 	/// <param name="maxInstanceCount">the max number of individual geometries planned to be added.</param>
@@ -39,6 +55,49 @@ public sealed class BatchedMesh : Mesh
 		_maxVertexCount = maxVertexCount;
 		_maxIndexCount = maxIndexCount;
 		_material = material;
+
+		BoundingBox = new Box3();
+		BoundingBox.OnChange = () =>
+		{
+			_isBoundingBoxWritten = true;
+			RecordSet("boundingBox", BoundingBox);
+		};
+
+		BoundingSphere = new Sphere();
+		BoundingSphere.OnChange = () =>
+		{
+			_isBoundingSphereWritten = true;
+			RecordSet("boundingSphere", BoundingSphere);
+		};
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>BatchedMesh</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal BatchedMesh(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		_maxInstanceCount = default!;
+		_maxVertexCount = default!;
+
+		BoundingBox = new Box3();
+		BoundingBox.OnChange = () =>
+		{
+			_isBoundingBoxWritten = true;
+			RecordSet("boundingBox", BoundingBox);
+		};
+
+		BoundingSphere = new Sphere();
+		BoundingSphere.OnChange = () =>
+		{
+			_isBoundingSphereWritten = true;
+			RecordSet("boundingSphere", BoundingSphere);
+		};
+
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.BatchedMesh</c>.</summary>
@@ -215,6 +274,62 @@ public sealed class BatchedMesh : Mesh
 	}
 
 	/// <summary>
+	/// The maximum number of individual geometries that can be stored in the <see cref="BatchedMesh"/>.
+	/// Read only. Read-only in three.js, so it is read on demand rather than mirrored: records a get
+	/// op, sends it behind every write already pending, and completes with the value
+	/// <c>maxInstanceCount</c> held.
+	/// </summary>
+	/// <returns>The value <c>maxInstanceCount</c> held, once the JavaScript side has answered.</returns>
+	public Task<int> MaxInstanceCountAsync()
+	{
+		return GetAsync<int>("maxInstanceCount");
+	}
+
+	/// <summary>
+	/// Reads <c>instanceCount</c> back from the JavaScript-side object. Read-only in three.js, so it is
+	/// read on demand rather than mirrored: records a get op, sends it behind every write already
+	/// pending, and completes with the value <c>instanceCount</c> held.
+	/// </summary>
+	/// <returns>The value <c>instanceCount</c> held, once the JavaScript side has answered.</returns>
+	public Task<int> InstanceCountAsync()
+	{
+		return GetAsync<int>("instanceCount");
+	}
+
+	/// <summary>
+	/// Reads <c>unusedVertexCount</c> back from the JavaScript-side object. Read-only in three.js, so
+	/// it is read on demand rather than mirrored: records a get op, sends it behind every write already
+	/// pending, and completes with the value <c>unusedVertexCount</c> held.
+	/// </summary>
+	/// <returns>The value <c>unusedVertexCount</c> held, once the JavaScript side has answered.</returns>
+	public Task<int> UnusedVertexCountAsync()
+	{
+		return GetAsync<int>("unusedVertexCount");
+	}
+
+	/// <summary>
+	/// Reads <c>unusedIndexCount</c> back from the JavaScript-side object. Read-only in three.js, so it
+	/// is read on demand rather than mirrored: records a get op, sends it behind every write already
+	/// pending, and completes with the value <c>unusedIndexCount</c> held.
+	/// </summary>
+	/// <returns>The value <c>unusedIndexCount</c> held, once the JavaScript side has answered.</returns>
+	public Task<int> UnusedIndexCountAsync()
+	{
+		return GetAsync<int>("unusedIndexCount");
+	}
+
+	/// <summary>
+	/// Read-only flag to check if a given object is of type <see cref="BatchedMesh"/>. Read-only in
+	/// three.js, so it is read on demand rather than mirrored: records a get op, sends it behind every
+	/// write already pending, and completes with the value <c>isBatchedMesh</c> held.
+	/// </summary>
+	/// <returns>The value <c>isBatchedMesh</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsBatchedMeshAsync()
+	{
+		return GetAsync<bool>("isBatchedMesh");
+	}
+
+	/// <summary>
 	/// Get the color of the defined geometry. Records a read op, sends it behind every write already
 	/// pending, and completes with what <c>getColorAt</c> returned.
 	/// </summary>
@@ -317,6 +432,42 @@ public sealed class BatchedMesh : Mesh
 	}
 
 	/// <summary>
+	/// Repacks the sub geometries in [name] to remove any unused space remaining from previously
+	/// deleted geometry, freeing up space to add new geometry. Records a read op, sends it behind every
+	/// write already pending, and completes with what <c>optimize</c> returned.
+	/// </summary>
+	/// <returns>The value <c>optimize</c> returned, once the JavaScript side has answered.</returns>
+	public Task<BatchedMesh?> OptimizeAsync()
+	{
+		return RecordReadObject<BatchedMesh>("optimize", (adoptedBatch, adoptedHandle) => new BatchedMesh(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
+	/// Reads <c>getBoundingBoxAt</c> back from the JavaScript-side object. Records a read op, sends it
+	/// behind every write already pending, and completes with what <c>getBoundingBoxAt</c> returned.
+	/// </summary>
+	/// <param name="geometryId">Value forwarded to the <c>geometryId</c> argument.</param>
+	/// <param name="target">Value forwarded to the <c>target</c> argument.</param>
+	/// <returns>The value <c>getBoundingBoxAt</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Box3> GetBoundingBoxAtAsync(float geometryId, Box3 target)
+	{
+		return RecordRead<Box3>("getBoundingBoxAt", geometryId, target);
+	}
+
+	/// <summary>
+	/// Reads <c>getBoundingSphereAt</c> back from the JavaScript-side object. Records a read op, sends
+	/// it behind every write already pending, and completes with what <c>getBoundingSphereAt</c>
+	/// returned.
+	/// </summary>
+	/// <param name="geometryId">Value forwarded to the <c>geometryId</c> argument.</param>
+	/// <param name="target">Value forwarded to the <c>target</c> argument.</param>
+	/// <returns>The value <c>getBoundingSphereAt</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Sphere> GetBoundingSphereAtAsync(float geometryId, Sphere target)
+	{
+		return RecordRead<Sphere>("getBoundingSphereAt", geometryId, target);
+	}
+
+	/// <summary>
 	/// Attaches the objects <c>THREE.BatchedMesh</c> is constructed from, so their create ops reach the
 	/// batch before the one that references them by handle, then emits this object's own.
 	/// </summary>
@@ -337,6 +488,16 @@ public sealed class BatchedMesh : Mesh
 	internal override void EmitState(ThreeBatch batch)
 	{
 		base.EmitState(batch);
+
+		if (_isBoundingBoxWritten)
+		{
+			batch.Set(Handle, "boundingBox", ThreeValue.Encode(BoundingBox));
+		}
+
+		if (_isBoundingSphereWritten)
+		{
+			batch.Set(Handle, "boundingSphere", ThreeValue.Encode(BoundingSphere));
+		}
 
 		if (_isPerObjectFrustumCulledWritten)
 		{

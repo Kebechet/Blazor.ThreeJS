@@ -17,8 +17,10 @@ public class Mesh : Object3D
 {
 	private BufferGeometry? _geometry;
 	private Material? _material;
+	private float[]? _morphTargetInfluences;
 	private bool _isGeometryWritten;
 	private bool _isMaterialWritten;
+	private bool _isMorphTargetInfluencesWritten;
 
 	/// <summary>Create a new instance of <see cref="Mesh"/>.</summary>
 	/// <param name="geometry">
@@ -31,6 +33,18 @@ public class Mesh : Object3D
 	{
 		_geometry = geometry;
 		_material = material;
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>Mesh</c> under the handle the browser minted for it. No
+	/// create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal Mesh(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.Mesh</c>.</summary>
@@ -108,10 +122,42 @@ public class Mesh : Object3D
 		}
 	}
 
+	/// <summary>
+	/// An array of weights typically from <c>0-1</c> that specify how much of the morph is applied.
+	/// Writing it records a <c>morphTargetInfluences</c> property write once this object is attached;
+	/// writing the value already held records nothing.
+	/// </summary>
+	public float[]? MorphTargetInfluences
+	{
+		get { return _morphTargetInfluences; }
+		set
+		{
+			if (_morphTargetInfluences == value)
+			{
+				return;
+			}
+
+			_morphTargetInfluences = value;
+			_isMorphTargetInfluencesWritten = true;
+			RecordSet("morphTargetInfluences", value);
+		}
+	}
+
 	/// <summary>Updates the morphTargets to have no influence on the object.</summary>
 	public void UpdateMorphTargets()
 	{
 		RecordCall("updateMorphTargets");
+	}
+
+	/// <summary>
+	/// Read-only flag to check if a given object is of type <see cref="Mesh"/>. Read-only in three.js,
+	/// so it is read on demand rather than mirrored: records a get op, sends it behind every write
+	/// already pending, and completes with the value <c>isMesh</c> held.
+	/// </summary>
+	/// <returns>The value <c>isMesh</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsMeshAsync()
+	{
+		return GetAsync<bool>("isMesh");
 	}
 
 	/// <summary>
@@ -162,6 +208,11 @@ public class Mesh : Object3D
 		{
 			_material?.AttachTo(batch);
 			batch.Set(Handle, "material", ThreeValue.Encode(_material));
+		}
+
+		if (_isMorphTargetInfluencesWritten)
+		{
+			batch.Set(Handle, "morphTargetInfluences", ThreeValue.Encode(_morphTargetInfluences));
 		}
 	}
 }

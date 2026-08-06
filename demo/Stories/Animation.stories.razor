@@ -1,0 +1,200 @@
+@attribute [Stories("Catalogue/Animation")]
+@implements IDisposable
+
+<Stories TComponent="ThreeCanvas">
+    @* Named without a '#', for the reason Textures.stories.razor gives: BlazingStory slugs the story
+       name into its id, and trailing punctuation leaves a trailing hyphen in every link to it. *@
+    <Story Name="A keyframe clip built in code">
+        <Template>
+            <p>
+                The clip below is not loaded from a file. Its keyframes are arrays built in C# and
+                handed to a <code>VectorKeyframeTrack</code>, played through an
+                <code>AnimationMixer</code>.
+            </p>
+            <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildAnimationSceneAsync" />
+            <p>
+                <button @onclick="PlayAsync" disabled="@_isPlaying">Play</button>
+                <button @onclick="StopAsync" disabled="@(!_isPlaying)">Stop</button>
+                <button @onclick="() => SetSpeedAsync(0.4f)">Slow</button>
+                <button @onclick="() => SetSpeedAsync(1f)">Normal</button>
+                <button @onclick="() => SetSpeedAsync(2.5f)">Fast</button>
+                — @(_isPlaying ? "playing" : "stopped") at @_timeScale×
+            </p>
+            <p>
+                A track is a name, a list of times, and a flat list of values - three floats per keyframe
+                for a position track, so @_keyframeCount keyframes is @(_keyframeCount * 3) values. The
+                name is a property path into the object being animated: <code>.position</code> here,
+                and three.js resolves it against the mixer's root.
+            </p>
+            <p>
+                ⚠️ <code>AnimationMixer.Update</code> has to be called every frame - it is what advances
+                the clip - so this is the one place the mirror genuinely needs per-frame traffic. It
+                costs no extra round trip: the call is recorded into the same batch the animation loop
+                already flushes, so it rides along with the frame's other writes rather than adding an
+                interop call of its own.
+            </p>
+            <p>
+                <code>AnimationClip.Tracks</code> is still set through <code>Set</code> rather than a
+                typed property. The tracks are typed - <code>VectorKeyframeTrack</code> and its five
+                siblings all generate - but their shared base <code>KeyframeTrack</code> does not, so
+                there is no C# element type for the array. Its <code>values</code> is declared
+                <code>ArrayLike&lt;number | string | boolean&gt;</code>, and a union of three unrelated
+                element types has no single C# spelling.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+
+    /// <summary>Seconds the clip runs for, and the last keyframe's time.</summary>
+    private const float ClipDuration = 2.4f;
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+    private ThreeContext? _threeContext;
+    private AnimationMixer? _mixer;
+    private AnimationAction? _action;
+    private int _keyframeCount;
+    private float _timeScale = 1f;
+    private bool _isPlaying = true;
+
+    private async Task BuildAnimationSceneAsync(ThreeContext threeContext)
+    {
+        _threeContext = threeContext;
+
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 2.2f, 9f);
+        camera.LookAt(0f, 0.4f, 0f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.5f));
+
+        var keyLight = new DirectionalLight(Color.White, 1.8f);
+        keyLight.Position.Set(4f, 7f, 5f);
+        scene.Add(keyLight);
+
+        var floorMaterial = new MeshStandardMaterial();
+        floorMaterial.Color.SetHex(0x6f767d);
+        floorMaterial.Roughness = 0.95f;
+
+        var floor = new Mesh(new PlaneGeometry(20f, 20f), floorMaterial);
+        floor.Rotation.Set(-MathF.PI / 2f, 0f, 0f, EulerOrder.XYZ);
+        floor.Position.Set(0f, -1.6f, 0f);
+        scene.Add(floor);
+
+        var material = new MeshStandardMaterial();
+        material.Color.SetHex(0x5b8dd9);
+        material.Roughness = 0.35f;
+
+        var subject = new Mesh(new TorusKnotGeometry(0.6f, 0.22f), material);
+        scene.Add(subject);
+
+        // A bounce along the arc: five keyframes, three components each, in the flat run the track
+        // expects. Times and values are separate arrays and have to agree on count.
+        float[] times = [0f, 0.6f, 1.2f, 1.8f, ClipDuration];
+        float[] positions =
+        [
+            -3f, -0.6f, 0f,
+            -1.5f, 1.4f, 0f,
+            0f, -0.6f, 0f,
+            1.5f, 1.4f, 0f,
+            3f, -0.6f, 0f
+        ];
+
+        _keyframeCount = times.Length;
+
+        var positionTrack = new VectorKeyframeTrack(".position", times, positions);
+        var clip = new AnimationClip("bounce", ClipDuration);
+
+        // Through Set because the array's element type would be KeyframeTrack, which does not generate.
+        clip.Set("tracks", new ThreeObject[] { positionTrack });
+
+        var mixer = new AnimationMixer(subject);
+        threeContext.Attach(mixer);
+        _mixer = mixer;
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        _action = await mixer.ClipActionAsync(clip, subject, AnimationBlendMode.NormalAnimationBlendMode);
+        if (_action is not null)
+        {
+            _action.Loop = AnimationActionLoopStyles.LoopPingPong;
+            _action.Repetitions = float.PositiveInfinity;
+            await _action.PlayAsync();
+        }
+
+        StateHasChanged();
+
+        _ = AnimateAsync(threeContext, mixer);
+    }
+
+    private async Task PlayAsync()
+    {
+        if (_action is null)
+        {
+            return;
+        }
+
+        _isPlaying = true;
+        await _action.PlayAsync();
+    }
+
+    private async Task StopAsync()
+    {
+        if (_action is null)
+        {
+            return;
+        }
+
+        _isPlaying = false;
+        await _action.StopAsync();
+    }
+
+    private async Task SetSpeedAsync(float timeScale)
+    {
+        if (_mixer is null || _threeContext is null)
+        {
+            return;
+        }
+
+        _timeScale = timeScale;
+        _mixer.TimeScale = timeScale;
+        await _threeContext.FlushAsync();
+    }
+
+    /// <summary>
+    /// Advances the mixer once per frame. The delta is fixed rather than measured, because the frame
+    /// interval here is what the timer guarantees, not what the browser painted.
+    /// </summary>
+    private async Task AnimateAsync(ThreeContext threeContext, AnimationMixer mixer)
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        var delta = (float) FrameInterval.TotalSeconds;
+
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                mixer.Update(delta);
+                await threeContext.FlushAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // See Cube.stories.razor for why this is what stops the loop when a story is swapped.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+}

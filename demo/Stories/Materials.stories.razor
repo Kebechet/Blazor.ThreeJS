@@ -5,10 +5,10 @@
     <Story Name="Mesh materials">
         <Template>
             <p>
-                The same sphere and the same two lights, shaded nine different ways. Every material is
+                The same sphere and the same two lights, shaded eight different ways. Every material is
                 built with its own defaults and given one tint where it has a colour to give -
-                <code>MeshNormalMaterial</code> and <code>MeshDepthMaterial</code> have none, because
-                they colour by surface direction and by distance from the camera instead.
+                <code>MeshNormalMaterial</code> has none, because it colours by surface direction
+                instead.
             </p>
             <ThreeCanvas Style="width: 100%; height: 440px;" OnReady="BuildMaterialGalleryAsync" />
             <p>Reading left to right, top to bottom:</p>
@@ -21,10 +21,22 @@
             <p>
                 <code>MeshMatcapMaterial</code> looks flat here on purpose: it shades entirely from a
                 matcap texture, and this package cannot load one yet, so what is on screen is the
-                material doing exactly what it does with no map. Four more materials are typed but not
-                shown - <code>ShaderMaterial</code> and <code>RawShaderMaterial</code> need GLSL,
-                <code>ShadowMaterial</code> needs a shadow map, and <code>MeshDistanceMaterial</code> is
-                what three.js uses internally for point-light shadows.
+                material doing exactly what it does with no map. <code>ShadowMaterial</code> is typed but
+                not shown here, because it needs a shadow map to show anything - see
+                <em>Catalogue/Shadows</em>.
+            </p>
+            <p>
+                ⚠️ Four typed materials cannot be rendered at all by this package:
+                <code>ShaderMaterial</code>, <code>RawShaderMaterial</code>,
+                <code>MeshDepthMaterial</code> and <code>MeshDistanceMaterial</code>. The package ships
+                three.js's WebGPU build, whose renderer converts every material into a node graph
+                before drawing it, and those four have no node equivalent - the node builder rejects
+                them with <em>"Material … is not compatible"</em>.
+            </p>
+            <p>
+                The two shader materials are the ones worth knowing about: under this renderer, custom
+                shading is written as TSL node expressions rather than as GLSL strings. The other two
+                are depth passes three.js drives itself, so a scene rarely names them directly.
             </p>
         </Template>
     </Story>
@@ -118,8 +130,7 @@
             ("MeshPhysicalMaterial", physicalMaterial),
             ("MeshToonMaterial", toonMaterial),
             ("MeshMatcapMaterial", matcapMaterial),
-            ("MeshNormalMaterial", new MeshNormalMaterial()),
-            ("MeshDepthMaterial", new MeshDepthMaterial())
+            ("MeshNormalMaterial", new MeshNormalMaterial())
         ];
     }
 

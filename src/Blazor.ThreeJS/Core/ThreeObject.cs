@@ -1,3 +1,5 @@
+using Kebechet.Blazor.ThreeJS.Objects;
+
 namespace Kebechet.Blazor.ThreeJS.Core;
 
 /// <summary>
@@ -156,6 +158,7 @@ public abstract class ThreeObject
 		}
 
 		Batch = batch;
+		batch.Context?.Register(this);
 		EmitCreate(batch);
 		EmitState(batch);
 		ReplayPendingOps(batch);
@@ -304,6 +307,154 @@ public abstract class ThreeObject
 	}
 
 	/// <summary>
+	/// Reads a property whose value is a three.js <b>object</b> rather than a value, and hands back
+	/// something that can be written to.
+	/// <para>
+	/// <see cref="GetAsync{TValue}"/> refuses these: the value channel carries numbers, strings and
+	/// tagged math values, and serializing an object would produce a bag of numbers that reads like an
+	/// answer. This asks the applier to register the object instead and answers with a
+	/// <see cref="Primitive"/> naming it, which is what reaches a nested object the applier cannot
+	/// address through a dotted path — <c>renderer.shadowMap</c> being the case that motivated it.
+	/// </para>
+	/// <para>
+	/// An object the mirror has already seen answers with the handle it already has, so reading the
+	/// same property twice, or reading one that returns the receiver, does not produce two mirrors of
+	/// one object.
+	/// </para>
+	/// </summary>
+	/// <param name="member">Name of the property to read.</param>
+	/// <returns>The object under its own handle, or <see langword="null"/> when the property held none.</returns>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when this object is not attached, or when it has no such property.
+	/// </exception>
+	public async Task<Primitive?> GetObjectAsync(string member)
+	{
+		var context = RequireContext(member);
+		var reference = await context.GetAsync<ThreeObjectReference?>(Handle, member, mintsHandle: true).ConfigureAwait(false);
+		return Adopt(context, reference);
+	}
+
+	/// <summary>
+	/// Invokes a method whose return value is a three.js <b>object</b> rather than a value, and hands
+	/// back something that can be written to. The method counterpart of
+	/// <see cref="GetObjectAsync"/>; see that for why an object cannot travel as a value.
+	/// </summary>
+	/// <param name="member">Name of the method to invoke.</param>
+	/// <param name="args">Positional arguments to pass to the method.</param>
+	/// <returns>The returned object under its own handle, or <see langword="null"/> when it returned none.</returns>
+	/// <exception cref="InvalidOperationException">Thrown when this object is not attached.</exception>
+	public async Task<Primitive?> CallObjectAsync(string member, params object?[] args)
+	{
+		var context = RequireContext(member);
+		AttachMirroredArguments(context.Batch, args);
+		var encodedArgs = args
+			.Select(x => EncodeOrExplain(member, x))
+			.ToArray();
+
+		var reference = await context.ReadAsync<ThreeObjectReference?>(Handle, member, encodedArgs, mintsHandle: true).ConfigureAwait(false);
+		return Adopt(context, reference);
+	}
+
+	/// <summary>Wraps a reference the applier answered with, or nothing when it answered with none.</summary>
+	/// <param name="context">Context the handle belongs to.</param>
+	/// <param name="reference">The reference, absent when the member held no object.</param>
+	/// <returns>The adopted object.</returns>
+	private static Primitive? Adopt(ThreeContext context, ThreeObjectReference? reference)
+	{
+		if (reference is null)
+		{
+			return null;
+		}
+
+		// A handle this context already mirrors resolves to that mirror. Only a handle nothing here
+		// holds is genuinely new and gets a wrapper of its own.
+		if (context.Resolve(reference.Handle) is Primitive existing)
+		{
+			return existing;
+		}
+
+		return new Primitive(context.Batch, reference.Handle, reference.ThreeTypeName ?? "Object");
+	}
+
+	/// <summary>
+	/// Invokes a method whose return value is a mirrored three.js object, and hands back the C# type
+	/// the generated signature declares. The typed counterpart of <see cref="CallObjectAsync"/>.
+	/// </summary>
+	/// <typeparam name="TValue">Mirrored type the method returns.</typeparam>
+	/// <param name="member">Name of the three.js method to invoke.</param>
+	/// <param name="adopt">Builds the wrapper for a handle this context does not already mirror.</param>
+	/// <param name="args">Positional arguments to pass to the method.</param>
+	/// <returns>The returned object, or <see langword="null"/> when the method returned none.</returns>
+	private protected async Task<TValue?> RecordReadObject<TValue>(
+		string member,
+		Func<ThreeBatch, int, TValue> adopt,
+		params object?[] args)
+		where TValue : ThreeObject
+	{
+		var context = RequireContext(member);
+		AttachMirroredArguments(context.Batch, args);
+		var encodedArgs = args
+			.Select(x => EncodeOrExplain(member, x))
+			.ToArray();
+
+		var reference = await context.ReadAsync<ThreeObjectReference?>(Handle, member, encodedArgs, mintsHandle: true).ConfigureAwait(false);
+		return AdoptTyped(context, member, reference, adopt);
+	}
+
+	/// <summary>
+	/// Reads a property whose value is a mirrored three.js object, and hands back the C# type the
+	/// generated signature declares. The typed counterpart of <see cref="GetObjectAsync"/>.
+	/// </summary>
+	/// <typeparam name="TValue">Mirrored type the property holds.</typeparam>
+	/// <param name="member">Name of the property to read.</param>
+	/// <param name="adopt">Builds the wrapper for a handle this context does not already mirror.</param>
+	/// <returns>The object the property held, or <see langword="null"/> when it held none.</returns>
+	private protected async Task<TValue?> RecordGetObject<TValue>(string member, Func<ThreeBatch, int, TValue> adopt)
+		where TValue : ThreeObject
+	{
+		var context = RequireContext(member);
+		var reference = await context.GetAsync<ThreeObjectReference?>(Handle, member, mintsHandle: true).ConfigureAwait(false);
+		return AdoptTyped(context, member, reference, adopt);
+	}
+
+	/// <summary>
+	/// Resolves a reference to the mirror this context already holds for it, or builds a new one.
+	/// </summary>
+	/// <typeparam name="TValue">Mirrored type expected.</typeparam>
+	/// <param name="context">Context the handle belongs to.</param>
+	/// <param name="member">Member that produced the reference, named in any failure.</param>
+	/// <param name="reference">The reference, absent when the member produced no object.</param>
+	/// <param name="adopt">Builds the wrapper for a handle this context does not already mirror.</param>
+	/// <returns>The mirrored object.</returns>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when the handle names a mirror of an incompatible type. That means three.js answered with
+	/// an object the declared return type does not describe, which a fresh wrapper would paper over by
+	/// producing a second mirror of one object.
+	/// </exception>
+	private static TValue? AdoptTyped<TValue>(
+		ThreeContext context,
+		string member,
+		ThreeObjectReference? reference,
+		Func<ThreeBatch, int, TValue> adopt)
+		where TValue : ThreeObject
+	{
+		if (reference is null)
+		{
+			return null;
+		}
+
+		if (context.Resolve(reference.Handle) is { } existing)
+		{
+			return existing as TValue ?? throw new InvalidOperationException(
+				$"'{member}' answered with handle {reference.Handle}, which this context already mirrors as " +
+				$"'{existing.GetType().Name}' rather than '{typeof(TValue).Name}'. Wrapping it again would leave two " +
+				$"mirrors of one three.js object, and a write through either would be invisible to the other.");
+		}
+
+		return adopt(context.Batch, reference.Handle);
+	}
+
+	/// <summary>
 	/// Records releasing this object's JavaScript-side resources and retiring its handle. The applier
 	/// invokes three.js's own <c>dispose()</c> where the object has one, drops the object from the
 	/// handle table, and takes it out of the pointer-target set.
@@ -323,7 +474,13 @@ public abstract class ThreeObject
 	/// disposes every object the context created.
 	/// </para>
 	/// </summary>
-	internal void Release()
+	/// <remarks>
+	/// Named <c>RetireHandle</c> rather than <c>Release</c> because <c>release</c> is ordinary three.js
+	/// vocabulary — <c>ReadbackBuffer.release()</c> is a generated method — and a generated subclass
+	/// declaring one would hide this without overriding it, leaving two unrelated meanings behind one
+	/// name depending on the static type of the reference.
+	/// </remarks>
+	internal void RetireHandle()
 	{
 		Batch?.Dispose(Handle);
 	}

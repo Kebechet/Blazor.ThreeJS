@@ -2,6 +2,7 @@
 // Re-run `npm run emit` after changing the emitter or generator/three-api.json.
 
 using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Math;
 
 namespace Kebechet.Blazor.ThreeJS.Objects;
 
@@ -18,6 +19,15 @@ public sealed class Sprite : Object3D
 	private BufferGeometry? _geometry;
 	private bool _isGeometryWritten;
 	private bool _isMaterialWritten;
+	private bool _isCenterWritten;
+
+	/// <summary>
+	/// The sprite's anchor point, and the point around which the <see cref="Sprite"/> rotates. A value
+	/// of (0.5, 0.5) corresponds to the midpoint of the sprite. A value of (0, 0) corresponds to the
+	/// lower left corner of the sprite. Mirrored as an instance this object owns: mutating it records a
+	/// write of <c>center</c>.
+	/// </summary>
+	public Vector2 Center { get; }
 
 	/// <summary>Creates a new Sprite.</summary>
 	/// <param name="material">
@@ -27,6 +37,32 @@ public sealed class Sprite : Object3D
 	public Sprite(SpriteMaterial? material = null)
 	{
 		_material = material;
+
+		Center = new Vector2();
+		Center.OnChange = () =>
+		{
+			_isCenterWritten = true;
+			RecordSet("center", Center);
+		};
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>Sprite</c> under the handle the browser minted for it. No
+	/// create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal Sprite(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		Center = new Vector2();
+		Center.OnChange = () =>
+		{
+			_isCenterWritten = true;
+			RecordSet("center", Center);
+		};
+
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.Sprite</c>.</summary>
@@ -97,6 +133,17 @@ public sealed class Sprite : Object3D
 	}
 
 	/// <summary>
+	/// Read-only flag to check if a given object is of type <see cref="Sprite"/>. Read-only in
+	/// three.js, so it is read on demand rather than mirrored: records a get op, sends it behind every
+	/// write already pending, and completes with the value <c>isSprite</c> held.
+	/// </summary>
+	/// <returns>The value <c>isSprite</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsSpriteAsync()
+	{
+		return GetAsync<bool>("isSprite");
+	}
+
+	/// <summary>
 	/// Attaches the objects <c>THREE.Sprite</c> is constructed from, so their create ops reach the
 	/// batch before the one that references them by handle, then emits this object's own.
 	/// </summary>
@@ -130,6 +177,11 @@ public sealed class Sprite : Object3D
 		{
 			_material?.AttachTo(batch);
 			batch.Set(Handle, "material", ThreeValue.Encode(_material));
+		}
+
+		if (_isCenterWritten)
+		{
+			batch.Set(Handle, "center", ThreeValue.Encode(Center));
 		}
 	}
 }

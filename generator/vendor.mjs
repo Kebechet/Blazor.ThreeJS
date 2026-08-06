@@ -24,7 +24,7 @@ const REPO_ROOT = path.resolve(HERE, "..");
 const UPSTREAM_ROOT = path.join(REPO_ROOT, "node_modules", "three");
 const VENDOR_ROOT = path.join(REPO_ROOT, "src", "Blazor.ThreeJS", "wwwroot");
 /** The vendored three.js bundle every addon's bare `three` import is rewritten to point at. */
-const BUNDLE_FILE_NAME = "three.module.min.js";
+const BUNDLE_FILE_NAME = "three.webgpu.min.js";
 /** Bare module specifier the addons import three.js under, which no browser can resolve unaided. */
 const BARE_THREE_SPECIFIER = "three";
 /** The hand-written interop module, checked to import the same bundle this script vendors. */
@@ -36,14 +36,21 @@ const INTEROP_FILE_NAME = "three-interop.js";
  * The minified builds are deliberate: they are half the transfer of the readable ones over the wire
  * and a third of the bytes to parse, three.js publishes no source maps for either, and the code a
  * consumer actually debugs is `three-interop.js` — which is ours, is small, and stays readable.
- * `three.module.min.js` imports `three.core.min.js` by name, so the pair travels together.
+ * `three.webgpu.min.js` imports `three.core.min.js` by name, so the pair travels together.
+ *
+ * The WebGPU build rather than the classic one. It carries the whole classic surface — `Mesh`,
+ * `MeshStandardMaterial`, `AnimationMixer` and the rest — plus the node material system, and swaps
+ * `WebGLRenderer` for `WebGPURenderer`. That renderer runs on a WebGPU backend where the browser has
+ * one and falls back to a WebGL2 backend where it does not, so nothing stops rendering; what changes
+ * is that materials become node graphs and compute shaders become reachable. It costs about 93 KB
+ * more over the wire once compressed, which is the whole price.
  *
  * The two utils below the entry points are here because `GLTFLoader` imports them, which is a fact
  * about upstream rather than a choice — `verifyImportClosure` re-derives it on every run and fails if
  * this list stops being closed under imports.
  */
 const VENDORED_FILES = new Map([
-    ["three.module.min.js", "build/three.module.min.js"],
+    ["three.webgpu.min.js", "build/three.webgpu.min.js"],
     ["three.core.min.js", "build/three.core.min.js"],
     ["addons/controls/OrbitControls.js", "examples/jsm/controls/OrbitControls.js"],
     ["addons/loaders/GLTFLoader.js", "examples/jsm/loaders/GLTFLoader.js"],
@@ -56,7 +63,7 @@ const VENDORED_FILES = new Map([
  * as a static asset whether or not anything imports it, so it would go on padding every consumer's
  * publish output with megabytes nothing loads.
  */
-const RETIRED_FILES = ["three.module.js", "three.core.js"];
+const RETIRED_FILES = ["three.module.js", "three.core.js", "three.module.min.js"];
 
 /**
  * Matches the specifier of a static `import ... from '...'` / `export ... from '...'` clause.

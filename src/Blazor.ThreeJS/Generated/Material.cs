@@ -112,6 +112,25 @@ public class Material : EventDispatcher
 		};
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>Material</c> under the handle the browser minted for it.
+	/// No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal Material(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		BlendColor = new Color(0f, 0f, 0f);
+		BlendColor.OnChange = () =>
+		{
+			_isBlendColorWritten = true;
+			RecordSet("blendColor", BlendColor);
+		};
+
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.Material</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -979,27 +998,6 @@ public class Material : EventDispatcher
 		}
 	}
 
-	/// <summary>
-	/// An optional callback that is executed immediately before the material is used to render a 3D
-	/// object. This method can only be used when rendering with <see cref="WebGLRenderer"/>.
-	/// </summary>
-	/// <param name="renderer">The renderer.</param>
-	/// <param name="scene">The scene.</param>
-	/// <param name="camera">The camera that is used to render the scene.</param>
-	/// <param name="geometry">The 3D object's geometry.</param>
-	/// <param name="object">The 3D object.</param>
-	/// <param name="group">The geometry group data.</param>
-	public void OnBeforeRender(
-		WebGLRenderer renderer,
-		Scene scene,
-		Camera camera,
-		BufferGeometry geometry,
-		Object3D @object,
-		Group group)
-	{
-		RecordCall("onBeforeRender", renderer, scene, camera, geometry, @object, group);
-	}
-
 	/// <summary>Copies the values of the given material to this instance.</summary>
 	/// <param name="source">The material to copy.</param>
 	public void Copy(Material source)
@@ -1017,16 +1015,60 @@ public class Material : EventDispatcher
 	}
 
 	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isMaterial</c> held.
+	/// </summary>
+	/// <returns>The value <c>isMaterial</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsMaterialAsync()
+	{
+		return GetAsync<bool>("isMaterial");
+	}
+
+	/// <summary>
+	/// The UUID of the material. Read-only in three.js, so it is read on demand rather than mirrored:
+	/// records a get op, sends it behind every write already pending, and completes with the value
+	/// <c>uuid</c> held.
+	/// </summary>
+	/// <returns>The value <c>uuid</c> held, once the JavaScript side has answered.</returns>
+	public Task<string> UuidAsync()
+	{
+		return GetAsync<string>("uuid");
+	}
+
+	/// <summary>
+	/// This starts at <c>0</c> and counts how many times <c>Material#needsUpdate</c> is set to
+	/// <c>true</c>. Read-only in three.js, so it is read on demand rather than mirrored: records a get
+	/// op, sends it behind every write already pending, and completes with the value <c>version</c>
+	/// held.
+	/// </summary>
+	/// <returns>The value <c>version</c> held, once the JavaScript side has answered.</returns>
+	public Task<float> VersionAsync()
+	{
+		return GetAsync<float>("version");
+	}
+
+	/// <summary>
 	/// In case <c>Material#onBeforeCompile</c> is used, this callback can be used to identify values of
 	/// settings used in <c>onBeforeCompile()</c>, so three.js can reuse a cached shader or recompile
 	/// the shader for this material as needed. This method can only be used when rendering with
-	/// <see cref="WebGLRenderer"/>. Records a read op, sends it behind every write already pending, and
+	/// <c>WebGLRenderer</c>. Records a read op, sends it behind every write already pending, and
 	/// completes with what <c>customProgramCacheKey</c> returned.
 	/// </summary>
 	/// <returns>The value <c>customProgramCacheKey</c> returned, once the JavaScript side has answered.</returns>
 	public Task<string> CustomProgramCacheKeyAsync()
 	{
 		return RecordRead<string>("customProgramCacheKey");
+	}
+
+	/// <summary>
+	/// Returns a new material with copied values from this instance. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>clone</c> returned.
+	/// </summary>
+	/// <returns>The value <c>clone</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Material?> CloneAsync()
+	{
+		return RecordReadObject<Material>("clone", (adoptedBatch, adoptedHandle) => new Material(adoptedBatch, adoptedHandle));
 	}
 
 	/// <summary>

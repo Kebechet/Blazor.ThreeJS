@@ -269,7 +269,7 @@ public abstract class ThreeNode<TThreeObject> : ThreeNode
 	/// <summary>Releases the object, when one was built.</summary>
 	protected sealed override void ReleaseMirroredObject()
 	{
-		_object?.Release();
+		_object?.RetireHandle();
 	}
 
 	/// <summary>

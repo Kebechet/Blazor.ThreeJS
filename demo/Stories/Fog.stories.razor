@@ -1,0 +1,177 @@
+@attribute [Stories("Catalogue/Fog")]
+@implements IDisposable
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Linear and exponential fog">
+        <Template>
+            <p>
+                Fog fades geometry into the background with distance. three.js has two kinds and they
+                are separate classes: <code>Fog</code> ramps linearly between a near and a far distance,
+                <code>FogExp2</code> falls off exponentially by density.
+            </p>
+            <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildFogSceneAsync" />
+            <p>
+                <button @onclick="() => ApplyFogAsync(FogKind.None)">No fog</button>
+                <button @onclick="() => ApplyFogAsync(FogKind.Linear)">Fog (linear)</button>
+                <button @onclick="() => ApplyFogAsync(FogKind.Exponential)">FogExp2 (exponential)</button>
+                — showing <strong>@_fogKind</strong>
+            </p>
+            <p>
+                The pillars recede to @PillarCount deep, so the difference is easiest to see at the back
+                of the row: linear fog reaches full strength exactly at <code>Far</code> and not before,
+                where exponential fog never quite gets there but thickens much sooner.
+            </p>
+            <p>
+                ⚠️ <code>Scene.Fog</code> is typed <code>ThreeObject?</code> rather than
+                <code>Fog?</code>. three.js declares the property as <code>Fog | FogExp2 | null</code>,
+                and C# has no union type - so it resolves to the base both mirrored classes share. Every
+                arm crosses the wire as a handle and the applier does not care which class the handle
+                names, so this is exact on the wire even though it is weaker in the type system: nothing
+                stops you assigning a <code>Mesh</code> here, and three.js is what will object.
+            </p>
+            <p>
+                Both fog classes reaching the generated surface at all is recent, and so is this
+                property. A union of mirrored classes used to be refused outright, which meant the
+                scene had no fog property in any form.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private const float DriftPerFrame = 0.02f;
+    private const int PillarCount = 14;
+    private const int BackgroundHex = 0x2a3138;
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+    private ThreeContext? _threeContext;
+    private Scene? _scene;
+    private FogKind _fogKind = FogKind.Linear;
+
+    private async Task BuildFogSceneAsync(ThreeContext threeContext)
+    {
+        _threeContext = threeContext;
+
+        var scene = new Scene();
+        threeContext.Attach(scene);
+        _scene = scene;
+
+        var camera = new PerspectiveCamera(50f, 16f / 9f, 0.1f, 120f);
+        camera.Position.Set(0f, 1.6f, 7f);
+        camera.LookAt(0f, 0.6f, -20f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.55f));
+
+        var keyLight = new DirectionalLight(Color.White, 1.5f);
+        keyLight.Position.Set(4f, 8f, 6f);
+        scene.Add(keyLight);
+
+        // The fog colour has to match what is behind the geometry, or the far pillars fade towards a
+        // colour the background never reaches and the effect reads as a grey smear instead of depth.
+        threeContext.Renderer.SetClearColor(Color.FromHex(BackgroundHex), 1f);
+
+        var pillarGeometry = new BoxGeometry(0.9f, 3.2f, 0.9f);
+        var pillarMaterial = new MeshStandardMaterial();
+        pillarMaterial.Color.SetHex(0x9fd0ff);
+        pillarMaterial.Roughness = 0.55f;
+
+        foreach (var depth in Enumerable.Range(0, PillarCount))
+        {
+            foreach (var side in new[] { -1f, 1f })
+            {
+                var pillar = new Mesh(pillarGeometry, pillarMaterial);
+                pillar.Position.Set(side * 2.6f, 0f, -depth * 3.4f);
+                scene.Add(pillar);
+            }
+        }
+
+        var floorMaterial = new MeshStandardMaterial();
+        floorMaterial.Color.SetHex(0x6f767d);
+        floorMaterial.Roughness = 0.95f;
+
+        var floor = new Mesh(new PlaneGeometry(40f, 120f), floorMaterial);
+        floor.Rotation.Set(-MathF.PI / 2f, 0f, 0f, EulerOrder.XYZ);
+        floor.Position.Set(0f, -1.6f, -20f);
+        scene.Add(floor);
+
+        ApplyFog();
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        _ = AnimateAsync(threeContext, camera);
+    }
+
+    private async Task ApplyFogAsync(FogKind fogKind)
+    {
+        if (_threeContext is null)
+        {
+            return;
+        }
+
+        _fogKind = fogKind;
+        ApplyFog();
+        await _threeContext.FlushAsync();
+    }
+
+    /// <summary>Assigns the scene's fog, or clears it. Both classes go over the wire as a handle.</summary>
+    private void ApplyFog()
+    {
+        if (_scene is null)
+        {
+            return;
+        }
+
+        _scene.Fog = _fogKind switch
+        {
+            FogKind.Linear => new Fog(Color.FromHex(BackgroundHex), 6f, 42f),
+            FogKind.Exponential => new FogExp2(Color.FromHex(BackgroundHex), 0.05f),
+            _ => null
+        };
+    }
+
+    /// <summary>Drifts the camera forward and back, so depth reads as depth rather than as a gradient.</summary>
+    private async Task AnimateAsync(ThreeContext threeContext, Object3D camera)
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        var travelled = 0f;
+        var direction = 1f;
+
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                travelled += DriftPerFrame * direction;
+                if (travelled is > 6f or < 0f)
+                {
+                    direction = -direction;
+                }
+
+                camera.Position.Z = 7f - travelled;
+                await threeContext.FlushAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // See Cube.stories.razor for why this is what stops the loop when a story is swapped.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+
+    /// <summary>Which of three.js's two fog classes the scene is currently using, if either.</summary>
+    private enum FogKind
+    {
+        None,
+        Linear,
+        Exponential
+    }
+}

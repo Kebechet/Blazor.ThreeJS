@@ -14,7 +14,9 @@ public sealed class SkeletonHelper : LineSegments
 {
 	private readonly Object3D _object;
 	private Object3D? _root;
+	private Bone?[] _bones = [];
 	private bool _isRootWritten;
+	private bool _isBonesWritten;
 
 	/// <summary>Constructs a new skeleton helper.</summary>
 	/// <param name="object">
@@ -24,6 +26,20 @@ public sealed class SkeletonHelper : LineSegments
 	public SkeletonHelper(Object3D @object)
 	{
 		_object = @object;
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>SkeletonHelper</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal SkeletonHelper(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		_object = default!;
+
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.SkeletonHelper</c>.</summary>
@@ -63,6 +79,26 @@ public sealed class SkeletonHelper : LineSegments
 		}
 	}
 
+	/// <summary>
+	/// The list of bones that the helper visualizes. Writing it records a <c>bones</c> property write
+	/// once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public Bone?[] Bones
+	{
+		get { return _bones; }
+		set
+		{
+			if (_bones == value)
+			{
+				return;
+			}
+
+			_bones = value;
+			_isBonesWritten = true;
+			RecordSet("bones", value);
+		}
+	}
+
 	/// <summary>Defines the colors of the helper.</summary>
 	/// <param name="color1">The first line color for each bone.</param>
 	/// <param name="color2">The second line color for each bone.</param>
@@ -78,6 +114,17 @@ public sealed class SkeletonHelper : LineSegments
 	public void Dispose()
 	{
 		RecordCall("dispose");
+	}
+
+	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isSkeletonHelper</c> held.
+	/// </summary>
+	/// <returns>The value <c>isSkeletonHelper</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsSkeletonHelperAsync()
+	{
+		return GetAsync<bool>("isSkeletonHelper");
 	}
 
 	/// <summary>
@@ -108,6 +155,11 @@ public sealed class SkeletonHelper : LineSegments
 		{
 			_root?.AttachTo(batch);
 			batch.Set(Handle, "root", ThreeValue.Encode(_root));
+		}
+
+		if (_isBonesWritten)
+		{
+			batch.Set(Handle, "bones", ThreeValue.Encode(_bones));
 		}
 	}
 }

@@ -11,60 +11,74 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// </summary>
 /// <seealso href="https://threejs.org/docs/index.html#api/en/textures/DataTexture">Official Documentation</seealso>
 /// <seealso href="https://github.com/mrdoob/three.js/blob/master/src/textures/DataTexture.js">Source</seealso>
-public sealed class DataTexture : EventDispatcher
+public sealed class DataTexture : Texture
 {
-	private MagnificationTextureFilter _magFilter;
-	private MinificationTextureFilter _minFilter;
-	private bool _flipY = false;
-	private bool _generateMipmaps = false;
-	private float _unpackAlignment = 1f;
-	private string _uuid = string.Empty;
-	private string _name = string.Empty;
-	private float _channel;
-	private Wrapping _wrapS;
-	private Wrapping _wrapT;
-	private float _anisotropy;
-	private TextureDataType _type;
-	private bool _matrixAutoUpdate = true;
-	private float _rotation = 0f;
-	private bool _premultiplyAlpha = false;
-	private string _colorSpace = string.Empty;
-	private bool _isRenderTargetTexture = false;
-	private bool _isArrayTexture = false;
-	private int _version = 0;
-	private float _pmremVersion;
-	private bool _normalized = false;
-	private bool _needsUpdate;
-	private bool _needsPMREMUpdate = false;
-	private RenderTarget? _renderTarget;
-	private bool _isMagFilterWritten;
-	private bool _isMinFilterWritten;
-	private bool _isFlipYWritten;
-	private bool _isGenerateMipmapsWritten;
-	private bool _isUnpackAlignmentWritten;
-	private bool _isUuidWritten;
-	private bool _isNameWritten;
-	private bool _isChannelWritten;
-	private bool _isWrapSWritten;
-	private bool _isWrapTWritten;
-	private bool _isAnisotropyWritten;
-	private bool _isTypeWritten;
-	private bool _isMatrixAutoUpdateWritten;
-	private bool _isRotationWritten;
-	private bool _isPremultiplyAlphaWritten;
-	private bool _isColorSpaceWritten;
-	private bool _isIsRenderTargetTextureWritten;
-	private bool _isIsArrayTextureWritten;
-	private bool _isVersionWritten;
-	private bool _isPmremVersionWritten;
-	private bool _isNormalizedWritten;
-	private bool _isNeedsUpdateWritten;
-	private bool _isNeedsPMREMUpdateWritten;
-	private bool _isRenderTargetWritten;
+	private readonly TypedArray? _data;
+	private readonly float _width;
+	private readonly float _height;
+	private readonly PixelFormat? _format;
+	private readonly TextureDataType? _type;
+	private readonly Mapping? _mapping;
+	private readonly Wrapping? _wrapS;
+	private readonly Wrapping? _wrapT;
+	private readonly MagnificationTextureFilter? _magFilter;
+	private readonly MinificationTextureFilter? _minFilter;
+	private readonly float? _anisotropy;
 
 	/// <summary>Initializes a new <see cref="DataTexture"/>.</summary>
-	public DataTexture()
+	/// <param name="data">
+	/// <see href="https://developer.mozilla.org/en-US/docs/Web/API/ArrayBufferView">ArrayBufferView</see>
+	/// of the texture.
+	/// </param>
+	/// <param name="width">Width of the texture.</param>
+	/// <param name="height">Height of the texture.</param>
+	/// <param name="format">See <c>.format</c>. Default <c>THREE.RGBAFormat</c>.</param>
+	/// <param name="type">See <c>.type</c>. Default <c>THREE.UnsignedByteType</c>.</param>
+	/// <param name="mapping">See <c>.mapping</c>. Default <c>THREE.Texture.DEFAULT_MAPPING</c>.</param>
+	/// <param name="wrapS">See <c>.wrapS</c>. Default <c>THREE.ClampToEdgeWrapping</c>.</param>
+	/// <param name="wrapT">See <c>.wrapT</c>. Default <c>THREE.ClampToEdgeWrapping</c>.</param>
+	/// <param name="magFilter">See <c>.magFilter</c>. Default <c>THREE.NearestFilter</c>.</param>
+	/// <param name="minFilter">See <c>.minFilter</c>. Default <c>THREE.NearestFilter</c>.</param>
+	/// <param name="anisotropy">See <c>.anisotropy</c>. Default <c>THREE.Texture.DEFAULT_ANISOTROPY</c>.</param>
+	public DataTexture(
+		TypedArray? data = null,
+		float width = 1f,
+		float height = 1f,
+		PixelFormat? format = null,
+		TextureDataType? type = null,
+		Mapping? mapping = null,
+		Wrapping? wrapS = null,
+		Wrapping? wrapT = null,
+		MagnificationTextureFilter? magFilter = null,
+		MinificationTextureFilter? minFilter = null,
+		float? anisotropy = null)
 	{
+		_data = data;
+		_width = width;
+		_height = height;
+		_format = format;
+		_type = type;
+		_mapping = mapping;
+		_wrapS = wrapS;
+		_wrapT = wrapT;
+		_magFilter = magFilter;
+		_minFilter = minFilter;
+		_anisotropy = anisotropy;
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>DataTexture</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal DataTexture(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		_width = default!;
+		_height = default!;
+
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.DataTexture</c>.</summary>
@@ -74,670 +88,40 @@ public sealed class DataTexture : EventDispatcher
 	}
 
 	/// <summary>
-	/// The <c>magFilter</c> property of the JavaScript-side object. Writing it records a
-	/// <c>magFilter</c> property write once this object is attached; writing the value already held
-	/// records nothing.
+	/// Constructor arguments forwarded to <c>THREE.DataTexture</c>: data, width, height, format, type,
+	/// mapping, wrapS, wrapT, magFilter, minFilter, anisotropy. An argument the caller left unspecified
+	/// travels as the wire's not-supplied sentinel, or is trimmed when nothing supplied follows it, so
+	/// three.js applies its own default.
 	/// </summary>
-	public MagnificationTextureFilter MagFilter
+	protected override object?[] ConstructorArgs
 	{
-		get { return _magFilter; }
-		set
+		get
 		{
-			if (_magFilter == value)
-			{
-				return;
-			}
-
-			_magFilter = value;
-			_isMagFilterWritten = true;
-			RecordSet("magFilter", value);
+			return ThreeValue.TrimUnspecifiedTail(
+			[
+				ThreeValue.OrUnspecified(_data),
+				_width,
+				_height,
+				ThreeValue.OrUnspecified(_format),
+				ThreeValue.OrUnspecified(_type),
+				ThreeValue.OrUnspecified(_mapping),
+				ThreeValue.OrUnspecified(_wrapS),
+				ThreeValue.OrUnspecified(_wrapT),
+				ThreeValue.OrUnspecified(_magFilter),
+				ThreeValue.OrUnspecified(_minFilter),
+				ThreeValue.OrUnspecified(_anisotropy)
+			]);
 		}
 	}
 
 	/// <summary>
-	/// The <c>minFilter</c> property of the JavaScript-side object. Writing it records a
-	/// <c>minFilter</c> property write once this object is attached; writing the value already held
-	/// records nothing.
+	/// Read-only flag to check if a given object is of type <see cref="DataTexture"/>. Read-only in
+	/// three.js, so it is read on demand rather than mirrored: records a get op, sends it behind every
+	/// write already pending, and completes with the value <c>isDataTexture</c> held.
 	/// </summary>
-	public MinificationTextureFilter MinFilter
+	/// <returns>The value <c>isDataTexture</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsDataTextureAsync()
 	{
-		get { return _minFilter; }
-		set
-		{
-			if (_minFilter == value)
-			{
-				return;
-			}
-
-			_minFilter = value;
-			_isMinFilterWritten = true;
-			RecordSet("minFilter", value);
-		}
-	}
-
-	/// <summary>
-	/// The <c>flipY</c> property of the JavaScript-side object. Writing it records a <c>flipY</c>
-	/// property write once this object is attached; writing the value already held records nothing.
-	/// </summary>
-	public bool FlipY
-	{
-		get { return _flipY; }
-		set
-		{
-			if (_flipY == value)
-			{
-				return;
-			}
-
-			_flipY = value;
-			_isFlipYWritten = true;
-			RecordSet("flipY", value);
-		}
-	}
-
-	/// <summary>
-	/// The <c>generateMipmaps</c> property of the JavaScript-side object. Writing it records a
-	/// <c>generateMipmaps</c> property write once this object is attached; writing the value already
-	/// held records nothing.
-	/// </summary>
-	public bool GenerateMipmaps
-	{
-		get { return _generateMipmaps; }
-		set
-		{
-			if (_generateMipmaps == value)
-			{
-				return;
-			}
-
-			_generateMipmaps = value;
-			_isGenerateMipmapsWritten = true;
-			RecordSet("generateMipmaps", value);
-		}
-	}
-
-	/// <summary>
-	/// The <c>unpackAlignment</c> property of the JavaScript-side object. Writing it records a
-	/// <c>unpackAlignment</c> property write once this object is attached; writing the value already
-	/// held records nothing.
-	/// </summary>
-	public float UnpackAlignment
-	{
-		get { return _unpackAlignment; }
-		set
-		{
-			if (_unpackAlignment == value)
-			{
-				return;
-			}
-
-			_unpackAlignment = value;
-			_isUnpackAlignmentWritten = true;
-			RecordSet("unpackAlignment", value);
-		}
-	}
-
-	/// <summary>
-	/// <see href="http://en.wikipedia.org/wiki/Universally_unique_identifier">UUID</see> of this object
-	/// instance. Writing it records a <c>uuid</c> property write once this object is attached; writing
-	/// the value already held records nothing.
-	/// </summary>
-	public string Uuid
-	{
-		get { return _uuid; }
-		set
-		{
-			if (_uuid == value)
-			{
-				return;
-			}
-
-			_uuid = value;
-			_isUuidWritten = true;
-			RecordSet("uuid", value);
-		}
-	}
-
-	/// <summary>
-	/// Optional name of the object. Writing it records a <c>name</c> property write once this object is
-	/// attached; writing the value already held records nothing.
-	/// </summary>
-	public string Name
-	{
-		get { return _name; }
-		set
-		{
-			if (_name == value)
-			{
-				return;
-			}
-
-			_name = value;
-			_isNameWritten = true;
-			RecordSet("name", value);
-		}
-	}
-
-	/// <summary>
-	/// Lets you select the uv attribute to map the texture to. <c>0</c> for <c>uv</c>, <c>1</c> for
-	/// <c>uv1</c>, <c>2</c> for <c>uv2</c> and <c>3</c> for <c>uv3</c>. Writing it records a
-	/// <c>channel</c> property write once this object is attached; writing the value already held
-	/// records nothing.
-	/// </summary>
-	public float Channel
-	{
-		get { return _channel; }
-		set
-		{
-			if (_channel == value)
-			{
-				return;
-			}
-
-			_channel = value;
-			_isChannelWritten = true;
-			RecordSet("channel", value);
-		}
-	}
-
-	/// <summary>
-	/// This defines how the <c>Texture</c> is wrapped *horizontally* and corresponds to **U** in UV
-	/// mapping. Writing it records a <c>wrapS</c> property write once this object is attached; writing
-	/// the value already held records nothing.
-	/// </summary>
-	public Wrapping WrapS
-	{
-		get { return _wrapS; }
-		set
-		{
-			if (_wrapS == value)
-			{
-				return;
-			}
-
-			_wrapS = value;
-			_isWrapSWritten = true;
-			RecordSet("wrapS", value);
-		}
-	}
-
-	/// <summary>
-	/// This defines how the <c>Texture</c> is wrapped *vertically* and corresponds to **V** in UV
-	/// mapping. Writing it records a <c>wrapT</c> property write once this object is attached; writing
-	/// the value already held records nothing.
-	/// </summary>
-	public Wrapping WrapT
-	{
-		get { return _wrapT; }
-		set
-		{
-			if (_wrapT == value)
-			{
-				return;
-			}
-
-			_wrapT = value;
-			_isWrapTWritten = true;
-			RecordSet("wrapT", value);
-		}
-	}
-
-	/// <summary>
-	/// The number of samples taken along the axis through the pixel that has the highest density of
-	/// texels. Writing it records a <c>anisotropy</c> property write once this object is attached;
-	/// writing the value already held records nothing.
-	/// </summary>
-	public float Anisotropy
-	{
-		get { return _anisotropy; }
-		set
-		{
-			if (_anisotropy == value)
-			{
-				return;
-			}
-
-			_anisotropy = value;
-			_isAnisotropyWritten = true;
-			RecordSet("anisotropy", value);
-		}
-	}
-
-	/// <summary>
-	/// This must correspond to the <c>.format</c>. Writing it records a <c>type</c> property write once
-	/// this object is attached; writing the value already held records nothing.
-	/// </summary>
-	public TextureDataType Type
-	{
-		get { return _type; }
-		set
-		{
-			if (_type == value)
-			{
-				return;
-			}
-
-			_type = value;
-			_isTypeWritten = true;
-			RecordSet("type", value);
-		}
-	}
-
-	/// <summary>
-	/// Whether is to update the texture's uv-transform <c>.matrix</c>. Writing it records a
-	/// <c>matrixAutoUpdate</c> property write once this object is attached; writing the value already
-	/// held records nothing.
-	/// </summary>
-	public bool MatrixAutoUpdate
-	{
-		get { return _matrixAutoUpdate; }
-		set
-		{
-			if (_matrixAutoUpdate == value)
-			{
-				return;
-			}
-
-			_matrixAutoUpdate = value;
-			_isMatrixAutoUpdateWritten = true;
-			RecordSet("matrixAutoUpdate", value);
-		}
-	}
-
-	/// <summary>
-	/// How much the texture is rotated around the center point, in radians. Writing it records a
-	/// <c>rotation</c> property write once this object is attached; writing the value already held
-	/// records nothing.
-	/// </summary>
-	public float Rotation
-	{
-		get { return _rotation; }
-		set
-		{
-			if (_rotation == value)
-			{
-				return;
-			}
-
-			_rotation = value;
-			_isRotationWritten = true;
-			RecordSet("rotation", value);
-		}
-	}
-
-	/// <summary>
-	/// If set to <c>true</c>, the alpha channel, if present, is multiplied into the color channels when
-	/// the texture is uploaded to the GPU. Writing it records a <c>premultiplyAlpha</c> property write
-	/// once this object is attached; writing the value already held records nothing.
-	/// </summary>
-	public bool PremultiplyAlpha
-	{
-		get { return _premultiplyAlpha; }
-		set
-		{
-			if (_premultiplyAlpha == value)
-			{
-				return;
-			}
-
-			_premultiplyAlpha = value;
-			_isPremultiplyAlphaWritten = true;
-			RecordSet("premultiplyAlpha", value);
-		}
-	}
-
-	/// <summary>
-	/// The <c>{@link Texture</c> constants} page for details of other color spaces. Writing it records
-	/// a <c>colorSpace</c> property write once this object is attached; writing the value already held
-	/// records nothing.
-	/// </summary>
-	public string ColorSpace
-	{
-		get { return _colorSpace; }
-		set
-		{
-			if (_colorSpace == value)
-			{
-				return;
-			}
-
-			_colorSpace = value;
-			_isColorSpaceWritten = true;
-			RecordSet("colorSpace", value);
-		}
-	}
-
-	/// <summary>
-	/// Indicates whether a texture belongs to a render target or not. Writing it records a
-	/// <c>isRenderTargetTexture</c> property write once this object is attached; writing the value
-	/// already held records nothing.
-	/// </summary>
-	public bool IsRenderTargetTexture
-	{
-		get { return _isRenderTargetTexture; }
-		set
-		{
-			if (_isRenderTargetTexture == value)
-			{
-				return;
-			}
-
-			_isRenderTargetTexture = value;
-			_isIsRenderTargetTextureWritten = true;
-			RecordSet("isRenderTargetTexture", value);
-		}
-	}
-
-	/// <summary>
-	/// Indicates if a texture should be handled like a texture array. Writing it records a
-	/// <c>isArrayTexture</c> property write once this object is attached; writing the value already
-	/// held records nothing.
-	/// </summary>
-	public bool IsArrayTexture
-	{
-		get { return _isArrayTexture; }
-		set
-		{
-			if (_isArrayTexture == value)
-			{
-				return;
-			}
-
-			_isArrayTexture = value;
-			_isIsArrayTextureWritten = true;
-			RecordSet("isArrayTexture", value);
-		}
-	}
-
-	/// <summary>
-	/// This starts at <c>0</c> and counts how many times <c>.needsUpdate</c> is set to <c>true</c>.
-	/// Writing it records a <c>version</c> property write once this object is attached; writing the
-	/// value already held records nothing.
-	/// </summary>
-	public int Version
-	{
-		get { return _version; }
-		set
-		{
-			if (_version == value)
-			{
-				return;
-			}
-
-			_version = value;
-			_isVersionWritten = true;
-			RecordSet("version", value);
-		}
-	}
-
-	/// <summary>
-	/// Indicates whether this texture should be processed by PMREMGenerator or not (only relevant for
-	/// render target textures). Writing it records a <c>pmremVersion</c> property write once this
-	/// object is attached; writing the value already held records nothing.
-	/// </summary>
-	public float PmremVersion
-	{
-		get { return _pmremVersion; }
-		set
-		{
-			if (_pmremVersion == value)
-			{
-				return;
-			}
-
-			_pmremVersion = value;
-			_isPmremVersionWritten = true;
-			RecordSet("pmremVersion", value);
-		}
-	}
-
-	/// <summary>
-	/// Whether the texture should use one of the 16 bit integer formats which are normalized to [0, 1]
-	/// or [-1, 1] (depending on signed/unsigned) when sampled. Writing it records a <c>normalized</c>
-	/// property write once this object is attached; writing the value already held records nothing.
-	/// </summary>
-	public bool Normalized
-	{
-		get { return _normalized; }
-		set
-		{
-			if (_normalized == value)
-			{
-				return;
-			}
-
-			_normalized = value;
-			_isNormalizedWritten = true;
-			RecordSet("normalized", value);
-		}
-	}
-
-	/// <summary>
-	/// Set this to <c>true</c> to trigger an update next time the texture is used. Particularly
-	/// important for setting the wrap mode. Writing it records a <c>needsUpdate</c> property write once
-	/// this object is attached; writing the value already held records nothing.
-	/// </summary>
-	public bool NeedsUpdate
-	{
-		get { return _needsUpdate; }
-		set
-		{
-			if (_needsUpdate == value)
-			{
-				return;
-			}
-
-			_needsUpdate = value;
-			_isNeedsUpdateWritten = true;
-			RecordSet("needsUpdate", value);
-		}
-	}
-
-	/// <summary>
-	/// Indicates whether this texture should be processed by <c>THREE.PMREMGenerator</c> or not.
-	/// Writing it records a <c>needsPMREMUpdate</c> property write once this object is attached;
-	/// writing the value already held records nothing.
-	/// </summary>
-	public bool NeedsPMREMUpdate
-	{
-		get { return _needsPMREMUpdate; }
-		set
-		{
-			if (_needsPMREMUpdate == value)
-			{
-				return;
-			}
-
-			_needsPMREMUpdate = value;
-			_isNeedsPMREMUpdateWritten = true;
-			RecordSet("needsPMREMUpdate", value);
-		}
-	}
-
-	/// <summary>
-	/// The <c>renderTarget</c> property of the JavaScript-side object. Writing it records a
-	/// <c>renderTarget</c> property write once this object is attached; writing the value already held
-	/// records nothing.
-	/// </summary>
-	public RenderTarget? RenderTarget
-	{
-		get { return _renderTarget; }
-		set
-		{
-			if (ReferenceEquals(_renderTarget, value))
-			{
-				return;
-			}
-
-			_renderTarget = value;
-			_isRenderTargetWritten = true;
-			if (Batch is not null && value is not null)
-			{
-				value.AttachTo(Batch);
-			}
-
-			RecordSet("renderTarget", value);
-		}
-	}
-
-	/// <summary>
-	/// Update the texture's **UV-transform** <c>.matrix</c> from the texture properties <c>.offset</c>,
-	/// <c>.repeat</c>, <c>.rotation</c> and <c>.center</c>.
-	/// </summary>
-	public void UpdateMatrix()
-	{
-		RecordCall("updateMatrix");
-	}
-
-	/// <summary>Adds a range of data in the data texture to be updated on the GPU.</summary>
-	/// <param name="start">Position at which to start update.</param>
-	/// <param name="count">The number of components to update.</param>
-	public void AddUpdateRange(float start, int count)
-	{
-		RecordCall("addUpdateRange", start, count);
-	}
-
-	/// <summary>Clears the update ranges.</summary>
-	public void ClearUpdateRanges()
-	{
-		RecordCall("clearUpdateRanges");
-	}
-
-	/// <summary>Frees the GPU-related resources allocated by this instance.</summary>
-	public void Dispose()
-	{
-		RecordCall("dispose");
-	}
-
-	/// <summary>
-	/// Emits the create op for <c>THREE.DataTexture</c>, then replays every property written before
-	/// this object was attached. A replayed value that is itself a mirrored object is attached first,
-	/// so its create op reaches the batch before the write that references it by handle.
-	/// </summary>
-	/// <param name="batch">Batch to record the ops into.</param>
-	internal override void EmitCreate(ThreeBatch batch)
-	{
-		base.EmitCreate(batch);
-
-		if (_isMagFilterWritten)
-		{
-			batch.Set(Handle, "magFilter", ThreeValue.Encode(_magFilter));
-		}
-
-		if (_isMinFilterWritten)
-		{
-			batch.Set(Handle, "minFilter", ThreeValue.Encode(_minFilter));
-		}
-
-		if (_isFlipYWritten)
-		{
-			batch.Set(Handle, "flipY", ThreeValue.Encode(_flipY));
-		}
-
-		if (_isGenerateMipmapsWritten)
-		{
-			batch.Set(Handle, "generateMipmaps", ThreeValue.Encode(_generateMipmaps));
-		}
-
-		if (_isUnpackAlignmentWritten)
-		{
-			batch.Set(Handle, "unpackAlignment", ThreeValue.Encode(_unpackAlignment));
-		}
-
-		if (_isUuidWritten)
-		{
-			batch.Set(Handle, "uuid", ThreeValue.Encode(_uuid));
-		}
-
-		if (_isNameWritten)
-		{
-			batch.Set(Handle, "name", ThreeValue.Encode(_name));
-		}
-
-		if (_isChannelWritten)
-		{
-			batch.Set(Handle, "channel", ThreeValue.Encode(_channel));
-		}
-
-		if (_isWrapSWritten)
-		{
-			batch.Set(Handle, "wrapS", ThreeValue.Encode(_wrapS));
-		}
-
-		if (_isWrapTWritten)
-		{
-			batch.Set(Handle, "wrapT", ThreeValue.Encode(_wrapT));
-		}
-
-		if (_isAnisotropyWritten)
-		{
-			batch.Set(Handle, "anisotropy", ThreeValue.Encode(_anisotropy));
-		}
-
-		if (_isTypeWritten)
-		{
-			batch.Set(Handle, "type", ThreeValue.Encode(_type));
-		}
-
-		if (_isMatrixAutoUpdateWritten)
-		{
-			batch.Set(Handle, "matrixAutoUpdate", ThreeValue.Encode(_matrixAutoUpdate));
-		}
-
-		if (_isRotationWritten)
-		{
-			batch.Set(Handle, "rotation", ThreeValue.Encode(_rotation));
-		}
-
-		if (_isPremultiplyAlphaWritten)
-		{
-			batch.Set(Handle, "premultiplyAlpha", ThreeValue.Encode(_premultiplyAlpha));
-		}
-
-		if (_isColorSpaceWritten)
-		{
-			batch.Set(Handle, "colorSpace", ThreeValue.Encode(_colorSpace));
-		}
-
-		if (_isIsRenderTargetTextureWritten)
-		{
-			batch.Set(Handle, "isRenderTargetTexture", ThreeValue.Encode(_isRenderTargetTexture));
-		}
-
-		if (_isIsArrayTextureWritten)
-		{
-			batch.Set(Handle, "isArrayTexture", ThreeValue.Encode(_isArrayTexture));
-		}
-
-		if (_isVersionWritten)
-		{
-			batch.Set(Handle, "version", ThreeValue.Encode(_version));
-		}
-
-		if (_isPmremVersionWritten)
-		{
-			batch.Set(Handle, "pmremVersion", ThreeValue.Encode(_pmremVersion));
-		}
-
-		if (_isNormalizedWritten)
-		{
-			batch.Set(Handle, "normalized", ThreeValue.Encode(_normalized));
-		}
-
-		if (_isNeedsUpdateWritten)
-		{
-			batch.Set(Handle, "needsUpdate", ThreeValue.Encode(_needsUpdate));
-		}
-
-		if (_isNeedsPMREMUpdateWritten)
-		{
-			batch.Set(Handle, "needsPMREMUpdate", ThreeValue.Encode(_needsPMREMUpdate));
-		}
-
-		if (_isRenderTargetWritten)
-		{
-			_renderTarget?.AttachTo(batch);
-			batch.Set(Handle, "renderTarget", ThreeValue.Encode(_renderTarget));
-		}
+		return GetAsync<bool>("isDataTexture");
 	}
 }

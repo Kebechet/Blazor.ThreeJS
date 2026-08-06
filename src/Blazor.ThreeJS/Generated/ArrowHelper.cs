@@ -43,6 +43,20 @@ public sealed class ArrowHelper : Object3D
 		_headWidth = headWidth;
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>ArrowHelper</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal ArrowHelper(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		_length = default!;
+
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.ArrowHelper</c>.</summary>
 	protected override string ThreeTypeName
 	{

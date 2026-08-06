@@ -18,8 +18,10 @@ public class Line : Object3D
 {
 	private BufferGeometry? _geometry;
 	private Material? _material;
+	private float[]? _morphTargetInfluences;
 	private bool _isGeometryWritten;
 	private bool _isMaterialWritten;
+	private bool _isMorphTargetInfluencesWritten;
 
 	/// <summary>Create a new instance of <see cref="Line"/>.</summary>
 	/// <param name="geometry">
@@ -31,6 +33,18 @@ public class Line : Object3D
 	{
 		_geometry = geometry;
 		_material = material;
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>Line</c> under the handle the browser minted for it. No
+	/// create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal Line(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.Line</c>.</summary>
@@ -106,10 +120,53 @@ public class Line : Object3D
 		}
 	}
 
+	/// <summary>
+	/// An array of weights typically from <c>0-1</c> that specify how much of the morph is applied.
+	/// Writing it records a <c>morphTargetInfluences</c> property write once this object is attached;
+	/// writing the value already held records nothing.
+	/// </summary>
+	public float[]? MorphTargetInfluences
+	{
+		get { return _morphTargetInfluences; }
+		set
+		{
+			if (_morphTargetInfluences == value)
+			{
+				return;
+			}
+
+			_morphTargetInfluences = value;
+			_isMorphTargetInfluencesWritten = true;
+			RecordSet("morphTargetInfluences", value);
+		}
+	}
+
 	/// <summary>Updates the morphTargets to have no influence on the object.</summary>
 	public void UpdateMorphTargets()
 	{
 		RecordCall("updateMorphTargets");
+	}
+
+	/// <summary>
+	/// Read-only flag to check if a given object is of type <see cref="Line"/>. Read-only in three.js,
+	/// so it is read on demand rather than mirrored: records a get op, sends it behind every write
+	/// already pending, and completes with the value <c>isLine</c> held.
+	/// </summary>
+	/// <returns>The value <c>isLine</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsLineAsync()
+	{
+		return GetAsync<bool>("isLine");
+	}
+
+	/// <summary>
+	/// Computes an array of distance values which are necessary for <c>LineDashedMaterial</c>. Records
+	/// a read op, sends it behind every write already pending, and completes with what
+	/// <c>computeLineDistances</c> returned.
+	/// </summary>
+	/// <returns>The value <c>computeLineDistances</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Line?> ComputeLineDistancesAsync()
+	{
+		return RecordReadObject<Line>("computeLineDistances", (adoptedBatch, adoptedHandle) => new Line(adoptedBatch, adoptedHandle));
 	}
 
 	/// <summary>
@@ -147,6 +204,11 @@ public class Line : Object3D
 		{
 			_material?.AttachTo(batch);
 			batch.Set(Handle, "material", ThreeValue.Encode(_material));
+		}
+
+		if (_isMorphTargetInfluencesWritten)
+		{
+			batch.Set(Handle, "morphTargetInfluences", ThreeValue.Encode(_morphTargetInfluences));
 		}
 	}
 }

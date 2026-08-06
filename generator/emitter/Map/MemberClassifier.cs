@@ -101,10 +101,21 @@ internal sealed class MemberClassifier
 			return row;
 		}
 
-		return Skip(
-			row,
-			$"read-only in three.js (declared `{property.Type?.Text ?? "?"}`), and the read op invokes a method — a property has nothing to route through it, and exposing one as an async method would change the shape of the mirrored API rather than its coverage",
-			SkipCategory.ReadOnlyProperty);
+		// Read-only and not a math value: C# cannot hold it as mirrored state, because three.js is the
+		// only side that ever assigns it. The get op reads a property directly, so it can still be read
+		// back on demand — as a query rather than a property, since the value is three.js's to change
+		// and a C# property would imply the mirror knew it without asking.
+		if (!IsReadable(mapping))
+		{
+			return Skip(
+				row,
+				$"read-only in three.js and typed `{property.Type?.Text ?? "?"}`, a handle-backed object — the get op carries values, and no op mints a handle for an object JavaScript created",
+				SkipCategory.NoHandleForResult);
+		}
+
+		row.Bucket = MemberBucket.AsyncQuery;
+		row.IsPropertyRead = true;
+		return row;
 	}
 
 	private ClassifiedMember ClassifyMethod(IrClass irClass, IrMethod method, SurfaceMember member)
@@ -158,10 +169,14 @@ internal sealed class MemberClassifier
 				return row;
 			}
 
-			return Skip(
-				row,
-				"takes no arguments and returns its own type, so the return value is the result — it is a JavaScript object, and no op hands back a handle for one the browser created",
-				SkipCategory.NoHandleForResult);
+			// The return value is the result, so it has to come back. Whether it is a fresh object or
+			// the receiver is not decidable from the declaration - `Object3D.clone` and
+			// `BufferGeometry.center` both say `this` - so the applier decides: an object it already
+			// has a handle for answers with that handle, and only a genuinely new one is registered.
+			row.CSharpTypeName = irClass.Name;
+			row.IsAdoptedResult = true;
+			row.Bucket = MemberBucket.AsyncQuery;
+			return row;
 		}
 
 		var returnMapping = _mapper.Map(signature.ReturnType, new TypeMappingContext
@@ -178,10 +193,18 @@ internal sealed class MemberClassifier
 
 		if (!IsReadable(returnMapping))
 		{
-			return Skip(
-				row,
-				$"returns `{returnMapping.CSharpTypeName}`, a handle-backed object — the read op carries values, and no op mints a handle for an object JavaScript created",
-				SkipCategory.NoHandleForResult);
+			// A mirrored class comes back by handle rather than by value: the applier registers the
+			// object and answers with a reference, which the read adopts into the declared C# type.
+			// Anything else genuinely has nowhere to go.
+			if (returnMapping.Kind != TypeMappingKind.GeneratedWrapperClass)
+			{
+				return Skip(
+					row,
+					$"returns `{returnMapping.CSharpTypeName}`, which is neither a value the read op carries nor a mirrored class a handle could name",
+					SkipCategory.NoHandleForResult);
+			}
+
+			row.IsAdoptedResult = true;
 		}
 
 		row.CSharpTypeName = returnMapping.CSharpTypeName;
@@ -193,20 +216,34 @@ internal sealed class MemberClassifier
 	/// <summary>
 	/// Whether a return type can travel back over the read op. The op carries <b>values</b>: a primitive
 	/// passes through as itself, an enum as the same numeric backing value the write path already sends,
-	/// and one of the five hand-written math types as the same <c>$t</c>-tagged form C# encodes in the
-	/// other direction.
+	/// a hand-written math type as the same <c>$t</c>-tagged form C# encodes in the other direction, and
+	/// a typed array as its <c>$ta</c>-tagged components.
 	/// <para>
 	/// A generated wrapper class cannot: it is mirrored by handle, and no op mints a handle for an
 	/// object JavaScript created. Serializing its public shape instead would hand C# a plausible bag of
 	/// numbers, which is the one outcome a read must never produce, so <c>three-interop.js</c> refuses
 	/// it at runtime too rather than trusting this rule alone.
 	/// </para>
+	/// <para>
+	/// An array is readable exactly when its elements are, which is not the same as being sendable: the
+	/// encoder writes an array of handles happily, but reading one back would need a handle minted for
+	/// every element.
+	/// </para>
 	/// </summary>
 	/// <param name="returnMapping">The method's resolved return type.</param>
 	/// <returns><see langword="true"/> when a value of that type can be read back.</returns>
 	private static bool IsReadable(TypeMapping returnMapping)
 	{
-		return returnMapping.Kind is TypeMappingKind.Primitive or TypeMappingKind.GeneratedEnum or TypeMappingKind.HandWrittenMathType;
+		if (returnMapping.Kind == TypeMappingKind.Sequence)
+		{
+			return returnMapping.ElementMapping is { } element && IsReadable(element);
+		}
+
+		return returnMapping.Kind is
+			TypeMappingKind.Primitive or
+			TypeMappingKind.GeneratedEnum or
+			TypeMappingKind.HandWrittenMathType or
+			TypeMappingKind.HandWrittenTypedArray;
 	}
 
 	/// <summary>Whether a return type means no value comes back at all.</summary>
@@ -317,6 +354,19 @@ internal sealed class ClassifiedMember
 
 	/// <summary>True for state three.js exposes read-only but the applier writes into in place.</summary>
 	public bool IsWrittenInPlace { get; set; }
+
+	/// <summary>
+	/// True when an <see cref="MemberBucket.AsyncQuery"/> row reads a property rather than invoking a
+	/// method, which is the difference between the get op and the read op. Both answer with a value on
+	/// the same correlated channel, so only the op kind and the absence of arguments differ.
+	/// </summary>
+	public bool IsPropertyRead { get; set; }
+
+	/// <summary>
+	/// True when an <see cref="MemberBucket.AsyncQuery"/> row answers with a handle the mirror adopts
+	/// rather than with a value. The result is a three.js object, which has no wire form of its own.
+	/// </summary>
+	public bool IsAdoptedResult { get; set; }
 
 	/// <summary>Number of overloads, on a method.</summary>
 	public int OverloadCount { get; init; }

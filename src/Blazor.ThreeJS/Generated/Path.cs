@@ -2,6 +2,7 @@
 // Re-run `npm run emit` after changing the emitter or generator/three-api.json.
 
 using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Math;
 
 namespace Kebechet.Blazor.ThreeJS.Objects;
 
@@ -14,15 +15,62 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// <seealso href="https://github.com/mrdoob/three.js/blob/master/src/extras/core/Path.js">Source</seealso>
 public class Path : CurvePath
 {
+	private readonly Vector2[]? _points;
+	private bool _isCurrentPointWritten;
+
+	/// <summary>
+	/// The current offset of the path. Any new <c>Curve</c> added will start here. Mirrored as an
+	/// instance this object owns: mutating it records a write of <c>currentPoint</c>.
+	/// </summary>
+	public Vector2 CurrentPoint { get; }
+
 	/// <summary>Creates a <see cref="Path"/> from the points.</summary>
-	public Path()
+	/// <param name="points">Array of <see cref="Vector2">Vector2s</see>.</param>
+	public Path(Vector2[]? points = null)
 	{
+		_points = points;
+
+		CurrentPoint = new Vector2();
+		CurrentPoint.OnChange = () =>
+		{
+			_isCurrentPointWritten = true;
+			RecordSet("currentPoint", CurrentPoint);
+		};
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>Path</c> under the handle the browser minted for it. No
+	/// create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal Path(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		CurrentPoint = new Vector2();
+		CurrentPoint.OnChange = () =>
+		{
+			_isCurrentPointWritten = true;
+			RecordSet("currentPoint", CurrentPoint);
+		};
+
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.Path</c>.</summary>
 	protected override string ThreeTypeName
 	{
 		get { return "Path"; }
+	}
+
+	/// <summary>
+	/// Constructor arguments forwarded to <c>THREE.Path</c>: points. An argument the caller left
+	/// unspecified travels as the wire's not-supplied sentinel, or is trimmed when nothing supplied
+	/// follows it, so three.js applies its own default.
+	/// </summary>
+	protected override object?[] ConstructorArgs
+	{
+		get { return ThreeValue.TrimUnspecifiedTail([ThreeValue.OrUnspecified(_points)]); }
 	}
 
 	/// <summary>Adds an absolutely positioned <c>EllipseCurve</c> to the path.</summary>
@@ -139,5 +187,34 @@ public class Path : CurvePath
 	public void QuadraticCurveTo(float aCPx, float aCPy, float aX, float aY)
 	{
 		RecordCall("quadraticCurveTo", aCPx, aCPy, aX, aY);
+	}
+
+	/// <summary>Points are added to the <c>curves</c> array as <c>LineCurves</c>.</summary>
+	/// <param name="vectors">Value forwarded to the <c>vectors</c> argument.</param>
+	public void SetFromPoints(Vector2[] vectors)
+	{
+		RecordCall("setFromPoints", vectors);
+	}
+
+	/// <summary>Connects a new <c>SplineCurve</c> onto the path.</summary>
+	/// <param name="pts">An array of <see cref="Vector2">Vector2's</see>.</param>
+	public void SplineThru(Vector2[] pts)
+	{
+		RecordCall("splineThru", pts);
+	}
+
+	/// <summary>
+	/// Emits the create op for <c>THREE.Path</c>, then replays every property written before this
+	/// object was attached.
+	/// </summary>
+	/// <param name="batch">Batch to record the ops into.</param>
+	internal override void EmitCreate(ThreeBatch batch)
+	{
+		base.EmitCreate(batch);
+
+		if (_isCurrentPointWritten)
+		{
+			batch.Set(Handle, "currentPoint", ThreeValue.Encode(CurrentPoint));
+		}
 	}
 }

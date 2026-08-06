@@ -12,10 +12,14 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// </summary>
 public sealed class Scene : Object3D
 {
+	private Texture? _environment = null;
+	private ThreeObject? _fog = null;
 	private float _backgroundBlurriness = 0f;
 	private float _backgroundIntensity = 1f;
 	private float _environmentIntensity = 1f;
 	private Material? _overrideMaterial = null;
+	private bool _isEnvironmentWritten;
+	private bool _isFogWritten;
 	private bool _isBackgroundBlurrinessWritten;
 	private bool _isBackgroundIntensityWritten;
 	private bool _isBackgroundRotationWritten;
@@ -55,10 +59,89 @@ public sealed class Scene : Object3D
 		};
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>Scene</c> under the handle the browser minted for it. No
+	/// create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal Scene(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		BackgroundRotation = new Euler();
+		BackgroundRotation.OnChange = () =>
+		{
+			_isBackgroundRotationWritten = true;
+			RecordSet("backgroundRotation", BackgroundRotation);
+		};
+
+		EnvironmentRotation = new Euler();
+		EnvironmentRotation.OnChange = () =>
+		{
+			_isEnvironmentRotationWritten = true;
+			RecordSet("environmentRotation", EnvironmentRotation);
+		};
+
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.Scene</c>.</summary>
 	protected override string ThreeTypeName
 	{
 		get { return "Scene"; }
+	}
+
+	/// <summary>
+	/// Sets the environment map for all physical materials in the scene. However, it's not possible to
+	/// overwrite an existing texture assigned to the <c>envMap</c> material property. Writing it
+	/// records a <c>environment</c> property write once this object is attached; writing the value
+	/// already held records nothing.
+	/// </summary>
+	public Texture? Environment
+	{
+		get { return _environment; }
+		set
+		{
+			if (ReferenceEquals(_environment, value))
+			{
+				return;
+			}
+
+			_environment = value;
+			_isEnvironmentWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("environment", value);
+		}
+	}
+
+	/// <summary>
+	/// A fog instance defining the type of fog that affects everything rendered in the scene. Writing
+	/// it records a <c>fog</c> property write once this object is attached; writing the value already
+	/// held records nothing.
+	/// </summary>
+	public ThreeObject? Fog
+	{
+		get { return _fog; }
+		set
+		{
+			if (ReferenceEquals(_fog, value))
+			{
+				return;
+			}
+
+			_fog = value;
+			_isFogWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("fog", value);
+		}
 	}
 
 	/// <summary>
@@ -153,6 +236,17 @@ public sealed class Scene : Object3D
 	}
 
 	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isScene</c> held.
+	/// </summary>
+	/// <returns>The value <c>isScene</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsSceneAsync()
+	{
+		return GetAsync<bool>("isScene");
+	}
+
+	/// <summary>
 	/// Replays every property written before this object was attached, so construction order never
 	/// matters to the caller. A property the caller never wrote is left alone: three.js's own default
 	/// is the truth for it, and the mirror has never read anything back to improve on that. A replayed
@@ -163,6 +257,18 @@ public sealed class Scene : Object3D
 	internal override void EmitState(ThreeBatch batch)
 	{
 		base.EmitState(batch);
+
+		if (_isEnvironmentWritten)
+		{
+			_environment?.AttachTo(batch);
+			batch.Set(Handle, "environment", ThreeValue.Encode(_environment));
+		}
+
+		if (_isFogWritten)
+		{
+			_fog?.AttachTo(batch);
+			batch.Set(Handle, "fog", ThreeValue.Encode(_fog));
+		}
 
 		if (_isBackgroundBlurrinessWritten)
 		{

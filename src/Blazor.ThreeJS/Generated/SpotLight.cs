@@ -20,12 +20,14 @@ public class SpotLight : Object3D
 	private float _penumbra;
 	private float _decay;
 	private Object3D? _target;
+	private Texture? _map = null;
 	private float _power;
 	private bool _isTargetWritten;
 	private bool _isDistanceWritten;
 	private bool _isAngleWritten;
 	private bool _isPenumbraWritten;
 	private bool _isDecayWritten;
+	private bool _isMapWritten;
 	private bool _isPowerWritten;
 	private bool _isIntensityWritten;
 
@@ -54,6 +56,23 @@ public class SpotLight : Object3D
 		_angle = angle;
 		_penumbra = penumbra;
 		_decay = decay;
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>SpotLight</c> under the handle the browser minted for it.
+	/// No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal SpotLight(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		_intensity = default!;
+		_distance = default!;
+		_penumbra = default!;
+		_decay = default!;
+
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.SpotLight</c>.</summary>
@@ -195,6 +214,34 @@ public class SpotLight : Object3D
 	}
 
 	/// <summary>
+	/// A texture used to modulate the color of the light. The spot light color is mixed with the RGB
+	/// value of this texture, with a ratio corresponding to its alpha value. The cookie-like masking
+	/// effect is reproduced using pixel values (0, 0, 0, 1-cookie_value). *Warning*: This property is
+	/// disabled if <c>Object3D#castShadow</c> is set to <c>false</c>. Writing it records a <c>map</c>
+	/// property write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public Texture? Map
+	{
+		get { return _map; }
+		set
+		{
+			if (ReferenceEquals(_map, value))
+			{
+				return;
+			}
+
+			_map = value;
+			_isMapWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("map", value);
+		}
+	}
+
+	/// <summary>
 	/// The <c>power</c> property of the JavaScript-side object. Writing it records a <c>power</c>
 	/// property write once this object is attached; writing the value already held records nothing.
 	/// </summary>
@@ -244,6 +291,28 @@ public class SpotLight : Object3D
 	}
 
 	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isSpotLight</c> held.
+	/// </summary>
+	/// <returns>The value <c>isSpotLight</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsSpotLightAsync()
+	{
+		return GetAsync<bool>("isSpotLight");
+	}
+
+	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isLight</c> held.
+	/// </summary>
+	/// <returns>The value <c>isLight</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsLightAsync()
+	{
+		return GetAsync<bool>("isLight");
+	}
+
+	/// <summary>
 	/// Replays every property written before this object was attached, so construction order never
 	/// matters to the caller. A property the caller never wrote is left alone: three.js's own default
 	/// is the truth for it, and the mirror has never read anything back to improve on that. A replayed
@@ -279,6 +348,12 @@ public class SpotLight : Object3D
 		if (_isDecayWritten)
 		{
 			batch.Set(Handle, "decay", ThreeValue.Encode(_decay));
+		}
+
+		if (_isMapWritten)
+		{
+			_map?.AttachTo(batch);
+			batch.Set(Handle, "map", ThreeValue.Encode(_map));
 		}
 
 		if (_isPowerWritten)

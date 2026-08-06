@@ -43,6 +43,35 @@ public sealed class PrimitiveObject3D : Object3D
 		_constructorArgs = constructorArgs ?? [];
 	}
 
+	/// <summary>
+	/// Adopts a scene-graph object the browser already made, under the handle it was registered with.
+	/// <para>
+	/// This is what a read declared to return <see cref="Object3D"/> answers with. That base is
+	/// abstract in C#, so it cannot be the thing constructed; this is the concrete scene-graph wrapper,
+	/// and it satisfies the declared type while carrying three.js's own name for what actually came
+	/// back.
+	/// </para>
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	/// <param name="threeTypeName">three.js's own <c>type</c> for the object.</param>
+	internal PrimitiveObject3D(ThreeBatch batch, int handle, string threeTypeName)
+		: base(handle)
+	{
+		_threeTypeName = threeTypeName;
+		_constructorArgs = [];
+		Batch = batch;
+	}
+
+	/// <summary>
+	/// three.js's name for this object: the export the caller named when constructing one, or what
+	/// three.js itself reported when this was adopted from a read.
+	/// </summary>
+	public string ThreeType
+	{
+		get { return _threeTypeName; }
+	}
+
 	/// <summary>Name of the corresponding export on the three.js namespace, as the caller gave it.</summary>
 	protected override string ThreeTypeName
 	{

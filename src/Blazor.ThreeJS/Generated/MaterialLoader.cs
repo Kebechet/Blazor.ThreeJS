@@ -17,6 +17,18 @@ public class MaterialLoader : Loader
 		_manager = manager;
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>MaterialLoader</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal MaterialLoader(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.MaterialLoader</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -31,6 +43,18 @@ public class MaterialLoader : Loader
 	protected override object?[] ConstructorArgs
 	{
 		get { return ThreeValue.TrimUnspecifiedTail([ThreeValue.OrUnspecified(_manager)]); }
+	}
+
+	/// <summary>
+	/// Reads <c>createMaterialFromType</c> back from the JavaScript-side object. Records a read op,
+	/// sends it behind every write already pending, and completes with what
+	/// <c>createMaterialFromType</c> returned.
+	/// </summary>
+	/// <param name="type">Value forwarded to the <c>type</c> argument.</param>
+	/// <returns>The value <c>createMaterialFromType</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Material?> CreateMaterialFromTypeAsync(string type)
+	{
+		return RecordReadObject<Material>("createMaterialFromType", (adoptedBatch, adoptedHandle) => new Material(adoptedBatch, adoptedHandle), type);
 	}
 
 	/// <summary>

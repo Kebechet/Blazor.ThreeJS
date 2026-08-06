@@ -1,0 +1,177 @@
+@attribute [Stories("Catalogue/Math values")]
+@using System.Globalization
+@implements IDisposable
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Bounds, planes and spheres">
+        <Template>
+            <p>
+                Three of the hand-written math types, drawn where three.js can show them. Each one is
+                built in C# and crosses the wire as a tagged value - a fixed run of components under a
+                type name - rather than as a handle, because a math value is data rather than an object
+                with an identity.
+            </p>
+            <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildMathSceneAsync" />
+            <ul>
+                <li>
+                    <code>Box3</code> - the yellow cage. Built with <code>SetFromPoints</code> over the
+                    eight scattered cubes, then handed to <code>Box3Helper</code>, which takes a
+                    <code>Box3</code> directly.
+                </li>
+                <li>
+                    <code>Plane</code> - the grey grid. A normal and a distance along it, drawn by
+                    <code>PlaneHelper</code>.
+                </li>
+                <li>
+                    <code>Sphere</code> - the blue wireframe. Not built here at all: it is
+                    <code>boundingSphere</code>, <em>read back</em> from the geometry after three.js
+                    computed it, and a wireframe placed at the centre and radius that came back.
+                </li>
+            </ul>
+            <p>
+                <strong>Computed here:</strong>
+                <code>Box3</code> spans @Format(_boundsSize) about @Format(_boundsCenter).
+                <strong>Read back from three.js:</strong>
+                @if (_boundingSphere is null)
+                {
+                    <em>reading…</em>
+                }
+                else
+                {
+                    <code>Sphere</code>
+                    <text>centre @Format(_boundingSphere.Center), radius @_boundingSphere.Radius.ToString("F2", CultureInfo.InvariantCulture)</text>
+                }
+            </p>
+            <p>
+                ⚠️ A default <code>Box3</code> is <em>empty</em>, not zero-sized: three.js seeds its
+                minimum at positive infinity and its maximum at negative infinity so expanding it by any
+                point yields exactly that point. JSON has no infinity, so those components travel as the
+                strings <code>"Infinity"</code> and <code>"-Infinity"</code> - without that, a
+                default-constructed box could not be sent at all.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private const float RadiansPerFrame = 0.004f;
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+    private Vector3 _boundsSize = new();
+    private Vector3 _boundsCenter = new();
+    private Sphere? _boundingSphere;
+
+    /// <summary>The scattered points the bounding box is measured from, and where the cubes go.</summary>
+    private static readonly Vector3[] _markerPositions =
+    [
+        new(-2.2f, -1.1f, -1.6f),
+        new(2.4f, 0.9f, 1.2f),
+        new(-1.4f, 1.6f, 1.8f),
+        new(1.8f, -1.5f, -1.9f),
+        new(0.4f, 2.0f, -0.8f),
+        new(-2.6f, 0.2f, 0.9f),
+        new(2.1f, -0.7f, -0.4f),
+        new(0.1f, -1.9f, 1.5f)
+    ];
+
+    private async Task BuildMathSceneAsync(ThreeContext threeContext)
+    {
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 3.2f, 10.5f);
+        camera.LookAt(0f, 0f, 0f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.6f));
+
+        var keyLight = new DirectionalLight(Color.White, 1.5f);
+        keyLight.Position.Set(4f, 6f, 6f);
+        scene.Add(keyLight);
+
+        var markerMaterial = new MeshStandardMaterial();
+        markerMaterial.Color.SetHex(0x5b8dd9);
+        markerMaterial.Roughness = 0.4f;
+
+        var markers = new Group();
+        var markerGeometry = new BoxGeometry(0.34f, 0.34f, 0.34f);
+        foreach (var markerPosition in _markerPositions)
+        {
+            var marker = new Mesh(markerGeometry, markerMaterial);
+            marker.Position.Copy(markerPosition);
+            markers.Add(marker);
+        }
+
+        scene.Add(markers);
+
+        // Measured in C#: the box never leaves this side until the helper needs it, so nothing is
+        // asked of three.js to compute bounds C# already has the points for.
+        var bounds = new Box3().SetFromPoints(_markerPositions);
+        _boundsSize = bounds.GetSize();
+        _boundsCenter = bounds.GetCenter();
+        markers.Add(new Box3Helper(bounds, Color.FromHex(0xffb347)));
+
+        var groundPlane = new Plane(new Vector3(0f, 1f, 0f), 2.4f);
+        scene.Add(new PlaneHelper(groundPlane, 9f, Color.FromHex(0x8a8f94)));
+
+        // The sphere is three.js's to compute, so the geometry goes over first and the value comes back.
+        var sphereSource = new SphereGeometry(1f, 24, 16);
+        var probe = new Mesh(sphereSource, markerMaterial);
+        probe.IsVisible = false;
+        scene.Add(probe);
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        sphereSource.ComputeBoundingSphere();
+        _boundingSphere = await sphereSource.GetAsync<Sphere>("boundingSphere");
+
+        var wireframeMaterial = new MeshBasicMaterial();
+        wireframeMaterial.Color.SetHex(0x9fd0ff);
+        wireframeMaterial.Wireframe = true;
+
+        var readBackSphere = new Mesh(new SphereGeometry(_boundingSphere.Radius, 20, 14), wireframeMaterial);
+        readBackSphere.Position.Copy(_boundingSphere.Center);
+        readBackSphere.Position.X += 4.6f;
+        scene.Add(readBackSphere);
+
+        StateHasChanged();
+
+        _ = AnimateAsync(threeContext, markers);
+    }
+
+    private static string Format(Vector3 vector)
+    {
+        return $"({vector.X.ToString("F2", CultureInfo.InvariantCulture)}, " +
+            $"{vector.Y.ToString("F2", CultureInfo.InvariantCulture)}, " +
+            $"{vector.Z.ToString("F2", CultureInfo.InvariantCulture)})";
+    }
+
+    private async Task AnimateAsync(ThreeContext threeContext, Object3D markers)
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                var nextRotationY = markers.Rotation.Y + RadiansPerFrame;
+                markers.Rotation.Y = nextRotationY >= MathF.Tau ? nextRotationY - MathF.Tau : nextRotationY;
+                await threeContext.FlushAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // See Cube.stories.razor for why this is what stops the loop when a story is swapped.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+}

@@ -36,6 +36,22 @@ public sealed class PointLight : Object3D
 		_decay = decay;
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>PointLight</c> under the handle the browser minted for it.
+	/// No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal PointLight(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		_intensity = default!;
+		_distance = default!;
+		_decay = default!;
+
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.PointLight</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -152,6 +168,28 @@ public sealed class PointLight : Object3D
 	public void Dispose()
 	{
 		RecordCall("dispose");
+	}
+
+	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isPointLight</c> held.
+	/// </summary>
+	/// <returns>The value <c>isPointLight</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsPointLightAsync()
+	{
+		return GetAsync<bool>("isPointLight");
+	}
+
+	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isLight</c> held.
+	/// </summary>
+	/// <returns>The value <c>isLight</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsLightAsync()
+	{
+		return GetAsync<bool>("isLight");
 	}
 
 	/// <summary>

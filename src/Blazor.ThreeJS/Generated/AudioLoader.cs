@@ -17,6 +17,18 @@ public sealed class AudioLoader : Loader
 		_manager = manager;
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>AudioLoader</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal AudioLoader(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.AudioLoader</c>.</summary>
 	protected override string ThreeTypeName
 	{

@@ -43,6 +43,27 @@ public sealed class HemisphereLight : Object3D
 		};
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>HemisphereLight</c> under the handle the browser minted
+	/// for it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal HemisphereLight(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		_intensity = default!;
+
+		Color = new Color();
+		Color.OnChange = () =>
+		{
+			_isColorWritten = true;
+			RecordSet("color", Color);
+		};
+
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.HemisphereLight</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -94,6 +115,28 @@ public sealed class HemisphereLight : Object3D
 	public void Dispose()
 	{
 		RecordCall("dispose");
+	}
+
+	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isHemisphereLight</c> held.
+	/// </summary>
+	/// <returns>The value <c>isHemisphereLight</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsHemisphereLightAsync()
+	{
+		return GetAsync<bool>("isHemisphereLight");
+	}
+
+	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isLight</c> held.
+	/// </summary>
+	/// <returns>The value <c>isLight</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsLightAsync()
+	{
+		return GetAsync<bool>("isLight");
 	}
 
 	/// <summary>

@@ -28,6 +28,21 @@ public sealed class PointLightHelper : Mesh
 		_color = color;
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>PointLightHelper</c> under the handle the browser minted
+	/// for it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal PointLightHelper(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		_light = default!;
+		_sphereSize = default!;
+
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.PointLightHelper</c>.</summary>
 	protected override string ThreeTypeName
 	{

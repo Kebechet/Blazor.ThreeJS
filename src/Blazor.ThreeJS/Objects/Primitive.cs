@@ -69,6 +69,35 @@ public sealed class Primitive : ThreeObject
 		_constructorArgs = constructorArgs ?? [];
 	}
 
+	/// <summary>
+	/// Adopts an object the browser already made, under the handle it was registered with. Used by
+	/// <see cref="ThreeObject.GetObjectAsync"/> and <see cref="ThreeObject.CallObjectAsync"/> to hand
+	/// back something reachable for a member whose result is a three.js object.
+	/// <para>
+	/// The type name is what three.js itself reported, so it is accurate rather than assumed - but it
+	/// is a label here, not an instruction: no create op is ever emitted for an adopted object.
+	/// </para>
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	/// <param name="threeTypeName">three.js's own <c>constructor.name</c> for the object.</param>
+	internal Primitive(ThreeBatch batch, int handle, string threeTypeName)
+		: base(handle)
+	{
+		_threeTypeName = threeTypeName;
+		_constructorArgs = [];
+		Batch = batch;
+	}
+
+	/// <summary>
+	/// three.js's name for this object: the export the caller named when constructing one, or what
+	/// three.js itself reported when this was adopted from a read.
+	/// </summary>
+	public string ThreeType
+	{
+		get { return _threeTypeName; }
+	}
+
 	/// <summary>Name of the corresponding export on the three.js namespace, as the caller gave it.</summary>
 	protected override string ThreeTypeName
 	{

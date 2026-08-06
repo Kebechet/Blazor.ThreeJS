@@ -13,7 +13,40 @@
                 the browser built those meshes, C# never saw their geometry, and it can still move them.
             </p>
             <ThreeCanvas Style="width: 100%; height: 420px;" OnReady="BuildFigureSceneAsync" />
-            <p>Last part clicked: <strong>@_lastClickedPartName</strong></p>
+            @* The test id is the E2E suite's hook. Without it the suite locates this by element name,
+               which breaks the moment the story grows a second <strong> — as it did when the download
+               readout below was added. *@
+            <p>Last part clicked: <strong data-testid="last-clicked-part">@_lastClickedPartName</strong></p>
+            <p>
+                Download reported:
+                @if (_loadProgress is null)
+                {
+                    <em>no progress events</em>
+                }
+                else if (_loadProgress.Fraction is { } fraction)
+                {
+                    <text><strong>@fraction.ToString("P0", CultureInfo.InvariantCulture)</strong> (@_loadProgress.BytesLoaded of @_loadProgress.BytesTotal bytes)</text>
+                }
+                else
+                {
+                    <text><strong>@_loadProgress.BytesLoaded bytes</strong>, total unknown</text>
+                }
+            </p>
+            <p>
+                ⚠️ That readout comes from the only JavaScript-to-C# callback the package makes during an
+                operation. It is bounded by the fetch - a handful of events for a model - which is why it
+                exists at all. three.js's per-frame hooks (<code>WebGLRenderer.setCustomSort</code>,
+                <code>onBeforeRender</code>) are deliberately <em>not</em> exposed: a delegate invoked per
+                object per frame across this boundary would be a network round trip per object on a
+                Blazor Server circuit, and an idle scene costing zero interop is the property the whole
+                design rests on.
+            </p>
+            <p>
+                A total of "unknown" is normal rather than a failure: a server streaming the response,
+                or compressing it without a <code>Content-Length</code>, reports no total. The API
+                answers <code>null</code> there instead of zero, so a progress bar can go indeterminate
+                rather than sit at 0% forever.
+            </p>
             <p>
                 <button @onclick="ReadCameraPositionAsync">Where is the camera?</button>
                 @_cameraReadout
@@ -32,6 +65,7 @@
     private PerspectiveCamera? _camera;
     private OrbitControls? _orbitControls;
     private string _lastClickedPartName = "nothing yet";
+    private GltfLoadProgress? _loadProgress;
     private string _cameraReadout = "not asked yet";
 
     private async Task BuildFigureSceneAsync(ThreeContext threeContext)
@@ -57,7 +91,15 @@
 
         await threeContext.SetActiveSceneAsync(scene, camera);
 
-        var model = await new GLTFLoader(threeContext).LoadAsync(_navigationManager.ToAbsoluteUri(ModelUrl).ToString());
+        // The one JavaScript-to-C# callback the package makes during an operation, and bounded by the
+        // fetch rather than by the frame rate. See the note under the canvas.
+        var progress = new Progress<GltfLoadProgress>(report =>
+        {
+            _loadProgress = report;
+            InvokeAsync(StateHasChanged);
+        });
+
+        var model = await new GLTFLoader(threeContext).LoadAsync(_navigationManager.ToAbsoluteUri(ModelUrl).ToString(), progress);
         scene.Add(model.Scene);
 
         foreach (var bodyPart in model.Nodes.Where(x => x.ThreeType == "Mesh"))

@@ -28,6 +28,23 @@ public sealed class PlaneGeometry : BufferGeometry
 		_heightSegments = heightSegments;
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>PlaneGeometry</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal PlaneGeometry(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		_width = default!;
+		_height = default!;
+		_widthSegments = default!;
+		_heightSegments = default!;
+
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.PlaneGeometry</c>.</summary>
 	protected override string ThreeTypeName
 	{

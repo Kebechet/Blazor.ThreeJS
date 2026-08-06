@@ -118,7 +118,7 @@ internal sealed class ClassEmitter
 
 		WriteFields(writer, fields, surface.Properties);
 		WriteOwnedMathProperties(writer, surface.Properties);
-		WriteConstructor(writer, irClass, threeTypeName, constructorParameters, surface.Properties);
+		WriteConstructor(writer, irClass, threeTypeName, baseTypeName, constructorParameters, surface.Properties);
 		writer.WriteLine();
 		WriteThreeTypeName(writer, threeTypeName);
 
@@ -369,7 +369,7 @@ internal sealed class ClassEmitter
 			}
 
 			var fieldName = "_" + ConstructorMapper.ToCamelCase(member.MemberName);
-			var cSharpTypeName = ResolvePropertyTypeName(member.Mapping);
+			var cSharpTypeName = ResolvePropertyTypeName(member.Mapping, isOwnedMathValue);
 			var defaultLiteral = isOwnedMathValue
 				? null
 				: MethodMapper.RenderDefaultLiteral(ResolveDocumentedDefault(member), member.Mapping);
@@ -416,12 +416,31 @@ internal sealed class ClassEmitter
 
 	private static EmittedQuery BuildQuery(ClassifiedMember member, string cSharpName)
 	{
+		// A property read has no IR method behind it, so its parameters are empty by construction rather
+		// than by mapping — the get op names a property and takes nothing.
+		if (member.IsPropertyRead)
+		{
+			return new EmittedQuery
+			{
+				ThreeName = member.MemberName,
+				CSharpName = cSharpName,
+				Parameters = [],
+				ReturnTypeName = member.CSharpTypeName!,
+				ReturnMapping = member.Mapping,
+				IsPropertyRead = true,
+				IsAdoptedResult = member.IsAdoptedResult,
+				Documentation = member.Property?.Doc
+			};
+		}
+
 		return new EmittedQuery
 		{
 			ThreeName = member.MemberName,
 			CSharpName = cSharpName,
 			Parameters = member.Method!.Parameters,
 			ReturnTypeName = member.CSharpTypeName!,
+			ReturnMapping = member.ReturnMapping,
+			IsAdoptedResult = member.IsAdoptedResult,
 			Documentation = member.Method.Signature?.Doc
 		};
 	}
@@ -433,8 +452,25 @@ internal sealed class ClassEmitter
 	/// </summary>
 	/// <param name="mapping">The property's resolved type.</param>
 	/// <returns>The C# type as written.</returns>
-	private static string ResolvePropertyTypeName(TypeMapping mapping)
+	/// <summary>
+	/// Names the C# type of a mirrored property.
+	/// </summary>
+	/// <param name="mapping">The resolved type of the three.js member.</param>
+	/// <param name="isOwnedMathValue">
+	/// Whether the property is a math value this object constructs and watches. Such a property is
+	/// never null even where three.js declares it nullable (<c>BufferGeometry.boundingBox</c> is
+	/// <c>Box3 | null</c> until something computes it), because the mirror has to hold an instance from
+	/// the start to hang its change callback off. Annotating it nullable would both misstate the
+	/// mirror's own invariant and emit <c>new Box3?()</c>, which does not compile.
+	/// </param>
+	/// <returns>The type name, with a nullable annotation where one belongs.</returns>
+	private static string ResolvePropertyTypeName(TypeMapping mapping, bool isOwnedMathValue = false)
 	{
+		if (isOwnedMathValue)
+		{
+			return mapping.CSharpTypeName!;
+		}
+
 		if (mapping.Kind == TypeMappingKind.GeneratedWrapperClass || mapping.IsExplicitlyNullable)
 		{
 			return mapping.CSharpTypeName + "?";
@@ -501,23 +537,58 @@ internal sealed class ClassEmitter
 	/// <summary>
 	/// Initializer for a field the upstream documents no default for. Only non-nullable reference types
 	/// need one at all; every other field's C# default is as good an answer as the mirror has.
+	/// <para>
+	/// An array-typed field starts empty rather than null. Empty is the honest initial state — the
+	/// mirror holds no elements until the caller supplies some — where null would be a second, useless
+	/// way of saying the same thing that every consumer would have to test for.
+	/// </para>
 	/// </summary>
 	/// <param name="cSharpTypeName">Field type as written.</param>
 	/// <returns>The initializer literal, or <see langword="null"/> when none is needed.</returns>
 	private static string? DefaultInitializer(string cSharpTypeName)
 	{
-		return cSharpTypeName == "string"
-			? "string.Empty"
+		if (cSharpTypeName == "string")
+		{
+			return "string.Empty";
+		}
+
+		if (cSharpTypeName.EndsWith("[]", StringComparison.Ordinal))
+		{
+			return "[]";
+		}
+
+		// A typed array starts empty for the same reason an array does. Its constructor takes its
+		// elements as a `params` list, so the no-argument form is the empty one.
+		return EmitterConfig.TypedArrayTypeNames.Contains(cSharpTypeName)
+			? $"new {cSharpTypeName}()"
 			: null;
 	}
 
 	private bool UsesMathTypes(IReadOnlyList<MappedParameter> constructorParameters, EmittedSurface surface)
 	{
-		return constructorParameters.Any(x => x.Mapping.Kind == TypeMappingKind.HandWrittenMathType) ||
-			surface.Properties.Any(x => x.Mapping.Kind == TypeMappingKind.HandWrittenMathType) ||
-			surface.Commands.Any(command => command.Parameters.Any(x => x.Mapping.Kind == TypeMappingKind.HandWrittenMathType)) ||
+		return constructorParameters.Any(x => NamesMathType(x.Mapping)) ||
+			surface.Properties.Any(x => NamesMathType(x.Mapping)) ||
+			surface.Commands.Any(command => command.Parameters.Any(x => NamesMathType(x.Mapping))) ||
 			surface.Queries.Any(query => EmitterConfig.MathTypeNames.Contains(query.ReturnTypeName) ||
-				query.Parameters.Any(x => x.Mapping.Kind == TypeMappingKind.HandWrittenMathType));
+				NamesMathType(query.ReturnMapping) ||
+				query.Parameters.Any(x => NamesMathType(x.Mapping)));
+	}
+
+	/// <summary>
+	/// Whether a mapping puts a math type's name in the emitted source, and therefore needs the math
+	/// namespace imported. Recurses through arrays: <c>Vector3[]</c> spells <c>Vector3</c> just as
+	/// plainly as <c>Vector3</c> does, and only the element mapping knows that.
+	/// </summary>
+	/// <param name="mapping">The resolved type, absent where the member carries none.</param>
+	/// <returns><see langword="true"/> when the math namespace has to be imported.</returns>
+	private static bool NamesMathType(TypeMapping? mapping)
+	{
+		if (mapping is null)
+		{
+			return false;
+		}
+
+		return mapping.Kind == TypeMappingKind.HandWrittenMathType || NamesMathType(mapping.ElementMapping);
 	}
 
 	/// <summary>Writes the provenance header. See <see cref="WriteFileHeader"/> for why it is not an auto-generated marker.</summary>
@@ -622,6 +693,7 @@ internal sealed class ClassEmitter
 		CSharpWriter writer,
 		IrClass irClass,
 		string threeTypeName,
+		string baseTypeName,
 		IReadOnlyList<MappedParameter> parameters,
 		IReadOnlyList<EmittedProperty> properties)
 	{
@@ -673,9 +745,95 @@ internal sealed class ClassEmitter
 			writer.WriteLine($"{parameter.FieldName} = {parameter.DeclarationName};");
 		}
 
+		WriteOwnedMathValueSetup(writer, properties, hasPrecedingStatements: parameters.Count > 0);
+
+		writer.Outdent();
+		writer.WriteLine("}");
+
+		WriteAdoptionConstructor(writer, threeTypeName, baseTypeName, parameters, properties);
+	}
+
+	/// <summary>
+	/// Writes the constructor that names an object the browser already made rather than building one.
+	/// <para>
+	/// The batch is taken here rather than assigned later so the object is attached from the moment it
+	/// exists: <c>AttachTo</c> returns early on an already-attached object, which is what stops
+	/// <c>EmitCreate</c> ever running for it. Creating it a second time is exactly the failure this
+	/// prevents — the JavaScript object is already there, and a create op would replace it with a
+	/// default-constructed one.
+	/// </para>
+	/// <para>
+	/// Not public: a handle only means anything against the JavaScript object table it came from, so
+	/// minting one is this assembly's business.
+	/// </para>
+	/// </summary>
+	/// <param name="writer">Destination.</param>
+	/// <param name="threeTypeName">Class being emitted.</param>
+	/// <param name="baseTypeName">C# base, which decides which adoption constructor to chain to.</param>
+	/// <param name="parameters">Constructor parameters, whose backing fields adoption cannot fill.</param>
+	/// <param name="properties">Emitted properties, for the owned math values that still need wiring.</param>
+	private static void WriteAdoptionConstructor(
+		CSharpWriter writer,
+		string threeTypeName,
+		string baseTypeName,
+		IReadOnlyList<MappedParameter> parameters,
+		IReadOnlyList<EmittedProperty> properties)
+	{
+		writer.WriteLine();
+		DocCommentEmitter.WriteSummary(
+			writer,
+			$"Adopts an existing JavaScript-side <c>{threeTypeName}</c> under the handle the browser minted for it. " +
+			$"No create op is emitted: the object already exists, and this mirror's job is to name it.");
+
+		DocCommentEmitter.WriteParam(writer, "batch", "Batch this object's writes record into.");
+		DocCommentEmitter.WriteParam(writer, "handle", "Negative handle the JavaScript side registered the object under.");
+
+		// The hand-written bases take the handle alone and have no batch to be given; a generated base
+		// carries this same two-argument constructor, so the chain forwards both.
+		var isHandWrittenBase = baseTypeName == EmitterConfig.RootBaseTypeName ||
+			EmitterConfig.HandWrittenClassNames.Contains(baseTypeName);
+
+		writer.WriteLine($"internal {threeTypeName}(ThreeBatch batch, int handle)");
+		writer.Indent();
+		writer.WriteLine(isHandWrittenBase ? ": base(handle)" : ": base(batch, handle)");
+		writer.Outdent();
+		writer.WriteLine("{");
+		writer.Indent();
+
+		// A constructor argument three.js requires is unknown to an adopted mirror: the browser built
+		// the object, so the real value is on that side and was never sent here. The field is written
+		// as unknown rather than left unassigned, because leaving it would warn (CS8618) about a
+		// non-nullable field that the public constructor does fill.
+		var unknownFields = parameters
+			.Where(x => !x.CSharpTypeName.EndsWith("?", StringComparison.Ordinal))
+			.ToList();
+
+		foreach (var parameter in unknownFields)
+		{
+			writer.WriteLine($"{parameter.FieldName} = default!;");
+		}
+
+		WriteOwnedMathValueSetup(writer, properties, hasPrecedingStatements: unknownFields.Any());
+
+		if (properties.Any(x => x.IsOwnedMathValue) || unknownFields.Any())
+		{
+			writer.WriteLine();
+		}
+
+		writer.WriteLine("Batch = batch;");
+		writer.Outdent();
+		writer.WriteLine("}");
+	}
+
+	/// <summary>Writes the owned math values' construction and change hooks, shared by both constructors.</summary>
+	/// <param name="writer">Destination.</param>
+	/// <param name="properties">Emitted properties.</param>
+	/// <param name="hasPrecedingStatements">Whether a blank line is needed before the first block.</param>
+	private static void WriteOwnedMathValueSetup(CSharpWriter writer, IReadOnlyList<EmittedProperty> properties, bool hasPrecedingStatements)
+	{
 		foreach (var (index, property) in properties.Where(x => x.IsOwnedMathValue).Index())
 		{
-			if (index > 0 || parameters.Count > 0)
+			if (index > 0 || hasPrecedingStatements)
 			{
 				writer.WriteLine();
 			}
@@ -689,9 +847,6 @@ internal sealed class ClassEmitter
 			writer.Outdent();
 			writer.WriteLine("};");
 		}
-
-		writer.Outdent();
-		writer.WriteLine("}");
 	}
 
 	/// <summary>
@@ -960,7 +1115,9 @@ internal sealed class ClassEmitter
 			? DocCommentEmitter.EnsureSentenceEnd(DocCommentEmitter.RenderInline(rawSummary))
 			: $"Reads <c>{query.ThreeName}</c> back from the JavaScript-side object.";
 
-		summary += $" Records a read op, sends it behind every write already pending, and completes with what <c>{query.ThreeName}</c> returned.";
+		summary += query.IsPropertyRead
+			? $" Read-only in three.js, so it is read on demand rather than mirrored: records a get op, sends it behind every write already pending, and completes with the value <c>{query.ThreeName}</c> held."
+			: $" Records a read op, sends it behind every write already pending, and completes with what <c>{query.ThreeName}</c> returned.";
 
 		DocCommentEmitter.WriteSummary(writer, summary);
 		foreach (var parameter in query.Parameters)
@@ -972,7 +1129,9 @@ internal sealed class ClassEmitter
 			DocCommentEmitter.WriteParam(writer, parameter.Name, text);
 		}
 
-		DocCommentEmitter.WriteReturns(writer, $"The value <c>{query.ThreeName}</c> returned, once the JavaScript side has answered.");
+		DocCommentEmitter.WriteReturns(writer, query.IsPropertyRead
+			? $"The value <c>{query.ThreeName}</c> held, once the JavaScript side has answered."
+			: $"The value <c>{query.ThreeName}</c> returned, once the JavaScript side has answered.");
 
 		var declaredParameters = query.Parameters
 			.Select(x => x.DefaultLiteral is null
@@ -980,7 +1139,11 @@ internal sealed class ClassEmitter
 				: $"{x.CSharpTypeName} {x.DeclarationName} = {x.DefaultLiteral}")
 			.ToList();
 
-		var returnTypeName = $"Task<{query.ReturnTypeName}>";
+		// An adopted result is nullable: three.js answers with nothing when the member held no object,
+		// and a non-nullable signature would make that indistinguishable from an object at handle zero.
+		var returnTypeName = query.IsAdoptedResult
+			? $"Task<{query.ReturnTypeName}?>"
+			: $"Task<{query.ReturnTypeName}>";
 		var declaration = $"public {returnTypeName} {query.CSharpName}({string.Join(", ", declaredParameters)})";
 		if (writer.IndentColumn + declaration.Length <= EmitterConfig.DeclarationWrapColumn)
 		{
@@ -1003,13 +1166,44 @@ internal sealed class ClassEmitter
 		writer.WriteLine("{");
 		writer.Indent();
 
-		// RecordRead owns attaching any argument that is itself a mirrored object, for the same reason
-		// RecordCall does: one owner for the invariant is what keeps the two paths from drifting.
-		var arguments = query.Parameters.Count == 0
-			? string.Empty
-			: ", " + string.Join(", ", query.Parameters.Select(x => x.DeclarationName));
+		if (query.IsAdoptedResult)
+		{
+			// The lambda is what supplies the concrete type: the helper resolves a handle this context
+			// already mirrors and only calls this for one it has never seen.
+			var adopt = EmitterConfig.AdoptionSubstituteTypeNames.TryGetValue(query.ReturnTypeName, out var substitute)
+				? $"(adoptedBatch, adoptedHandle) => new {substitute}(adoptedBatch, adoptedHandle, \"{query.ReturnTypeName}\")"
+				: $"(adoptedBatch, adoptedHandle) => new {query.ReturnTypeName}(adoptedBatch, adoptedHandle)";
+			// The type argument is spelled out rather than inferred: where the adopter is a substitute
+			// for an abstract declared type, inference would take the substitute and produce a
+			// `Task<PrimitiveObject3D?>` that does not convert to the declared `Task<Object3D?>`.
+			if (query.IsPropertyRead)
+			{
+				writer.WriteLine($"return RecordGetObject<{query.ReturnTypeName}>(\"{query.ThreeName}\", {adopt});");
+			}
+			else
+			{
+				var adoptedArguments = query.Parameters.Count == 0
+					? string.Empty
+					: ", " + string.Join(", ", query.Parameters.Select(x => x.DeclarationName));
 
-		writer.WriteLine($"return RecordRead<{query.ReturnTypeName}>(\"{query.ThreeName}\"{arguments});");
+				writer.WriteLine($"return RecordReadObject<{query.ReturnTypeName}>(\"{query.ThreeName}\", {adopt}{adoptedArguments});");
+			}
+		}
+		else if (query.IsPropertyRead)
+		{
+			writer.WriteLine($"return GetAsync<{query.ReturnTypeName}>(\"{query.ThreeName}\");");
+		}
+		else
+		{
+			// RecordRead owns attaching any argument that is itself a mirrored object, for the same reason
+			// RecordCall does: one owner for the invariant is what keeps the two paths from drifting.
+			var arguments = query.Parameters.Count == 0
+				? string.Empty
+				: ", " + string.Join(", ", query.Parameters.Select(x => x.DeclarationName));
+
+			writer.WriteLine($"return RecordRead<{query.ReturnTypeName}>(\"{query.ThreeName}\"{arguments});");
+		}
+
 		writer.Outdent();
 		writer.WriteLine("}");
 	}
@@ -1259,6 +1453,18 @@ internal sealed class EmittedQuery
 
 	/// <summary>C# type of the value read back, without the surrounding task.</summary>
 	public required string ReturnTypeName { get; init; }
+
+	/// <summary>How that type resolved, which is what knows whether it names a math type through an array.</summary>
+	public TypeMapping? ReturnMapping { get; init; }
+
+	/// <summary>
+	/// True when this reads a read-only property through the get op rather than invoking a method
+	/// through the read op.
+	/// </summary>
+	public bool IsPropertyRead { get; init; }
+
+	/// <summary>True when the result is a three.js object adopted by handle rather than a value.</summary>
+	public bool IsAdoptedResult { get; init; }
 
 	/// <summary>Upstream JSDoc for the signature.</summary>
 	public IrDoc? Documentation { get; init; }

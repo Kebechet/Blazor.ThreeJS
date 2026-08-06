@@ -1,4 +1,5 @@
 using Kebechet.Blazor.ThreeJS.Core;
+using Microsoft.JSInterop;
 
 namespace Kebechet.Blazor.ThreeJS.Addons;
 
@@ -59,17 +60,29 @@ public sealed class GLTFLoader
 	/// </para>
 	/// </summary>
 	/// <param name="url">URL of the <c>.gltf</c> or <c>.glb</c> file, as the browser will fetch it.</param>
+	/// <param name="progress">
+	/// Receives the browser's own fetch progress while the file downloads, or <see langword="null"/> to
+	/// ask for none. Reported a handful of times per load rather than continuously, and a report that
+	/// cannot be delivered — a circuit that went away mid-download — is dropped rather than failing the
+	/// load.
+	/// </param>
 	/// <returns>The loaded model, already attached to this loader's context.</returns>
 	/// <exception cref="ArgumentException">Thrown when <paramref name="url"/> is <see langword="null"/>, empty, or whitespace.</exception>
 	/// <exception cref="InvalidOperationException">Thrown when the browser answered without a root node.</exception>
-	public async Task<GLTFModel> LoadAsync(string url)
+	public async Task<GLTFModel> LoadAsync(string url, IProgress<GltfLoadProgress>? progress = null)
 	{
 		if (string.IsNullOrWhiteSpace(url))
 		{
 			throw new ArgumentException("A glTF URL is required; the browser has nothing to fetch without one.", nameof(url));
 		}
 
-		var response = await _context.LoadGltfAsync(url);
+		// Disposed however the load ends. An undisposed reference keeps the reporter, and everything it
+		// closes over, alive in the browser's reference table for as long as the circuit lives.
+		using var progressReference = progress is null
+			? null
+			: DotNetObjectReference.Create(new GltfProgressReporter(progress));
+
+		var response = await _context.LoadGltfAsync(url, progressReference);
 		if (!response.Nodes.Any())
 		{
 			throw new InvalidOperationException(

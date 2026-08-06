@@ -2,6 +2,7 @@
 // Re-run `npm run emit` after changing the emitter or generator/three-api.json.
 
 using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Math;
 
 namespace Kebechet.Blazor.ThreeJS.Objects;
 
@@ -15,18 +16,58 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// <seealso href="https://github.com/mrdoob/three.js/blob/master/src/extras/curves/QuadraticBezierCurve.js">Source</seealso>
 public sealed class QuadraticBezierCurve : ThreeObject
 {
+	private readonly Vector2? _v0;
+	private readonly Vector2? _v1;
+	private readonly Vector2? _v2;
 	private int _arcLengthDivisions = 200;
 	private bool _isArcLengthDivisionsWritten;
 
 	/// <summary>This constructor creates a new <see cref="QuadraticBezierCurve"/>.</summary>
-	public QuadraticBezierCurve()
+	/// <param name="v0">The start point. Default is <c>new THREE.Vector2()</c>.</param>
+	/// <param name="v1">The control point. Default is <c>new THREE.Vector2()</c>.</param>
+	/// <param name="v2">The end point. Default is <c>new THREE.Vector2()</c>.</param>
+	public QuadraticBezierCurve(Vector2? v0 = null, Vector2? v1 = null, Vector2? v2 = null)
 	{
+		_v0 = v0;
+		_v1 = v1;
+		_v2 = v2;
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>QuadraticBezierCurve</c> under the handle the browser
+	/// minted for it. No create op is emitted: the object already exists, and this mirror's job is to
+	/// name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal QuadraticBezierCurve(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.QuadraticBezierCurve</c>.</summary>
 	protected override string ThreeTypeName
 	{
 		get { return "QuadraticBezierCurve"; }
+	}
+
+	/// <summary>
+	/// Constructor arguments forwarded to <c>THREE.QuadraticBezierCurve</c>: v0, v1, v2. An argument
+	/// the caller left unspecified travels as the wire's not-supplied sentinel, or is trimmed when
+	/// nothing supplied follows it, so three.js applies its own default.
+	/// </summary>
+	protected override object?[] ConstructorArgs
+	{
+		get
+		{
+			return ThreeValue.TrimUnspecifiedTail(
+			[
+				ThreeValue.OrUnspecified(_v0),
+				ThreeValue.OrUnspecified(_v1),
+				ThreeValue.OrUnspecified(_v2)
+			]);
+		}
 	}
 
 	/// <summary>
@@ -59,6 +100,63 @@ public sealed class QuadraticBezierCurve : ThreeObject
 	}
 
 	/// <summary>
+	/// Returns a vector for a given position on the curve. Records a read op, sends it behind every
+	/// write already pending, and completes with what <c>getPoint</c> returned.
+	/// </summary>
+	/// <param name="t">A position on the curve. Must be in the range <c>[ 0, 1 ]</c>.</param>
+	/// <param name="optionalTarget">
+	/// If specified, the result will be copied into this Vector, otherwise a new Vector will be
+	/// created.
+	/// </param>
+	/// <returns>The value <c>getPoint</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Vector2> GetPointAsync(float t, Vector2 optionalTarget)
+	{
+		return RecordRead<Vector2>("getPoint", t, optionalTarget);
+	}
+
+	/// <summary>
+	/// Returns a vector for a given position on the <c>Curve</c> according to the arc length. Records a
+	/// read op, sends it behind every write already pending, and completes with what <c>getPointAt</c>
+	/// returned.
+	/// </summary>
+	/// <param name="u">
+	/// A position on the <c>Curve</c> according to the arc length. Must be in the range <c>[ 0, 1
+	/// ]</c>.
+	/// </param>
+	/// <param name="optionalTarget">
+	/// If specified, the result will be copied into this Vector, otherwise a new Vector will be
+	/// created.
+	/// </param>
+	/// <returns>The value <c>getPointAt</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Vector2> GetPointAtAsync(float u, Vector2 optionalTarget)
+	{
+		return RecordRead<Vector2>("getPointAt", u, optionalTarget);
+	}
+
+	/// <summary>
+	/// Returns a set of divisions <c>+1</c> points using <c>getPoint(t)</c>. Records a read op, sends
+	/// it behind every write already pending, and completes with what <c>getPoints</c> returned.
+	/// </summary>
+	/// <param name="divisions">Number of pieces to divide the <c>Curve</c> into.</param>
+	/// <returns>The value <c>getPoints</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Vector2[]> GetPointsAsync(int divisions = 5)
+	{
+		return RecordRead<Vector2[]>("getPoints", divisions);
+	}
+
+	/// <summary>
+	/// Returns a set of divisions <c>+1</c> equi-spaced points using <c>getPointAt(u)</c>. Records a
+	/// read op, sends it behind every write already pending, and completes with what
+	/// <c>getSpacedPoints</c> returned.
+	/// </summary>
+	/// <param name="divisions">Number of pieces to divide the <c>Curve</c> into.</param>
+	/// <returns>The value <c>getSpacedPoints</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Vector2[]> GetSpacedPointsAsync(int divisions = 5)
+	{
+		return RecordRead<Vector2[]>("getSpacedPoints", divisions);
+	}
+
+	/// <summary>
 	/// Get total <c>Curve</c> arc length. Records a read op, sends it behind every write already
 	/// pending, and completes with what <c>getLength</c> returned.
 	/// </summary>
@@ -66,6 +164,17 @@ public sealed class QuadraticBezierCurve : ThreeObject
 	public Task<float> GetLengthAsync()
 	{
 		return RecordRead<float>("getLength");
+	}
+
+	/// <summary>
+	/// Get list of cumulative segment lengths. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getLengths</c> returned.
+	/// </summary>
+	/// <param name="divisions"></param>
+	/// <returns>The value <c>getLengths</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float[]> GetLengthsAsync(int divisions)
+	{
+		return RecordRead<float[]>("getLengths", divisions);
 	}
 
 	/// <summary>
@@ -78,6 +187,50 @@ public sealed class QuadraticBezierCurve : ThreeObject
 	public Task<float> GetUtoTmappingAsync(float u, float distance)
 	{
 		return RecordRead<float>("getUtoTmapping", u, distance);
+	}
+
+	/// <summary>
+	/// Returns a unit vector tangent at t. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getTangent</c> returned.
+	/// </summary>
+	/// <param name="t">A position on the curve. Must be in the range <c>[ 0, 1 ]</c>.</param>
+	/// <param name="optionalTarget">
+	/// If specified, the result will be copied into this Vector, otherwise a new Vector will be
+	/// created.
+	/// </param>
+	/// <returns>The value <c>getTangent</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Vector2> GetTangentAsync(float t, Vector2 optionalTarget)
+	{
+		return RecordRead<Vector2>("getTangent", t, optionalTarget);
+	}
+
+	/// <summary>
+	/// Returns tangent at a point which is equidistant to the ends of the <c>Curve</c> from the point
+	/// given in <c>.getTangent</c>. Records a read op, sends it behind every write already pending, and
+	/// completes with what <c>getTangentAt</c> returned.
+	/// </summary>
+	/// <param name="u">
+	/// A position on the <c>Curve</c> according to the arc length. Must be in the range <c>[ 0, 1
+	/// ]</c>.
+	/// </param>
+	/// <param name="optionalTarget">
+	/// If specified, the result will be copied into this Vector, otherwise a new Vector will be
+	/// created.
+	/// </param>
+	/// <returns>The value <c>getTangentAt</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Vector2> GetTangentAtAsync(float u, Vector2 optionalTarget)
+	{
+		return RecordRead<Vector2>("getTangentAt", u, optionalTarget);
+	}
+
+	/// <summary>
+	/// Creates a clone of this instance. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>clone</c> returned.
+	/// </summary>
+	/// <returns>The value <c>clone</c> returned, once the JavaScript side has answered.</returns>
+	public Task<QuadraticBezierCurve?> CloneAsync()
+	{
+		return RecordReadObject<QuadraticBezierCurve>("clone", (adoptedBatch, adoptedHandle) => new QuadraticBezierCurve(adoptedBatch, adoptedHandle));
 	}
 
 	/// <summary>

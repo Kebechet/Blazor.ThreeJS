@@ -22,6 +22,18 @@ public sealed class Timer : ThreeObject
 	{
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>Timer</c> under the handle the browser minted for it. No
+	/// create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal Timer(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.Timer</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -95,5 +107,15 @@ public sealed class Timer : ThreeObject
 	public Task<float> GetTimescaleAsync()
 	{
 		return RecordRead<float>("getTimescale");
+	}
+
+	/// <summary>
+	/// Resets the time computation for the current simulation step. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>reset</c> returned.
+	/// </summary>
+	/// <returns>The value <c>reset</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Timer?> ResetAsync()
+	{
+		return RecordReadObject<Timer>("reset", (adoptedBatch, adoptedHandle) => new Timer(adoptedBatch, adoptedHandle));
 	}
 }

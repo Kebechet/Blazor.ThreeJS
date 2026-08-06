@@ -67,9 +67,7 @@ internal sealed class TypeMapper
 			case "union":
 				return MapUnion(type, context);
 			case "array":
-				return TypeMapping.Skipped(
-					SkipCategory.CollectionType,
-					$"`{type.Text}` is an array, and `ThreeValue.Encode` has no array arm — an array argument has no wire encoding");
+				return MapArray(type, context);
 			case "tuple":
 			case "namedTupleMember":
 				return TypeMapping.Skipped(SkipCategory.CollectionType, $"`{type.Text}` is a tuple, which has no wire encoding");
@@ -81,11 +79,37 @@ internal sealed class TypeMapper
 			case "object":
 				return TypeMapping.Skipped(SkipCategory.AnonymousObjectType, $"`{type.Text}` is an anonymous object literal type with no named C# equivalent");
 			case "literal":
-				return TypeMapping.Skipped(
-					SkipCategory.LiteralType,
-					$"`{type.Text}` is a literal type — three.js's `isMesh`-style runtime type tag — which C# has no equivalent for outside an enum member");
+				return MapLiteral(type, context);
 			default:
 				return TypeMapping.Skipped(SkipCategory.UnmappedTypeSyntax, $"`{type.Text}` is a TypeScript `{type.Kind}` type, which has no C# equivalent");
+		}
+	}
+
+	/// <summary>
+	/// Maps a single literal type to the C# type of the value it pins.
+	/// <para>
+	/// Every one of these in the three.js surface is a runtime type tag — <c>isMesh: true</c>,
+	/// <c>isBufferGeometry: true</c> — declared as the literal <c>true</c> rather than as
+	/// <c>boolean</c>. C# cannot express "always true", but it does not need to: the tag is read-only,
+	/// so it comes back over the get op as the <see langword="bool"/> it is. Narrowing the type to
+	/// <see langword="bool"/> loses only the guarantee, not the value.
+	/// </para>
+	/// </summary>
+	private static TypeMapping MapLiteral(IrType type, TypeMappingContext context)
+	{
+		switch (type.LiteralKind)
+		{
+			case "boolean":
+				return TypeMapping.Mapped("bool", TypeMappingKind.Primitive);
+			case "string":
+				return TypeMapping.Mapped("string", TypeMappingKind.Primitive);
+			case "number":
+				var resolution = NumericKindResolver.Resolve(context.MemberName, context.NumericKind);
+				return TypeMapping.Mapped(resolution.CSharpTypeName, TypeMappingKind.Primitive, numeric: resolution);
+			default:
+				return TypeMapping.Skipped(
+					SkipCategory.LiteralType,
+					$"`{type.Text}` is a `{type.LiteralKind ?? "?"}` literal, which pins a value C# has no type for");
 		}
 	}
 
@@ -110,10 +134,59 @@ internal sealed class TypeMapper
 		}
 	}
 
+	/// <summary>
+	/// Maps <c>T[]</c> onto <c>T[]</c>, resolving the element type and carrying its mapping through.
+	/// The wire encoder walks a sequence element by element, so an array is expressible exactly when
+	/// its elements are — an array of handles included, which is how <c>Skeleton.bones</c> travels.
+	/// </summary>
+	private TypeMapping MapArray(IrType type, TypeMappingContext context)
+	{
+		if (type.Element is null)
+		{
+			return TypeMapping.Skipped(SkipCategory.CollectionType, $"`{type.Text}` is an array whose element type the IR does not carry");
+		}
+
+		var element = Map(type.Element, context);
+		if (!element.IsMapped)
+		{
+			return TypeMapping.Skipped(element.SkipCategory, $"`{type.Text}` is an array whose element type cannot be mapped: {element.SkipReason}");
+		}
+
+		if (element.CSharpTypeName == "void")
+		{
+			return TypeMapping.Skipped(SkipCategory.CollectionType, $"`{type.Text}` is an array of `void`, which has no elements to carry");
+		}
+
+		// The element's own nullable annotation is kept: `(Material | null)[]` really can hold nulls,
+		// and dropping it would let a caller pass an array C# thinks is non-null into a slot that is not.
+		var elementTypeName = element.IsExplicitlyNullable || element.Kind == TypeMappingKind.GeneratedWrapperClass
+			? element.CSharpTypeName + "?"
+			: element.CSharpTypeName;
+
+		return TypeMapping.Mapped(elementTypeName + "[]", TypeMappingKind.Sequence, element.RequiredGeneratedTypeName, elementMapping: element);
+	}
+
 	private TypeMapping MapReference(IrType type, TypeMappingContext context)
 	{
 		var name = type.Name ?? type.Text;
 		var target = type.Target;
+
+		// Ahead of the origin switch, which would otherwise refuse these as lib types. They are lib
+		// types — but the package hand-writes a C# class for each, because three.js hands a typed array
+		// straight to WebGL and nothing else can stand in for one.
+		if (EmitterConfig.TypedArrayTypeNames.Contains(name))
+		{
+			return TypeMapping.Mapped(name, TypeMappingKind.HandWrittenTypedArray);
+		}
+
+		// Structural array interfaces, which a plain JavaScript array satisfies — and a plain JavaScript
+		// array is exactly what the sequence encoder produces. `ArrayLike<number>` is what every
+		// keyframe track declares its times and values as, so refusing it as a lib type blocked the
+		// whole animation stack over a shape the wire already carries.
+		if (EmitterConfig.StructuralSequenceTypeNames.Contains(name) && type.TypeArguments is [{ } elementType])
+		{
+			return MapArray(new IrType { Kind = "array", Text = type.Text, Element = elementType }, context);
+		}
 
 		switch (target?.Origin)
 		{
@@ -198,6 +271,14 @@ internal sealed class TypeMapper
 
 	private static TypeMapping MapInterfaceReference(string name, IrType type)
 	{
+		// A structural stand-in for a math type three.js also has a class for. The mirror can only ever
+		// send the class, which satisfies the interface, so this resolves rather than being refused as
+		// a shape with no C# equivalent.
+		if (EmitterConfig.StructuralMathInterfaceNames.TryGetValue(name, out var mathTypeName))
+		{
+			return TypeMapping.Mapped(mathTypeName, TypeMappingKind.HandWrittenMathType);
+		}
+
 		var isOptionsBag = name.EndsWith("Parameters", StringComparison.Ordinal) ||
 			name.EndsWith("Options", StringComparison.Ordinal);
 
@@ -219,6 +300,14 @@ internal sealed class TypeMapper
 		if (string.Equals(name, EmitterConfig.ColorRepresentationAliasName, StringComparison.Ordinal))
 		{
 			return TypeMapping.Mapped(EmitterConfig.ColorTypeName, TypeMappingKind.HandWrittenMathType);
+		}
+
+		// three.js's own alias for "any of the nine typed arrays", which it spells as a union. The
+		// package's hand-written base is exactly that set, so the union resolves to it rather than
+		// being refused for having more than one arm.
+		if (string.Equals(name, EmitterConfig.TypedArrayBaseTypeName, StringComparison.Ordinal))
+		{
+			return TypeMapping.Mapped(EmitterConfig.TypedArrayBaseTypeName, TypeMappingKind.HandWrittenTypedArray);
 		}
 
 		// The catalog is asked before the hand-written names, so a value set that exists in both places
@@ -286,6 +375,22 @@ internal sealed class TypeMapper
 			alternatives = [singleValueArm];
 		}
 
+		// A union whose arms are all mirrored classes is still one thing on the wire: every arm travels
+		// as a handle, and the applier does not care which class the handle names. So it resolves to the
+		// base they all share rather than being refused — `Scene.fog` is `Fog | FogExp2`, and without
+		// this the property does not exist at all, which is a worse answer than one that accepts either.
+		// Weaker than the declared type — nothing stops a caller assigning a Mesh to `Scene.fog` — so it
+		// is recorded as a narrowing and listed in the README's narrowings section with the arms it
+		// stands for.
+		if (alternatives.Count > 1 && alternatives.All(x => IsMirroredClass(x, context)))
+		{
+			MultiValueNarrowings.Add(type.Text);
+			return TypeMapping.Mapped(
+				EmitterConfig.RootBaseTypeName,
+				TypeMappingKind.GeneratedWrapperClass,
+				isExplicitlyNullable: hasNullArm);
+		}
+
 		if (alternatives.Count != 1)
 		{
 			return TypeMapping.Skipped(
@@ -305,6 +410,23 @@ internal sealed class TypeMapper
 			mapping.RequiredGeneratedTypeName,
 			isExplicitlyNullable: true,
 			numeric: mapping.Numeric);
+	}
+
+	/// <summary>
+	/// Whether a union arm is a class this mirror represents by handle, which is what makes an
+	/// all-class union expressible as their shared base.
+	/// </summary>
+	/// <param name="alternative">One arm of the union.</param>
+	/// <param name="context">Mapping context, for type-parameter erasure inside the arm.</param>
+	/// <returns><see langword="true"/> when the arm resolves to a handle-backed class.</returns>
+	private bool IsMirroredClass(IrType alternative, TypeMappingContext context)
+	{
+		if (alternative.Kind != "reference" || alternative.Target?.RefKind != "class")
+		{
+			return false;
+		}
+
+		return Map(alternative, context).Kind == TypeMappingKind.GeneratedWrapperClass;
 	}
 
 	/// <summary>

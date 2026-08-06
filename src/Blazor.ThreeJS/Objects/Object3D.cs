@@ -474,7 +474,7 @@ public abstract class Object3D : ThreeObject
 	/// simply dropped from the list <see cref="AttachTo"/> would have replayed.
 	/// <para>
 	/// Detaching does not release the child. The child keeps its handle and its JavaScript-side object,
-	/// so it can be added somewhere else; releasing it is <see cref="ThreeObject.Release"/>'s job.
+	/// so it can be added somewhere else; releasing it is <see cref="ThreeObject.RetireHandle"/>'s job.
 	/// </para>
 	/// <para>
 	/// A no-op for an object that is not a child of this one, which is what lets a caller detach

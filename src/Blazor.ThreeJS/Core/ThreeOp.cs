@@ -70,6 +70,21 @@ internal sealed class ThreeOp
 	[JsonPropertyName("i")]
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 	public int RequestId { get; init; }
+
+	/// <summary>
+	/// Asks the applier to answer with a handle rather than a value. Only meaningful on
+	/// <see cref="ThreeOpKind.Read"/> and <see cref="ThreeOpKind.Get"/>, and omitted when false.
+	/// <para>
+	/// Without it, a member whose result is a three.js object is refused: the value channel carries
+	/// numbers, strings and tagged math values, and serializing an object would hand C# a bag of
+	/// numbers that looks like an answer. With it, the applier registers the object and sends back a
+	/// <c>$ref</c>, which C# adopts. An object it has seen before answers with the handle it already
+	/// has, so <c>action.play()</c> returning itself does not become a second mirror of one object.
+	/// </para>
+	/// </summary>
+	[JsonPropertyName("n")]
+	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+	public bool MintsHandle { get; init; }
 }
 
 /// <summary>

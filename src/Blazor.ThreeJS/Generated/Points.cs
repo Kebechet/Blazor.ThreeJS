@@ -16,6 +16,8 @@ public sealed class Points : Object3D
 {
 	private BufferGeometry? _geometry;
 	private Material? _material;
+	private float[]? _morphTargetInfluences;
+	private bool _isMorphTargetInfluencesWritten;
 	private bool _isGeometryWritten;
 	private bool _isMaterialWritten;
 
@@ -30,6 +32,18 @@ public sealed class Points : Object3D
 	{
 		_geometry = geometry;
 		_material = material;
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>Points</c> under the handle the browser minted for it. No
+	/// create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal Points(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.Points</c>.</summary>
@@ -52,6 +66,27 @@ public sealed class Points : Object3D
 				ThreeValue.OrUnspecified(_geometry),
 				ThreeValue.OrUnspecified(_material)
 			]);
+		}
+	}
+
+	/// <summary>
+	/// An array of weights typically from <c>0-1</c> that specify how much of the morph is applied.
+	/// Writing it records a <c>morphTargetInfluences</c> property write once this object is attached;
+	/// writing the value already held records nothing.
+	/// </summary>
+	public float[]? MorphTargetInfluences
+	{
+		get { return _morphTargetInfluences; }
+		set
+		{
+			if (_morphTargetInfluences == value)
+			{
+				return;
+			}
+
+			_morphTargetInfluences = value;
+			_isMorphTargetInfluencesWritten = true;
+			RecordSet("morphTargetInfluences", value);
 		}
 	}
 
@@ -114,6 +149,17 @@ public sealed class Points : Object3D
 	}
 
 	/// <summary>
+	/// Read-only flag to check if a given object is of type <see cref="Points"/>. Read-only in
+	/// three.js, so it is read on demand rather than mirrored: records a get op, sends it behind every
+	/// write already pending, and completes with the value <c>isPoints</c> held.
+	/// </summary>
+	/// <returns>The value <c>isPoints</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsPointsAsync()
+	{
+		return GetAsync<bool>("isPoints");
+	}
+
+	/// <summary>
 	/// Attaches the objects <c>THREE.Points</c> is constructed from, so their create ops reach the
 	/// batch before the one that references them by handle, then emits this object's own.
 	/// </summary>
@@ -137,6 +183,11 @@ public sealed class Points : Object3D
 	internal override void EmitState(ThreeBatch batch)
 	{
 		base.EmitState(batch);
+
+		if (_isMorphTargetInfluencesWritten)
+		{
+			batch.Set(Handle, "morphTargetInfluences", ThreeValue.Encode(_morphTargetInfluences));
+		}
 
 		if (_isGeometryWritten)
 		{

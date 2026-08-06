@@ -11,29 +11,31 @@ namespace Blazor.ThreeJS.Emitter.Map;
 /// </summary>
 internal sealed class ConstructorMapper
 {
+
 	/// <summary>Maps the constructor of one class.</summary>
 	/// <param name="irClass">Class whose constructor is being mapped.</param>
 	/// <param name="mapper">Type mapper.</param>
 	/// <returns>The mapped constructor, or a refusal naming what could not be mirrored.</returns>
 	public MappedConstructor Map(IrClass irClass, TypeMapper mapper)
 	{
-		if (irClass.Constructors.Count > 1)
-		{
-			return MappedConstructor.Refused(
-				$"{irClass.Constructors.Count} constructor overloads; C# overload emission is not implemented",
-				SkipCategory.ConstructorOverloads);
-		}
-
 		if (irClass.Constructors.Count == 0)
 		{
 			return MappedConstructor.Mapped([], [], []);
+		}
+
+		var selected = SelectSubsumingConstructor(irClass.Constructors);
+		if (selected is null)
+		{
+			return MappedConstructor.Refused(
+				$"{irClass.Constructors.Count} constructor overloads, none of which subsumes the others, so one C# constructor cannot stand for them all",
+				SkipCategory.ConstructorOverloads);
 		}
 
 		var parameters = new List<MappedParameter>();
 		var dropped = new List<DroppedParameter>();
 		var isTailDropped = false;
 
-		foreach (var irParameter in irClass.Constructors[0].Parameters)
+		foreach (var irParameter in selected.Parameters)
 		{
 			if (isTailDropped)
 			{
@@ -152,6 +154,73 @@ internal sealed class ConstructorMapper
 			.ToList();
 
 		return MappedConstructor.Mapped(parameters, dropped, middlePositionHazards);
+	}
+
+	/// <summary>
+	/// Picks the one overload every other overload is a valid call of, or <see langword="null"/> when
+	/// no such overload exists.
+	/// <para>
+	/// Overloading is how the three.js types spell a signature that gained a parameter: <c>Texture</c>
+	/// declares its nine legacy arguments as one overload and the current ten, all optional, as
+	/// another. Those are not two constructors — they are one, written twice, and emitting both would
+	/// be a duplicate C# signature (CS0111) because the arguments differ only in optionality. Taking
+	/// the widest is therefore exact rather than lossy: every call the narrower overload accepts, the
+	/// wider one accepts too.
+	/// </para>
+	/// <para>
+	/// Genuinely different overloads — ones taking unrelated types — have no subsuming member and are
+	/// still refused, because silently picking one of those would drop half the constructor's API.
+	/// </para>
+	/// </summary>
+	/// <param name="constructors">Every declared constructor overload.</param>
+	/// <returns>The subsuming overload, or <see langword="null"/> when the overloads genuinely differ.</returns>
+	private static IrSignature? SelectSubsumingConstructor(IReadOnlyList<IrSignature> constructors)
+	{
+		if (constructors.Count == 1)
+		{
+			return constructors[0];
+		}
+
+		return constructors.FirstOrDefault(candidate =>
+			constructors.All(other => ReferenceEquals(candidate, other) || Subsumes(candidate, other)));
+	}
+
+	/// <summary>
+	/// Whether every call of <paramref name="other"/> is also a valid call of <paramref name="candidate"/>:
+	/// it takes at least as many parameters, agrees on the declared type at every shared position, and
+	/// makes optional everything the other leaves out or leaves optional.
+	/// </summary>
+	/// <param name="candidate">The overload being tested as the wider one.</param>
+	/// <param name="other">The overload it must accept every call of.</param>
+	/// <returns><see langword="true"/> when the candidate subsumes the other.</returns>
+	private static bool Subsumes(IrSignature candidate, IrSignature other)
+	{
+		if (candidate.Parameters.Count < other.Parameters.Count)
+		{
+			return false;
+		}
+
+		for (var index = 0; index < other.Parameters.Count; index++)
+		{
+			var candidateParameter = candidate.Parameters[index];
+			var otherParameter = other.Parameters[index];
+			if (candidateParameter.Type?.Text != otherParameter.Type?.Text)
+			{
+				return false;
+			}
+
+			// An argument the other overload lets the caller omit has to be omittable here too, or a
+			// call that compiles against the other would not compile against this one.
+			if (otherParameter.IsOptional && !candidateParameter.IsOptional)
+			{
+				return false;
+			}
+		}
+
+		// Anything beyond the other overload's arity has to be omittable, for the same reason.
+		return candidate.Parameters
+			.Skip(other.Parameters.Count)
+			.All(x => x.IsOptional || x.IsRest);
 	}
 
 	/// <summary>

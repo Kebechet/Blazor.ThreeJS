@@ -25,6 +25,18 @@ public sealed class LineCurve3 : ThreeObject
 		_v2 = v2;
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>LineCurve3</c> under the handle the browser minted for it.
+	/// No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal LineCurve3(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.LineCurve3</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -71,6 +83,63 @@ public sealed class LineCurve3 : ThreeObject
 	}
 
 	/// <summary>
+	/// Returns a vector for a given position on the curve. Records a read op, sends it behind every
+	/// write already pending, and completes with what <c>getPoint</c> returned.
+	/// </summary>
+	/// <param name="t">A position on the curve. Must be in the range <c>[ 0, 1 ]</c>.</param>
+	/// <param name="optionalTarget">
+	/// If specified, the result will be copied into this Vector, otherwise a new Vector will be
+	/// created.
+	/// </param>
+	/// <returns>The value <c>getPoint</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Vector3> GetPointAsync(float t, Vector3 optionalTarget)
+	{
+		return RecordRead<Vector3>("getPoint", t, optionalTarget);
+	}
+
+	/// <summary>
+	/// Returns a vector for a given position on the <c>Curve</c> according to the arc length. Records a
+	/// read op, sends it behind every write already pending, and completes with what <c>getPointAt</c>
+	/// returned.
+	/// </summary>
+	/// <param name="u">
+	/// A position on the <c>Curve</c> according to the arc length. Must be in the range <c>[ 0, 1
+	/// ]</c>.
+	/// </param>
+	/// <param name="optionalTarget">
+	/// If specified, the result will be copied into this Vector, otherwise a new Vector will be
+	/// created.
+	/// </param>
+	/// <returns>The value <c>getPointAt</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Vector3> GetPointAtAsync(float u, Vector3 optionalTarget)
+	{
+		return RecordRead<Vector3>("getPointAt", u, optionalTarget);
+	}
+
+	/// <summary>
+	/// Returns a set of divisions <c>+1</c> points using <c>getPoint(t)</c>. Records a read op, sends
+	/// it behind every write already pending, and completes with what <c>getPoints</c> returned.
+	/// </summary>
+	/// <param name="divisions">Number of pieces to divide the <c>Curve</c> into.</param>
+	/// <returns>The value <c>getPoints</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Vector3[]> GetPointsAsync(int divisions = 5)
+	{
+		return RecordRead<Vector3[]>("getPoints", divisions);
+	}
+
+	/// <summary>
+	/// Returns a set of divisions <c>+1</c> equi-spaced points using <c>getPointAt(u)</c>. Records a
+	/// read op, sends it behind every write already pending, and completes with what
+	/// <c>getSpacedPoints</c> returned.
+	/// </summary>
+	/// <param name="divisions">Number of pieces to divide the <c>Curve</c> into.</param>
+	/// <returns>The value <c>getSpacedPoints</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Vector3[]> GetSpacedPointsAsync(int divisions = 5)
+	{
+		return RecordRead<Vector3[]>("getSpacedPoints", divisions);
+	}
+
+	/// <summary>
 	/// Get total <c>Curve</c> arc length. Records a read op, sends it behind every write already
 	/// pending, and completes with what <c>getLength</c> returned.
 	/// </summary>
@@ -78,6 +147,17 @@ public sealed class LineCurve3 : ThreeObject
 	public Task<float> GetLengthAsync()
 	{
 		return RecordRead<float>("getLength");
+	}
+
+	/// <summary>
+	/// Get list of cumulative segment lengths. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getLengths</c> returned.
+	/// </summary>
+	/// <param name="divisions"></param>
+	/// <returns>The value <c>getLengths</c> returned, once the JavaScript side has answered.</returns>
+	public Task<float[]> GetLengthsAsync(int divisions)
+	{
+		return RecordRead<float[]>("getLengths", divisions);
 	}
 
 	/// <summary>
@@ -90,6 +170,50 @@ public sealed class LineCurve3 : ThreeObject
 	public Task<float> GetUtoTmappingAsync(float u, float distance)
 	{
 		return RecordRead<float>("getUtoTmapping", u, distance);
+	}
+
+	/// <summary>
+	/// Returns a unit vector tangent at t. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getTangent</c> returned.
+	/// </summary>
+	/// <param name="t">A position on the curve. Must be in the range <c>[ 0, 1 ]</c>.</param>
+	/// <param name="optionalTarget">
+	/// If specified, the result will be copied into this Vector, otherwise a new Vector will be
+	/// created.
+	/// </param>
+	/// <returns>The value <c>getTangent</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Vector3> GetTangentAsync(float t, Vector3 optionalTarget)
+	{
+		return RecordRead<Vector3>("getTangent", t, optionalTarget);
+	}
+
+	/// <summary>
+	/// Returns tangent at a point which is equidistant to the ends of the <c>Curve</c> from the point
+	/// given in <c>.getTangent</c>. Records a read op, sends it behind every write already pending, and
+	/// completes with what <c>getTangentAt</c> returned.
+	/// </summary>
+	/// <param name="u">
+	/// A position on the <c>Curve</c> according to the arc length. Must be in the range <c>[ 0, 1
+	/// ]</c>.
+	/// </param>
+	/// <param name="optionalTarget">
+	/// If specified, the result will be copied into this Vector, otherwise a new Vector will be
+	/// created.
+	/// </param>
+	/// <returns>The value <c>getTangentAt</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Vector3> GetTangentAtAsync(float u, Vector3 optionalTarget)
+	{
+		return RecordRead<Vector3>("getTangentAt", u, optionalTarget);
+	}
+
+	/// <summary>
+	/// Creates a clone of this instance. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>clone</c> returned.
+	/// </summary>
+	/// <returns>The value <c>clone</c> returned, once the JavaScript side has answered.</returns>
+	public Task<LineCurve3?> CloneAsync()
+	{
+		return RecordReadObject<LineCurve3>("clone", (adoptedBatch, adoptedHandle) => new LineCurve3(adoptedBatch, adoptedHandle));
 	}
 
 	/// <summary>

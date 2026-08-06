@@ -1,0 +1,173 @@
+@attribute [Stories("Catalogue/Shadows")]
+@implements IDisposable
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Casting and receiving shadows">
+        <Template>
+            <p>
+                Shadows need three things agreed between C# and three.js: the renderer's shadow map
+                switched on, a light told to cast, and each object told whether it casts, receives, or
+                both. The last two are ordinary mirrored properties. The first is not reachable at all
+                without naming an object nobody holds a reference to.
+            </p>
+            <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildShadowSceneAsync" />
+            <p>
+                <button @onclick="ToggleShadowsAsync">@(_areShadowsEnabled ? "Turn shadows off" : "Turn shadows on")</button>
+                — shadow map <strong>@(_areShadowsEnabled ? "enabled" : "disabled")</strong>,
+                adopted as <code>@(_shadowMapType ?? "…")</code>
+            </p>
+            <p>
+                <code>renderer.shadowMap.enabled</code> is a property on a <em>nested</em> object, and
+                the applier resolves a member directly rather than walking a dotted path - there is no
+                <code>Set("shadowMap.enabled", true)</code>. Reading it as a value fails too: the value
+                channel carries numbers, strings and tagged math values, and serializing a three.js
+                object would hand C# a bag of numbers that reads like an answer.
+            </p>
+            <p>
+                So the read asks for a <strong>handle</strong> instead. <code>GetObjectAsync</code>
+                registers the object on the JavaScript side and answers with a reference C# adopts, and
+                writes to it are ordinary ops from then on:
+            </p>
+            <pre><code>var shadowMap = await threeContext.Renderer.GetObjectAsync("shadowMap");
+shadowMap.Set("enabled", true);
+shadowMap.Set("type", ShadowMapType.PCFSoftShadowMap);</code></pre>
+            <p>
+                ⚠️ An object the mirror has already seen answers with the handle it already has, rather
+                than a second one. That matters because three.js returns <code>this</code> from most of
+                its mutators and the declared return type cannot be told apart from one that allocates -
+                <code>Object3D.clone</code> and <code>BufferGeometry.center</code> both say
+                <code>this</code>. Minting blindly would give one object two handles, and a write
+                through one would be invisible through the other.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private const float RadiansPerFrame = 0.005f;
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+    private ThreeContext? _threeContext;
+    private Primitive? _shadowMap;
+    private string? _shadowMapType;
+    private bool _areShadowsEnabled = true;
+
+    private async Task BuildShadowSceneAsync(ThreeContext threeContext)
+    {
+        _threeContext = threeContext;
+
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 4.5f, 9f);
+        camera.LookAt(0f, 0.5f, 0f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.35f));
+
+        var keyLight = new DirectionalLight(Color.White, 2.2f);
+        keyLight.Position.Set(4f, 7f, 4f);
+        keyLight.CastShadow = true;
+        scene.Add(keyLight);
+
+        var floorMaterial = new MeshStandardMaterial();
+        floorMaterial.Color.SetHex(0x9aa0a6);
+        floorMaterial.Roughness = 0.9f;
+
+        var floor = new Mesh(new PlaneGeometry(16f, 16f), floorMaterial);
+        floor.Rotation.Set(-MathF.PI / 2f, 0f, 0f, EulerOrder.XYZ);
+        floor.Position.Set(0f, -1.4f, 0f);
+
+        // Receives but does not cast: a floor casting onto itself is shadow acne, not a shadow.
+        floor.ReceiveShadow = true;
+        scene.Add(floor);
+
+        var casters = new Group();
+        var casterGeometry = new BoxGeometry(1.3f, 1.3f, 1.3f);
+
+        foreach (var (index, hex) in new[] { 0x5b8dd9, 0xffb347, 0x4ad6a0 }.Index())
+        {
+            var material = new MeshStandardMaterial();
+            material.Color.SetHex(hex);
+            material.Roughness = 0.4f;
+
+            var caster = new Mesh(casterGeometry, material);
+            caster.Position.Set((index - 1) * 2.6f, 0.4f, 0f);
+            caster.CastShadow = true;
+            caster.ReceiveShadow = true;
+            casters.Add(caster);
+        }
+
+        scene.Add(casters);
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        // The renderer is adopted; its shadowMap is adopted from it. Neither is reachable by walking
+        // the scene graph, which is the whole point of this story.
+        _shadowMap = await threeContext.Renderer.GetObjectAsync("shadowMap");
+        _shadowMapType = _shadowMap?.ThreeType;
+        ApplyShadowSettings();
+        await threeContext.FlushAsync();
+        StateHasChanged();
+
+        _ = AnimateAsync(threeContext, casters);
+    }
+
+    private async Task ToggleShadowsAsync()
+    {
+        if (_threeContext is null)
+        {
+            return;
+        }
+
+        _areShadowsEnabled = !_areShadowsEnabled;
+        ApplyShadowSettings();
+        await _threeContext.FlushAsync();
+    }
+
+    /// <summary>
+    /// Writes the shadow map's own settings. <c>needsUpdate</c> is what makes three.js rebuild the
+    /// shadow textures after the flag changes; without it, turning shadows back on leaves the last
+    /// rendered maps in place.
+    /// </summary>
+    private void ApplyShadowSettings()
+    {
+        if (_shadowMap is null)
+        {
+            return;
+        }
+
+        _shadowMap.Set("enabled", _areShadowsEnabled);
+        _shadowMap.Set("type", ShadowMapType.PCFSoftShadowMap);
+        _shadowMap.Set("needsUpdate", true);
+    }
+
+    private async Task AnimateAsync(ThreeContext threeContext, Object3D casters)
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                var nextRotationY = casters.Rotation.Y + RadiansPerFrame;
+                casters.Rotation.Y = nextRotationY >= MathF.Tau ? nextRotationY - MathF.Tau : nextRotationY;
+                await threeContext.FlushAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // See Cube.stories.razor for why this is what stops the loop when a story is swapped.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+}

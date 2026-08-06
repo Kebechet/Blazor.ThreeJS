@@ -143,8 +143,9 @@ internal sealed class ThreeBatch
 	/// <param name="handle">Handle of the object to invoke the method on.</param>
 	/// <param name="member">Name of the method to invoke.</param>
 	/// <param name="args">Positional arguments to pass to the method.</param>
+	/// <param name="mintsHandle">Whether the applier should answer with a handle instead of a value.</param>
 	/// <returns>The request id identifying this read in the applier's response.</returns>
-	public int Read(int handle, string member, object?[] args)
+	public int Read(int handle, string member, object?[] args, bool mintsHandle = false)
 	{
 		InvalidateSetCoalescing(handle);
 
@@ -157,7 +158,8 @@ internal sealed class ThreeBatch
 			Handle = handle,
 			Member = member,
 			Args = args,
-			RequestId = _nextRequestId
+			RequestId = _nextRequestId,
+			MintsHandle = mintsHandle
 		});
 
 		return _nextRequestId;
@@ -176,8 +178,9 @@ internal sealed class ThreeBatch
 	/// </summary>
 	/// <param name="handle">Handle of the object to read from.</param>
 	/// <param name="member">Name of the property to read.</param>
+	/// <param name="mintsHandle">Whether the applier should answer with a handle instead of a value.</param>
 	/// <returns>The request id identifying this read in the applier's response.</returns>
-	public int Get(int handle, string member)
+	public int Get(int handle, string member, bool mintsHandle = false)
 	{
 		InvalidateSetCoalescing(handle);
 
@@ -187,7 +190,8 @@ internal sealed class ThreeBatch
 			Kind = ThreeOpKind.Get,
 			Handle = handle,
 			Member = member,
-			RequestId = _nextRequestId
+			RequestId = _nextRequestId,
+			MintsHandle = mintsHandle
 		});
 
 		return _nextRequestId;

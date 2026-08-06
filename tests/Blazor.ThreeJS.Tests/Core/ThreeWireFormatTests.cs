@@ -620,7 +620,10 @@ public class ThreeWireFormatTests
 	public void ThreeValue_DecodeGivenAnUnknownTag_Throws()
 	{
 		// Arrange
-		var element = JsonSerializer.SerializeToElement(new { t = "Box3", v = new[] { 0f } }, _webOptions);
+		// Deliberately a name three.js has no math type for, rather than one that is merely unported
+		// today: this test asserts the decoder's refusal, and a real name would start passing through
+		// the moment that type was ported, silently testing nothing.
+		var element = JsonSerializer.SerializeToElement(new { t = "NotAThreeMathType", v = new[] { 0f } }, _webOptions);
 		var retagged = JsonDocument.Parse(
 			element.GetRawText().Replace("\"t\":", $"\"{ThreeWireFormat.TagKey}\":", StringComparison.Ordinal)).RootElement;
 

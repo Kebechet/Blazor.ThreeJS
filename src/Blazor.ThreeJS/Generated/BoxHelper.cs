@@ -8,10 +8,10 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 
 /// <summary>
 /// Helper object to graphically show the world-axis-aligned bounding box around an object. The
-/// actual bounding box is handled with <c>Box3</c>, this is just a visual helper for debugging. It
-/// can be automatically resized with <c>BoxHelper#update</c> when the object it's created from is
-/// transformed. Note that the object must have a geometry for this to work, so it won't work with
-/// sprites. The JavaScript-side <c>THREE.BoxHelper</c>.
+/// actual bounding box is handled with <see cref="Box3"/>, this is just a visual helper for
+/// debugging. It can be automatically resized with <c>BoxHelper#update</c> when the object it's
+/// created from is transformed. Note that the object must have a geometry for this to work, so it
+/// won't work with sprites. The JavaScript-side <c>THREE.BoxHelper</c>.
 /// </summary>
 public sealed class BoxHelper : LineSegments
 {
@@ -26,6 +26,20 @@ public sealed class BoxHelper : LineSegments
 	{
 		_object = @object;
 		_color = color;
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>BoxHelper</c> under the handle the browser minted for it.
+	/// No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal BoxHelper(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		_object = default!;
+
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.BoxHelper</c>.</summary>

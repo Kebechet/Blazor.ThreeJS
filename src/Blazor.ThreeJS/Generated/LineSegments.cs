@@ -34,6 +34,18 @@ public class LineSegments : Line
 		_material = material;
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>LineSegments</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal LineSegments(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.LineSegments</c>.</summary>
 	protected override string ThreeTypeName
 	{
@@ -55,6 +67,17 @@ public class LineSegments : Line
 				ThreeValue.OrUnspecified(_material)
 			]);
 		}
+	}
+
+	/// <summary>
+	/// Read-only flag to check if a given object is of type <see cref="LineSegments"/>. Read-only in
+	/// three.js, so it is read on demand rather than mirrored: records a get op, sends it behind every
+	/// write already pending, and completes with the value <c>isLineSegments</c> held.
+	/// </summary>
+	/// <returns>The value <c>isLineSegments</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsLineSegmentsAsync()
+	{
+		return GetAsync<bool>("isLineSegments");
 	}
 
 	/// <summary>

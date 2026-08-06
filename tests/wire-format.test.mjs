@@ -29,7 +29,7 @@ import {
     loadGltfInto,
     runOps
 } from '../src/Blazor.ThreeJS/wwwroot/three-interop.js';
-import * as THREE from '../src/Blazor.ThreeJS/wwwroot/three.module.min.js';
+import * as THREE from '../src/Blazor.ThreeJS/wwwroot/three.webgpu.min.js';
 
 // A browser global three.js's FileLoader reports download progress through, and which Node has not
 // got. A gap in the test host rather than in anything this package ships: every browser it targets
@@ -270,6 +270,175 @@ assert.match(
     unencodableReadResponse.r[0].e,
     /no wire encoding/,
     'a read returning a three.js object must be refused, not serialized as a plain object');
+
+// ---------------------------------------------------------------------------------------------
+// Tagged math values, both directions, against the real three.js.
+//
+// C# and JavaScript each carry their own hand-written component layout per type - ToArray/FromArray
+// on one side, read/build on the other - with no compiler relationship between them. A pair that
+// disagrees on component order still round-trips within each language, so neither language's own
+// tests can catch it: a transposed matrix or a swapped Box3 corner would reach production silently.
+//
+// math-values-fixture.json is written by the C# encoder and asserted against it by
+// MathValueWireFormatTests. Decoding each entry here into a real three.js instance and encoding it
+// straight back is what pins the two layouts to each other.
+// ---------------------------------------------------------------------------------------------
+
+const mathValues = JSON.parse(readFileSync(new URL('./math-values-fixture.json', import.meta.url), 'utf8'));
+
+let mathValueCount = 0;
+for (const [typeName, encoded] of Object.entries(mathValues)) {
+    // Through the applier's own ops rather than by calling decode/encode directly: a Set writes the
+    // value onto a real three.js object and a Get reads it back, which is the path a mirrored
+    // property actually takes.
+    const carrier = {};
+    context.objects.set(90, carrier);
+    runOps(context, [{ k: OP_SET, h: 90, m: 'value', v: encoded }]);
+
+    const instance = carrier.value;
+    assert.equal(
+        instance instanceof THREE[typeName],
+        true,
+        `a '${typeName}' tagged value must decode to a real THREE.${typeName}, not to a plain object`);
+
+    const readBack = runOps(context, [{ k: OP_GET, h: 90, m: 'value', i: 80 }]).r[0].v;
+    assert.deepEqual(
+        readBack,
+        encoded,
+        `${typeName} components disagree between C# and JavaScript - one side's layout has drifted`);
+
+    context.objects.delete(90);
+    mathValueCount++;
+}
+
+assert.equal(mathValueCount, 19, 'every hand-written math type should be in the fixture');
+
+// Infinity has no JSON number, and the two runtimes fail differently and quietly if left alone:
+// Utf8JsonWriter throws in C#, and JSON.stringify(Infinity) yields null here. three.js seeds an empty
+// Box3 at ±Infinity, so this is that type's default state rather than an edge case.
+const emptyBox = { $t: 'Box3', v: ['Infinity', 'Infinity', 'Infinity', '-Infinity', '-Infinity', '-Infinity'] };
+const boxCarrier = {};
+context.objects.set(91, boxCarrier);
+runOps(context, [{ k: OP_SET, h: 91, m: 'value', v: emptyBox }]);
+assert.equal(boxCarrier.value.isEmpty(), true, 'an infinite Box3 must decode to a box three.js itself calls empty');
+assert.deepEqual(
+    runOps(context, [{ k: OP_GET, h: 91, m: 'value', i: 81 }]).r[0].v,
+    emptyBox,
+    'a non-finite component must survive being read back, rather than being flattened to null by JSON.stringify');
+context.objects.delete(91);
+
+console.log(`# Math values OK - ${mathValueCount} tagged types round-tripped through the applier, non-finite components included.`);
+
+// ---------------------------------------------------------------------------------------------
+// Arrays and typed arrays.
+//
+// The end-to-end case is a custom BufferGeometry: C# sends vertex data as a $ta typed array, the
+// applier rebuilds the real Float32Array, and three.js uploads it. Anything less than the real
+// constructor fails here - BufferAttribute reads `array.length` and hands the buffer to WebGL, so a
+// plain Array of numbers gets through the constructor and breaks at draw time instead.
+// ---------------------------------------------------------------------------------------------
+
+const geometryContext = { objects: new Map() };
+const TRIANGLE = [0, 0, 0, 1, 0, 0, 0, 1, 0];
+
+runOps(geometryContext, [
+    { k: OP_CREATE, h: 1, t: 'BufferAttribute', a: [{ $ta: 'Float32Array', v: TRIANGLE }, 3] },
+    { k: OP_CREATE, h: 2, t: 'BufferGeometry', a: [] },
+    { k: OP_CALL, h: 2, m: 'setAttribute', a: ['position', { $ref: 1 }] }
+]);
+
+const positionAttribute = geometryContext.objects.get(1);
+assert.equal(positionAttribute.array instanceof Float32Array, true, 'a $ta value must rebuild the real typed array, not a plain Array');
+assert.equal(positionAttribute.count, 3, 'three vertices of item size three');
+assert.equal(
+    geometryContext.objects.get(2).getAttribute('position'),
+    positionAttribute,
+    'a $ref argument must resolve to the object the handle names');
+
+// Read back: a typed array returns in the same $ta form C# sends, so BufferGeometry data round-trips.
+const attributeReadBack = runOps(geometryContext, [{ k: OP_GET, h: 1, m: 'array', i: 82 }]).r[0].v;
+assert.deepEqual(
+    attributeReadBack,
+    { $ta: 'Float32Array', v: TRIANGLE },
+    'a typed array must read back under the same tag it was sent with');
+
+// An array of handles is sendable but deliberately NOT readable: encoding one would need a minted
+// handle per element, which no op does. It has to fail loudly rather than serialize the objects.
+geometryContext.objects.set(3, { bones: [positionAttribute] });
+const unreadableArray = runOps(geometryContext, [{ k: OP_GET, h: 3, m: 'bones', i: 83 }]);
+assert.match(
+    unreadableArray.r[0].e,
+    /no wire encoding/,
+    'an array of three.js objects must be refused on the way back, not serialized element by element');
+
+// Plain arrays, both directions, including one of tagged values.
+geometryContext.objects.set(4, {});
+runOps(geometryContext, [
+    { k: OP_SET, h: 4, m: 'numbers', v: [1, 2, 3] },
+    { k: OP_SET, h: 4, m: 'points', v: [{ $t: 'Vector3', v: [1, 2, 3] }, { $t: 'Vector3', v: [4, 5, 6] }] }
+]);
+
+const arrayCarrier = geometryContext.objects.get(4);
+assert.deepEqual(arrayCarrier.numbers, [1, 2, 3], 'a plain array must decode element by element');
+assert.equal(arrayCarrier.points.length, 2, 'an array of tagged values must keep every element');
+assert.equal(arrayCarrier.points[0].isVector3, true, 'each element of a tagged array must become a real three.js value');
+assert.deepEqual(
+    runOps(geometryContext, [{ k: OP_GET, h: 4, m: 'points', i: 84 }]).r[0].v,
+    [{ $t: 'Vector3', v: [1, 2, 3] }, { $t: 'Vector3', v: [4, 5, 6] }],
+    'an array of math values must read back tagged element by element');
+
+console.log('# Arrays OK - a custom BufferGeometry built from a $ta typed array, arrays round-tripped, handle arrays refused on read.');
+
+// ---------------------------------------------------------------------------------------------
+// Minting a handle for a member whose result is an object.
+//
+// The property this rests on is that an object the table already knows answers with the handle it
+// already has. three.js returns `this` from most of its mutators, and the declared return type cannot
+// tell those apart from the ones that allocate — Object3D.clone and BufferGeometry.center both say
+// `this`. Minting blindly would give an object C# already mirrors a second handle, and a write through
+// one would be invisible through the other.
+// ---------------------------------------------------------------------------------------------
+
+const mintContext = { objects: new Map() };
+runOps(mintContext, [{ k: OP_CREATE, h: 1, t: 'BufferGeometry', a: [] }]);
+const mintGeometry = mintContext.objects.get(1);
+
+// `center()` returns the receiver. C# created it, so the handle that comes back must be C#'s own
+// positive one and NOT a freshly minted negative one.
+const selfReturn = runOps(mintContext, [{ k: OP_READ, h: 1, m: 'center', a: [], i: 90, n: true }]).r[0].v;
+assert.equal(selfReturn.$ref, 1, 'a method returning the receiver must answer with the handle it already has');
+assert.equal(mintContext.objects.size, 1, 'answering with a known handle must not register a second entry');
+
+// `clone()` allocates. That one is genuinely new, so it gets a minted handle of its own.
+const cloned = runOps(mintContext, [{ k: OP_READ, h: 1, m: 'clone', a: [], i: 91, n: true }]).r[0].v;
+assert.notEqual(cloned.$ref, 1, 'a method that allocates must not answer with the receiver handle');
+assert.ok(cloned.$ref < 0, 'a minted handle must be negative');
+assert.equal(cloned.t, 'BufferGeometry', 'the reference must carry the constructor name three.js reports');
+assert.notEqual(mintContext.objects.get(cloned.$ref), mintGeometry, 'the clone must be a different object');
+
+// Asking twice for the same object answers the same handle both times.
+const firstAsk = runOps(mintContext, [{ k: OP_GET, h: 1, m: 'attributes', i: 92, n: true }]).r[0].v;
+const secondAsk = runOps(mintContext, [{ k: OP_GET, h: 1, m: 'attributes', i: 93, n: true }]).r[0].v;
+assert.equal(firstAsk.$ref, secondAsk.$ref, 'reading the same object twice must answer with one handle, not two');
+
+// A value still answers as a value under `n`: handing back a handle to a Vector3 would make the caller
+// round-trip again for components C# can hold directly.
+const valueUnderMint = runOps(mintContext, [{ k: OP_GET, h: 1, m: 'boundingSphere', i: 94, n: true }]).r[0].v;
+assert.equal(valueUnderMint, null, 'an unset property answers null even when a handle was asked for');
+
+runOps(mintContext, [{ k: OP_CREATE, h: 2, t: 'Vector3', a: [1, 2, 3] }]);
+mintContext.objects.set(3, { position: mintContext.objects.get(2) });
+const mathUnderMint = runOps(mintContext, [{ k: OP_GET, h: 3, m: 'position', i: 95, n: true }]).r[0].v;
+assert.deepEqual(mathUnderMint, { $t: 'Vector3', v: [1, 2, 3] }, 'a math value must answer as a value even when a handle was asked for');
+
+// Without `n`, an object result is still refused rather than serialized.
+const refusedWithoutMint = runOps(mintContext, [{ k: OP_READ, h: 1, m: 'clone', a: [], i: 96 }]);
+assert.match(
+    refusedWithoutMint.r[0].e,
+    /no wire encoding/,
+    'an object result must still be refused when the caller did not ask for a handle');
+
+console.log('# Handle minting OK - the receiver keeps its handle, a clone gets a new one, values stay values.');
 
 // ---------------------------------------------------------------------------------------------
 // The escape hatch. Everything above is the typed surface proving itself; this is the other half of
@@ -520,22 +689,54 @@ await new Promise(resolve => modelServer.listen(0, '127.0.0.1', resolve));
 const modelUrl = `http://127.0.0.1:${modelServer.address().port}/figure.gltf`;
 
 const loadingContext = { objects: new Map() };
-const loadResponse = await loadGltfInto(loadingContext, modelUrl);
+
+// Stands in for the DotNetObjectReference a caller passing an IProgress supplies. This is the only
+// JavaScript-to-C# call the package makes during an operation, and it is bounded by the fetch — a
+// handful of events for a model, never per frame.
+const progressReports = [];
+const progressRef = {
+    invokeMethodAsync: (method, loaded, total) => {
+        progressReports.push({ method, loaded, total });
+        return Promise.resolve();
+    }
+};
+
+const loadResponse = await loadGltfInto(loadingContext, modelUrl, progressRef);
 const loadedNodes = loadResponse.n;
+
+assert.ok(progressReports.length > 0, 'a load with a progress reference should report at least once');
+assert.equal(
+    progressReports.every(report => report.method === 'ReportProgress'),
+    true,
+    'progress must be delivered to the [JSInvokable] name the C# reporter declares');
+assert.ok(
+    progressReports.every(report => typeof report.loaded === 'number' && typeof report.total === 'number'),
+    'both progress figures must be numbers, since C# declares them long');
+
+// A progress reference that throws must not fail an otherwise-fine load: the usual cause is a circuit
+// that went away mid-download, and the model is still going to arrive.
+const faultingContext = { objects: new Map() };
+const faultingRef = { invokeMethodAsync: () => Promise.reject(new Error('circuit gone')) };
+const survivedResponse = await loadGltfInto(faultingContext, modelUrl, faultingRef);
+assert.ok(survivedResponse.n.length > 1, 'a failing progress report must not fail the load');
 
 assert.ok(loadedNodes.length > 1, 'the loaded graph should report a root and its named descendants');
 
-// Handle minting, and the property the whole design rests on: the browser allocates downwards from
-// -1 and C# upwards from 1, so neither allocator can ever produce a handle the other already used.
-// ThreeObject rejects a non-negative handle offered as browser-minted, which is the same rule from
-// the other side.
+// Handle minting, and the property the whole design rests on: the browser allocates downwards and C#
+// upwards from 1, so neither allocator can ever produce a handle the other already used. ThreeObject
+// rejects a non-negative handle offered as browser-minted, which is the same rule from the other side.
 const mintedHandles = loadedNodes.map(node => node.h);
 assert.deepEqual(
     mintedHandles.filter(handle => handle >= 0),
     [],
     'every handle the browser mints must be negative, or it would collide with one C# allocated');
 assert.equal(new Set(mintedHandles).size, mintedHandles.length, 'no two loaded nodes may share a handle');
-assert.deepEqual(mintedHandles.slice(0, 3), [-1, -2, -3], 'minting should count down from -1');
+
+// -1 is reserved for the context's own renderer, so minting starts below it. A loaded node handed -1
+// would answer to the same handle C# addresses the renderer by, and writes meant for one would land
+// on the other.
+assert.deepEqual(mintedHandles.slice(0, 3), [-2, -3, -4], 'minting should count down from below the reserved renderer handle');
+assert.equal(mintedHandles.includes(-1), false, 'no minted handle may take the reserved renderer handle');
 
 for (const node of loadedNodes) {
     assert.ok(loadingContext.objects.has(node.h), `handle ${node.h} should be registered in the object table`);

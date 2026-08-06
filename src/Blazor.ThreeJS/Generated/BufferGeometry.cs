@@ -25,17 +25,74 @@ public class BufferGeometry : EventDispatcher
 	private int _id;
 	private string _uuid = string.Empty;
 	private string _name = string.Empty;
+	private BufferAttribute? _index = null;
 	private float _indirectOffset;
 	private bool _morphTargetsRelative = false;
 	private bool _isIdWritten;
 	private bool _isUuidWritten;
 	private bool _isNameWritten;
+	private bool _isIndexWritten;
 	private bool _isIndirectOffsetWritten;
 	private bool _isMorphTargetsRelativeWritten;
+	private bool _isBoundingBoxWritten;
+	private bool _isBoundingSphereWritten;
+
+	/// <summary>
+	/// Bounding box for the <c>BufferGeometry</c>, which can be calculated with
+	/// <c>.computeBoundingBox()</c>. Mirrored as an instance this object owns: mutating it records a
+	/// write of <c>boundingBox</c>.
+	/// </summary>
+	public Box3 BoundingBox { get; }
+
+	/// <summary>
+	/// Bounding sphere for the <c>BufferGeometry</c>, which can be calculated with
+	/// <c>.computeBoundingSphere()</c>. Mirrored as an instance this object owns: mutating it records a
+	/// write of <c>boundingSphere</c>.
+	/// </summary>
+	public Sphere BoundingSphere { get; }
 
 	/// <summary>This creates a new <c>BufferGeometry</c> object.</summary>
 	public BufferGeometry()
 	{
+		BoundingBox = new Box3();
+		BoundingBox.OnChange = () =>
+		{
+			_isBoundingBoxWritten = true;
+			RecordSet("boundingBox", BoundingBox);
+		};
+
+		BoundingSphere = new Sphere();
+		BoundingSphere.OnChange = () =>
+		{
+			_isBoundingSphereWritten = true;
+			RecordSet("boundingSphere", BoundingSphere);
+		};
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>BufferGeometry</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal BufferGeometry(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		BoundingBox = new Box3();
+		BoundingBox.OnChange = () =>
+		{
+			_isBoundingBoxWritten = true;
+			RecordSet("boundingBox", BoundingBox);
+		};
+
+		BoundingSphere = new Sphere();
+		BoundingSphere.OnChange = () =>
+		{
+			_isBoundingSphereWritten = true;
+			RecordSet("boundingSphere", BoundingSphere);
+		};
+
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.BufferGeometry</c>.</summary>
@@ -102,6 +159,35 @@ public class BufferGeometry : EventDispatcher
 			_name = value;
 			_isNameWritten = true;
 			RecordSet("name", value);
+		}
+	}
+
+	/// <summary>
+	/// Allows for vertices to be re-used across multiple triangles; this is called using "indexed
+	/// triangles". Each triangle is associated with the indices of three vertices. This attribute
+	/// therefore stores the index of each vertex for each triangular face. If this attribute is not
+	/// set, the <c>renderer</c> assumes that each three contiguous positions represent a single
+	/// triangle. Writing it records a <c>index</c> property write once this object is attached; writing
+	/// the value already held records nothing.
+	/// </summary>
+	public BufferAttribute? Index
+	{
+		get { return _index; }
+		set
+		{
+			if (ReferenceEquals(_index, value))
+			{
+				return;
+			}
+
+			_index = value;
+			_isIndexWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("index", value);
 		}
 	}
 
@@ -295,8 +381,60 @@ public class BufferGeometry : EventDispatcher
 	}
 
 	/// <summary>
+	/// Read-only flag to check if a given object is of type <see cref="BufferGeometry"/>. Read-only in
+	/// three.js, so it is read on demand rather than mirrored: records a get op, sends it behind every
+	/// write already pending, and completes with the value <c>isBufferGeometry</c> held.
+	/// </summary>
+	/// <returns>The value <c>isBufferGeometry</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsBufferGeometryAsync()
+	{
+		return GetAsync<bool>("isBufferGeometry");
+	}
+
+	/// <summary>
+	/// Return the <c>.index</c> buffer. Records a read op, sends it behind every write already pending,
+	/// and completes with what <c>getIndex</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getIndex</c> returned, once the JavaScript side has answered.</returns>
+	public Task<BufferAttribute?> GetIndexAsync()
+	{
+		return RecordReadObject<BufferAttribute>("getIndex", (adoptedBatch, adoptedHandle) => new BufferAttribute(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
+	/// Center the geometry based on the bounding box. Records a read op, sends it behind every write
+	/// already pending, and completes with what <c>center</c> returned.
+	/// </summary>
+	/// <returns>The value <c>center</c> returned, once the JavaScript side has answered.</returns>
+	public Task<BufferGeometry?> CenterAsync()
+	{
+		return RecordReadObject<BufferGeometry>("center", (adoptedBatch, adoptedHandle) => new BufferGeometry(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
+	/// Return a non-index version of an indexed BufferGeometry. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>toNonIndexed</c> returned.
+	/// </summary>
+	/// <returns>The value <c>toNonIndexed</c> returned, once the JavaScript side has answered.</returns>
+	public Task<BufferGeometry?> ToNonIndexedAsync()
+	{
+		return RecordReadObject<BufferGeometry>("toNonIndexed", (adoptedBatch, adoptedHandle) => new BufferGeometry(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
+	/// Creates a clone of this BufferGeometry. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>clone</c> returned.
+	/// </summary>
+	/// <returns>The value <c>clone</c> returned, once the JavaScript side has answered.</returns>
+	public Task<BufferGeometry?> CloneAsync()
+	{
+		return RecordReadObject<BufferGeometry>("clone", (adoptedBatch, adoptedHandle) => new BufferGeometry(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
 	/// Emits the create op for <c>THREE.BufferGeometry</c>, then replays every property written before
-	/// this object was attached.
+	/// this object was attached. A replayed value that is itself a mirrored object is attached first,
+	/// so its create op reaches the batch before the write that references it by handle.
 	/// </summary>
 	/// <param name="batch">Batch to record the ops into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
@@ -318,6 +456,12 @@ public class BufferGeometry : EventDispatcher
 			batch.Set(Handle, "name", ThreeValue.Encode(_name));
 		}
 
+		if (_isIndexWritten)
+		{
+			_index?.AttachTo(batch);
+			batch.Set(Handle, "index", ThreeValue.Encode(_index));
+		}
+
 		if (_isIndirectOffsetWritten)
 		{
 			batch.Set(Handle, "indirectOffset", ThreeValue.Encode(_indirectOffset));
@@ -326,6 +470,16 @@ public class BufferGeometry : EventDispatcher
 		if (_isMorphTargetsRelativeWritten)
 		{
 			batch.Set(Handle, "morphTargetsRelative", ThreeValue.Encode(_morphTargetsRelative));
+		}
+
+		if (_isBoundingBoxWritten)
+		{
+			batch.Set(Handle, "boundingBox", ThreeValue.Encode(BoundingBox));
+		}
+
+		if (_isBoundingSphereWritten)
+		{
+			batch.Set(Handle, "boundingSphere", ThreeValue.Encode(BoundingSphere));
 		}
 	}
 }

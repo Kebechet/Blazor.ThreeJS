@@ -20,7 +20,8 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// </summary>
 public sealed class LightProbe : Object3D
 {
-	private float _intensity = 1f;
+	private readonly SphericalHarmonics3? _sh;
+	private float _intensity;
 	private bool _isColorWritten;
 	private bool _isIntensityWritten;
 
@@ -31,8 +32,13 @@ public sealed class LightProbe : Object3D
 	public Color Color { get; }
 
 	/// <summary>Constructs a new light probe.</summary>
-	public LightProbe()
+	/// <param name="sh">The spherical harmonics which represents encoded lighting information.</param>
+	/// <param name="intensity">The light's strength/intensity.</param>
+	public LightProbe(SphericalHarmonics3? sh = null, float intensity = 1f)
 	{
+		_sh = sh;
+		_intensity = intensity;
+
 		Color = new Color();
 		Color.OnChange = () =>
 		{
@@ -41,10 +47,41 @@ public sealed class LightProbe : Object3D
 		};
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>LightProbe</c> under the handle the browser minted for it.
+	/// No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal LightProbe(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		_intensity = default!;
+
+		Color = new Color();
+		Color.OnChange = () =>
+		{
+			_isColorWritten = true;
+			RecordSet("color", Color);
+		};
+
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.LightProbe</c>.</summary>
 	protected override string ThreeTypeName
 	{
 		get { return "LightProbe"; }
+	}
+
+	/// <summary>
+	/// Constructor arguments forwarded to <c>THREE.LightProbe</c>: sh, intensity. An argument the
+	/// caller left unspecified travels as the wire's not-supplied sentinel, or is trimmed when nothing
+	/// supplied follows it, so three.js applies its own default.
+	/// </summary>
+	protected override object?[] ConstructorArgs
+	{
+		get { return ThreeValue.TrimUnspecifiedTail([ThreeValue.OrUnspecified(_sh), _intensity]); }
 	}
 
 	/// <summary>
@@ -74,6 +111,28 @@ public sealed class LightProbe : Object3D
 	public void Dispose()
 	{
 		RecordCall("dispose");
+	}
+
+	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isLightProbe</c> held.
+	/// </summary>
+	/// <returns>The value <c>isLightProbe</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsLightProbeAsync()
+	{
+		return GetAsync<bool>("isLightProbe");
+	}
+
+	/// <summary>
+	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
+	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
+	/// the value <c>isLight</c> held.
+	/// </summary>
+	/// <returns>The value <c>isLight</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsLightAsync()
+	{
+		return GetAsync<bool>("isLight");
 	}
 
 	/// <summary>

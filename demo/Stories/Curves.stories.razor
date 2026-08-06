@@ -1,0 +1,164 @@
+@attribute [Stories("Catalogue/Curves")]
+@using System.Globalization
+@implements IDisposable
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Two-dimensional and three-dimensional curves">
+        <Template>
+            <p>
+                Both curves below are defined by control points in C#, sampled by three.js, and drawn
+                from the points it sends back. The flat one is a <code>SplineCurve</code>, whose points
+                are <code>Vector2</code>; the looping one is a <code>CatmullRomCurve3</code>, whose
+                points are <code>Vector3</code>.
+            </p>
+            <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildCurvesAsync" />
+            <p>
+                <strong>Sampled by three.js and read back:</strong>
+                <code>SplineCurve</code> @_splinePointCount points, length
+                @_splineLength.ToString("F2", CultureInfo.InvariantCulture);
+                <code>CatmullRomCurve3</code> @_catmullPointCount points, length
+                @_catmullLength.ToString("F2", CultureInfo.InvariantCulture).
+            </p>
+            <p>
+                That both types exist at all is worth a note. three.js declares one
+                <code>Curve&lt;TVector extends Vector2 | Vector3&gt;</code> and every curve class picks
+                an arm: <code>SplineCurve extends Curve&lt;Vector2&gt;</code>,
+                <code>CatmullRomCurve3 extends Curve&lt;Vector3&gt;</code>. The mirror binds that
+                argument per subclass, so <code>GetPointsAsync</code> returns
+                <code>Vector2[]</code> on one and <code>Vector3[]</code> on the other rather than
+                collapsing both to whichever arm was picked first.
+            </p>
+            <p>
+                The returned array crosses the wire as an array of tagged math values, and the line
+                geometry built from it goes back the other way as a single <code>Float32Array</code> -
+                so a 128-segment curve costs one round trip out and one upload back, not one per point.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private const float RadiansPerFrame = 0.005f;
+    private const int SplineDivisions = 96;
+    private const int CatmullDivisions = 160;
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+    private int _splinePointCount;
+    private int _catmullPointCount;
+    private float _splineLength;
+    private float _catmullLength;
+
+    private async Task BuildCurvesAsync(ThreeContext threeContext)
+    {
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 2.4f, 9f);
+        camera.LookAt(0f, 0f, 0f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.7f));
+
+        var splineCurve = new SplineCurve(
+        [
+            new Vector2(-3f, -1.2f),
+            new Vector2(-1.5f, 1.4f),
+            new Vector2(0f, -1.4f),
+            new Vector2(1.5f, 1.4f),
+            new Vector2(3f, -1.2f)
+        ]);
+
+        threeContext.Attach(splineCurve);
+
+        var splinePoints = await splineCurve.GetPointsAsync(SplineDivisions);
+        _splineLength = await splineCurve.GetLengthAsync();
+        _splinePointCount = splinePoints.Length;
+
+        var splineMaterial = new LineBasicMaterial();
+        splineMaterial.Color.SetHex(0xffb347);
+
+        // The curve is flat, so every sampled point sits at z = 0. Lifted clear of the second curve so
+        // the two read as separate objects rather than one tangle.
+        var splineLine = new Line(BuildLineGeometry(splinePoints.Select(x => new Vector3(x.X, x.Y, 0f))), splineMaterial);
+        splineLine.Position.Set(0f, 1.6f, 0f);
+        scene.Add(splineLine);
+
+        var catmullCurve = new CatmullRomCurve3(
+        [
+            new Vector3(-3f, 0f, -1.5f),
+            new Vector3(-1.5f, 1.2f, 1.5f),
+            new Vector3(1.5f, -1.2f, 1.5f),
+            new Vector3(3f, 0f, -1.5f),
+            new Vector3(0f, 1.6f, -3f)
+        ],
+        closed: true);
+
+        threeContext.Attach(catmullCurve);
+
+        var catmullPoints = await catmullCurve.GetPointsAsync(CatmullDivisions);
+        _catmullLength = await catmullCurve.GetLengthAsync();
+        _catmullPointCount = catmullPoints.Length;
+
+        var catmullMaterial = new LineBasicMaterial();
+        catmullMaterial.Color.SetHex(0x9fd0ff);
+
+        var catmullLine = new Line(BuildLineGeometry(catmullPoints), catmullMaterial);
+        catmullLine.Position.Set(0f, -1.2f, 0f);
+        scene.Add(catmullLine);
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+        StateHasChanged();
+
+        _ = AnimateAsync(threeContext, [splineLine, catmullLine]);
+    }
+
+    /// <summary>
+    /// Turns sampled curve points into a line geometry, as one flat XYZ run uploaded in a single
+    /// <c>Float32Array</c>.
+    /// </summary>
+    /// <param name="points">Points in curve order.</param>
+    /// <returns>The geometry, with a <c>position</c> attribute and nothing else.</returns>
+    private static BufferGeometry BuildLineGeometry(IEnumerable<Vector3> points)
+    {
+        var positions = points
+            .SelectMany(point => new[] { point.X, point.Y, point.Z })
+            .ToArray();
+
+        var geometry = new BufferGeometry();
+        geometry.Call("setAttribute", "position", new BufferAttribute(new Float32Array(positions), 3f));
+        return geometry;
+    }
+
+    private async Task AnimateAsync(ThreeContext threeContext, IReadOnlyList<Object3D> lines)
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                foreach (var line in lines)
+                {
+                    var nextRotationY = line.Rotation.Y + RadiansPerFrame;
+                    line.Rotation.Y = nextRotationY >= MathF.Tau ? nextRotationY - MathF.Tau : nextRotationY;
+                }
+
+                await threeContext.FlushAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // See Cube.stories.razor for why this is what stops the loop when a story is swapped.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+}

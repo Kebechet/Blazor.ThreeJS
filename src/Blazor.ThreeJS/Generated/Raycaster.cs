@@ -34,10 +34,17 @@ public sealed class Raycaster : ThreeObject
 	private float? _far;
 	private Camera? _camera;
 	private Layers? _layers;
+	private bool _isRayWritten;
 	private bool _isNearWritten;
 	private bool _isFarWritten;
 	private bool _isCameraWritten;
 	private bool _isLayersWritten;
+
+	/// <summary>
+	/// The <c>Ray</c> used for the raycasting. Mirrored as an instance this object owns: mutating it
+	/// records a write of <c>ray</c>.
+	/// </summary>
+	public Ray Ray { get; }
 
 	/// <summary>This creates a new <see cref="Raycaster"/> object.</summary>
 	/// <param name="origin">The origin vector where the ray casts from.</param>
@@ -50,6 +57,34 @@ public sealed class Raycaster : ThreeObject
 		_direction = direction;
 		_near = near;
 		_far = far;
+
+		Ray = new Ray();
+		Ray.OnChange = () =>
+		{
+			_isRayWritten = true;
+			RecordSet("ray", Ray);
+		};
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>Raycaster</c> under the handle the browser minted for it.
+	/// No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal Raycaster(ThreeBatch batch, int handle)
+		: base(handle)
+	{
+		_near = default!;
+
+		Ray = new Ray();
+		Ray.OnChange = () =>
+		{
+			_isRayWritten = true;
+			RecordSet("ray", Ray);
+		};
+
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.Raycaster</c>.</summary>
@@ -183,6 +218,17 @@ public sealed class Raycaster : ThreeObject
 		RecordCall("set", origin, direction);
 	}
 
+	/// <summary>Updates the ray with a new origin and direction.</summary>
+	/// <param name="coords">
+	/// 2D coordinates of the mouse, in normalized device coordinates (NDC)---X and Y components should
+	/// be between -1 and 1.
+	/// </param>
+	/// <param name="camera">camera from which the ray should originate.</param>
+	public void SetFromCamera(Vector2 coords, Camera camera)
+	{
+		RecordCall("setFromCamera", coords, camera);
+	}
+
 	/// <summary>
 	/// Emits the create op for <c>THREE.Raycaster</c>, then replays every property written before this
 	/// object was attached. A replayed value that is itself a mirrored object is attached first, so its
@@ -192,6 +238,11 @@ public sealed class Raycaster : ThreeObject
 	internal override void EmitCreate(ThreeBatch batch)
 	{
 		base.EmitCreate(batch);
+
+		if (_isRayWritten)
+		{
+			batch.Set(Handle, "ray", ThreeValue.Encode(Ray));
+		}
 
 		if (_isNearWritten)
 		{

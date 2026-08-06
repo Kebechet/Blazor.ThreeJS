@@ -1,0 +1,167 @@
+@attribute [Stories("Architecture/The renderer")]
+@implements IDisposable
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Reaching the renderer itself">
+        <Template>
+            <p>
+                Everything else in a scene is reachable by walking down from the scene graph. The
+                renderer is not: <code>ThreeCanvas</code> creates it in JavaScript before any C# object
+                exists, and no mesh, light or camera holds a reference to it. So the context names it
+                directly - <code>ThreeContext.Renderer</code> is a <code>WebGLRenderer</code> adopted
+                under a reserved handle, not one C# constructed.
+            </p>
+            <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildRendererSceneAsync" />
+            <p>
+                <button @onclick="() => ApplyToneMappingAsync(ToneMapping.NoToneMapping)">No tone mapping</button>
+                <button @onclick="() => ApplyToneMappingAsync(ToneMapping.ACESFilmicToneMapping)">ACES filmic</button>
+                <button @onclick="() => ApplyToneMappingAsync(ToneMapping.ReinhardToneMapping)">Reinhard</button>
+                — showing <strong>@_toneMapping</strong>
+            </p>
+            <p>
+                <button @onclick="() => ApplyExposureAsync(0.6f)">Exposure 0.6</button>
+                <button @onclick="() => ApplyExposureAsync(1.0f)">Exposure 1.0</button>
+                <button @onclick="() => ApplyExposureAsync(1.8f)">Exposure 1.8</button>
+                <button @onclick="CycleBackgroundAsync">Cycle clear colour</button>
+            </p>
+            <p>
+                The emissive spheres are deliberately brighter than white. Without tone mapping they
+                clip to flat white; ACES and Reinhard each roll that highlight off differently, which is
+                the whole reason the setting exists and is only visible on the renderer.
+            </p>
+            <p>
+                ⚠️ The renderer is <em>adopted</em>: no create op is emitted for it, because the object
+                already exists. That also means the mirror knows only what C# has written to it - a
+                property C# never set reads back as the C# default, not as what three.js holds. The same
+                rule as any adopted object; see <em>Architecture/Mirror authority</em>.
+            </p>
+            <p>
+                Shadow maps are the one renderer feature still out of reach:
+                <code>renderer.shadowMap.enabled</code> is a property on a nested object, and the
+                applier resolves members directly rather than walking a dotted path, so reaching it
+                needs a handle minted for <code>shadowMap</code> itself.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private const float RadiansPerFrame = 0.005f;
+
+    /// <summary>Clear colours cycled through, to show the renderer's own background is writable.</summary>
+    private static readonly int[] _backgroundHexes = [0x11151a, 0x1d2430, 0x2a1f2d, 0x0d1b16];
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+    private ThreeContext? _threeContext;
+    private ToneMapping _toneMapping = ToneMapping.NoToneMapping;
+    private int _backgroundIndex;
+
+    private async Task BuildRendererSceneAsync(ThreeContext threeContext)
+    {
+        _threeContext = threeContext;
+
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 1.2f, 8f);
+        camera.LookAt(0f, 0f, 0f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.35f));
+
+        var keyLight = new DirectionalLight(Color.White, 1.4f);
+        keyLight.Position.Set(4f, 6f, 5f);
+        scene.Add(keyLight);
+
+        var group = new Group();
+        var sphereGeometry = new SphereGeometry(0.9f, 40, 26);
+
+        foreach (var (index, hex) in new[] { 0xff5a3c, 0x4ad6a0, 0x5b8dd9 }.Index())
+        {
+            var material = new MeshStandardMaterial();
+            material.Color.SetHex(hex);
+            material.Roughness = 0.35f;
+
+            // Emissive above 1 is what makes tone mapping visible at all: a value inside the displayable
+            // range looks identical under every curve.
+            material.Emissive.SetHex(hex);
+            material.EmissiveIntensity = 2.4f;
+
+            var sphere = new Mesh(sphereGeometry, material);
+            sphere.Position.Set((index - 1) * 2.4f, 0f, 0f);
+            group.Add(sphere);
+        }
+
+        scene.Add(group);
+
+        threeContext.Renderer.SetClearColor(Color.FromHex(_backgroundHexes[0]), 1f);
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        _ = AnimateAsync(threeContext, group);
+    }
+
+    private async Task ApplyToneMappingAsync(ToneMapping toneMapping)
+    {
+        if (_threeContext is null)
+        {
+            return;
+        }
+
+        _toneMapping = toneMapping;
+        _threeContext.Renderer.ToneMapping = toneMapping;
+        await _threeContext.FlushAsync();
+    }
+
+    private async Task ApplyExposureAsync(float exposure)
+    {
+        if (_threeContext is null)
+        {
+            return;
+        }
+
+        _threeContext.Renderer.ToneMappingExposure = exposure;
+        await _threeContext.FlushAsync();
+    }
+
+    private async Task CycleBackgroundAsync()
+    {
+        if (_threeContext is null)
+        {
+            return;
+        }
+
+        _backgroundIndex = (_backgroundIndex + 1) % _backgroundHexes.Length;
+        _threeContext.Renderer.SetClearColor(Color.FromHex(_backgroundHexes[_backgroundIndex]), 1f);
+        await _threeContext.FlushAsync();
+    }
+
+    private async Task AnimateAsync(ThreeContext threeContext, Object3D group)
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                var nextRotationY = group.Rotation.Y + RadiansPerFrame;
+                group.Rotation.Y = nextRotationY >= MathF.Tau ? nextRotationY - MathF.Tau : nextRotationY;
+                await threeContext.FlushAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // See Cube.stories.razor for why this is what stops the loop when a story is swapped.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+}

@@ -21,7 +21,7 @@ public sealed class GltfFigureTests(DemoFixture fixture)
 	private static readonly string[] RequiredModuleChunks =
 	[
 		"/_content/Kebechet.Blazor.ThreeJS/three-interop.js",
-		"/_content/Kebechet.Blazor.ThreeJS/three.module.min.js",
+		"/_content/Kebechet.Blazor.ThreeJS/three.webgpu.min.js",
 		"/_content/Kebechet.Blazor.ThreeJS/three.core.min.js",
 		"/_content/Kebechet.Blazor.ThreeJS/addons/loaders/GLTFLoader.js",
 		"/_content/Kebechet.Blazor.ThreeJS/addons/controls/OrbitControls.js",
@@ -89,7 +89,9 @@ public sealed class GltfFigureTests(DemoFixture fixture)
 		// Arrange
 		await using var storyPage = await fixture.OpenStoryAsync(Stories.FigureWithOrbitControls);
 		await WaitForModelAsync(storyPage);
-		var lastClickedPart = storyPage.Page.Locator("strong");
+		// By test id rather than by element name: the story's prose is free to grow another <strong>
+		// without silently retargeting this assertion at the wrong one.
+		var lastClickedPart = storyPage.Page.Locator("[data-testid='last-clicked-part']");
 		(await lastClickedPart.InnerTextAsync()).ShouldBe(NothingClickedYet);
 
 		// Act

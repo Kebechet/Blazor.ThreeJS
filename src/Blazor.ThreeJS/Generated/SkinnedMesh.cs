@@ -18,7 +18,21 @@ public sealed class SkinnedMesh : Mesh
 	private readonly Material? _material;
 	private readonly bool? _useVertexTexture;
 	private Skeleton? _skeleton;
+	private bool _isBoundingBoxWritten;
+	private bool _isBoundingSphereWritten;
 	private bool _isSkeletonWritten;
+
+	/// <summary>
+	/// The bounding box of the SkinnedMesh. Can be calculated with <c>.computeBoundingBox()</c>.
+	/// Mirrored as an instance this object owns: mutating it records a write of <c>boundingBox</c>.
+	/// </summary>
+	public Box3 BoundingBox { get; }
+
+	/// <summary>
+	/// The bounding box of the SkinnedMesh. Can be calculated with <c>.computeBoundingSphere()</c>.
+	/// Mirrored as an instance this object owns: mutating it records a write of <c>boundingSphere</c>.
+	/// </summary>
+	public Sphere BoundingSphere { get; }
 
 	/// <summary>Create a new instance of <see cref="SkinnedMesh"/>.</summary>
 	/// <param name="geometry">
@@ -33,6 +47,46 @@ public sealed class SkinnedMesh : Mesh
 		_geometry = geometry;
 		_material = material;
 		_useVertexTexture = useVertexTexture;
+
+		BoundingBox = new Box3();
+		BoundingBox.OnChange = () =>
+		{
+			_isBoundingBoxWritten = true;
+			RecordSet("boundingBox", BoundingBox);
+		};
+
+		BoundingSphere = new Sphere();
+		BoundingSphere.OnChange = () =>
+		{
+			_isBoundingSphereWritten = true;
+			RecordSet("boundingSphere", BoundingSphere);
+		};
+	}
+
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>SkinnedMesh</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal SkinnedMesh(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		BoundingBox = new Box3();
+		BoundingBox.OnChange = () =>
+		{
+			_isBoundingBoxWritten = true;
+			RecordSet("boundingBox", BoundingBox);
+		};
+
+		BoundingSphere = new Sphere();
+		BoundingSphere.OnChange = () =>
+		{
+			_isBoundingSphereWritten = true;
+			RecordSet("boundingSphere", BoundingSphere);
+		};
+
+		Batch = batch;
 	}
 
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.SkinnedMesh</c>.</summary>
@@ -127,6 +181,17 @@ public sealed class SkinnedMesh : Mesh
 	}
 
 	/// <summary>
+	/// Read-only flag to check if a given object is of type <see cref="SkinnedMesh"/>. Read-only in
+	/// three.js, so it is read on demand rather than mirrored: records a get op, sends it behind every
+	/// write already pending, and completes with the value <c>isSkinnedMesh</c> held.
+	/// </summary>
+	/// <returns>The value <c>isSkinnedMesh</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsSkinnedMeshAsync()
+	{
+		return GetAsync<bool>("isSkinnedMesh");
+	}
+
+	/// <summary>
 	/// Applies the bone transform associated with the given index to the given position vector. Records
 	/// a read op, sends it behind every write already pending, and completes with what
 	/// <c>applyBoneTransform</c> returned.
@@ -163,6 +228,16 @@ public sealed class SkinnedMesh : Mesh
 	internal override void EmitState(ThreeBatch batch)
 	{
 		base.EmitState(batch);
+
+		if (_isBoundingBoxWritten)
+		{
+			batch.Set(Handle, "boundingBox", ThreeValue.Encode(BoundingBox));
+		}
+
+		if (_isBoundingSphereWritten)
+		{
+			batch.Set(Handle, "boundingSphere", ThreeValue.Encode(BoundingSphere));
+		}
 
 		if (_isSkeletonWritten)
 		{

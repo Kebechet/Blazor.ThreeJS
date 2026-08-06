@@ -110,6 +110,7 @@ internal sealed class CoverageReport
 		AppendReadmeClassTable(builder);
 		AppendReadmeExclusions(builder);
 		AppendReadmeReadChannel(builder);
+		AppendBlockedClassWorkarounds(builder);
 		AppendReadmeNarrowings(builder);
 		AppendReadmeEscapeHatch(builder);
 		AppendReadmeMeasurement(builder);
@@ -158,7 +159,10 @@ internal sealed class CoverageReport
 				MirroredState = CountBucket(MemberBucket.MirroredState),
 				Commands = CountBucket(MemberBucket.Command),
 				AsyncQueries = CountBucket(MemberBucket.AsyncQuery),
-				SkippedMembers = CountBucket(MemberBucket.Skipped)
+				SkippedMembers = CountBucket(MemberBucket.Skipped),
+				ReachableMembers = EmittableMembers().Count(),
+				GeneratedMembers = EmittableMembers().Count(x => x.Bucket != MemberBucket.Skipped),
+				StrandedMembers = _members.Count - EmittableMembers().Count()
 			},
 			Classes = classes,
 			MemberSkipReasons = SkipCountsByCategory()
@@ -290,15 +294,28 @@ internal sealed class CoverageReport
 		var mathCount = _scope.Results
 			.Count(x => x.Status == ClassScopeStatus.OutOfSurface && x.Category == SkipCategory.MathValueType);
 
+		// Named from the scope rather than from a written-out list, so a type that is ported - or one
+		// that upstream adds and nobody ports - moves between the two halves of this sentence on its own.
+		var unportedMathTypeNames = _scope.Results
+			.Where(x => x.Status == ClassScopeStatus.OutOfSurface && x.Category == SkipCategory.MathValueType)
+			.Select(x => x.Class.Name)
+			.Where(x => !EmitterConfig.MathTypeNames.Contains(x))
+			.Order(StringComparer.Ordinal)
+			.ToList();
+
 		var handWrittenNames = string.Join(", ", EmitterConfig.HandWrittenClassNames.Order(StringComparer.Ordinal).Select(x => $"`{x}`"));
 		var mathTypeNames = string.Join(", ", EmitterConfig.MathTypeNames.Order(StringComparer.Ordinal).Select(x => $"`{x}`"));
+		var unportedNames = unportedMathTypeNames.Any()
+			? string.Join(", ", unportedMathTypeNames.Select(x => $"`{x}`"))
+			: "none";
+
 		var prefixes = string.Join(", ", EmitterConfig.ExcludedSourcePrefixes.Select(x => $"`{x}**`"));
 		var rendererTypes = string.Join(", ", EmitterConfig.ConsumerFacingRendererClassNames.Select(x => $"`{x}`"));
 
 		AppendLine(builder, "| | classes | |");
 		AppendLine(builder, "|---|---|---|");
 		AppendLine(builder, $"| renderer internals ({prefixes}) | {rendererInternalCount} | the types consumers actually name ({rendererTypes}) are outside those directories and are generated |");
-		AppendLine(builder, $"| `{EmitterConfig.MathSourcePrefix}**` value types | {mathCount} | {EmitterConfig.MathTypeNames.Count} of them ship, hand-ported ({mathTypeNames}); the other {mathCount - EmitterConfig.MathTypeNames.Count} - `Vector2`, `Box3`, `Plane`, `Ray` and the rest - do not. A math value is arithmetic rather than a signature: the generator has their members but not their behaviour, so each one waits on a hand port |");
+		AppendLine(builder, $"| `{EmitterConfig.MathSourcePrefix}**` value types | {mathCount} | {EmitterConfig.MathTypeNames.Count} of them ship, hand-ported ({mathTypeNames}); the other {unportedMathTypeNames.Count} do not: {unportedNames}. A math value is arithmetic rather than a signature: the generator has their members but not their behaviour, so each one waits on a hand port |");
 		AppendLine(builder, $"| {handWrittenNames} | {EmitterConfig.HandWrittenClassNames.Count} | hand-written: it carries the scene-graph machinery - attachment, the transform, pre-attach state replay - which is behaviour rather than surface |");
 		AppendLine(builder);
 	}
@@ -313,7 +330,8 @@ internal sealed class CoverageReport
 	{
 		var emittableMembers = EmittableMembers().ToList();
 		var asyncQueryCount = emittableMembers.Count(x => x.Bucket == MemberBucket.AsyncQuery);
-		var readOnlyCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.ReadOnlyProperty);
+		var propertyReadCount = emittableMembers.Count(x => x.Bucket == MemberBucket.AsyncQuery && x.IsPropertyRead);
+		var methodReadCount = asyncQueryCount - propertyReadCount;
 		var noHandleCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.NoHandleForResult);
 		var collectionCount = emittableMembers.Count(x =>
 			x.MemberKind == ClassifiedMemberKind.Method &&
@@ -321,14 +339,18 @@ internal sealed class CoverageReport
 
 		AppendLine(builder, "### ⚠️ What reads back, and what does not");
 		AppendLine(builder);
-		AppendLine(builder, "The wire format has a seventh op kind, **read**: it invokes a three.js method inside the batch it");
-		AppendLine(builder, "travels in and sends the return value back, so a read always observes the writes made before it. It");
-		AppendLine(builder, "carries **values** - numbers, booleans, strings, and the five hand-written math types, tagged exactly as");
-		AppendLine(builder, "they are sent in the other direction.");
+		AppendLine(builder, "Two of the wire format's op kinds answer with a value: **read** invokes a three.js method, and **get**");
+		AppendLine(builder, "reads a property. Both travel inside the batch they were recorded in, so either always observes the");
+		AppendLine(builder, $"writes made before it. They carry **values** - numbers, booleans, strings, and the {EmitterConfig.MathTypeNames.Count} hand-written math");
+		AppendLine(builder, "types, tagged exactly as they are sent in the other direction.");
 		AppendLine(builder);
-		AppendLine(builder, $"On the generated classes that reaches **{asyncQueryCount} methods**: focal length and effective field of view, elapsed");
-		AppendLine(builder, "time, curve lengths, instance matrices and colours, vertex positions, layer tests. Each is emitted as");
-		AppendLine(builder, "`…Async` and returns a `Task<T>`.");
+		AppendLine(builder, $"On the generated classes that reaches **{asyncQueryCount} members**, each emitted as `…Async` returning a `Task<T>`:");
+		AppendLine(builder);
+		AppendLine(builder, $"- **{methodReadCount} methods** - focal length and effective field of view, elapsed time, curve lengths, instance");
+		AppendLine(builder, "  matrices and colours, vertex positions, layer tests.");
+		AppendLine(builder, $"- **{propertyReadCount} read-only properties** - `uuid`, `instanceCount`, `unusedVertexCount`, and three.js's own");
+		AppendLine(builder, "  `isMesh`-style type tags. Read on demand rather than mirrored, because three.js is the only side that");
+		AppendLine(builder, "  ever assigns them: a C# property would imply the mirror knew the value without asking.");
 		AppendLine(builder);
 		AppendLine(builder, "It does **not** carry handles, and that is what still puts members out of reach:");
 		AppendLine(builder);
@@ -344,13 +366,84 @@ internal sealed class CoverageReport
 			AppendLine(builder, "  callable**: it answers with `Intersection[]`, and the wire has no array encoding in either direction.");
 		}
 
-		AppendLine(builder, $"- **{readOnlyCount} read-only properties** are not generated as members. The read op invokes a method, so a");
-		AppendLine(builder, "  property has nothing to route through it, and exposing one as an async method would change the shape of");
-		AppendLine(builder, "  the API rather than its coverage. They are still readable: `GetAsync` below reads any property by name.");
 		AppendLine(builder);
 		AppendLine(builder, "A read is caller-initiated and costs one interop call. An idle scene still costs **zero** - nothing polls,");
 		AppendLine(builder, "and no callback runs per frame.");
 		AppendLine(builder);
+	}
+
+	/// <summary>
+	/// Lists the blocked classes whose capability is still reachable, and how. A blocked class is not
+	/// the same as a lost feature, and a table that only counts them implies it is.
+	/// </summary>
+	private void AppendBlockedClassWorkarounds(StringBuilder builder)
+	{
+		// Counted per result, like every other class figure in this document. Two three.js classes share
+		// a name, so counting distinct names instead would put a different total here than the class
+		// table three paragraphs up — one document, two answers for the same question.
+		var blocked = _scope.Results
+			.Where(x => x.Status == ClassScopeStatus.Blocked)
+			.ToList();
+
+		var blockedNames = blocked
+			.Select(x => x.Class.Name)
+			.ToHashSet(StringComparer.Ordinal);
+
+		// Disjoint by construction: a workaround only counts for a class the bundle actually exports,
+		// because one naming a class no runtime has would not work anyway.
+		var withWorkaround = blocked
+			.Where(x => x.Class.IsRuntimeExport && EmitterConfig.BlockedClassWorkarounds.ContainsKey(x.Class.Name))
+			.ToList();
+
+		var stillBlocked = EmitterConfig.BlockedClassWorkarounds
+			.Where(x => withWorkaround.Any(result => string.Equals(result.Class.Name, x.Key, StringComparison.Ordinal)))
+			.OrderBy(x => x.Key, StringComparer.Ordinal)
+			.ToList();
+
+		var noLongerBlocked = EmitterConfig.BlockedClassWorkarounds.Keys
+			.Where(x => !blockedNames.Contains(x))
+			.Order(StringComparer.Ordinal)
+			.ToList();
+
+		var absentFromBundle = blocked.Count(x => !x.Class.IsRuntimeExport);
+		var unaccounted = blocked.Count - absentFromBundle - withWorkaround.Count;
+
+		AppendLine(builder, "### Blocked, but still reachable");
+		AppendLine(builder);
+		AppendLine(builder, $"The {blocked.Count} blocked classes account for themselves as follows:");
+		AppendLine(builder);
+		AppendLine(builder, $"- **{absentFromBundle} are absent from the shipped three.js bundle.** Not a mapping decision: `THREE[name]` is");
+		AppendLine(builder, "  `undefined` for every one of them, so nothing could construct them — not a generated class, and not the");
+		AppendLine(builder, "  escape hatch either.");
+		AppendLine(builder, $"- **{withWorkaround.Count} lose no capability**, listed below. They are abstract bases whose concrete subclasses all");
+		AppendLine(builder, "  generate, convenience subclasses that only rearrange constructor arguments, or classes the untyped");
+		AppendLine(builder, "  escape hatch constructs by name.");
+		if (unaccounted > 0)
+		{
+			AppendLine(builder, $"- **{unaccounted} are neither**, and are a genuine gap nobody has written a route to yet.");
+		}
+
+		AppendLine(builder);
+		AppendLine(builder, "A blocked class is therefore not automatically a missing feature, and a count on its own implies it is.");
+		AppendLine(builder);
+		AppendLine(builder, "| class | how to get the same result |");
+		AppendLine(builder, "|---|---|");
+		foreach (var (name, workaround) in stillBlocked)
+		{
+			AppendLine(builder, $"| `{name}` | {workaround} |");
+		}
+
+		AppendLine(builder);
+
+		// Named rather than silently dropped: a note that outlives the limitation it describes sends a
+		// reader to the escape hatch for a class that now has a generated type.
+		if (noLongerBlocked.Any())
+		{
+			var names = string.Join(", ", noLongerBlocked.Select(x => $"`{x}`"));
+			AppendLine(builder, $"⚠️ {noLongerBlocked.Count} entries above describe classes that are no longer blocked and should be removed from");
+			AppendLine(builder, $"`EmitterConfig.BlockedClassWorkarounds`: {names}.");
+			AppendLine(builder);
+		}
 	}
 
 	private void AppendReadmeNarrowings(StringBuilder builder)
@@ -1114,7 +1207,7 @@ internal sealed class CoverageReport
 			SkipCategory.DomOrLibType => "a TypeScript lib or DOM type; C# holds no browser object and the wire has no encoding for one",
 			SkipCategory.NodeStackType => "declared under `src/nodes/**`, the TSL / WebGPU node stack outside the extracted surface",
 			SkipCategory.OptionsInterface => "a structural interface — an options bag or an event map — with no C# type to be",
-			SkipCategory.MathValueType => "a `src/math/**` value type beyond the five that are hand-written",
+			SkipCategory.MathValueType => "a `src/math/**` value type that is not one of the hand-written ones",
 			SkipCategory.CollectionType => "an array or tuple; `ThreeValue.Encode` has no array arm",
 			SkipCategory.CallbackType => "a JavaScript callback; the wire format carries ops in one direction only",
 			SkipCategory.StringConstantGroup => "a group of string-valued constants, which a C# enum cannot carry over this wire format",
@@ -1135,7 +1228,6 @@ internal sealed class CoverageReport
 			SkipCategory.ExternalType => "declared outside the scanned `src/` surface",
 			SkipCategory.UnresolvedType => "the TypeScript checker could not resolve the name",
 			SkipCategory.NotInstanceApi => "static, non-public or `@internal` — not part of the mirrored instance API",
-			SkipCategory.ReadOnlyProperty => "read-only in three.js, and the read op invokes a method rather than reading a property",
 			SkipCategory.NoHandleForResult => "its result is a JavaScript object, and no op mints a handle for one the browser created",
 			SkipCategory.ShadowedByConstructorParameter => "the constructor already takes it under the same name",
 			SkipCategory.HandWritten => "the package provides the class by hand, and the generated classes derive from it",

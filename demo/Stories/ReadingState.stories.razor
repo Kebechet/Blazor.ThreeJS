@@ -1,0 +1,192 @@
+@attribute [Stories("Architecture/Reading state back")]
+@using System.Globalization
+@implements IDisposable
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Asking three.js what it holds">
+        <Template>
+            <p>
+                Most of this mirror flows one way: C# holds the state, writes are batched, and an idle
+                scene costs nothing. Some values are three.js's to know, though - it generated them, or
+                it computed them - and for those the batch carries a question and waits for the answer.
+            </p>
+            <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildReadableSceneAsync" />
+            <p>
+                <button @onclick="ReadEverythingAsync" disabled="@_isReading">Read it all again</button>
+                @if (_readCount > 0)
+                {
+                    <text> — read @_readCount time@(_readCount == 1 ? "" : "s")</text>
+                }
+            </p>
+            <table>
+                <thead>
+                    <tr><th>Value</th><th>How it is obtained</th><th>Now</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>mesh.Position</code></td>
+                        <td>mirrored - C# wrote it, so C# knows it</td>
+                        <td><code>@Format(_position)</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>mesh.IsMeshAsync()</code></td>
+                        <td>get op - three.js's own type tag</td>
+                        <td><code>@_isMesh.ToString().ToLowerInvariant()</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>material.UuidAsync()</code></td>
+                        <td>get op - three.js generated it, C# never saw it</td>
+                        <td><code>@(_materialUuid ?? "—")</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>mesh.GetVertexPositionAsync(0, …)</code></td>
+                        <td>read op - a method call, answered with a tagged <code>Vector3</code></td>
+                        <td><code>@Format(_firstVertex)</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>geometry boundingSphere</code></td>
+                        <td>get op - three.js computed it from the vertices</td>
+                        <td><code>@(_boundingSphere is null ? "—" : $"r {_boundingSphere.Radius.ToString("F3", CultureInfo.InvariantCulture)}")</code></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>
+                The four reads above travel in <strong>one</strong> interop call. A read is recorded into
+                the same batch as any pending writes and sent behind them, so it always observes the
+                writes made before it, and several reads asked for together are answered together - each
+                correlated by a request id rather than by position.
+            </p>
+            <p>
+                ⚠️ Reading is <em>caller-initiated</em>. Nothing polls, and no callback runs per frame:
+                the values above are as of the last time the button was pressed, not live. That is the
+                same rule <em>Architecture/Mirror authority</em> states from the other direction - the
+                mirror is authoritative for what C# wrote, and stale for everything else.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private const float RadiansPerFrame = 0.006f;
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+    private ThreeContext? _threeContext;
+    private Mesh? _mesh;
+    private MeshStandardMaterial? _material;
+    private BufferGeometry? _geometry;
+
+    private Vector3 _position = new();
+    private Vector3 _firstVertex = new();
+    private Sphere? _boundingSphere;
+    private string? _materialUuid;
+    private bool _isMesh;
+    private bool _isReading;
+    private int _readCount;
+
+    private async Task BuildReadableSceneAsync(ThreeContext threeContext)
+    {
+        _threeContext = threeContext;
+
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 1.4f, 6.5f);
+        camera.LookAt(0f, 0f, 0f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.5f));
+
+        var keyLight = new DirectionalLight(Color.White, 1.8f);
+        keyLight.Position.Set(4f, 6f, 5f);
+        scene.Add(keyLight);
+
+        var geometry = new TorusKnotGeometry(1.2f, 0.36f);
+        _geometry = geometry;
+
+        var material = new MeshStandardMaterial();
+        material.Color.SetHex(0x5b8dd9);
+        material.Roughness = 0.35f;
+        material.Metalness = 0.2f;
+        _material = material;
+
+        var mesh = new Mesh(geometry, material);
+        mesh.Position.Set(0f, 0f, 0f);
+        scene.Add(mesh);
+        _mesh = mesh;
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        geometry.ComputeBoundingSphere();
+        await ReadEverythingAsync();
+
+        _ = AnimateAsync(threeContext, mesh);
+    }
+
+    /// <summary>
+    /// Asks for every read-only value at once. The four awaits below are started before any is awaited,
+    /// so all four ops land in the same batch and cost one interop call between them.
+    /// </summary>
+    private async Task ReadEverythingAsync()
+    {
+        if (_threeContext is null || _mesh is null || _material is null || _geometry is null)
+        {
+            return;
+        }
+
+        _isReading = true;
+
+        var isMeshRead = _mesh.IsMeshAsync();
+        var uuidRead = _material.UuidAsync();
+        var vertexRead = _mesh.GetVertexPositionAsync(0, new Vector3());
+        var boundingSphereRead = _geometry.GetAsync<Sphere>("boundingSphere");
+
+        _isMesh = await isMeshRead;
+        _materialUuid = await uuidRead;
+        _firstVertex = await vertexRead;
+        _boundingSphere = await boundingSphereRead;
+
+        // Mirrored, so this one is already known and costs nothing to show beside the others.
+        _position = _mesh.Position.Clone();
+
+        _readCount++;
+        _isReading = false;
+        StateHasChanged();
+    }
+
+    private static string Format(Vector3 vector)
+    {
+        return $"({vector.X.ToString("F2", CultureInfo.InvariantCulture)}, " +
+            $"{vector.Y.ToString("F2", CultureInfo.InvariantCulture)}, " +
+            $"{vector.Z.ToString("F2", CultureInfo.InvariantCulture)})";
+    }
+
+    private async Task AnimateAsync(ThreeContext threeContext, Object3D mesh)
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                var nextRotationY = mesh.Rotation.Y + RadiansPerFrame;
+                mesh.Rotation.Y = nextRotationY >= MathF.Tau ? nextRotationY - MathF.Tau : nextRotationY;
+                mesh.Rotation.X = 0.4f;
+                await threeContext.FlushAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // See Cube.stories.razor for why this is what stops the loop when a story is swapped.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+}

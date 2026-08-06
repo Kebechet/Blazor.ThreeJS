@@ -1,4 +1,4 @@
-import * as THREE from './three.module.min.js';
+import * as THREE from './three.webgpu.min.js';
 
 // Wire format shared with ThreeOp.cs — the numeric kinds, the short property names (k/h/t/m/a/v/c/i),
 // the response shape ({e, r} with rows of {i, v} or {i, e}) and the tagged-value keys ($t/$ref/$undef)
@@ -19,11 +19,161 @@ const OP_GET = 8;
 // above: renaming the C# method without changing this string breaks delivery silently.
 const POINTER_HIT_CALLBACK = 'DispatchPointerEventAsync';
 
+// Name of the [JSInvokable] method a model-load progress event is delivered to, on the
+// GltfProgressReporter the caller supplied. Part of the same contract as the op kinds: renaming the
+// C# method without changing this string breaks delivery silently.
+const LOAD_PROGRESS_CALLBACK = 'ReportProgress';
+
 // The one DOM event this module listens for. Deliberately not a pointer-move event: see
 // syncPointerListener.
 const POINTER_EVENT_NAME = 'click';
 
 const EULER_ORDERS = ['XYZ', 'YXZ', 'ZXY', 'ZYX', 'YZX', 'XZY'];
+
+// Tokens carrying a non-finite component of a tagged math value, shared with ThreeWireFormat.cs.
+// JSON has no numeric form for one, and both runtimes get it wrong differently if left alone: C#'s
+// Utf8JsonWriter throws on the way out, and JSON.stringify(Infinity) here silently yields null on the
+// way back. three.js seeds an empty Box3 at ±Infinity, so this is the default case for that type, not
+// an edge one. The spellings are JavaScript's own String(Infinity) etc., which is what lets
+// fromComponents convert with a plain Number().
+const POSITIVE_INFINITY_TOKEN = 'Infinity';
+const NEGATIVE_INFINITY_TOKEN = '-Infinity';
+const NAN_TOKEN = 'NaN';
+
+// Key naming which typed array a component list should be rebuilt as, shared with ThreeWireFormat.cs.
+// A plain JSON array cannot say it: three.js hands a BufferAttribute's array straight to WebGL, which
+// needs the real Float32Array rather than an Array of numbers.
+const TYPED_ARRAY_KEY = '$ta';
+
+// Key of a lone non-finite number, shared with ThreeWireFormat.cs. JSON.stringify(Infinity) is null,
+// so a bare number cannot carry one in either direction.
+const NON_FINITE_KEY = '$n';
+
+// Handle each context registers its renderer under, shared with ThreeWireFormat.cs. Reserved rather
+// than minted so C# can address the renderer without asking what handle it got; mintHandle seeds its
+// allocator below this, so nothing else can ever be given it.
+const RENDERER_HANDLE = -1;
+
+// Builds a Vector3 out of three consecutive components, which is how every composite math value below
+// carries its points.
+function vector3At(components, offset) {
+    return new THREE.Vector3(components[offset], components[offset + 1], components[offset + 2]);
+}
+
+// Every tagged math value except Euler, which carries a rotation order as well as components and so
+// stays a special case at both ends. `is` identifies one read off a three.js object, `read` flattens
+// it to components, and `build` reconstructs it — the same component order as the type's C# ToArray
+// and FromArray, which is the contract the two halves share.
+//
+// The six without an `isX` flag are matched with instanceof: three.js gives Ray, Line3, Triangle,
+// Spherical, Cylindrical and Frustum no runtime tag. Note also that Box3.isEmpty and
+// Triangle.isFrontFacing are prototype *methods*, so nothing here may match on an `is`-prefixed name
+// without knowing it is a flag.
+const MATH_VALUES = [
+    { tag: 'Vector3', is: value => value.isVector3, read: value => [value.x, value.y, value.z], build: c => vector3At(c, 0) },
+    { tag: 'Quaternion', is: value => value.isQuaternion, read: value => [value.x, value.y, value.z, value.w], build: c => new THREE.Quaternion(c[0], c[1], c[2], c[3]) },
+    { tag: 'Color', is: value => value.isColor, read: value => [value.r, value.g, value.b], build: c => new THREE.Color(c[0], c[1], c[2]) },
+    // three.js stores matrix elements column-major and C#'s Elements does too, so neither direction
+    // may transpose.
+    { tag: 'Matrix4', is: value => value.isMatrix4, read: value => Array.from(value.elements), build: c => new THREE.Matrix4().fromArray(c) },
+    { tag: 'Matrix3', is: value => value.isMatrix3, read: value => Array.from(value.elements), build: c => new THREE.Matrix3().fromArray(c) },
+    { tag: 'Vector2', is: value => value.isVector2, read: value => [value.x, value.y], build: c => new THREE.Vector2(c[0], c[1]) },
+    { tag: 'Vector4', is: value => value.isVector4, read: value => [value.x, value.y, value.z, value.w], build: c => new THREE.Vector4(c[0], c[1], c[2], c[3]) },
+    {
+        tag: 'Box3',
+        is: value => value.isBox3,
+        read: value => [value.min.x, value.min.y, value.min.z, value.max.x, value.max.y, value.max.z],
+        build: c => new THREE.Box3(vector3At(c, 0), vector3At(c, 3))
+    },
+    {
+        tag: 'Box2',
+        is: value => value.isBox2,
+        read: value => [value.min.x, value.min.y, value.max.x, value.max.y],
+        build: c => new THREE.Box2(new THREE.Vector2(c[0], c[1]), new THREE.Vector2(c[2], c[3]))
+    },
+    {
+        tag: 'Sphere',
+        is: value => value.isSphere,
+        read: value => [value.center.x, value.center.y, value.center.z, value.radius],
+        build: c => new THREE.Sphere(vector3At(c, 0), c[3])
+    },
+    {
+        tag: 'Plane',
+        is: value => value.isPlane,
+        read: value => [value.normal.x, value.normal.y, value.normal.z, value.constant],
+        build: c => new THREE.Plane(vector3At(c, 0), c[3])
+    },
+    {
+        tag: 'Ray',
+        is: value => value instanceof THREE.Ray,
+        read: value => [value.origin.x, value.origin.y, value.origin.z, value.direction.x, value.direction.y, value.direction.z],
+        build: c => new THREE.Ray(vector3At(c, 0), vector3At(c, 3))
+    },
+    {
+        tag: 'Line3',
+        is: value => value instanceof THREE.Line3,
+        read: value => [value.start.x, value.start.y, value.start.z, value.end.x, value.end.y, value.end.z],
+        build: c => new THREE.Line3(vector3At(c, 0), vector3At(c, 3))
+    },
+    {
+        tag: 'Triangle',
+        is: value => value instanceof THREE.Triangle,
+        read: value => [value.a.x, value.a.y, value.a.z, value.b.x, value.b.y, value.b.z, value.c.x, value.c.y, value.c.z],
+        build: c => new THREE.Triangle(vector3At(c, 0), vector3At(c, 3), vector3At(c, 6))
+    },
+    {
+        tag: 'Spherical',
+        is: value => value instanceof THREE.Spherical,
+        read: value => [value.radius, value.phi, value.theta],
+        build: c => new THREE.Spherical(c[0], c[1], c[2])
+    },
+    {
+        tag: 'Cylindrical',
+        is: value => value instanceof THREE.Cylindrical,
+        read: value => [value.radius, value.theta, value.y],
+        build: c => new THREE.Cylindrical(c[0], c[1], c[2])
+    },
+    {
+        tag: 'Frustum',
+        is: value => value instanceof THREE.Frustum,
+        read: value => value.planes.flatMap(plane => [plane.normal.x, plane.normal.y, plane.normal.z, plane.constant]),
+        build: c => new THREE.Frustum(...Array.from({ length: 6 }, (unused, index) =>
+            new THREE.Plane(vector3At(c, index * 4), c[(index * 4) + 3])))
+    },
+    {
+        tag: 'SphericalHarmonics3',
+        is: value => value.isSphericalHarmonics3,
+        read: value => value.coefficients.flatMap(coefficient => [coefficient.x, coefficient.y, coefficient.z]),
+        build: c => {
+            const harmonics = new THREE.SphericalHarmonics3();
+            harmonics.coefficients.forEach((coefficient, index) => coefficient.set(c[index * 3], c[(index * 3) + 1], c[(index * 3) + 2]));
+            return harmonics;
+        }
+    }
+];
+
+const MATH_VALUES_BY_TAG = new Map(MATH_VALUES.map(entry => [entry.tag, entry]));
+
+// Turns components off the wire into numbers, restoring the non-finite ones from their tokens.
+function fromComponents(components) {
+    return components.map(component => typeof component === 'string' ? Number(component) : component);
+}
+
+// Turns components into their wire form, spelling the non-finite ones as tokens so JSON.stringify
+// cannot quietly flatten them to null.
+function toComponents(values) {
+    return values.map(value => {
+        if (Number.isFinite(value)) {
+            return value;
+        }
+
+        if (value === Infinity) {
+            return POSITIVE_INFINITY_TOKEN;
+        }
+
+        return value === -Infinity ? NEGATIVE_INFINITY_TOKEN : NAN_TOKEN;
+    });
+}
 
 // The two addons this module wraps. They live outside the three.js bundle, ship as their own static
 // assets under wwwroot/addons, and are imported dynamically: a consumer who never loads a model
@@ -36,9 +186,16 @@ const ORBIT_CONTROLS_MODULE = './addons/controls/OrbitControls.js';
 const contexts = new Map();
 let nextContextId = 1;
 
-export function createContext(canvas, dotNetRef) {
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+// Async because WebGPURenderer's backend is: requesting a GPU adapter and device is a Promise, and
+// `render()` throws outright until it has resolved. The loop below reschedules itself in a `finally`,
+// so starting it before init would spin forever throwing once per frame with nothing to show for it.
+//
+// Where the browser has no WebGPU, the renderer falls back to a WebGL2 backend on its own and logs a
+// warning saying so. Nothing here has to choose: the scene renders either way.
+export async function createContext(canvas, dotNetRef) {
+    const renderer = new THREE.WebGPURenderer({ canvas, antialias: true, alpha: true });
     renderer.setPixelRatio(globalThis.devicePixelRatio || 1);
+    await renderer.init();
 
     const context = {
         renderer,
@@ -48,6 +205,11 @@ export function createContext(canvas, dotNetRef) {
         cameraHandle: 0,
         isRunning: true
     };
+
+    // Registered like any other mirrored object so C# can write to it through the ordinary ops - which
+    // is the only way to reach shadow maps, tone mapping or the clear colour, none of which is
+    // addressable from a scene object.
+    context.objects.set(RENDERER_HANDLE, renderer);
 
     applySize(context, canvas.clientWidth, canvas.clientHeight);
 
@@ -160,7 +322,9 @@ export function applyOp(context, op) {
             }
 
             const args = (op.a ?? []).map(value => decode(context, value).value);
-            context.objects.set(op.h, new ctor(...args));
+            const created = new ctor(...args);
+            context.objects.set(op.h, created);
+            rememberHandle(context, op.h, created);
             break;
         }
         case OP_SET: {
@@ -212,7 +376,7 @@ export function applyOp(context, op) {
             }
 
             const args = (op.a ?? []).map(value => decode(context, value).value);
-            return encode(target[op.m](...args));
+            return encodeResult(context, op, target[op.m](...args));
         }
         case OP_GET: {
             const target = resolveHandle(context, op.h);
@@ -227,11 +391,52 @@ export function applyOp(context, op) {
                 throw new Error(`'${op.m}' is not a property on the object at handle '${op.h}'`);
             }
 
-            return encode(target[op.m]);
+            return encodeResult(context, op, target[op.m]);
         }
         default:
             throw new Error(`Unknown op kind '${op.k}'`);
     }
+}
+
+// Answers a read or a get. Normally that is the value itself; when the op asked for a handle (`n`), a
+// three.js object is registered and referenced instead of being refused.
+//
+// Values still answer as values even under `n`: a number, a string or a tagged math value has an exact
+// wire form, and handing back a handle to a Vector3 would make the caller round-trip again to read
+// components C# can already hold. Only what `encode` has no form for becomes a reference.
+function encodeResult(context, op, value) {
+    if (op.n !== true || value === null || typeof value !== 'object' || isEncodableValue(value)) {
+        return encode(value);
+    }
+
+    return {
+        $ref: handleFor(context, value),
+        t: describeType(value)
+    };
+}
+
+// three.js's own name for an object, so C# can label what it adopted. The declared type is often a
+// base and a loader may return a subclass, so this is read rather than assumed.
+//
+// ⚠️ `type` first, and `constructor.name` only as a fallback. This package ships three.js's MINIFIED
+// build, where class names are mangled — `new BufferGeometry().constructor.name` is `'Wn'`. `type` is
+// a string literal three.js assigns, so the minifier cannot touch it. Anything without one is a plain
+// object, which has no meaningful name to report.
+function describeType(value) {
+    if (typeof value.type === 'string' && value.type.length > 0) {
+        return value.type;
+    }
+
+    return value.constructor ? value.constructor.name : 'Object';
+}
+
+// Whether `encode` has a wire form for this object, which is what decides between answering with the
+// value and answering with a handle to it.
+function isEncodableValue(value) {
+    return value.isEuler === true ||
+        ArrayBuffer.isView(value) ||
+        Array.isArray(value) ||
+        MATH_VALUES.some(mathValue => mathValue.is(value));
 }
 
 function resolveHandle(context, handle) {
@@ -266,8 +471,33 @@ function decode(context, value) {
         return { value, isMathValue: false };
     }
 
+    // Element-wise rather than passed through whole, so an array of handles becomes an array of the
+    // objects they name and an array of tagged values becomes an array of three.js instances. Never a
+    // math value itself: `assign` must not copy an array over an existing one, since three.js's array
+    // properties are reassigned rather than mutated in place.
+    if (Array.isArray(value)) {
+        return { value: value.map(element => decode(context, element).value), isMathValue: false };
+    }
+
     if (Object.prototype.hasOwnProperty.call(value, '$ref')) {
         return { value: resolveHandle(context, value.$ref), isMathValue: false };
+    }
+
+    // A lone non-finite number. Tagged rather than sent as a bare string, or it could not be told from
+    // a genuine string value.
+    if (Object.prototype.hasOwnProperty.call(value, NON_FINITE_KEY)) {
+        return { value: Number(value[NON_FINITE_KEY]), isMathValue: false };
+    }
+
+    // A typed array names the exact constructor three.js needs: BufferAttribute and DataTexture reject
+    // a plain Array, because WebGL uploads the buffer straight to the GPU.
+    if (Object.prototype.hasOwnProperty.call(value, TYPED_ARRAY_KEY)) {
+        const typedArray = globalThis[value[TYPED_ARRAY_KEY]];
+        if (typeof typedArray !== 'function') {
+            throw new Error(`'${value[TYPED_ARRAY_KEY]}' is not a typed array constructor available on this runtime`);
+        }
+
+        return { value: typedArray.from(fromComponents(value.v)), isMathValue: false };
     }
 
     // The "not supplied" sentinel, which only C#'s generated constructors send. It has to decode to a
@@ -279,27 +509,30 @@ function decode(context, value) {
         return { value: undefined, isMathValue: false };
     }
 
-    switch (value.$t) {
-        case 'Vector3':
-            return { value: new THREE.Vector3(value.v[0], value.v[1], value.v[2]), isMathValue: true };
-        case 'Euler':
-            return { value: new THREE.Euler(value.v[0], value.v[1], value.v[2], EULER_ORDERS[value.o ?? 0]), isMathValue: true };
-        case 'Quaternion':
-            return { value: new THREE.Quaternion(value.v[0], value.v[1], value.v[2], value.v[3]), isMathValue: true };
-        case 'Color':
-            return { value: new THREE.Color(value.v[0], value.v[1], value.v[2]), isMathValue: true };
-        case 'Matrix4':
-            // C# already stores its elements column-major, exactly as fromArray expects, so this
-            // must not transpose.
-            return { value: new THREE.Matrix4().fromArray(value.v), isMathValue: true };
-        default:
-            return { value, isMathValue: false };
+    if (value.$t === undefined) {
+        return { value, isMathValue: false };
     }
+
+    const components = fromComponents(value.v);
+
+    // Euler is the one tagged value carrying more than components, so it is built here rather than
+    // from the MATH_VALUES table.
+    if (value.$t === 'Euler') {
+        return { value: new THREE.Euler(components[0], components[1], components[2], EULER_ORDERS[value.o ?? 0]), isMathValue: true };
+    }
+
+    const mathValue = MATH_VALUES_BY_TAG.get(value.$t);
+    if (!mathValue) {
+        return { value, isMathValue: false };
+    }
+
+    return { value: mathValue.build(components), isMathValue: true };
 }
 
 // Turns a value a read op produced into the wire form C#'s ThreeValue.Decode understands: a
-// primitive passes through, one of the five hand-written math types becomes the same $t-tagged shape
-// C# sends in the other direction, and undefined becomes null, since JSON has no undefined.
+// primitive passes through, any of the hand-written math types in MATH_VALUES becomes the same
+// $t-tagged shape C# sends in the other direction, and undefined becomes null, since JSON has no
+// undefined.
 //
 // Anything else throws rather than being serialized. A three.js object serialized as a plain JSON
 // object would arrive in C# as a bag of numbers that deserializes onto whichever fields happen to
@@ -311,12 +544,24 @@ function encode(value) {
     }
 
     const type = typeof value;
-    if (type === 'number' || type === 'boolean' || type === 'string') {
+    if (type === 'number') {
+        // JSON.stringify turns a non-finite number into null, which would reach C# as a value nobody
+        // sent. Tagged, it survives.
+        return Number.isFinite(value) ? value : { [NON_FINITE_KEY]: String(value) };
+    }
+
+    if (type === 'boolean' || type === 'string') {
         return value;
     }
 
-    if (value.isVector3) {
-        return { $t: 'Vector3', v: [value.x, value.y, value.z] };
+    // ArrayBuffer.isView is true for every typed array and for DataView; the byteLength test excludes
+    // the latter, which carries no elements to hand back.
+    if (ArrayBuffer.isView(value) && typeof value.length === 'number') {
+        return { [TYPED_ARRAY_KEY]: value.constructor.name, v: toComponents(Array.from(value)) };
+    }
+
+    if (Array.isArray(value)) {
+        return value.map(encode);
     }
 
     if (value.isEuler) {
@@ -325,21 +570,13 @@ function encode(value) {
             throw new Error(`Euler order '${value.order}' is not one of ${EULER_ORDERS.join(', ')}`);
         }
 
-        return { $t: 'Euler', v: [value.x, value.y, value.z], o: order };
+        return { $t: 'Euler', v: toComponents([value.x, value.y, value.z]), o: order };
     }
 
-    if (value.isQuaternion) {
-        return { $t: 'Quaternion', v: [value.x, value.y, value.z, value.w] };
-    }
-
-    if (value.isColor) {
-        return { $t: 'Color', v: [value.r, value.g, value.b] };
-    }
-
-    if (value.isMatrix4) {
-        // three.js stores elements column-major and C#'s Matrix4.Elements does too, so this must not
-        // transpose — the same rule the Matrix4 decode arm above states from the other direction.
-        return { $t: 'Matrix4', v: Array.from(value.elements) };
+    for (const mathValue of MATH_VALUES) {
+        if (mathValue.is(value)) {
+            return { $t: mathValue.tag, v: toComponents(mathValue.read(value)) };
+        }
     }
 
     throw new Error(`A '${value.constructor ? value.constructor.name : type}' value has no wire encoding, so it cannot be read back`);
@@ -481,8 +718,48 @@ export function dispatchPointerHit(context, ndcX, ndcY) {
 // ---------------------------------------------------------------------------------------------
 
 function mintHandle(context) {
-    context.nextMintedHandle = (context.nextMintedHandle ?? 0) - 1;
+    // Seeded from the reserved renderer handle rather than from zero, so the first minted handle is
+    // the one below it and nothing can collide with the renderer — in a context that has no renderer
+    // too, which is what the wire-format test drives.
+    context.nextMintedHandle = (context.nextMintedHandle ?? RENDERER_HANDLE) - 1;
     return context.nextMintedHandle;
+}
+
+// The handle an object already answers to, minting one only if it has none.
+//
+// The reverse lookup is what makes minting safe on an arbitrary member. three.js returns `this` from
+// most of its mutators — `action.play()`, `geometry.center()` — and the declared return type cannot be
+// told apart from one that allocates: Object3D.clone and BufferGeometry.center both say `this`. Minting
+// blindly would give an object C# already mirrors a second handle, and writes through one would not be
+// seen through the other. Asking the table first makes both cases correct without guessing which is
+// which.
+//
+// A WeakMap so a handle registered here never keeps an object alive: the forward table is what owns
+// the reference, and when an op disposes a handle the entry here goes with the object.
+function handleFor(context, object) {
+    if (!context.handlesByObject) {
+        context.handlesByObject = new WeakMap();
+    }
+
+    const existing = context.handlesByObject.get(object);
+    if (existing !== undefined) {
+        return existing;
+    }
+
+    const handle = mintHandle(context);
+    context.objects.set(handle, object);
+    context.handlesByObject.set(object, handle);
+    return handle;
+}
+
+// Records the handle an object was created or registered under, so a later read that returns the same
+// object answers with it rather than minting a second one.
+function rememberHandle(context, handle, object) {
+    if (!context.handlesByObject) {
+        context.handlesByObject = new WeakMap();
+    }
+
+    context.handlesByObject.set(object, handle);
 }
 
 // Loads a glTF or GLB file and registers the graph it produced, so C# can hold the result.
@@ -495,22 +772,36 @@ function mintHandle(context) {
 // Each row carries the node's transform read off the object the loader built, encoded exactly as a
 // read op encodes one, so the C# mirror starts out holding the loader's own values rather than
 // three.js's constructor defaults.
-export async function loadGltf(contextId, url) {
+export async function loadGltf(contextId, url, progressRef) {
     const context = contexts.get(contextId);
     if (!context) {
         throw new Error(`Unknown context '${contextId}'`);
     }
 
-    return loadGltfInto(context, url);
+    return loadGltfInto(context, url, progressRef);
 }
 
 // Exported for the same reason runOps is: the wire-contract test drives it against a plain
 // `{ objects: new Map() }` and a real HTTP URL, so the fetch, the parse and the minting are all the
 // real thing. Going through loadGltf would be impossible there — createContext needs a WebGL
 // renderer, which Node has not got, so no context id would ever resolve.
-export async function loadGltfInto(context, url) {
+export async function loadGltfInto(context, url, progressRef) {
     const { GLTFLoader } = await import(GLTF_LOADER_MODULE);
-    const gltf = await new GLTFLoader().loadAsync(url);
+
+    // The only JavaScript-to-C# call the package makes during an operation, and bounded by the fetch:
+    // a handful of events for a model, never per frame. Failures are swallowed on purpose — a circuit
+    // that went away mid-download must not fault a load that is otherwise still going to succeed.
+    const onProgress = progressRef
+        ? event => {
+            progressRef.invokeMethodAsync(
+                LOAD_PROGRESS_CALLBACK,
+                event.loaded ?? 0,
+                event.lengthComputable ? (event.total ?? 0) : 0)
+                .catch(() => {});
+        }
+        : undefined;
+
+    const gltf = await new GLTFLoader().loadAsync(url, onProgress);
     return registerLoadedGraph(context, gltf.scene);
 }
 

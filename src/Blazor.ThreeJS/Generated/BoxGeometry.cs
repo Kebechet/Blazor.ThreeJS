@@ -44,6 +44,25 @@ public sealed class BoxGeometry : BufferGeometry
 		_depthSegments = depthSegments;
 	}
 
+	/// <summary>
+	/// Adopts an existing JavaScript-side <c>BoxGeometry</c> under the handle the browser minted for
+	/// it. No create op is emitted: the object already exists, and this mirror's job is to name it.
+	/// </summary>
+	/// <param name="batch">Batch this object's writes record into.</param>
+	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
+	internal BoxGeometry(ThreeBatch batch, int handle)
+		: base(batch, handle)
+	{
+		_width = default!;
+		_height = default!;
+		_depth = default!;
+		_widthSegments = default!;
+		_heightSegments = default!;
+		_depthSegments = default!;
+
+		Batch = batch;
+	}
+
 	/// <summary>Name of the corresponding three.js constructor, <c>THREE.BoxGeometry</c>.</summary>
 	protected override string ThreeTypeName
 	{

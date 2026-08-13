@@ -25,8 +25,14 @@ const UPSTREAM_ROOT = path.join(REPO_ROOT, "node_modules", "three");
 const VENDOR_ROOT = path.join(REPO_ROOT, "src", "Blazor.ThreeJS", "wwwroot");
 /** The vendored three.js bundle every addon's bare `three` import is rewritten to point at. */
 const BUNDLE_FILE_NAME = "three.webgpu.min.js";
-/** Bare module specifier the addons import three.js under, which no browser can resolve unaided. */
-const BARE_THREE_SPECIFIER = "three";
+/**
+ * Matches the bare specifiers upstream imports three.js under, none of which a browser can resolve
+ * unaided. Both name the same vendored bundle: the addons ask for `three`, and `three.tsl.min.js`
+ * asks for `three/webgpu`, which is upstream's own name for the build this package already ships.
+ * The quote style is captured and replayed because the addons are readable source using single
+ * quotes and the TSL bundle is minified using double.
+ */
+const BARE_THREE_SPECIFIER_PATTERN = /\bfrom\s*(['"])(?:three|three\/webgpu)\1/g;
 /** The hand-written interop module, checked to import the same bundle this script vendors. */
 const INTEROP_FILE_NAME = "three-interop.js";
 
@@ -45,6 +51,12 @@ const INTEROP_FILE_NAME = "three-interop.js";
  * is that materials become node graphs and compute shaders become reachable. It costs about 93 KB
  * more over the wire once compressed, which is the whole price.
  *
+ * `three.tsl.min.js` is the shader-authoring half of that node system, and it ships because nothing
+ * else can reach it: its 638 exports are free functions (`vec3`, `positionLocal`, `uniform`, `Fn`)
+ * registered onto node prototypes at runtime by `addMethodChaining`, so they are absent from the
+ * WebGPU bundle's exports and undescribable as C# members. Consumers write TSL in a small JavaScript
+ * module of their own and hand the resulting node back through `ThreeContext.LoadNodeAsync`.
+ *
  * The two utils below the entry points are here because `GLTFLoader` imports them, which is a fact
  * about upstream rather than a choice — `verifyImportClosure` re-derives it on every run and fails if
  * this list stops being closed under imports.
@@ -52,6 +64,7 @@ const INTEROP_FILE_NAME = "three-interop.js";
 const VENDORED_FILES = new Map([
     ["three.webgpu.min.js", "build/three.webgpu.min.js"],
     ["three.core.min.js", "build/three.core.min.js"],
+    ["three.tsl.min.js", "build/three.tsl.min.js"],
     ["addons/controls/OrbitControls.js", "examples/jsm/controls/OrbitControls.js"],
     ["addons/loaders/GLTFLoader.js", "examples/jsm/loaders/GLTFLoader.js"],
     ["addons/utils/BufferGeometryUtils.js", "examples/jsm/utils/BufferGeometryUtils.js"],
@@ -136,7 +149,7 @@ function vendorOne(vendoredPath, upstreamPath) {
     const source = fs.readFileSync(path.join(UPSTREAM_ROOT, upstreamPath), "utf8");
     const depth = vendoredPath.split("/").length - 1;
     const bundleSpecifier = `${"../".repeat(depth) || "./"}${BUNDLE_FILE_NAME}`;
-    return source.replaceAll(`from '${BARE_THREE_SPECIFIER}'`, `from '${bundleSpecifier}'`);
+    return source.replace(BARE_THREE_SPECIFIER_PATTERN, (_, quote) => `from ${quote}${bundleSpecifier}${quote}`);
 }
 
 /**

@@ -1,0 +1,109 @@
+@* No IDisposable and no animation loop: the sweep runs on the GPU, so there is nothing here to stop. *@
+@attribute [Stories("Catalogue/Shaders")]
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Custom shading with TSL">
+        <Template>
+            <p>
+                This renderer turns every material into a node graph before drawing it, so custom
+                shading is written as TSL node expressions rather than as GLSL strings -
+                <code>ShaderMaterial</code> has no node equivalent and the node builder refuses it.
+                TSL is reached by writing a small JavaScript module of your own and loading what it
+                exports with <code>ThreeContext.LoadNodeAsync</code>.
+            </p>
+            <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildShaderSceneAsync" />
+            <p>
+                <button @onclick="() => ApplySpeedAsync(0.4f)">Slow</button>
+                <button @onclick="() => ApplySpeedAsync(1.5f)">Normal</button>
+                <button @onclick="() => ApplySpeedAsync(4f)">Fast</button>
+                — the shader reports it is sweeping at
+                <strong data-testid="shader-speed">@_speed.ToString("0.0")</strong>×
+            </p>
+            <p>
+                The sphere carries two nodes from
+                <code>demo/wwwroot/js/tsl-shaders.js</code>: <code>colorNode</code> bands it by its
+                <code>uv</code>, and <code>positionNode</code> pushes each vertex along its normal by the
+                same sweep, so it ripples as well as recolours.
+            </p>
+            <p>
+                ⚠️ The animation costs <strong>no interop at all</strong>. <code>time</code> is a node
+                that advances on the GPU, so the sweep runs entirely inside the frame the browser was
+                already drawing. The buttons above are the only traffic this story generates, and each
+                one sends a single write.
+            </p>
+            <p>
+                That write is the point worth noticing. <code>speedUniform</code> returns a
+                <code>uniform</code> node, C# adopts it under a handle like any other object, and
+                <code>Set("value", …)</code> changes the running shader without rebuilding it. So the
+                shader is authored in JavaScript and driven from C#. The number above is read back off
+                that node after each write rather than echoed from a local, so it is what the shader is
+                sampling rather than what this page hoped it would be.
+            </p>
+            <p>
+                Node slots are reached through <code>Set</code> rather than as typed properties.
+                three.js declares them as <code>Node</code>, and the node classes are empty at the C#
+                boundary - their operators are grafted onto prototypes at runtime by
+                <code>addMethodChaining</code>, and their float-versus-vec3 typing lives in TypeScript
+                generics no C# signature can carry. Mirroring them would produce a lossy shadow of TSL;
+                loading the real thing keeps all of it.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private const string ShaderModulePath = "js/tsl-shaders.js";
+    private const int BackgroundHex = 0x0a0f1c;
+    private const float InitialSpeed = 1.5f;
+
+    private Primitive? _speedNode;
+    private float _speed = InitialSpeed;
+
+    private async Task BuildShaderSceneAsync(ThreeContext threeContext)
+    {
+        var scene = new Scene();
+        scene.Set("background", Color.FromHex(BackgroundHex));
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 0.6f, 4.2f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.6f));
+
+        var keyLight = new DirectionalLight(Color.White, 2.2f);
+        keyLight.Position.Set(3f, 4f, 5f);
+        scene.Add(keyLight);
+
+        // The uniform is loaded on its own so C# keeps a handle to it, then handed to both expressions -
+        // one value driving colour and displacement together, rather than two that could drift apart.
+        _speedNode = await threeContext.LoadNodeAsync(ShaderModulePath, "speedUniform", InitialSpeed);
+        var colourNode = await threeContext.LoadNodeAsync(ShaderModulePath, "auroraColour", _speedNode);
+        var positionNode = await threeContext.LoadNodeAsync(ShaderModulePath, "rippleSurface", _speedNode);
+
+        var material = new MeshStandardNodeMaterial();
+        material.Roughness = 0.35f;
+        material.Metalness = 0.1f;
+        material.Set("colorNode", colourNode);
+        material.Set("positionNode", positionNode);
+
+        var mesh = new Mesh(new SphereGeometry(1.2f, 96, 64), material);
+        scene.Add(mesh);
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+    }
+
+    private async Task ApplySpeedAsync(float speed)
+    {
+        if (_speedNode is null)
+        {
+            return;
+        }
+
+        // Read back rather than displaying the value just written: what is shown is then the uniform the
+        // running shader is actually sampling, which is the claim this story makes. The read flushes the
+        // write ahead of itself, so no explicit flush is needed here.
+        _speedNode.Set("value", speed);
+        _speed = await _speedNode.GetAsync<float>("value");
+    }
+}

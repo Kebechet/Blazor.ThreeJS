@@ -762,6 +762,51 @@ function rememberHandle(context, handle, object) {
     context.handlesByObject.set(object, handle);
 }
 
+// Imports a consumer's own JavaScript module and adopts the TSL node one of its exports produces.
+// This is the only route custom shading has under this renderer, which converts every material into a
+// node graph and rejects `ShaderMaterial` outright.
+//
+// TSL is deliberately not mirrored as C# members. Its authoring surface is ~638 free functions in a
+// separate bundle, and the operators that make an expression readable — `.add`, `.mul`, the swizzles —
+// do not exist on any class: `addMethodChaining` grafts them onto node prototypes at runtime, and
+// TypeScript only sees them through `declare module` augmentations of a `NodeElements` interface.
+// Generating that surface would also erase the one distinction TSL exists to enforce, because the
+// float-versus-vec3 typing lives in template-literal generics (`Node<'vec3'>`) that C# cannot carry.
+// Letting the consumer write those few lines in JavaScript keeps the whole language, exactly typed by
+// three.js's own definitions, at the cost of one file.
+//
+// `modulePath` resolves against the document rather than against this module, so a consumer names
+// their shader file the way they name any other static asset of their app.
+//
+// Arguments go through the same decoder as an op's, so a uniform can be handed a value C# computed or
+// a handle to an object C# already mirrors.
+export async function loadNode(contextId, modulePath, exportName, args) {
+    const context = contexts.get(contextId);
+    if (!context) {
+        throw new Error(`Unknown context '${contextId}'`);
+    }
+
+    const module = await import(new URL(modulePath, document.baseURI).href);
+    const exported = module[exportName];
+    if (exported === undefined) {
+        throw new Error(`Module '${modulePath}' has no export named '${exportName}'`);
+    }
+
+    const decodedArgs = (args ?? []).map(value => decode(context, value).value);
+    const node = typeof exported === 'function' ? exported(...decodedArgs) : exported;
+    if (node === null || node === undefined || node.isNode !== true) {
+        const produced = node === null || node === undefined ? String(node) : describeType(node);
+        throw new Error(
+            `Export '${exportName}' of '${modulePath}' produced ${produced} rather than a TSL node. ` +
+            "A shader export returns the result of a TSL expression, or is one.");
+    }
+
+    return {
+        $ref: handleFor(context, node),
+        t: describeType(node)
+    };
+}
+
 // Loads a glTF or GLB file and registers the graph it produced, so C# can hold the result.
 //
 // What comes back is one row per mirrored node: the root always, plus every named descendant.

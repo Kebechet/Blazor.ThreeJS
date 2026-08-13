@@ -59,7 +59,7 @@ internal static class Stories
 	/// <summary>Every way a value comes back from three.js, beside a mirrored one.</summary>
 	public const string ReadingState = "architecture-reading-state-back--asking-three-js-what-it-holds";
 
-	/// <summary>The adopted WebGLRenderer: tone mapping, exposure and clear colour from C#.</summary>
+	/// <summary>The adopted WebGPURenderer: tone mapping, exposure and clear colour from C#.</summary>
 	public const string Renderer = "architecture-the-renderer--reaching-the-renderer-itself";
 
 	/// <summary>Shadow casting, reached by adopting the renderer's nested shadow map.</summary>
@@ -70,6 +70,9 @@ internal static class Stories
 
 	/// <summary>A keyframe clip built in C# and played through an AnimationMixer.</summary>
 	public const string CatalogueAnimation = "catalogue-animation--a-keyframe-clip-built-in-code";
+
+	/// <summary>TSL node shading loaded from a JavaScript module, with its uniform driven from C#.</summary>
+	public const string CatalogueShaders = "catalogue-shaders--custom-shading-with-tsl";
 
 	/// <summary>Live interop counters against an orbiting, then C#-driven, scene.</summary>
 	public const string InteropBudget = "architecture-interop-budget--an-idle-scene-costs-nothing";
@@ -102,6 +105,7 @@ internal static class Stories
 		CatalogueShadows,
 		CatalogueFog,
 		CatalogueAnimation,
+		CatalogueShaders,
 		ReadingState,
 		Renderer,
 		InteropBudget,

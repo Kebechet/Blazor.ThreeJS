@@ -374,6 +374,63 @@ public sealed class ThreeContext : IAsyncDisposable
 	}
 
 	/// <summary>
+	/// <para>
+	/// Imports a JavaScript module of your own and adopts the TSL node one of its exports produces, so
+	/// it can be assigned to a material's node property. This is how custom shading is written under
+	/// this renderer, which turns every material into a node graph and rejects <c>ShaderMaterial</c>.
+	/// </para>
+	/// <para>
+	/// The module writes TSL the way three.js's own examples do, importing the shipped bundle at
+	/// <c>_content/Kebechet.Blazor.ThreeJS/three.tsl.min.js</c>, and exports either a function returning
+	/// a node or the node itself:
+	/// </para>
+	/// <code>
+	/// import { positionLocal, sin, time, vec3 } from '/_content/Kebechet.Blazor.ThreeJS/three.tsl.min.js';
+	///
+	/// export function wobble(amplitude) {
+	///     return positionLocal.add(vec3(0, sin(time).mul(amplitude), 0));
+	/// }
+	/// </code>
+	/// <code>
+	/// var wobble = await threeContext.LoadNodeAsync("js/wobble.js", "wobble", 0.4f);
+	/// material.Set("positionNode", wobble);
+	/// </code>
+	/// <para>
+	/// TSL is reached this way rather than mirrored because it is not describable as C# members: its
+	/// operators are grafted onto node prototypes at runtime, and its float-versus-vec3 typing lives in
+	/// TypeScript generics that no C# signature can carry. Writing those few lines in JavaScript keeps
+	/// the entire language rather than a lossy shadow of it.
+	/// </para>
+	/// <para>
+	/// Pending writes are flushed first, so an argument referencing a mirrored object resolves against
+	/// an object the browser has already been told to create.
+	/// </para>
+	/// </summary>
+	/// <param name="modulePath">
+	/// Path to the module, resolved against the document like any other static asset of your app.
+	/// </param>
+	/// <param name="exportName">Name of the export to read, called with <paramref name="args"/> when it is a function.</param>
+	/// <param name="args">Positional arguments for the exported function.</param>
+	/// <returns>The node, under a handle this context mirrors.</returns>
+	/// <exception cref="JSException">
+	/// Thrown when the module cannot be loaded, has no such export, or the export does not produce a node.
+	/// </exception>
+	public async Task<Primitive> LoadNodeAsync(string modulePath, string exportName, params object?[] args)
+	{
+		await FlushAsync().ConfigureAwait(false);
+
+		var encodedArgs = args
+			.Select(ThreeValue.Encode)
+			.ToArray();
+
+		var reference = await _module
+			.InvokeAsync<ThreeObjectReference>("loadNode", _contextId, modulePath, exportName, encodedArgs)
+			.ConfigureAwait(false);
+
+		return ThreeObject.Adopt(this, reference);
+	}
+
+	/// <summary>
 	/// Asks the browser to bind <c>OrbitControls</c> to the camera at <paramref name="cameraHandle"/>
 	/// and to this context's canvas, and hands back the handle it minted for them.
 	/// </summary>

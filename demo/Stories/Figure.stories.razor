@@ -35,7 +35,7 @@
             <p>
                 ⚠️ That readout comes from the only JavaScript-to-C# callback the package makes during an
                 operation. It is bounded by the fetch - a handful of events for a model - which is why it
-                exists at all. three.js's per-frame hooks (<code>WebGLRenderer.setCustomSort</code>,
+                exists at all. three.js's per-frame hooks (<code>Renderer.setOpaqueSort</code>,
                 <code>onBeforeRender</code>) are deliberately <em>not</em> exposed: a delegate invoked per
                 object per frame across this boundary would be a network round trip per object on a
                 Blazor Server circuit, and an idle scene costing zero interop is the property the whole

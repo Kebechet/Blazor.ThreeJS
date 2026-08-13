@@ -43,7 +43,7 @@ public sealed class GltfLoadProgress
 /// This is the only channel in the package that runs JavaScript-to-C# during an operation, and it is
 /// deliberately the only one. Its call count is bounded by the fetch — a handful of events for a
 /// model — so it cannot become per-frame traffic. three.js's per-frame hooks
-/// (<c>WebGLRenderer.setCustomSort</c>, <c>onBeforeRender</c>) are refused for exactly that reason:
+/// (<c>Renderer.setOpaqueSort</c>, <c>onBeforeRender</c>) are refused for exactly that reason:
 /// a delegate invoked per object per frame across this boundary is a network round trip per object on
 /// a Blazor Server circuit, and an idle scene costing zero interop is the property the whole design
 /// rests on.

@@ -8,7 +8,7 @@
                 Everything else in a scene is reachable by walking down from the scene graph. The
                 renderer is not: <code>ThreeCanvas</code> creates it in JavaScript before any C# object
                 exists, and no mesh, light or camera holds a reference to it. So the context names it
-                directly - <code>ThreeContext.Renderer</code> is a <code>WebGLRenderer</code> adopted
+                directly - <code>ThreeContext.Renderer</code> is a <code>WebGPURenderer</code> adopted
                 under a reserved handle, not one C# constructed.
             </p>
             <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildRendererSceneAsync" />

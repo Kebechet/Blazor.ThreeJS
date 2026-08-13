@@ -106,7 +106,7 @@ internal static class ThreeWireFormat
 	/// </para>
 	/// </summary>
 	/// <summary>
-	/// Handle every context registers its own <c>WebGLRenderer</c> under.
+	/// Handle every context registers its own <c>WebGPURenderer</c> under.
 	/// <para>
 	/// Reserved rather than minted, so C# can address the renderer without a round trip to ask what
 	/// handle it got. The applier seeds its own allocator below this value, so no loaded glTF node or

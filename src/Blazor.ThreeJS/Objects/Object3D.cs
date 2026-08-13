@@ -29,6 +29,10 @@ public abstract class Object3D : ThreeObject
 	private Layers? _layers;
 	private Material? _customDepthMaterial;
 	private Material? _customDistanceMaterial;
+	private bool _isPositionWritten;
+	private bool _isRotationWritten;
+	private bool _isScaleWritten;
+	private bool _isVisibleWritten;
 	private bool _isNameWritten;
 	private bool _isUpWritten;
 	private bool _isQuaternionWritten;
@@ -102,6 +106,7 @@ public abstract class Object3D : ThreeObject
 			}
 
 			_isVisible = value;
+			_isVisibleWritten = true;
 			RecordSet("visible", value);
 		}
 	}
@@ -429,9 +434,23 @@ public abstract class Object3D : ThreeObject
 	/// </summary>
 	private void WireTransformChangeTracking()
 	{
-		Position.OnChange = () => RecordSet("position", Position);
-		Rotation.OnChange = () => RecordSet("rotation", Rotation);
-		Scale.OnChange = () => RecordSet("scale", Scale);
+		Position.OnChange = () =>
+		{
+			_isPositionWritten = true;
+			RecordSet("position", Position);
+		};
+
+		Rotation.OnChange = () =>
+		{
+			_isRotationWritten = true;
+			RecordSet("rotation", Rotation);
+		};
+
+		Scale.OnChange = () =>
+		{
+			_isScaleWritten = true;
+			RecordSet("scale", Scale);
+		};
 
 		Quaternion.OnChange = () =>
 		{
@@ -553,21 +572,41 @@ public abstract class Object3D : ThreeObject
 	/// Replays properties that were written before this object was attached, so construction order
 	/// never matters to the caller.
 	/// <para>
-	/// The transform and visibility are replayed unconditionally: their four values are the ones this
-	/// class has held since construction, they match three.js's own defaults exactly, and every object
-	/// in the graph has them. Everything below is replayed only when it was written, because a value
-	/// nobody set is this class's guess at a three.js default rather than something it read back —
-	/// which is also why <c>quaternion</c> lands after <c>rotation</c>: three.js derives each from the
-	/// other, and the one the caller actually wrote has to be the one applied last.
+	/// Every value here is replayed only when it was actually written. A value nobody set is this
+	/// class's guess at a three.js default rather than something it read back, and writing a guess is
+	/// how <c>HemisphereLight</c> came to render whole scenes black: three.js constructs it, and
+	/// <c>DirectionalLight</c> and <c>SpotLight</c>, with <c>position</c> at <c>(0, 1, 0)</c> rather
+	/// than the origin, because for those three the position <em>is</em> the direction they light
+	/// from. Replaying an unwritten <c>(0, 0, 0)</c> over that left a zero-length direction and no
+	/// light at all, silently — see <c>Object3DTransformReplayTests</c>.
+	/// </para>
+	/// <para>
+	/// <c>quaternion</c> lands after <c>rotation</c> because three.js derives each from the other, and
+	/// the one the caller actually wrote has to be the one applied last.
 	/// </para>
 	/// </summary>
 	/// <param name="batch">Batch to record the property writes into.</param>
 	internal override void EmitState(ThreeBatch batch)
 	{
-		batch.Set(Handle, "position", ThreeValue.Encode(Position));
-		batch.Set(Handle, "rotation", ThreeValue.Encode(Rotation));
-		batch.Set(Handle, "scale", ThreeValue.Encode(Scale));
-		batch.Set(Handle, "visible", ThreeValue.Encode(_isVisible));
+		if (_isPositionWritten)
+		{
+			batch.Set(Handle, "position", ThreeValue.Encode(Position));
+		}
+
+		if (_isRotationWritten)
+		{
+			batch.Set(Handle, "rotation", ThreeValue.Encode(Rotation));
+		}
+
+		if (_isScaleWritten)
+		{
+			batch.Set(Handle, "scale", ThreeValue.Encode(Scale));
+		}
+
+		if (_isVisibleWritten)
+		{
+			batch.Set(Handle, "visible", ThreeValue.Encode(_isVisible));
+		}
 
 		if (_isQuaternionWritten)
 		{

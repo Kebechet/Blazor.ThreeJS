@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Kebechet.Blazor.ThreeJS.Objects;
 
 namespace Kebechet.Blazor.ThreeJS.Core;
@@ -233,10 +234,7 @@ public abstract class ThreeObject
 		// never seen is an unknown-handle failure in the browser, and nothing else on this path would
 		// have created the referenced object. Attaching rather than emitting its create op directly is
 		// what keeps a shared instance from being created twice.
-		if (value is ThreeObject mirroredValue)
-		{
-			mirroredValue.AttachTo(batch);
-		}
+		AttachMirroredValue(batch, value);
 
 		batch.Set(Handle, member, encodedValue);
 	}
@@ -359,7 +357,8 @@ public abstract class ThreeObject
 	/// <param name="context">Context the handle belongs to.</param>
 	/// <param name="reference">The reference, absent when the member held no object.</param>
 	/// <returns>The adopted object.</returns>
-	private static Primitive? Adopt(ThreeContext context, ThreeObjectReference? reference)
+	[return: NotNullIfNotNull(nameof(reference))]
+	internal static Primitive? Adopt(ThreeContext context, ThreeObjectReference? reference)
 	{
 		if (reference is null)
 		{
@@ -699,9 +698,47 @@ public abstract class ThreeObject
 	{
 		foreach (var arg in args)
 		{
-			if (arg is ThreeObject mirroredArgument)
+			AttachMirroredValue(batch, arg);
+		}
+	}
+
+	/// <summary>
+	/// Attaches every mirrored object a value carries, whether the value is one itself or a sequence of
+	/// them.
+	/// <para>
+	/// The sequence case is not a refinement: three.js accepts a list wherever it accepts one object —
+	/// <c>mesh.material</c> takes a <c>Material</c> or an array of them — and each element crosses as
+	/// its own handle. Attaching only a value that <em>is</em> a mirrored object leaves those elements
+	/// uncreated, so the write names handles the applier has never seen. That failure surfaces on the
+	/// error channel rather than on the console, which is why it reads as the write simply not
+	/// happening; see <c>ThreeEscapeHatchTests</c>.
+	/// </para>
+	/// <para>
+	/// One level deep, which is as far as three.js's own shapes go here. A string is
+	/// <see cref="System.Collections.IEnumerable"/> too and never carries a handle, so it is stepped
+	/// over rather than walked character by character.
+	/// </para>
+	/// </summary>
+	/// <param name="batch">Batch the objects should attach to.</param>
+	/// <param name="value">The value being written or passed.</param>
+	private protected static void AttachMirroredValue(ThreeBatch batch, object? value)
+	{
+		if (value is ThreeObject mirroredValue)
+		{
+			mirroredValue.AttachTo(batch);
+			return;
+		}
+
+		if (value is string || value is not System.Collections.IEnumerable sequence)
+		{
+			return;
+		}
+
+		foreach (var element in sequence)
+		{
+			if (element is ThreeObject mirroredElement)
 			{
-				mirroredArgument.AttachTo(batch);
+				mirroredElement.AttachTo(batch);
 			}
 		}
 	}

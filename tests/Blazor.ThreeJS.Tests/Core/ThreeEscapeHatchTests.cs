@@ -642,9 +642,6 @@ public class ThreeEscapeHatchTests
 		[
 			"Create:PositionalAudio",
 			"Set:position",
-			"Set:rotation",
-			"Set:scale",
-			"Set:visible",
 			"Set:refDistance",
 			"Call:play"
 		]);
@@ -685,6 +682,44 @@ public class ThreeEscapeHatchTests
 				})
 				.ToList()
 		};
+	}
+
+	/// <summary>
+	/// Every mirrored object in a written collection is created, not only a value that is one itself.
+	/// <para>
+	/// three.js accepts a list wherever it accepts a single object — <c>mesh.material</c> takes a
+	/// <c>Material</c> or an array of them — and each element crosses as its own handle. Attaching only
+	/// the single-value case left the rest uncreated, so the write named handles the applier had never
+	/// seen. It failed on the error channel rather than the console, which reads as a multi-material
+	/// mesh silently drawing with one material.
+	/// </para>
+	/// </summary>
+	[Fact]
+	public void Set_CollectionOfMirroredObjects_CreatesEveryElement()
+	{
+		// Arrange
+		var batch = new ThreeBatch();
+		var scene = new Scene();
+		var mesh = new Mesh(new BoxGeometry(), new MeshBasicMaterial());
+		scene.Add(mesh);
+		scene.AttachTo(batch);
+		batch.Drain();
+
+		var faceMaterials = new List<MeshStandardMaterial> { new(), new(), new() };
+
+		// Act
+		mesh.Set("material", faceMaterials);
+		var ops = batch.Drain();
+
+		// Assert
+		foreach (var faceMaterial in faceMaterials)
+		{
+			ops.ShouldContain(
+				x => x.Kind == ThreeOpKind.Create && x.Handle == faceMaterial.Handle,
+				$"the material at handle {faceMaterial.Handle} was referenced but never created.");
+		}
+
+		ops.ShouldContain(x => x.Kind == ThreeOpKind.Set && x.Handle == mesh.Handle && x.Member == "material");
 	}
 
 	/// <summary>

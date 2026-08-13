@@ -23,7 +23,10 @@ public class Object3DTests
 			.Where(x => x.Kind == ThreeOpKind.Set)
 			.Select(x => x.Member)
 			.ToList();
-		setMembers.ShouldBe(["position", "rotation", "scale", "visible"], ignoreOrder: true);
+		// Nothing at all: a value nobody wrote is this class's guess at a three.js default, and replaying
+		// a guess is what made a HemisphereLight - constructed at (0, 1, 0) - go dark. See
+		// Object3DTransformReplayTests.
+		setMembers.ShouldBeEmpty();
 	}
 
 	[Fact]
@@ -142,8 +145,7 @@ public class Object3DTests
 
 	/// <summary>
 	/// three.js derives <c>rotation</c> and <c>quaternion</c> from each other, so whichever is applied
-	/// last wins. The transform is replayed unconditionally and the quaternion only when written, so
-	/// the caller's own write has to be the one that lands second.
+	/// last wins. Both have to be written for the ordering to matter at all, so both are written here.
 	/// </summary>
 	[Fact]
 	public void Object3D_QuaternionWrittenBeforeAttach_IsReplayedAfterRotation()
@@ -151,6 +153,7 @@ public class Object3DTests
 		// Arrange
 		var batch = new ThreeBatch();
 		var group = new Group();
+		group.Rotation.Set(0.4f, 0.5f, 0.6f, EulerOrder.XYZ);
 		group.Quaternion.Set(0.1f, 0.2f, 0.3f, 0.9f);
 
 		// Act

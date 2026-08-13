@@ -145,8 +145,14 @@ public class SceneGraphTests
 		setMembers.ShouldBe(["visible", "roughness", "metalness"], ignoreOrder: true);
 	}
 
+	/// <summary>
+	/// An untouched object costs a create op and nothing else. This used to replay the whole transform
+	/// on the reasoning that the values matched three.js's defaults - which is false for the three
+	/// lights constructed at <c>(0, 1, 0)</c>, and made a hemisphere-lit scene render black. Every
+	/// object in a graph pays this, so the saving is per-object as well as being the correctness fix.
+	/// </summary>
 	[Fact]
-	public void SceneGraph_ObjectWithAnUntouchedTransformAttached_StillReplaysItsFullState()
+	public void SceneGraph_ObjectWithAnUntouchedTransformAttached_ReplaysNothing()
 	{
 		// Arrange
 		var batch = new ThreeBatch();
@@ -157,11 +163,7 @@ public class SceneGraphTests
 		var ops = batch.Drain();
 
 		// Assert
-		var setMembers = ops
-			.Where(x => x.Kind == ThreeOpKind.Set)
-			.Select(x => x.Member)
-			.ToList();
-		setMembers.ShouldBe(["position", "rotation", "scale", "visible"], ignoreOrder: true);
+		ops.ShouldNotContain(x => x.Kind == ThreeOpKind.Set);
 	}
 
 	[Fact]

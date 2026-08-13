@@ -18,20 +18,30 @@ public sealed class CatmullRomCurve3 : ThreeObject
 {
 	private Vector3[]? _points;
 	private bool _closed;
+	private CurveType? _curveType;
 	private float _tension;
 	private int _arcLengthDivisions = 200;
 	private bool _isClosedWritten;
 	private bool _isPointsWritten;
+	private bool _isCurveTypeWritten;
 	private bool _isTensionWritten;
 	private bool _isArcLengthDivisionsWritten;
 
 	/// <summary>This constructor creates a new <see cref="CatmullRomCurve3"/>.</summary>
 	/// <param name="points">An array of <c>Vector3</c> points.</param>
 	/// <param name="closed">Whether the curve is closed.</param>
-	public CatmullRomCurve3(Vector3[]? points = null, bool closed = false)
+	/// <param name="curveType">Type of the curve.</param>
+	/// <param name="tension">Tension of the curve.</param>
+	public CatmullRomCurve3(
+		Vector3[]? points = null,
+		bool closed = false,
+		CurveType? curveType = null,
+		float tension = 0.5f)
 	{
 		_points = points;
 		_closed = closed;
+		_curveType = curveType;
+		_tension = tension;
 	}
 
 	/// <summary>
@@ -44,6 +54,7 @@ public sealed class CatmullRomCurve3 : ThreeObject
 		: base(handle)
 	{
 		_closed = default!;
+		_tension = default!;
 
 		Batch = batch;
 	}
@@ -55,13 +66,22 @@ public sealed class CatmullRomCurve3 : ThreeObject
 	}
 
 	/// <summary>
-	/// Constructor arguments forwarded to <c>THREE.CatmullRomCurve3</c>: points, closed. An argument
-	/// the caller left unspecified travels as the wire's not-supplied sentinel, or is trimmed when
-	/// nothing supplied follows it, so three.js applies its own default.
+	/// Constructor arguments forwarded to <c>THREE.CatmullRomCurve3</c>: points, closed, curveType,
+	/// tension. An argument the caller left unspecified travels as the wire's not-supplied sentinel, or
+	/// is trimmed when nothing supplied follows it, so three.js applies its own default.
 	/// </summary>
 	protected override object?[] ConstructorArgs
 	{
-		get { return ThreeValue.TrimUnspecifiedTail([ThreeValue.OrUnspecified(_points), _closed]); }
+		get
+		{
+			return ThreeValue.TrimUnspecifiedTail(
+			[
+				ThreeValue.OrUnspecified(_points),
+				_closed,
+				ThreeValue.OrUnspecified(_curveType),
+				_tension
+			]);
+		}
 	}
 
 	/// <summary>
@@ -101,6 +121,27 @@ public sealed class CatmullRomCurve3 : ThreeObject
 			_points = value;
 			_isPointsWritten = true;
 			RecordSet("points", value);
+		}
+	}
+
+	/// <summary>
+	/// Possible values are <c>centripetal</c>, <c>chordal</c> and <c>catmullrom</c>. Writing it records
+	/// a <c>curveType</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public CurveType? CurveType
+	{
+		get { return _curveType; }
+		set
+		{
+			if (_curveType == value)
+			{
+				return;
+			}
+
+			_curveType = value;
+			_isCurveTypeWritten = true;
+			RecordSet("curveType", value);
 		}
 	}
 
@@ -152,6 +193,17 @@ public sealed class CatmullRomCurve3 : ThreeObject
 	public void UpdateArcLengths()
 	{
 		RecordCall("updateArcLengths");
+	}
+
+	/// <summary>
+	/// A Read-only _string_ to check if <c>this</c> object type. Read-only in three.js, so it is read
+	/// on demand rather than mirrored: records a get op, sends it behind every write already pending,
+	/// and completes with the value <c>type</c> held.
+	/// </summary>
+	/// <returns>The value <c>type</c> held, once the JavaScript side has answered.</returns>
+	public Task<string> TypeAsync()
+	{
+		return GetAsync<string>("type");
 	}
 
 	/// <summary>
@@ -305,6 +357,11 @@ public sealed class CatmullRomCurve3 : ThreeObject
 		if (_isPointsWritten)
 		{
 			batch.Set(Handle, "points", ThreeValue.Encode(_points));
+		}
+
+		if (_isCurveTypeWritten)
+		{
+			batch.Set(Handle, "curveType", ThreeValue.Encode(_curveType));
 		}
 
 		if (_isTensionWritten)

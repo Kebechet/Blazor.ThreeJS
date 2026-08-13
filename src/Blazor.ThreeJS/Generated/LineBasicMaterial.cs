@@ -14,11 +14,15 @@ public class LineBasicMaterial : Material
 {
 	private Texture? _map = null;
 	private float _linewidth = 1f;
+	private LineCap _linecap;
+	private LineJoin _linejoin;
 	private bool _fog = true;
 	private bool _lights = false;
 	private bool _isColorWritten;
 	private bool _isMapWritten;
 	private bool _isLinewidthWritten;
+	private bool _isLinecapWritten;
+	private bool _isLinejoinWritten;
 	private bool _isFogWritten;
 	private bool _isLightsWritten;
 
@@ -115,6 +119,48 @@ public class LineBasicMaterial : Material
 	}
 
 	/// <summary>
+	/// Defines appearance of line ends. Can only be used with <c>SVGRenderer</c>. Writing it records a
+	/// <c>linecap</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public LineCap Linecap
+	{
+		get { return _linecap; }
+		set
+		{
+			if (_linecap == value)
+			{
+				return;
+			}
+
+			_linecap = value;
+			_isLinecapWritten = true;
+			RecordSet("linecap", value);
+		}
+	}
+
+	/// <summary>
+	/// Defines appearance of line joints. Can only be used with <c>SVGRenderer</c>. Writing it records
+	/// a <c>linejoin</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public LineJoin Linejoin
+	{
+		get { return _linejoin; }
+		set
+		{
+			if (_linejoin == value)
+			{
+				return;
+			}
+
+			_linejoin = value;
+			_isLinejoinWritten = true;
+			RecordSet("linejoin", value);
+		}
+	}
+
+	/// <summary>
 	/// Whether the material is affected by fog or not. Writing it records a <c>fog</c> property write
 	/// once this object is attached; writing the value already held records nothing.
 	/// </summary>
@@ -189,6 +235,16 @@ public class LineBasicMaterial : Material
 		if (_isLinewidthWritten)
 		{
 			batch.Set(Handle, "linewidth", ThreeValue.Encode(_linewidth));
+		}
+
+		if (_isLinecapWritten)
+		{
+			batch.Set(Handle, "linecap", ThreeValue.Encode(_linecap));
+		}
+
+		if (_isLinejoinWritten)
+		{
+			batch.Set(Handle, "linejoin", ThreeValue.Encode(_linejoin));
 		}
 
 		if (_isFogWritten)

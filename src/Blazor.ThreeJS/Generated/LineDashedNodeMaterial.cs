@@ -18,6 +18,8 @@ public sealed class LineDashedNodeMaterial : NodeMaterial
 	private float _gapSize = 1f;
 	private Texture? _map = null;
 	private float _linewidth = 1f;
+	private LineCap _linecap;
+	private LineJoin _linejoin;
 	private bool _isDashOffsetWritten;
 	private bool _isScaleWritten;
 	private bool _isDashSizeWritten;
@@ -25,6 +27,8 @@ public sealed class LineDashedNodeMaterial : NodeMaterial
 	private bool _isColorWritten;
 	private bool _isMapWritten;
 	private bool _isLinewidthWritten;
+	private bool _isLinecapWritten;
+	private bool _isLinejoinWritten;
 
 	/// <summary>
 	/// Color of the material. Mirrored as an instance this object owns: mutating it records a write of
@@ -200,6 +204,48 @@ public sealed class LineDashedNodeMaterial : NodeMaterial
 	}
 
 	/// <summary>
+	/// Defines appearance of line ends. Can only be used with <c>SVGRenderer</c>. Writing it records a
+	/// <c>linecap</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public LineCap Linecap
+	{
+		get { return _linecap; }
+		set
+		{
+			if (_linecap == value)
+			{
+				return;
+			}
+
+			_linecap = value;
+			_isLinecapWritten = true;
+			RecordSet("linecap", value);
+		}
+	}
+
+	/// <summary>
+	/// Defines appearance of line joints. Can only be used with <c>SVGRenderer</c>. Writing it records
+	/// a <c>linejoin</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public LineJoin Linejoin
+	{
+		get { return _linejoin; }
+		set
+		{
+			if (_linejoin == value)
+			{
+				return;
+			}
+
+			_linejoin = value;
+			_isLinejoinWritten = true;
+			RecordSet("linejoin", value);
+		}
+	}
+
+	/// <summary>
 	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
 	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
 	/// the value <c>isLineDashedNodeMaterial</c> held.
@@ -254,6 +300,16 @@ public sealed class LineDashedNodeMaterial : NodeMaterial
 		if (_isLinewidthWritten)
 		{
 			batch.Set(Handle, "linewidth", ThreeValue.Encode(_linewidth));
+		}
+
+		if (_isLinecapWritten)
+		{
+			batch.Set(Handle, "linecap", ThreeValue.Encode(_linecap));
+		}
+
+		if (_isLinejoinWritten)
+		{
+			batch.Set(Handle, "linejoin", ThreeValue.Encode(_linejoin));
 		}
 	}
 }

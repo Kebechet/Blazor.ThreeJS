@@ -36,9 +36,13 @@ internal sealed class EnumEmitter
 			? DocCommentEmitter.EnsureSentenceEnd(DocCommentEmitter.RenderInline(rawSummary))
 			: $"The values three.js accepts for <c>{generatedEnum.Name}</c>.";
 
-		DocCommentEmitter.WriteSummary(
-			writer,
-			summary + " Encoded on the wire as the numeric value three.js itself uses, not as the member name.");
+		// three.js spells a few of these sets as strings. For those the C# value is only a position and
+		// carries no meaning upstream, so the wire sends the token instead — see `ThreeStringEnum`.
+		var wireNote = generatedEnum.IsStringValued
+			? " Encoded on the wire as the string three.js compares against, not as the C# value, which is only a position."
+			: " Encoded on the wire as the numeric value three.js itself uses, not as the member name.";
+
+		DocCommentEmitter.WriteSummary(writer, summary + wireNote);
 
 		writer.WriteLine($"public enum {generatedEnum.Name} : {generatedEnum.BackingTypeName}");
 		writer.WriteLine("{");
@@ -56,6 +60,13 @@ internal sealed class EnumEmitter
 			var memberSummary = member.Doc?.Summary is { Length: > 0 } rawMemberSummary
 				? DocCommentEmitter.EnsureSentenceEnd(DocCommentEmitter.RenderInline(rawMemberSummary))
 				: upstreamSpelling;
+
+			if (member.Token is { } token)
+			{
+				memberSummary += token.Length > 0
+					? $" Sent as <c>\"{token}\"</c>."
+					: " Sent as the empty string, which is what three.js uses for this.";
+			}
 
 			if (member.AliasOf is { } aliasOf)
 			{

@@ -35,6 +35,8 @@ public class MeshStandardNodeMaterial : NodeMaterial
 	private float _envMapIntensity = 1f;
 	private bool _wireframe = false;
 	private float _wireframeLinewidth = 1f;
+	private LineJoin _wireframeLinecap;
+	private LineJoin _wireframeLinejoin;
 	private bool _flatShading = false;
 	private bool _isColorWritten;
 	private bool _isRoughnessWritten;
@@ -63,6 +65,8 @@ public class MeshStandardNodeMaterial : NodeMaterial
 	private bool _isEnvMapIntensityWritten;
 	private bool _isWireframeWritten;
 	private bool _isWireframeLinewidthWritten;
+	private bool _isWireframeLinecapWritten;
+	private bool _isWireframeLinejoinWritten;
 	private bool _isFlatShadingWritten;
 
 	/// <summary>
@@ -742,6 +746,48 @@ public class MeshStandardNodeMaterial : NodeMaterial
 	}
 
 	/// <summary>
+	/// Defines appearance of wireframe ends. Can only be used with <c>SVGRenderer</c>. Writing it
+	/// records a <c>wireframeLinecap</c> property write once this object is attached; writing the value
+	/// already held records nothing.
+	/// </summary>
+	public LineJoin WireframeLinecap
+	{
+		get { return _wireframeLinecap; }
+		set
+		{
+			if (_wireframeLinecap == value)
+			{
+				return;
+			}
+
+			_wireframeLinecap = value;
+			_isWireframeLinecapWritten = true;
+			RecordSet("wireframeLinecap", value);
+		}
+	}
+
+	/// <summary>
+	/// Defines appearance of wireframe joints. Can only be used with <c>SVGRenderer</c>. Writing it
+	/// records a <c>wireframeLinejoin</c> property write once this object is attached; writing the
+	/// value already held records nothing.
+	/// </summary>
+	public LineJoin WireframeLinejoin
+	{
+		get { return _wireframeLinejoin; }
+		set
+		{
+			if (_wireframeLinejoin == value)
+			{
+				return;
+			}
+
+			_wireframeLinejoin = value;
+			_isWireframeLinejoinWritten = true;
+			RecordSet("wireframeLinejoin", value);
+		}
+	}
+
+	/// <summary>
 	/// Whether the material is rendered with flat shading or not. Writing it records a
 	/// <c>flatShading</c> property write once this object is attached; writing the value already held
 	/// records nothing.
@@ -934,6 +980,16 @@ public class MeshStandardNodeMaterial : NodeMaterial
 		if (_isWireframeLinewidthWritten)
 		{
 			batch.Set(Handle, "wireframeLinewidth", ThreeValue.Encode(_wireframeLinewidth));
+		}
+
+		if (_isWireframeLinecapWritten)
+		{
+			batch.Set(Handle, "wireframeLinecap", ThreeValue.Encode(_wireframeLinecap));
+		}
+
+		if (_isWireframeLinejoinWritten)
+		{
+			batch.Set(Handle, "wireframeLinejoin", ThreeValue.Encode(_wireframeLinejoin));
 		}
 
 		if (_isFlatShadingWritten)

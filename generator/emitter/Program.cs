@@ -66,6 +66,11 @@ foreach (var generatedEnum in enums.Generatable)
 	emittedFiles.Add(enumEmitter.Emit(generatedEnum));
 }
 
+var stringValuedEnums = enums.Generatable
+	.Where(x => x.IsStringValued)
+	.ToList();
+emittedFiles.Add(new StringEnumTokenEmitter(ir).Emit(stringValuedEnums));
+
 emittedFiles.Add(new EmittedFile
 {
 	RelativePath = "generator/emitter-audit.md",

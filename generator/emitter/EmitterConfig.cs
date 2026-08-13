@@ -380,11 +380,76 @@ internal static class EmitterConfig
 	/// ships. Keyed by three.js name, valued by the reason, which is reproduced in the coverage report
 	/// so the exclusion is reviewable rather than silent.
 	/// </summary>
-	public static readonly IReadOnlyDictionary<string, string> ExcludedEnumNames = new Dictionary<string, string>(StringComparer.Ordinal)
+	public static readonly IReadOnlyDictionary<string, string> ExcludedEnumNames;
+
+	/// <summary>
+	/// Enums synthesised from the string-literal unions three.js writes inline rather than behind a
+	/// named type, keyed by the token set so every member declaring the same set shares one C# enum.
+	/// <para>
+	/// The names are curated rather than derived from the member, because the member is not a reliable
+	/// guide: <c>MeshBasicMaterial.wireframeLinecap</c> is declared <c>"round" | "bevel" | "miter"</c>
+	/// upstream — the <i>join</i> values, not the cap ones — so deriving a name from it would produce a
+	/// <c>WireframeLinecap</c> enum holding join tokens and mislead every reader. Naming the set after
+	/// what the set is keeps that upstream quirk from spreading into this API.
+	/// </para>
+	/// <para>
+	/// A union whose token set is not listed here stays refused, so a new one upstream surfaces in the
+	/// coverage report as a decision to make rather than being auto-named into the public surface.
+	/// </para>
+	/// </summary>
+	public static readonly IReadOnlyList<(string Name, string[] Tokens)> SynthesisedStringEnums =
+	[
+		("LineJoin", ["round", "bevel", "miter"]),
+		("LineCap", ["butt", "round", "square"])
+	];
+
+	/// <summary>
+	/// The renderer's own WebGPU descriptor vocabulary. Every one of these is string-valued and so
+	/// would generate now that the wire carries tokens — but no member of the emitted surface is typed
+	/// by any of them, because they describe pipeline state the backend builds internally and this
+	/// package never hands a consumer. Emitting them would add roughly two hundred enum members to the
+	/// public API that nothing can be passed to.
+	/// </summary>
+	private static readonly string[] _webGpuDescriptorEnumNames =
+	[
+		"GPUAddressMode", "GPUBlendFactor", "GPUBlendOperation", "GPUBufferBindingType",
+		"GPUCompareFunction", "GPUCullMode", "GPUFeatureMap", "GPUFeatureName", "GPUFilterMode",
+		"GPUFrontFace", "GPUIndexFormat", "GPUInputStepMode", "GPULoadOp", "GPUPrimitiveTopology",
+		"GPUSamplerBindingType", "GPUStencilOperation", "GPUStorageTextureAccess", "GPUStoreOp",
+		"GPUTextureAspect", "GPUTextureDimension", "GPUTextureFormat", "GPUTextureSampleType",
+		"GPUTextureViewDimension", "GPUVertexFormat"
+	];
+
+	// A static constructor rather than a field initialiser: those run in declaration order, so
+	// building the dictionary where it is declared would read `_webGpuDescriptorEnumNames` before its
+	// own initialiser had run and see null.
+	static EmitterConfig()
 	{
-		["GPUColorWriteFlags"] = "a WebGPU construct, absent from the WebGL bundle this package ships (`THREE.GPUColorWriteFlags === undefined`). " +
-			"Consistent with the standing exclusion of the WebGPU / TSL stack; it is numeric, so nothing but this rule would have kept it out"
-	};
+		ExcludedEnumNames = BuildExcludedEnumNames();
+	}
+
+	private static Dictionary<string, string> BuildExcludedEnumNames()
+	{
+		var excluded = new Dictionary<string, string>(StringComparer.Ordinal)
+		{
+			["EulerOrder"] = "already hand-written as `Kebechet.Blazor.ThreeJS.Math.EulerOrder`, because `Euler` is a " +
+				"hand-written math value rather than a generated class. Its rotation order crosses inside the tagged " +
+				"Euler value as an index the applier maps through `EULER_ORDERS`, so a second enum here would be a " +
+				"duplicate name carrying a different wire form",
+
+			["GPUColorWriteFlags"] = "declared by @types/three but not exported by the bundle this package ships " +
+				"(`THREE.GPUColorWriteFlags === undefined`), so a member typed by it could never resolve at runtime. " +
+				"It is numeric, so nothing but this rule would have kept it out"
+		};
+
+		foreach (var name in _webGpuDescriptorEnumNames)
+		{
+			excluded[name] = "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted " +
+				"surface is typed by it, so generating it would add public enum members nothing can be passed to";
+		}
+
+		return excluded;
+	}
 
 	/// <summary>
 	/// Hand-written math types that cannot report a change. Both matrices hand their <c>Elements</c>

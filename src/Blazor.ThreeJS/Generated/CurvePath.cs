@@ -95,6 +95,17 @@ public class CurvePath : ThreeObject
 	}
 
 	/// <summary>
+	/// A Read-only _string_ to check if <c>this</c> object type. Read-only in three.js, so it is read
+	/// on demand rather than mirrored: records a get op, sends it behind every write already pending,
+	/// and completes with the value <c>type</c> held.
+	/// </summary>
+	/// <returns>The value <c>type</c> held, once the JavaScript side has answered.</returns>
+	public Task<string> TypeAsync()
+	{
+		return GetAsync<string>("type");
+	}
+
+	/// <summary>
 	/// Adds a <see cref="LineCurve">lineCurve</see> to close the path. Records a read op, sends it
 	/// behind every write already pending, and completes with what <c>closePath</c> returned.
 	/// </summary>

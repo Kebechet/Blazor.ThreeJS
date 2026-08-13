@@ -30,7 +30,7 @@ not after.
 
 | basis | generated | projected |
 |---|---|---|
-| documented `Float` | 39 | 0 |
+| documented `Float` | 40 | 0 |
 | documented `Integer` | 29 | 0 |
 | **heuristic override to `int`** | 7 | 0 |
 | **defaulted to `float`** | 103 | 0 |
@@ -152,7 +152,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `WebGLRenderTarget` | `height` | `float` | **defaulted to `float`** | generated | `src/renderers/WebGLRenderTarget.d.ts` |
 | `WebGLRenderTarget` | `width` | `float` | **defaulted to `float`** | generated | `src/renderers/WebGLRenderTarget.d.ts` |
 
-### Documented upstream — taken as written (68)
+### Documented upstream — taken as written (69)
 
 | class | member | C# type | basis | scope | file |
 |---|---|---|---|---|---|
@@ -168,6 +168,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CapsuleGeometry` | `height` | `float` | documented `Float` | generated | `src/geometries/CapsuleGeometry.d.ts` |
 | `CapsuleGeometry` | `radialSegments` | `int` | documented `Integer` | generated | `src/geometries/CapsuleGeometry.d.ts` |
 | `CapsuleGeometry` | `radius` | `float` | documented `Float` | generated | `src/geometries/CapsuleGeometry.d.ts` |
+| `CatmullRomCurve3` | `tension` | `float` | documented `Float` | generated | `src/extras/curves/CatmullRomCurve3.d.ts` |
 | `CircleGeometry` | `radius` | `float` | documented `Float` | generated | `src/geometries/CircleGeometry.d.ts` |
 | `CircleGeometry` | `segments` | `int` | documented `Integer` | generated | `src/geometries/CircleGeometry.d.ts` |
 | `CircleGeometry` | `thetaLength` | `float` | documented `Float` | generated | `src/geometries/CircleGeometry.d.ts` |
@@ -342,7 +343,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `BufferGeometry` | `property groups` | `GeometryGroup[]` is an array whose element type cannot be mapped: `GeometryGroup` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `BufferGeometry` | `property indirect` | `IndirectStorageBufferAttribute` is not an emitted class: its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with |
 | `BufferGeometry` | `property morphAttributes` | `{ position?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; normal?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; color?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; }` is an anonymous object literal type with no named C# equivalent |
-| `BufferGeometry` | `property type` | `string | "BufferGeometry"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BufferGeometry` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `BufferGeometryLoader` | `method parse` | parameter 'json': `unknown` carries no type information a C# signature could express |
 | `Camera` | `property matrixWorldInverse` | `Matrix4` hands its components out as a mutable array, so a change to it cannot be observed and there is nothing to record a property write from |
@@ -363,15 +363,11 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CapsuleGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
 | `CapsuleGeometry` | `property parameters` | `{ readonly radius: number; readonly height: number; readonly capSegments: number; readonly radialSegments: number; readonly heightSegments: number; }` is an anonymous object literal type with no named C# equivalent |
 | `CatmullRomCurve3` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `CatmullRomCurve3` | `constructor parameter curveType` | `CurveType` aliases `"centripetal" | "chordal" | "catmullrom"`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `CatmullRomCurve3` | `constructor parameter tension` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `CatmullRomCurve3` | `method computeFrenetFrames` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `CatmullRomCurve3` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `CatmullRomCurve3` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CatmullRomCurve3` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `CatmullRomCurve3` | `property curveType` | `CurveType` aliases `"centripetal" | "chordal" | "catmullrom"`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `CatmullRomCurve3` | `property isCatmullRomCurve3` | the declaration carries no type |
-| `CatmullRomCurve3` | `property type` | `string | "CatmullRomCurve3"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CircleGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `CircleGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
 | `CircleGeometry` | `property parameters` | `{ readonly radius: number; readonly segments: number; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent |
@@ -405,7 +401,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CubicBezierCurve` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CubicBezierCurve` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CubicBezierCurve` | `property isCubicBezierCurve` | the declaration carries no type |
-| `CubicBezierCurve` | `property type` | `string | "CubicBezierCurve"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CubicBezierCurve` | `property v0` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `CubicBezierCurve` | `property v1` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `CubicBezierCurve` | `property v2` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
@@ -416,7 +411,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CubicBezierCurve3` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CubicBezierCurve3` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CubicBezierCurve3` | `property isCubicBezierCurve3` | the declaration carries no type |
-| `CubicBezierCurve3` | `property type` | `string | "CubicBezierCurve3"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CubicBezierCurve3` | `property v0` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `CubicBezierCurve3` | `property v1` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `CubicBezierCurve3` | `property v2` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
@@ -433,7 +427,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CurvePath` | `method getTangentAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method toJSON` | return type: `CurvePathJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CurvePath` | `property curves` | `Array<Curve<TVector>>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `CurvePath` | `property type` | `string | "CurvePath"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CylinderGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `CylinderGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
 | `CylinderGeometry` | `property parameters` | `{ readonly radiusTop: number; readonly radiusBottom: number; readonly height: number; readonly radialSegments: number; readonly heightSegments: number; readonly openEnded: boolean; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent |
@@ -441,7 +434,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `DataArrayTexture` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `DataArrayTexture` | `property layerUpdates` | `Set<number>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `DataTexture` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `DataTexture` | `constructor parameter colorSpace` | `ColorSpace` cannot become a C# enum: the group is string-valued (`NoColorSpace` = ""); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
 | `DataUtils` | `method fromHalfFloat` | static; the mirror models instances, and a static write has no handle to address |
 | `DataUtils` | `method toHalfFloat` | static; the mirror models instances, and a static write has no handle to address |
 | `DirectionalLight` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
@@ -457,7 +449,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `EllipseCurve` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `EllipseCurve` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `EllipseCurve` | `property isEllipseCurve` | the declaration carries no type |
-| `EllipseCurve` | `property type` | `string | "EllipseCurve"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `EventDispatcher` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `EventDispatcher` | `method addEventListener` | parameter 'type': type parameter `T` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `EventDispatcher` | `method dispatchEvent` | parameter 'event': `BaseEvent<T> & TEventMap[T]` is a TypeScript `intersection` type, which has no C# equivalent |
@@ -525,8 +516,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Line2NodeMaterial` | `property dashSizeNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Line2NodeMaterial` | `property gapSizeNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Line2NodeMaterial` | `property lineColorNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `Line2NodeMaterial` | `property linecap` | `"butt" | "round" | "square"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `Line2NodeMaterial` | `property linejoin` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Line2NodeMaterial` | `property offsetNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `constructor parameter parameters` | `LineBasicMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `LineBasicMaterial` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
@@ -543,8 +532,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `LineBasicMaterial` | `property fragmentNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property geometryNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property lightsNode` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `LineBasicMaterial` | `property linecap` | `"butt" | "round" | "square"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `LineBasicMaterial` | `property linejoin` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LineBasicMaterial` | `property maskNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property maskShadowNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property mrtNode` | `MRTNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -556,14 +543,11 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `LineBasicMaterial` | `property receivedShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property vertexNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicNodeMaterial` | `constructor parameter parameters` | `LineBasicNodeMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
-| `LineBasicNodeMaterial` | `property linecap` | `"butt" | "round" | "square"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `LineBasicNodeMaterial` | `property linejoin` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LineCurve` | `method computeFrenetFrames` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `LineCurve` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `LineCurve` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `LineCurve` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `LineCurve` | `property isLineCurve` | the declaration carries no type |
-| `LineCurve` | `property type` | `string | "LineCurve"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LineCurve` | `property v1` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `LineCurve` | `property v2` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `LineCurve3` | `method computeFrenetFrames` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
@@ -571,7 +555,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `LineCurve3` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `LineCurve3` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `LineCurve3` | `property isLineCurve3` | the declaration carries no type |
-| `LineCurve3` | `property type` | `string | "LineCurve3"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LineCurve3` | `property v1` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `LineCurve3` | `property v2` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `LineDashedMaterial` | `constructor parameter parameters` | `LineDashedMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
@@ -584,8 +567,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `LineDashedNodeMaterial` | `property dashScaleNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineDashedNodeMaterial` | `property dashSizeNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineDashedNodeMaterial` | `property gapSizeNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `LineDashedNodeMaterial` | `property linecap` | `"butt" | "round" | "square"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `LineDashedNodeMaterial` | `property linejoin` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LineDashedNodeMaterial` | `property offsetNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Loader` | `method load` | parameter 'onLoad': `(data: TData) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Loader` | `method loadAsync` | return type: `Promise<TData>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -652,11 +633,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshBasicMaterial` | `property receivedShadowNode` | `() => Node` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `MeshBasicMaterial` | `property receivedShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property vertexNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshBasicMaterial` | `property wireframeLinecap` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshBasicMaterial` | `property wireframeLinejoin` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `MeshBasicNodeMaterial` | `constructor parameter parameters` | `MeshBasicNodeMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
-| `MeshBasicNodeMaterial` | `property wireframeLinecap` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshBasicNodeMaterial` | `property wireframeLinejoin` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `MeshDepthMaterial` | `constructor parameter parameters` | `MeshDepthMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `MeshDistanceMaterial` | `constructor parameter parameters` | `MeshDistanceMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `MeshLambertMaterial` | `constructor parameter parameters` | `MeshLambertMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
@@ -683,11 +660,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshLambertMaterial` | `property receivedShadowNode` | `() => Node` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `MeshLambertMaterial` | `property receivedShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property vertexNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshLambertMaterial` | `property wireframeLinecap` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshLambertMaterial` | `property wireframeLinejoin` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `MeshLambertNodeMaterial` | `constructor parameter parameters` | `MeshLambertNodeMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
-| `MeshLambertNodeMaterial` | `property wireframeLinecap` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshLambertNodeMaterial` | `property wireframeLinejoin` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `MeshMatcapMaterial` | `constructor parameter parameters` | `MeshMatcapMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `MeshMatcapMaterial` | `property alphaTestNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshMatcapMaterial` | `property aoNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -764,13 +737,9 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshPhongMaterial` | `property shininessNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property specularNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property vertexNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshPhongMaterial` | `property wireframeLinecap` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshPhongMaterial` | `property wireframeLinejoin` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `MeshPhongNodeMaterial` | `constructor parameter parameters` | `MeshPhongNodeMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `MeshPhongNodeMaterial` | `property shininessNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongNodeMaterial` | `property specularNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshPhongNodeMaterial` | `property wireframeLinecap` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshPhongNodeMaterial` | `property wireframeLinejoin` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `MeshPhysicalMaterial` | `constructor parameter parameters` | `MeshPhysicalMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `MeshPhysicalMaterial` | `property anisotropyNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhysicalMaterial` | `property attenuationColorNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -844,14 +813,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshStandardMaterial` | `property receivedShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property roughnessNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property vertexNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshStandardMaterial` | `property wireframeLinecap` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshStandardMaterial` | `property wireframeLinejoin` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `MeshStandardNodeMaterial` | `constructor parameter parameters` | `MeshStandardNodeMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `MeshStandardNodeMaterial` | `property emissiveNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardNodeMaterial` | `property metalnessNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardNodeMaterial` | `property roughnessNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshStandardNodeMaterial` | `property wireframeLinecap` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshStandardNodeMaterial` | `property wireframeLinejoin` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `MeshToonMaterial` | `constructor parameter parameters` | `MeshToonMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `MeshToonMaterial` | `property alphaTestNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property aoNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -876,11 +841,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshToonMaterial` | `property receivedShadowNode` | `() => Node` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `MeshToonMaterial` | `property receivedShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property vertexNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshToonMaterial` | `property wireframeLinecap` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshToonMaterial` | `property wireframeLinejoin` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `MeshToonNodeMaterial` | `constructor parameter parameters` | `MeshToonNodeMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
-| `MeshToonNodeMaterial` | `property wireframeLinecap` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshToonNodeMaterial` | `property wireframeLinejoin` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `NodeLoader` | `method createNodeFromType` | return type: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeLoader` | `method parse` | parameter 'json': `unknown` carries no type information a C# signature could express |
 | `NodeLoader` | `method parseNodes` | parameter 'json': `unknown` carries no type information a C# signature could express |
@@ -1027,7 +988,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `QuadraticBezierCurve` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `QuadraticBezierCurve` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `QuadraticBezierCurve` | `property isQuadraticBezierCurve` | the declaration carries no type |
-| `QuadraticBezierCurve` | `property type` | `string | "QuadraticBezierCurve"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `QuadraticBezierCurve` | `property v0` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `QuadraticBezierCurve` | `property v1` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `QuadraticBezierCurve` | `property v2` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
@@ -1037,7 +997,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `QuadraticBezierCurve3` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `QuadraticBezierCurve3` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `QuadraticBezierCurve3` | `property isQuadraticBezierCurve3` | the declaration carries no type |
-| `QuadraticBezierCurve3` | `property type` | `string | "QuadraticBezierCurve3"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `QuadraticBezierCurve3` | `property v0` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `QuadraticBezierCurve3` | `property v1` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `QuadraticBezierCurve3` | `property v2` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
@@ -1071,7 +1030,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `ShaderMaterial` | `fenced code in the property fog summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `ShaderMaterial` | `property defaultAttributeValues` | `{ color: [number, number, number]; uv: [number, number]; uv1: [number, number]; }` is an anonymous object literal type with no named C# equivalent |
 | `ShaderMaterial` | `property extensions` | `{ clipCullDistance: boolean; multiDraw: boolean; }` is an anonymous object literal type with no named C# equivalent |
-| `ShaderMaterial` | `property glslVersion` | `GLSLVersion` cannot become a C# enum: the group is string-valued (`GLSL1` = "100"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
 | `ShaderMaterial` | `property uniforms` | `{ [uniform: string]: IUniform }` is an anonymous object literal type with no named C# equivalent |
 | `ShaderMaterial` | `property uniformsGroups` | `Array<UniformsGroup>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `ShadowMaterial` | `constructor parameter parameters` | `ShadowMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
@@ -1119,7 +1077,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `SkinnedMesh` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `SkinnedMesh` | `property bindMatrix` | `Matrix4` hands its components out as a mutable array, so a change to it cannot be observed and there is nothing to record a property write from |
 | `SkinnedMesh` | `property bindMatrixInverse` | `Matrix4` hands its components out as a mutable array, so a change to it cannot be observed and there is nothing to record a property write from |
-| `SkinnedMesh` | `property bindMode` | `BindMode` cannot become a C# enum: the group is string-valued (`AttachedBindMode` = "attached"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
 | `SphereGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `SphereGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
 | `SphereGeometry` | `property parameters` | `{ readonly radius: number; readonly widthSegments: number; readonly heightSegments: number; readonly phiStart: number; readonly phiLength: number; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent |
@@ -1129,7 +1086,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `SplineCurve` | `method fromJSON` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `SplineCurve` | `method toJSON` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `SplineCurve` | `property isSplineCurve` | the declaration carries no type |
-| `SplineCurve` | `property type` | `string | "SplineCurve"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `SpotLight` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `SpotLight` | `property color` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `SpotLight` | `property shadow` | `SpotLightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
@@ -1191,7 +1147,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Texture` | `property DEFAULT_MAPPING` | static; the mirror models instances, and a static write has no handle to address |
 | `Texture` | `property format` | `AnyPixelFormat` aliases `PixelFormat | DepthTexturePixelFormat | CompressedPixelFormat`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Texture` | `property image` | `unknown` carries no type information a C# signature could express |
-| `Texture` | `property internalFormat` | `PixelFormatGPU` aliases `| "ALPHA" | "RGB" | "RGBA" | "LUMINANCE" | "LUMINANCE_ALPHA" | "RED_INTEGER" | "R8" | "R8_SNORM" | "R8I" | "R8UI" | "R16I" | "R16UI" | "R16F" | "R32I" | "R32UI" | "R32F" | "RG8" | "RG8_SNORM" | "RG8I" | "RG8UI" | "RG16I" | "RG16UI" | "RG16F" | "RG32I" | "RG32UI" | "RG32F" | "RGB565" | "RGB8" | "RGB8_SNORM" | "RGB8I" | "RGB8UI" | "RGB16I" | "RGB16UI" | "RGB16F" | "RGB32I" | "RGB32UI" | "RGB32F" | "RGB9_E5" | "SRGB8" | "R11F_G11F_B10F" | "RGBA4" | "RGBA8" | "RGBA8_SNORM" | "RGBA8I" | "RGBA8UI" | "RGBA16I" | "RGBA16UI" | "RGBA16F" | "RGBA32I" | "RGBA32UI" | "RGBA32F" | "RGB5_A1" | "RGB10_A2" | "RGB10_A2UI" | "SRGB8_ALPHA8" | "SRGB8" | "DEPTH_COMPONENT16" | "DEPTH_COMPONENT24" | "DEPTH_COMPONENT32F" | "DEPTH24_STENCIL8" | "DEPTH32F_STENCIL8"`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Texture` | `property mapping` | `AnyMapping` aliases `Mapping | CubeTextureMapping`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Texture` | `property matrix` | `Matrix3` hands its components out as a mutable array, so a change to it cannot be observed and there is nothing to record a property write from |
 | `Texture` | `property mipmaps` | `CompressedTextureMipmap[] | CubeTexture[] | HTMLCanvasElement[]` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |

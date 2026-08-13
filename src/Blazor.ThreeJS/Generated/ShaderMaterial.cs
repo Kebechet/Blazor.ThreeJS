@@ -32,6 +32,7 @@ public class ShaderMaterial : Material
 	private bool _clipping = false;
 	private string? _index0AttributeName;
 	private bool _uniformsNeedUpdate = false;
+	private GLSLVersion? _glslVersion = null;
 	private bool _isVertexShaderWritten;
 	private bool _isFragmentShaderWritten;
 	private bool _isLinewidthWritten;
@@ -42,6 +43,7 @@ public class ShaderMaterial : Material
 	private bool _isClippingWritten;
 	private bool _isIndex0AttributeNameWritten;
 	private bool _isUniformsNeedUpdateWritten;
+	private bool _isGlslVersionWritten;
 
 	/// <summary>Constructs a new shader material.</summary>
 	public ShaderMaterial()
@@ -280,6 +282,26 @@ public class ShaderMaterial : Material
 	}
 
 	/// <summary>
+	/// Defines the GLSL version of custom shader code. Writing it records a <c>glslVersion</c> property
+	/// write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public GLSLVersion? GlslVersion
+	{
+		get { return _glslVersion; }
+		set
+		{
+			if (_glslVersion == value)
+			{
+				return;
+			}
+
+			_glslVersion = value;
+			_isGlslVersionWritten = true;
+			RecordSet("glslVersion", value);
+		}
+	}
+
+	/// <summary>
 	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
 	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
 	/// the value <c>isShaderMaterial</c> held.
@@ -347,6 +369,11 @@ public class ShaderMaterial : Material
 		if (_isUniformsNeedUpdateWritten)
 		{
 			batch.Set(Handle, "uniformsNeedUpdate", ThreeValue.Encode(_uniformsNeedUpdate));
+		}
+
+		if (_isGlslVersionWritten)
+		{
+			batch.Set(Handle, "glslVersion", ThreeValue.Encode(_glslVersion));
 		}
 	}
 }

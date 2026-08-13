@@ -86,6 +86,71 @@ internal sealed class TypeMapper
 	}
 
 	/// <summary>
+	/// The one mapping every arm of a union agrees on, or <see langword="null"/> when they disagree or
+	/// any of them cannot be mapped at all.
+	/// <para>
+	/// Compared on the C# type name rather than on the mapping, because that is what the emitted
+	/// signature carries: two arms that produce the same name are indistinguishable to a caller, so
+	/// choosing between them is not a choice. An arm that cannot be mapped disqualifies the union
+	/// outright — agreement among the arms that happen to work would be agreement about a surface that
+	/// is missing part of what the caller may pass.
+	/// </para>
+	/// </summary>
+	/// <param name="alternatives">The union's arms, already stripped of <c>null</c> and <c>undefined</c>.</param>
+	/// <param name="context">Scope the arms resolve against.</param>
+	/// <returns>The agreed mapping, or <see langword="null"/>.</returns>
+	private TypeMapping? TryTakeAgreedMapping(List<IrType> alternatives, TypeMappingContext context)
+	{
+		TypeMapping? agreed = null;
+		foreach (var alternative in alternatives)
+		{
+			var mapping = Map(alternative, context);
+			if (!mapping.IsMapped)
+			{
+				return null;
+			}
+
+			if (agreed is null)
+			{
+				agreed = mapping;
+				continue;
+			}
+
+			if (!string.Equals(agreed.CSharpTypeName, mapping.CSharpTypeName, StringComparison.Ordinal))
+			{
+				return null;
+			}
+		}
+
+		return agreed;
+	}
+
+	/// <summary>
+	/// The string literals a union is made of, or <see langword="null"/> when any arm is something
+	/// else. A single non-string arm disqualifies the whole union: the set would no longer be closed,
+	/// and an enum standing for it would silently drop whatever that arm allowed.
+	/// </summary>
+	/// <param name="alternatives">The union's arms, already stripped of <c>null</c> and <c>undefined</c>.</param>
+	/// <returns>The tokens, or <see langword="null"/>.</returns>
+	internal static IReadOnlyList<string>? TryTakeStringLiteralTokens(IReadOnlyList<IrType> alternatives)
+	{
+		var tokens = new List<string>();
+		foreach (var alternative in alternatives)
+		{
+			if (alternative is not { Kind: "literal" } literal ||
+				literal.Value is not { ValueKind: System.Text.Json.JsonValueKind.String } value ||
+				value.GetString() is not { } token)
+			{
+				return null;
+			}
+
+			tokens.Add(token);
+		}
+
+		return tokens;
+	}
+
+	/// <summary>
 	/// Maps a single literal type to the C# type of the value it pins.
 	/// <para>
 	/// Every one of these in the three.js surface is a runtime type tag — <c>isMesh: true</c>,
@@ -375,6 +440,29 @@ internal sealed class TypeMapper
 			alternatives = [singleValueArm];
 		}
 
+		// Arms that all map to one C# type are not a choice at all — they are TypeScript spelling the
+		// same thing more than once. `number[] | ArrayLike<number>` is a sequence of numbers written
+		// twice, and `string | "BufferGeometry"` is a string with one of its own values named beside it.
+		// Neither narrows anything, so neither is recorded as a narrowing: the mapping that comes out is
+		// exactly what the declared type meant.
+		//
+		// ⚠️ A union of nothing but string literals is excluded, even though every arm does map to
+		// `string`. That is the closed set an enum stands for, and agreeing on `string` would both undo
+		// the enums already synthesised for those sets and stop any new set upstream from ever reaching
+		// the coverage report as a decision to make — it would just quietly become a string.
+		if (alternatives.Count > 1 &&
+			TryTakeStringLiteralTokens(alternatives) is null &&
+			TryTakeAgreedMapping(alternatives, context) is { CSharpTypeName: { } agreedTypeName } agreedMapping)
+		{
+			return TypeMapping.Mapped(
+				agreedTypeName,
+				agreedMapping.Kind,
+				agreedMapping.RequiredGeneratedTypeName,
+				agreedMapping.IsExplicitlyNullable || hasNullArm,
+				agreedMapping.Numeric,
+				agreedMapping.ElementMapping);
+		}
+
 		// A union whose arms are all mirrored classes is still one thing on the wire: every arm travels
 		// as a handle, and the applier does not care which class the handle names. So it resolves to the
 		// base they all share rather than being refused — `Scene.fog` is `Fog | FogExp2`, and without
@@ -388,6 +476,21 @@ internal sealed class TypeMapper
 			return TypeMapping.Mapped(
 				EmitterConfig.RootBaseTypeName,
 				TypeMappingKind.GeneratedWrapperClass,
+				isExplicitlyNullable: hasNullArm);
+		}
+
+		// A union of nothing but string literals is a closed set of values, not a choice between types,
+		// so it is the same thing a named alias like `ColorSpace` describes and resolves to the same
+		// kind of C# enum. Only the sets this package names resolve; the rest fall through and are
+		// refused below rather than being given a name derived from whichever member happened to be
+		// read first.
+		if (alternatives.Count > 1 && TryTakeStringLiteralTokens(alternatives) is { } tokens &&
+			_enums.TryGetByTokenSet(tokens, out var synthesisedEnum) && synthesisedEnum is not null)
+		{
+			return TypeMapping.Mapped(
+				synthesisedEnum.Name,
+				TypeMappingKind.GeneratedEnum,
+				requiredGeneratedTypeName: synthesisedEnum.Name,
 				isExplicitlyNullable: hasNullArm);
 		}
 

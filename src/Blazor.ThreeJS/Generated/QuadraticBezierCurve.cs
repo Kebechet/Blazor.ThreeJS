@@ -100,6 +100,17 @@ public sealed class QuadraticBezierCurve : ThreeObject
 	}
 
 	/// <summary>
+	/// A Read-only _string_ to check if <c>this</c> object type. Read-only in three.js, so it is read
+	/// on demand rather than mirrored: records a get op, sends it behind every write already pending,
+	/// and completes with the value <c>type</c> held.
+	/// </summary>
+	/// <returns>The value <c>type</c> held, once the JavaScript side has answered.</returns>
+	public Task<string> TypeAsync()
+	{
+		return GetAsync<string>("type");
+	}
+
+	/// <summary>
 	/// Returns a vector for a given position on the curve. Records a read op, sends it behind every
 	/// write already pending, and completes with what <c>getPoint</c> returned.
 	/// </summary>

@@ -17,7 +17,9 @@ public sealed class SkinnedMesh : Mesh
 	private readonly BufferGeometry? _geometry;
 	private readonly Material? _material;
 	private readonly bool? _useVertexTexture;
+	private BindMode _bindMode = BindMode.AttachedBindMode;
 	private Skeleton? _skeleton;
+	private bool _isBindModeWritten;
 	private bool _isBoundingBoxWritten;
 	private bool _isBoundingSphereWritten;
 	private bool _isSkeletonWritten;
@@ -110,6 +112,29 @@ public sealed class SkinnedMesh : Mesh
 				ThreeValue.OrUnspecified(_material),
 				ThreeValue.OrUnspecified(_useVertexTexture)
 			]);
+		}
+	}
+
+	/// <summary>
+	/// Either <c>AttachedBindMode</c> or <c>DetachedBindMode</c>. <c>AttachedBindMode</c> means the
+	/// skinned mesh shares the same world space as the skeleton. This is not true when using
+	/// <c>DetachedBindMode</c> which is useful when sharing a skeleton across multiple skinned meshes.
+	/// Writing it records a <c>bindMode</c> property write once this object is attached; writing the
+	/// value already held records nothing.
+	/// </summary>
+	public BindMode BindMode
+	{
+		get { return _bindMode; }
+		set
+		{
+			if (_bindMode == value)
+			{
+				return;
+			}
+
+			_bindMode = value;
+			_isBindModeWritten = true;
+			RecordSet("bindMode", value);
 		}
 	}
 
@@ -228,6 +253,11 @@ public sealed class SkinnedMesh : Mesh
 	internal override void EmitState(ThreeBatch batch)
 	{
 		base.EmitState(batch);
+
+		if (_isBindModeWritten)
+		{
+			batch.Set(Handle, "bindMode", ThreeValue.Encode(_bindMode));
+		}
 
 		if (_isBoundingBoxWritten)
 		{

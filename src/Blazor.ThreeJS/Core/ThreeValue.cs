@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Kebechet.Blazor.ThreeJS.Math;
+using Kebechet.Blazor.ThreeJS.Objects;
 
 namespace Kebechet.Blazor.ThreeJS.Core;
 
@@ -32,10 +33,14 @@ internal static class ThreeValue
 	/// <see cref="Box3"/>, <see cref="Frustum"/> and the rest of <c>Math/</c>)
 	/// becomes a <see cref="TaggedValue"/>, <see cref="ThreeObject"/> instances become a
 	/// <see cref="HandleReference"/>, <see cref="Unspecified"/> stays the sentinel the applier turns
-	/// back into <c>undefined</c>, an <see cref="Enum"/> value is cast to its numeric backing
-	/// value so a future <c>JsonStringEnumConverter</c> reaching these options cannot silently turn
-	/// it into its member name, and primitives, <see cref="string"/> and <see langword="null"/> pass
+	/// back into <c>undefined</c>, and primitives, <see cref="string"/> and <see langword="null"/> pass
 	/// through unchanged.
+	/// <para>
+	/// An <see cref="Enum"/> takes whichever form three.js itself uses: the numeric backing value for
+	/// most sets — cast explicitly, so a future <c>JsonStringEnumConverter</c> reaching these options
+	/// cannot silently turn it into its member name — and the token for the sets three.js spells as
+	/// strings, which carry no meaning in their C# value at all.
+	/// </para>
 	/// </summary>
 	/// <param name="value">The value to encode.</param>
 	/// <returns>The wire-ready representation of <paramref name="value"/>.</returns>
@@ -96,6 +101,15 @@ internal static class ThreeValue
 			case UnspecifiedValue unspecified:
 				return unspecified;
 			case Enum enumValue:
+				// three.js spells some of its closed sets as strings — `ColorSpace` is `"srgb"`, not a
+				// number — and for those the C# value is only a position. Sending the number would be
+				// silently wrong: three.js compares it against its own strings, matches nothing, and
+				// carries on with whatever default it had.
+				if (ThreeStringEnum.TokenFor(enumValue) is { } token)
+				{
+					return token;
+				}
+
 				return Convert.ChangeType(enumValue, enumValue.GetTypeCode());
 			case TypedArray typedArray:
 				return new TypedArrayValue
@@ -155,6 +169,19 @@ internal static class ThreeValue
 		if (value.ValueKind == JsonValueKind.Array && typeof(TValue).IsArray)
 		{
 			return (TValue) DecodeArray(typeof(TValue).GetElementType()!, value);
+		}
+
+		// A string-valued enum comes back as the token three.js compares against, which the plain
+		// deserializer cannot bind to a numeric C# enum. Ahead of the arm below because a token is a
+		// JSON string, and because `GLSLVersion` spells one of its tokens `"100"` — left to a converter
+		// that reads numeric strings, that would bind to whichever member happened to be value 100.
+		if (value.ValueKind == JsonValueKind.String)
+		{
+			var enumType = Nullable.GetUnderlyingType(typeof(TValue)) ?? typeof(TValue);
+			if (enumType.IsEnum && ThreeStringEnum.FromToken(enumType, value.GetString()!) is { } decodedEnum)
+			{
+				return (TValue) decodedEnum;
+			}
 		}
 
 		if (value.ValueKind != JsonValueKind.Object)

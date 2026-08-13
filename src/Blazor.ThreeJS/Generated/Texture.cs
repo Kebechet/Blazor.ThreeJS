@@ -30,6 +30,7 @@ public class Texture : EventDispatcher
 	private MinificationTextureFilter _minFilter;
 	private float _anisotropy;
 	private TextureDataType _type;
+	private PixelFormatGPU? _internalFormat;
 	private bool _matrixAutoUpdate = true;
 	private float _rotation = 0f;
 	private bool _generateMipmaps = true;
@@ -54,6 +55,7 @@ public class Texture : EventDispatcher
 	private bool _isMinFilterWritten;
 	private bool _isAnisotropyWritten;
 	private bool _isTypeWritten;
+	private bool _isInternalFormatWritten;
 	private bool _isMatrixAutoUpdateWritten;
 	private bool _isOffsetWritten;
 	private bool _isRepeatWritten;
@@ -341,6 +343,27 @@ public class Texture : EventDispatcher
 			_type = value;
 			_isTypeWritten = true;
 			RecordSet("type", value);
+		}
+	}
+
+	/// <summary>
+	/// The GPU Pixel Format allows the developer to specify how the data is going to be stored on the
+	/// GPU. Writing it records a <c>internalFormat</c> property write once this object is attached;
+	/// writing the value already held records nothing.
+	/// </summary>
+	public PixelFormatGPU? InternalFormat
+	{
+		get { return _internalFormat; }
+		set
+		{
+			if (_internalFormat == value)
+			{
+				return;
+			}
+
+			_internalFormat = value;
+			_isInternalFormatWritten = true;
+			RecordSet("internalFormat", value);
 		}
 	}
 
@@ -831,6 +854,11 @@ public class Texture : EventDispatcher
 		if (_isTypeWritten)
 		{
 			batch.Set(Handle, "type", ThreeValue.Encode(_type));
+		}
+
+		if (_isInternalFormatWritten)
+		{
+			batch.Set(Handle, "internalFormat", ThreeValue.Encode(_internalFormat));
 		}
 
 		if (_isMatrixAutoUpdateWritten)

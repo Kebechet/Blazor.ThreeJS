@@ -54,8 +54,6 @@ Declared types narrowed by rule 5, each of which lost its multi-value form:
 - `SerializedImage | SerializedImage[]`
 - `Shape | Shape[]`
 - `Uniform | Uniform[]`
-- `WebGLRenderTarget | WebGLRenderTarget<Texture[]>`
-- `WebGLRenderTarget | WebGLRenderTarget<Texture[]> | null`
 - `number | number[]`
 
 ## How a class's member set is worked out
@@ -291,7 +289,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `CameraHelper` | 1 | — | `src/helpers/CameraHelper.d.ts` |
 | `CanvasTexture` | 0 | `canvas`, `mapping`, `wrapS`, `wrapT`, `magFilter`, `minFilter`, `format`, `type`, `anisotropy` | `src/textures/CanvasTexture.d.ts` |
 | `CapsuleGeometry` | 5 | — | `src/geometries/CapsuleGeometry.d.ts` |
-| `CatmullRomCurve3` | 2 | `curveType`, `tension` | `src/extras/curves/CatmullRomCurve3.d.ts` |
+| `CatmullRomCurve3` | 4 | — | `src/extras/curves/CatmullRomCurve3.d.ts` |
 | `CircleGeometry` | 4 | — | `src/geometries/CircleGeometry.d.ts` |
 | `ClippingGroup` | 0 | — | `src/objects/ClippingGroup.d.ts` |
 | `Clock` | 1 | — | `src/core/Clock.d.ts` |
@@ -308,7 +306,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `CylinderGeometry` | 8 | — | `src/geometries/CylinderGeometry.d.ts` |
 | `Data3DTexture` | 4 | — | `src/textures/Data3DTexture.d.ts` |
 | `DataArrayTexture` | 4 | — | `src/textures/DataArrayTexture.d.ts` |
-| `DataTexture` | 11 | `colorSpace` | `src/textures/DataTexture.d.ts` |
+| `DataTexture` | 12 | — | `src/textures/DataTexture.d.ts` |
 | `DataUtils` | 0 | — | `src/extras/DataUtils.d.ts` |
 | `DepthTexture` | 11 | — | `src/textures/DepthTexture.d.ts` |
 | `DirectionalLight` | 2 | — | `src/lights/DirectionalLight.d.ts` |
@@ -464,14 +462,14 @@ three.js is reachable at all" and "how much of what we mirror is state".
 
 | bucket | what it means | all classes | emittable classes |
 |---|---|---|---|
-| MirroredState | state C# holds and writes through on change | 1141 | 879 |
-| Command | a method recorded as a call op, returning nothing or `this` | 768 | 305 |
-| AsyncQuery | a method whose result the caller needs back | 803 | 427 |
-| Skipped | not mirrored; see the skip list below | 1220 | 879 |
+| MirroredState | state C# holds and writes through on change | 1174 | 911 |
+| Command | a method recorded as a call op, returning nothing or `this` | 774 | 305 |
+| AsyncQuery | a method whose result the caller needs back | 815 | 438 |
+| Skipped | not mirrored; see the skip list below | 1169 | 836 |
 | **total** | | **3932** | **2490** |
 
 Two op kinds answer with a value: **read**, which invokes a method, and **get**, which reads a property.
-427 of the async queries above sit on an emitted class and are generated as `…Async` methods over the
+438 of the async queries above sit on an emitted class and are generated as `…Async` methods over the
 read op. A property has no method to route through that op, so none is generated for one — the untyped
 `GetAsync` reads any property by name instead.
 
@@ -502,27 +500,26 @@ the README's coverage table.
 |---|---|---|
 | `NodeStackType` | 380 | declared under `src/nodes/**`, the TSL / WebGPU node stack outside the extracted surface |
 | `DomOrLibType` | 126 | a TypeScript lib or DOM type; C# holds no browser object and the wire has no encoding for one |
-| `UnmappedUnion` | 125 | a union of several real alternatives, which one C# parameter cannot express |
 | `CallbackType` | 112 | a JavaScript callback; the wire format carries ops in one direction only |
 | `NotInstanceApi` | 87 | static, non-public or `@internal` — not part of the mirrored instance API |
 | `AnonymousObjectType` | 82 | an anonymous object literal type with no name to give a C# type |
+| `UnmappedUnion` | 78 | a union of several real alternatives, which one C# parameter cannot express |
 | `OptionsInterface` | 71 | a structural interface — an options bag or an event map — with no C# type to be |
 | `UntypedValue` | 55 | declared `any` / `unknown`, or with no type at all |
 | `AbstractClass` | 37 | the class is abstract, so it has no constructor to mirror |
 | `MathValueType` | 29 | a `src/math/**` value type that is not one of the hand-written ones |
 | `NotExported` | 25 | three.js's public barrel does not re-export it as a value, so the applier cannot reach it on `THREE` |
-| `UnmappedTypeAlias` | 21 | a type alias that is neither a constant group nor a rename of a mapped type |
 | `UnwrappedClass` | 20 | an in-scope class that is itself not emitted |
+| `UnmappedTypeAlias` | 19 | a type alias that is neither a constant group nor a rename of a mapped type |
 | `ExternalType` | 14 | declared outside the scanned `src/` surface |
 | `UnmappedTypeSyntax` | 11 | a TypeScript type form with no C# equivalent |
 | `UnerasableTypeParameter` | 8 | a type parameter with neither a default nor a constraint to erase to |
 | `RestParameter` | 6 | a rest parameter, including the rest-union-tuple pseudo-overload form |
 | `UnreachableBaseConstructor` | 5 | its C# base requires constructor arguments the generated class has nothing to supply |
 | `CollectionType` | 3 | an array or tuple; `ThreeValue.Encode` has no array arm |
-| `StringConstantGroup` | 2 | a group of string-valued constants, which a C# enum cannot carry over this wire format |
 | `NoHandleForResult` | 1 | its result is a JavaScript object, and no op mints a handle for one the browser created |
 
-<details><summary>Every skipped member (1220)</summary>
+<details><summary>Every skipped member (1169)</summary>
 
 | class | member | obstacle | why |
 |---|---|---|---|
@@ -622,7 +619,6 @@ the README's coverage table.
 | `BufferAttribute` | `method onUpload` | `CallbackType` | parameter 'callback': `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BufferAttribute` | `method set` | `UnmappedUnion` | parameter 'value': `ArrayLike<number> | ArrayBufferView` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BufferAttribute` | `method toJSON` | `OptionsInterface` | return type: `BufferAttributeJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `BufferGeometry` | `property type` | `UnmappedUnion` | `string | "BufferGeometry"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BufferGeometry` | `property indirect` | `UnreachableBaseConstructor` | `IndirectStorageBufferAttribute` is not an emitted class: its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with |
 | `BufferGeometry` | `property attributes` | `DomOrLibType` | `Record<string, BufferAttribute | InterleavedBufferAttribute>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `BufferGeometry` | `property morphAttributes` | `AnonymousObjectType` | `{ position?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; normal?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; color?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; }` is an anonymous object literal type with no named C# equivalent |
@@ -644,8 +640,6 @@ the README's coverage table.
 | `CapsuleGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly radius: number; readonly height: number; readonly capSegments: number; readonly radialSegments: number; readonly heightSegments: number; }` is an anonymous object literal type with no named C# equivalent |
 | `CapsuleGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `CatmullRomCurve3` | `property isCatmullRomCurve3` | `UntypedValue` | the declaration carries no type |
-| `CatmullRomCurve3` | `property type` | `UnmappedUnion` | `string | "CatmullRomCurve3"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `CatmullRomCurve3` | `property curveType` | `UnmappedTypeAlias` | `CurveType` aliases `"centripetal" | "chordal" | "catmullrom"`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `CatmullRomCurve3` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `CatmullRomCurve3` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `CatmullRomCurve3` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
@@ -658,7 +652,6 @@ the README's coverage table.
 | `Color` | `method set` | `RestParameter` | parameter 'args' is a rest-union-tuple pseudo-overload (`[color: ColorRepresentation] | [r: number, g: number, b: number]`), which is one TypeScript signature standing for several C# overloads |
 | `Color` | `method getHSL` | `OptionsInterface` | parameter 'target': `HSL` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Color` | `method getRGB` | `OptionsInterface` | parameter 'target': `RGB` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `Color` | `method fromArray` | `UnmappedUnion` | parameter 'array': `number[] | ArrayLike<number>` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Color` | `method [Symbol.iterator]` | `NotInstanceApi` | the member name is not a usable C# identifier |
 | `ColorKeyframeTrack` | `property TimeBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `ColorKeyframeTrack` | `property ValueBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -677,13 +670,11 @@ the README's coverage table.
 | `CubeRenderTarget` | `method clear` | `AbstractClass` | parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `CubeTexture` | `property images` | `UntypedValue` | `TImage[]` is an array whose element type cannot be mapped: `unknown` carries no type information a C# signature could express |
 | `CubicBezierCurve` | `property isCubicBezierCurve` | `UntypedValue` | the declaration carries no type |
-| `CubicBezierCurve` | `property type` | `UnmappedUnion` | `string | "CubicBezierCurve"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CubicBezierCurve` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `CubicBezierCurve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `CubicBezierCurve` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CubicBezierCurve` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CubicBezierCurve3` | `property isCubicBezierCurve3` | `UntypedValue` | the declaration carries no type |
-| `CubicBezierCurve3` | `property type` | `UnmappedUnion` | `string | "CubicBezierCurve3"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CubicBezierCurve3` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `CubicBezierCurve3` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `CubicBezierCurve3` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
@@ -691,7 +682,6 @@ the README's coverage table.
 | `CubicInterpolant` | `property settings` | `OptionsInterface` | `CubicInterpolantSettings` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CubicInterpolant` | `property DefaultSettings_` | `OptionsInterface` | `CubicInterpolantSettings` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CubicInterpolant` | `method getSettings_` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
-| `Curve` | `property type` | `UnmappedUnion` | `string | "Curve"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Curve` | `method getPoint` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Curve` | `method getPointAt` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Curve` | `method getPoints` | `UnmappedUnion` | return type: `TVector[]` is an array whose element type cannot be mapped: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -702,7 +692,6 @@ the README's coverage table.
 | `Curve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `Curve` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Curve` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `CurvePath` | `property type` | `UnmappedUnion` | `string | "CurvePath"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `property curves` | `DomOrLibType` | `Array<Curve<TVector>>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `CurvePath` | `method add` | `AbstractClass` | parameter 'curve': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `CurvePath` | `method getPoint` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -733,15 +722,14 @@ the README's coverage table.
 | `Earcut` | `method triangulate` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `EdgesGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly geometry: TBufferGeometry | null; readonly thresholdAngle: number; }` is an anonymous object literal type with no named C# equivalent |
 | `EllipseCurve` | `property isEllipseCurve` | `UntypedValue` | the declaration carries no type |
-| `EllipseCurve` | `property type` | `UnmappedUnion` | `string | "EllipseCurve"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `EllipseCurve` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `EllipseCurve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `EllipseCurve` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `EllipseCurve` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `Euler` | `property order` | `UnmappedTypeAlias` | `EulerOrder` aliases `"XYZ" | "YXZ" | "ZXY" | "ZYX" | "YZX" | "XZY"`, which is neither a group of numeric constants nor a type the mirror expresses |
+| `Euler` | `property order` | `UnmappedTypeAlias` | `EulerOrder` cannot become a C# enum: already hand-written as `Kebechet.Blazor.ThreeJS.Math.EulerOrder`, because `Euler` is a hand-written math value rather than a generated class. Its rotation order crosses inside the tagged Euler value as an index the applier maps through `EULER_ORDERS`, so a second enum here would be a duplicate name carrying a different wire form |
 | `Euler` | `property _onChangeCallback` | `CallbackType` | `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Euler` | `property DEFAULT_ORDER` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
-| `Euler` | `method reorder` | `UnmappedTypeAlias` | parameter 'newOrder': `EulerOrder` aliases `"XYZ" | "YXZ" | "ZXY" | "ZYX" | "YZX" | "XZY"`, which is neither a group of numeric constants nor a type the mirror expresses |
+| `Euler` | `method reorder` | `UnmappedTypeAlias` | parameter 'newOrder': `EulerOrder` cannot become a C# enum: already hand-written as `Kebechet.Blazor.ThreeJS.Math.EulerOrder`, because `Euler` is a hand-written math value rather than a generated class. Its rotation order crosses inside the tagged Euler value as an index the applier maps through `EULER_ORDERS`, so a second enum here would be a duplicate name carrying a different wire form |
 | `Euler` | `method fromArray` | `UnmappedTypeAlias` | parameter 'array': `EulerTuple` aliases `[x: number, y: number, z: number, order?: EulerOrder]`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Euler` | `method toArray` | `DomOrLibType` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
 | `Euler` | `method _onChange` | `CallbackType` | parameter 'callback': `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
@@ -757,7 +745,6 @@ the README's coverage table.
 | `FrustumArray` | `method copy` | `MathValueType` | parameter 'source': `FrustumArray` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `GLBufferAttribute` | `property buffer` | `DomOrLibType` | `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `GLBufferAttribute` | `property type` | `DomOrLibType` | `GLenum` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `GLBufferAttribute` | `property elementSize` | `UnmappedUnion` | `1 | 2 | 4` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `GLBufferAttribute` | `method setBuffer` | `DomOrLibType` | parameter 'buffer': `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `GLBufferAttribute` | `method setType` | `DomOrLibType` | parameter 'type': `GLenum` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `ImageBitmapLoader` | `property options` | `DomOrLibType` | `ImageBitmapOptions` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -809,10 +796,6 @@ the README's coverage table.
 | `Line2NodeMaterial` | `property dashSizeNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Line2NodeMaterial` | `property gapSizeNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Line2NodeMaterial` | `property lineColorNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `Line2NodeMaterial` | `property linecap` | `UnmappedUnion` | `"butt" | "round" | "square"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `Line2NodeMaterial` | `property linejoin` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `LineBasicMaterial` | `property linecap` | `UnmappedUnion` | `"butt" | "round" | "square"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `LineBasicMaterial` | `property linejoin` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LineBasicMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -836,16 +819,12 @@ the README's coverage table.
 | `LineBasicMaterial` | `property fragmentNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property vertexNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `LineBasicNodeMaterial` | `property linecap` | `UnmappedUnion` | `"butt" | "round" | "square"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `LineBasicNodeMaterial` | `property linejoin` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LineCurve` | `property isLineCurve` | `UntypedValue` | the declaration carries no type |
-| `LineCurve` | `property type` | `UnmappedUnion` | `string | "LineCurve"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LineCurve` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `LineCurve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `LineCurve` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `LineCurve` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `LineCurve3` | `property isLineCurve3` | `UntypedValue` | the declaration carries no type |
-| `LineCurve3` | `property type` | `UnmappedUnion` | `string | "LineCurve3"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LineCurve3` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `LineCurve3` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `LineCurve3` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
@@ -858,8 +837,6 @@ the README's coverage table.
 | `LineDashedNodeMaterial` | `property dashScaleNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineDashedNodeMaterial` | `property dashSizeNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineDashedNodeMaterial` | `property gapSizeNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `LineDashedNodeMaterial` | `property linecap` | `UnmappedUnion` | `"butt" | "round" | "square"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `LineDashedNodeMaterial` | `property linejoin` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LinearInterpolant` | `property settings` | `AnonymousObjectType` | `{}` is an anonymous object literal type with no named C# equivalent |
 | `LinearInterpolant` | `property DefaultSettings_` | `AnonymousObjectType` | `{}` is an anonymous object literal type with no named C# equivalent |
 | `LinearInterpolant` | `method getSettings_` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
@@ -905,8 +882,6 @@ the README's coverage table.
 | `Matrix4` | `property elements` | `UnmappedTypeAlias` | `Matrix4Tuple` aliases `[ n11: number, n12: number, n13: number, n14: number, n21: number, n22: number, n23: number, n24: number, n31: number, n32: number, n33: number, n34: number, n41: number, n42: number, n43: number, n44: number, ]`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Matrix4` | `method toArray` | `UnerasableTypeParameter` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
 | `Mesh` | `property morphTargetDictionary` | `AnonymousObjectType` | `{ [key: string]: number }` is an anonymous object literal type with no named C# equivalent |
-| `MeshBasicMaterial` | `property wireframeLinecap` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshBasicMaterial` | `property wireframeLinejoin` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `MeshBasicMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -930,10 +905,6 @@ the README's coverage table.
 | `MeshBasicMaterial` | `property fragmentNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property vertexNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshBasicNodeMaterial` | `property wireframeLinecap` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshBasicNodeMaterial` | `property wireframeLinejoin` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshLambertMaterial` | `property wireframeLinecap` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshLambertMaterial` | `property wireframeLinejoin` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `MeshLambertMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -957,8 +928,6 @@ the README's coverage table.
 | `MeshLambertMaterial` | `property fragmentNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property vertexNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshLambertNodeMaterial` | `property wireframeLinecap` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshLambertNodeMaterial` | `property wireframeLinejoin` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `MeshMatcapMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshMatcapMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshMatcapMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1005,8 +974,6 @@ the README's coverage table.
 | `MeshNormalMaterial` | `property fragmentNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshNormalMaterial` | `property vertexNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshNormalMaterial` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshPhongMaterial` | `property wireframeLinecap` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshPhongMaterial` | `property wireframeLinejoin` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `MeshPhongMaterial` | `property shininessNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property specularNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1034,8 +1001,6 @@ the README's coverage table.
 | `MeshPhongMaterial` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongNodeMaterial` | `property shininessNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongNodeMaterial` | `property specularNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshPhongNodeMaterial` | `property wireframeLinecap` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshPhongNodeMaterial` | `property wireframeLinejoin` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `MeshPhysicalMaterial` | `property iridescenceThicknessRange` | `CollectionType` | `[number, number]` is a tuple, which has no wire encoding |
 | `MeshPhysicalMaterial` | `property clearcoatNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhysicalMaterial` | `property clearcoatRoughnessNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1079,8 +1044,6 @@ the README's coverage table.
 | `MeshSSSNodeMaterial` | `property thicknessAttenuationNode` | `NodeStackType` | `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshSSSNodeMaterial` | `property thicknessPowerNode` | `NodeStackType` | `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshSSSNodeMaterial` | `property thicknessScaleNode` | `NodeStackType` | `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshStandardMaterial` | `property wireframeLinecap` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshStandardMaterial` | `property wireframeLinejoin` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `MeshStandardMaterial` | `property emissiveNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property metalnessNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property roughnessNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1110,10 +1073,6 @@ the README's coverage table.
 | `MeshStandardNodeMaterial` | `property emissiveNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardNodeMaterial` | `property metalnessNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardNodeMaterial` | `property roughnessNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshStandardNodeMaterial` | `property wireframeLinecap` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshStandardNodeMaterial` | `property wireframeLinejoin` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshToonMaterial` | `property wireframeLinecap` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshToonMaterial` | `property wireframeLinejoin` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `MeshToonMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1137,8 +1096,6 @@ the README's coverage table.
 | `MeshToonMaterial` | `property fragmentNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property vertexNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshToonNodeMaterial` | `property wireframeLinecap` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `MeshToonNodeMaterial` | `property wireframeLinejoin` | `UnmappedUnion` | `"round" | "bevel" | "miter"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `NodeLoader` | `property textures` | `AnonymousObjectType` | `{ [key: string]: Texture }` is an anonymous object literal type with no named C# equivalent |
 | `NodeLoader` | `property nodes` | `AnonymousObjectType` | `{ [type: string]: Node }` is an anonymous object literal type with no named C# equivalent |
 | `NodeLoader` | `method parseNodes` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
@@ -1292,19 +1249,16 @@ the README's coverage table.
 | `QuadMesh` | `method renderAsync` | `AbstractClass` | parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `QuadMesh` | `method render` | `AbstractClass` | parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `QuadraticBezierCurve` | `property isQuadraticBezierCurve` | `UntypedValue` | the declaration carries no type |
-| `QuadraticBezierCurve` | `property type` | `UnmappedUnion` | `string | "QuadraticBezierCurve"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `QuadraticBezierCurve` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `QuadraticBezierCurve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `QuadraticBezierCurve` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `QuadraticBezierCurve` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `QuadraticBezierCurve3` | `property isQuadraticBezierCurve3` | `UntypedValue` | the declaration carries no type |
-| `QuadraticBezierCurve3` | `property type` | `UnmappedUnion` | `string | "QuadraticBezierCurve3"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `QuadraticBezierCurve3` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `QuadraticBezierCurve3` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `QuadraticBezierCurve3` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `QuadraticBezierCurve3` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Quaternion` | `property _onChangeCallback` | `CallbackType` | `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `Quaternion` | `method fromArray` | `UnmappedUnion` | parameter 'array': `number[] | ArrayLike<number>` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Quaternion` | `method toJSON` | `CollectionType` | return type: `[number, number, number, number]` is a tuple, which has no wire encoding |
 | `Quaternion` | `method _onChange` | `CallbackType` | parameter 'callback': `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Quaternion` | `method slerpFlat` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
@@ -1381,7 +1335,6 @@ the README's coverage table.
 | `ShaderMaterial` | `property uniformsGroups` | `DomOrLibType` | `Array<UniformsGroup>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `ShaderMaterial` | `property extensions` | `AnonymousObjectType` | `{ clipCullDistance: boolean; multiDraw: boolean; }` is an anonymous object literal type with no named C# equivalent |
 | `ShaderMaterial` | `property defaultAttributeValues` | `AnonymousObjectType` | `{ color: [number, number, number]; uv: [number, number]; uv1: [number, number]; }` is an anonymous object literal type with no named C# equivalent |
-| `ShaderMaterial` | `property glslVersion` | `StringConstantGroup` | `GLSLVersion` cannot become a C# enum: the group is string-valued (`GLSL1` = "100"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
 | `ShadowMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1417,7 +1370,6 @@ the README's coverage table.
 | `ShapeUtils` | `method triangulateShape` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `Skeleton` | `method toJSON` | `OptionsInterface` | return type: `SkeletonJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Skeleton` | `method fromJSON` | `OptionsInterface` | parameter 'json': `SkeletonJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `SkinnedMesh` | `property bindMode` | `StringConstantGroup` | `BindMode` cannot become a C# enum: the group is string-valued (`AttachedBindMode` = "attached"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
 | `Source` | `property data` | `UnerasableTypeParameter` | type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `Source` | `method toJSON` | `UnmappedUnion` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
 | `SourceJSON` | `property url` | `UnmappedTypeAlias` | `SerializedImage` aliases `| string | { data: number[]; width: number; height: number; type: string; }`, which is neither a group of numeric constants nor a type the mirror expresses |
@@ -1426,10 +1378,8 @@ the README's coverage table.
 | `Sphere` | `method fromJSON` | `OptionsInterface` | parameter 'json': `SphereJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `SphereGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly radius: number; readonly widthSegments: number; readonly heightSegments: number; readonly phiStart: number; readonly phiLength: number; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent |
 | `SphereGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
-| `SphericalHarmonics3` | `method fromArray` | `UnmappedUnion` | parameter 'array': `number[] | ArrayLike<number>` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `SphericalHarmonics3` | `method getBasisAt` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `SplineCurve` | `property isSplineCurve` | `UntypedValue` | the declaration carries no type |
-| `SplineCurve` | `property type` | `UnmappedUnion` | `string | "SplineCurve"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `SplineCurve` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `SplineCurve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `SplineCurve` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
@@ -1478,7 +1428,6 @@ the README's coverage table.
 | `Texture` | `property mipmaps` | `UnmappedUnion` | `CompressedTextureMipmap[] | CubeTexture[] | HTMLCanvasElement[]` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Texture` | `property mapping` | `UnmappedTypeAlias` | `AnyMapping` aliases `Mapping | CubeTextureMapping`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Texture` | `property format` | `UnmappedTypeAlias` | `AnyPixelFormat` aliases `PixelFormat | DepthTexturePixelFormat | CompressedPixelFormat`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `Texture` | `property internalFormat` | `UnmappedTypeAlias` | `PixelFormatGPU` aliases `| "ALPHA" | "RGB" | "RGBA" | "LUMINANCE" | "LUMINANCE_ALPHA" | "RED_INTEGER" | "R8" | "R8_SNORM" | "R8I" | "R8UI" | "R16I" | "R16UI" | "R16F" | "R32I" | "R32UI" | "R32F" | "RG8" | "RG8_SNORM" | "RG8I" | "RG8UI" | "RG16I" | "RG16UI" | "RG16F" | "RG32I" | "RG32UI" | "RG32F" | "RGB565" | "RGB8" | "RGB8_SNORM" | "RGB8I" | "RGB8UI" | "RGB16I" | "RGB16UI" | "RGB16F" | "RGB32I" | "RGB32UI" | "RGB32F" | "RGB9_E5" | "SRGB8" | "R11F_G11F_B10F" | "RGBA4" | "RGBA8" | "RGBA8_SNORM" | "RGBA8I" | "RGBA8UI" | "RGBA16I" | "RGBA16UI" | "RGBA16F" | "RGBA32I" | "RGBA32UI" | "RGBA32F" | "RGB5_A1" | "RGB10_A2" | "RGB10_A2UI" | "SRGB8_ALPHA8" | "SRGB8" | "DEPTH_COMPONENT16" | "DEPTH_COMPONENT24" | "DEPTH_COMPONENT32F" | "DEPTH24_STENCIL8" | "DEPTH32F_STENCIL8"`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Texture` | `property userData` | `DomOrLibType` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Texture` | `property updateRanges` | `DomOrLibType` | `Array<{ start: number; count: number }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Texture` | `property DEFAULT_ANISOTROPY` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
@@ -1505,12 +1454,9 @@ the README's coverage table.
 | `UniformsGroup` | `property uniforms` | `DomOrLibType` | `Array<Uniform | Uniform[]>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `UniformsGroup` | `method add` | `UntypedValue` | parameter 'uniform': `Uniform` is not an emitted class: required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express |
 | `UniformsGroup` | `method remove` | `UntypedValue` | parameter 'uniform': `Uniform` is not an emitted class: required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express |
-| `Vector2` | `method fromArray` | `UnmappedUnion` | parameter 'array': `number[] | ArrayLike<number>` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Vector2` | `method [Symbol.iterator]` | `NotInstanceApi` | the member name is not a usable C# identifier |
 | `Vector3` | `method setFromColor` | `OptionsInterface` | parameter 'color': `RGB` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `Vector3` | `method fromArray` | `UnmappedUnion` | parameter 'array': `number[] | ArrayLike<number>` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Vector3` | `method [Symbol.iterator]` | `NotInstanceApi` | the member name is not a usable C# identifier |
-| `Vector4` | `method fromArray` | `UnmappedUnion` | parameter 'array': `number[] | ArrayLike<number>` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Vector4` | `method [Symbol.iterator]` | `NotInstanceApi` | the member name is not a usable C# identifier |
 | `VectorKeyframeTrack` | `property TimeBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `VectorKeyframeTrack` | `property ValueBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -1764,8 +1710,8 @@ as its numeric backing value — a string-valued group would arrive as a number 
 the string. The backing type is the narrowest that holds every value, so three.js's small flag sets stay
 `byte` and its WebGL constants land on `ushort`.
 
-**32 generated**: 30 inferred from a constant group, 2 from a real TypeScript `enum`.
-27 are referenced by a mapped member today; the rest are emitted anyway, because an enum is a
+**41 generated**: 39 inferred from a constant group, 2 from a real TypeScript `enum`.
+32 are referenced by a mapped member today; the rest are emitted anyway, because an enum is a
 leaf type whose availability should not move with the class surface.
 
 | enum | source | members | aliases | backing type | referenced |
@@ -1773,24 +1719,33 @@ leaf type whose availability should not move with the class surface.
 | `AnimationActionLoopStyles` | constant group | 3 | 0 | `ushort` | yes |
 | `AnimationBlendMode` | constant group | 2 | 0 | `ushort` | yes |
 | `AttributeGPUType` | constant group | 2 | 0 | `ushort` | yes |
+| `BindMode` | constant group | 2 | 0 | `byte` | yes |
 | `Blending` | constant group | 7 | 0 | `byte` | yes |
 | `BlendingDstFactor` | constant group | 14 | 0 | `byte` | yes |
 | `BlendingEquation` | constant group | 5 | 0 | `byte` | yes |
+| `ColorSpace` | constant group | 3 | 0 | `byte` | yes |
+| `ColorSpaceTransfer` | constant group | 2 | 0 | `byte` | no |
 | `Combine` | constant group | 3 | 0 | `byte` | yes |
 | `CoordinateSystem` | constant group | 2 | 0 | `ushort` | yes |
 | `CubeTextureMapping` | constant group | 3 | 0 | `ushort` | no |
 | `CullFace` | constant group | 4 | 0 | `byte` | yes |
+| `CurveType` | constant group | 3 | 0 | `byte` | yes |
 | `DepthModes` | constant group | 8 | 0 | `byte` | yes |
 | `DepthPackingStrategies` | constant group | 4 | 0 | `ushort` | yes |
 | `DepthTexturePixelFormat` | constant group | 2 | 0 | `ushort` | yes |
+| `GLSLVersion` | constant group | 2 | 0 | `byte` | yes |
 | `InterpolationEndingModes` | constant group | 3 | 0 | `ushort` | no |
 | `InterpolationModes` | constant group | 4 | 0 | `ushort` | yes |
+| `LineCap` | constant group | 3 | 0 | `byte` | no |
+| `LineJoin` | constant group | 3 | 0 | `byte` | no |
 | `MOUSE` | TypeScript `enum` | 6 | 3 | `byte` | no |
 | `MagnificationTextureFilter` | constant group | 2 | 0 | `ushort` | yes |
 | `Mapping` | constant group | 3 | 0 | `ushort` | yes |
 | `MinificationTextureFilter` | constant group | 10 | 4 | `ushort` | yes |
 | `NormalMapTypes` | constant group | 2 | 0 | `byte` | yes |
+| `NormalPacking` | constant group | 3 | 0 | `byte` | no |
 | `PixelFormat` | constant group | 11 | 0 | `ushort` | yes |
+| `PixelFormatGPU` | constant group | 60 | 0 | `byte` | yes |
 | `ShadowMapType` | constant group | 4 | 0 | `byte` | yes |
 | `Side` | constant group | 3 | 0 | `byte` | yes |
 | `StencilFunc` | constant group | 8 | 0 | `ushort` | yes |
@@ -1855,37 +1810,33 @@ Most are not value sets at all: only 4 of the 23 are a literal. The rest are nam
 
 | name | why |
 |---|---|
-| `BindMode` | the group is string-valued (`AttachedBindMode` = "attached"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `ColorSpace` | the group is string-valued (`NoColorSpace` = ""); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `ColorSpaceTransfer` | the group is string-valued (`LinearTransfer` = "linear"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
 | `CompressedPixelFormat` | constant `RGB_BPTC_SIGNED_Format` has no literal value in the IR (declared type `<none>`) |
-| `GLSLVersion` | the group is string-valued (`GLSL1` = "100"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUAddressMode` | the enum is string-valued (`ClampToEdge` = "clamp-to-edge"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUBlendFactor` | the enum is string-valued (`Zero` = "zero"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUBlendOperation` | the enum is string-valued (`Add` = "add"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUBufferBindingType` | the enum is string-valued (`Uniform` = "uniform"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUColorWriteFlags` | a WebGPU construct, absent from the WebGL bundle this package ships (`THREE.GPUColorWriteFlags === undefined`). Consistent with the standing exclusion of the WebGPU / TSL stack; it is numeric, so nothing but this rule would have kept it out |
-| `GPUCompareFunction` | the enum is string-valued (`Never` = "never"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUCullMode` | the enum is string-valued (`None` = "none"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUFeatureMap` | the enum is string-valued (`texture-compression-s3tc` = "texture-compression-bc"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUFeatureName` | the enum is string-valued (`CoreFeaturesAndLimits` = "core-features-and-limits"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUFilterMode` | the enum is string-valued (`Linear` = "linear"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUFrontFace` | the enum is string-valued (`CCW` = "ccw"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUIndexFormat` | the enum is string-valued (`Uint16` = "uint16"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUInputStepMode` | the enum is string-valued (`Vertex` = "vertex"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPULoadOp` | the enum is string-valued (`Load` = "load"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUPrimitiveTopology` | the enum is string-valued (`PointList` = "point-list"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUSamplerBindingType` | the enum is string-valued (`Filtering` = "filtering"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUStencilOperation` | the enum is string-valued (`Keep` = "keep"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUStorageTextureAccess` | the enum is string-valued (`WriteOnly` = "write-only"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUStoreOp` | the enum is string-valued (`Store` = "store"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUTextureAspect` | the enum is string-valued (`All` = "all"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUTextureDimension` | the enum is string-valued (`OneD` = "1d"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUTextureFormat` | the enum is string-valued (`R8Unorm` = "r8unorm"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUTextureSampleType` | the enum is string-valued (`Float` = "float"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUTextureViewDimension` | the enum is string-valued (`OneD` = "1d"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `GPUVertexFormat` | the enum is string-valued (`Uint8x2` = "uint8x2"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
-| `NormalPacking` | the group is string-valued (`NoNormalPacking` = ""); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string |
+| `EulerOrder` | already hand-written as `Kebechet.Blazor.ThreeJS.Math.EulerOrder`, because `Euler` is a hand-written math value rather than a generated class. Its rotation order crosses inside the tagged Euler value as an index the applier maps through `EULER_ORDERS`, so a second enum here would be a duplicate name carrying a different wire form |
+| `GPUAddressMode` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUBlendFactor` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUBlendOperation` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUBufferBindingType` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUColorWriteFlags` | declared by @types/three but not exported by the bundle this package ships (`THREE.GPUColorWriteFlags === undefined`), so a member typed by it could never resolve at runtime. It is numeric, so nothing but this rule would have kept it out |
+| `GPUCompareFunction` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUCullMode` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUFeatureMap` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUFeatureName` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUFilterMode` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUFrontFace` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUIndexFormat` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUInputStepMode` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPULoadOp` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUPrimitiveTopology` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUSamplerBindingType` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUStencilOperation` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUStorageTextureAccess` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUStoreOp` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUTextureAspect` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUTextureDimension` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUTextureFormat` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUTextureSampleType` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUTextureViewDimension` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
+| `GPUVertexFormat` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |
 
 ## Unspecified arguments in a middle position
 
@@ -1899,7 +1850,7 @@ cannot be trimmed and must not be sent as null either — it travels as the `$un
 (`ThreeWireFormat.UndefinedKey`), which `three-interop.js` decodes to a real `undefined`. The
 round trip is pinned end to end by `tests/wire-format.test.mjs` against the vendored three.js.
 
-46 emittable classes carry 90 such parameters. They are the measure of how much
+46 emittable classes carry 92 such parameters. They are the measure of how much
 of the emitted surface that one wire feature holds up.
 
 <details><summary>Every affected class</summary>
@@ -1912,13 +1863,13 @@ of the emitted surface that one wire feature holds up.
 | `ArcCurve` | `aRadius`, `aEndAngle` |
 | `ArrowHelper` | `dir`, `origin`, `color`, `headLength` |
 | `BatchedMesh` | `maxIndexCount` |
-| `CatmullRomCurve3` | `points` |
+| `CatmullRomCurve3` | `points`, `curveType` |
 | `CubeDepthTexture` | `type`, `mapping`, `wrapS`, `wrapT`, `magFilter`, `minFilter`, `anisotropy` |
 | `CubicBezierCurve` | `v0`, `v1`, `v2` |
 | `CubicBezierCurve3` | `v0`, `v1`, `v2` |
 | `Data3DTexture` | `data` |
 | `DataArrayTexture` | `data` |
-| `DataTexture` | `data`, `format`, `type`, `mapping`, `wrapS`, `wrapT`, `magFilter`, `minFilter` |
+| `DataTexture` | `data`, `format`, `type`, `mapping`, `wrapS`, `wrapT`, `magFilter`, `minFilter`, `anisotropy` |
 | `DepthTexture` | `width`, `height`, `type`, `mapping`, `wrapS`, `wrapT`, `magFilter`, `minFilter`, `anisotropy`, `format` |
 | `DirectionalLight` | `color` |
 | `EdgesGeometry` | `geometry` |

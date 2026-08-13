@@ -24,6 +24,7 @@ public sealed class DataTexture : Texture
 	private readonly MagnificationTextureFilter? _magFilter;
 	private readonly MinificationTextureFilter? _minFilter;
 	private readonly float? _anisotropy;
+	private readonly ColorSpace? _colorSpace;
 
 	/// <summary>Initializes a new <see cref="DataTexture"/>.</summary>
 	/// <param name="data">
@@ -40,6 +41,7 @@ public sealed class DataTexture : Texture
 	/// <param name="magFilter">See <c>.magFilter</c>. Default <c>THREE.NearestFilter</c>.</param>
 	/// <param name="minFilter">See <c>.minFilter</c>. Default <c>THREE.NearestFilter</c>.</param>
 	/// <param name="anisotropy">See <c>.anisotropy</c>. Default <c>THREE.Texture.DEFAULT_ANISOTROPY</c>.</param>
+	/// <param name="colorSpace">See <c>.colorSpace</c>. Default <c>NoColorSpace</c>.</param>
 	public DataTexture(
 		TypedArray? data = null,
 		float width = 1f,
@@ -51,7 +53,8 @@ public sealed class DataTexture : Texture
 		Wrapping? wrapT = null,
 		MagnificationTextureFilter? magFilter = null,
 		MinificationTextureFilter? minFilter = null,
-		float? anisotropy = null)
+		float? anisotropy = null,
+		ColorSpace? colorSpace = null)
 	{
 		_data = data;
 		_width = width;
@@ -64,6 +67,7 @@ public sealed class DataTexture : Texture
 		_magFilter = magFilter;
 		_minFilter = minFilter;
 		_anisotropy = anisotropy;
+		_colorSpace = colorSpace;
 	}
 
 	/// <summary>
@@ -89,9 +93,9 @@ public sealed class DataTexture : Texture
 
 	/// <summary>
 	/// Constructor arguments forwarded to <c>THREE.DataTexture</c>: data, width, height, format, type,
-	/// mapping, wrapS, wrapT, magFilter, minFilter, anisotropy. An argument the caller left unspecified
-	/// travels as the wire's not-supplied sentinel, or is trimmed when nothing supplied follows it, so
-	/// three.js applies its own default.
+	/// mapping, wrapS, wrapT, magFilter, minFilter, anisotropy, colorSpace. An argument the caller left
+	/// unspecified travels as the wire's not-supplied sentinel, or is trimmed when nothing supplied
+	/// follows it, so three.js applies its own default.
 	/// </summary>
 	protected override object?[] ConstructorArgs
 	{
@@ -109,7 +113,8 @@ public sealed class DataTexture : Texture
 				ThreeValue.OrUnspecified(_wrapT),
 				ThreeValue.OrUnspecified(_magFilter),
 				ThreeValue.OrUnspecified(_minFilter),
-				ThreeValue.OrUnspecified(_anisotropy)
+				ThreeValue.OrUnspecified(_anisotropy),
+				ThreeValue.OrUnspecified(_colorSpace)
 			]);
 		}
 	}

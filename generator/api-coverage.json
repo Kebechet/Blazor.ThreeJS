@@ -8,12 +8,12 @@
     "blockedClasses": 55,
     "reachableClasses": 264,
     "members": 3932,
-    "mirroredState": 1141,
-    "commands": 768,
-    "asyncQueries": 803,
-    "skippedMembers": 1220,
+    "mirroredState": 1174,
+    "commands": 774,
+    "asyncQueries": 815,
+    "skippedMembers": 1169,
     "reachableMembers": 2490,
-    "generatedMembers": 1611,
+    "generatedMembers": 1654,
     "strandedMembers": 1442
   },
   "classes": [
@@ -456,23 +456,11 @@
       "file": "src/extras/curves/CatmullRomCurve3.d.ts",
       "status": "emittable",
       "isReachable": true,
-      "constructorParameterCount": 2,
-      "droppedConstructorParameters": [
-        {
-          "name": "curveType",
-          "type": "CurveType",
-          "reason": "`CurveType` aliases `\"centripetal\" | \"chordal\" | \"catmullrom\"`, which is neither a group of numeric constants nor a type the mirror expresses",
-          "category": "UnmappedTypeAlias"
-        },
-        {
-          "name": "tension",
-          "type": "number",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        }
-      ],
+      "constructorParameterCount": 4,
+      "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
-        "points"
+        "points",
+        "curveType"
       ]
     },
     {
@@ -833,15 +821,8 @@
       "file": "src/textures/DataTexture.d.ts",
       "status": "emittable",
       "isReachable": true,
-      "constructorParameterCount": 11,
-      "droppedConstructorParameters": [
-        {
-          "name": "colorSpace",
-          "type": "ColorSpace",
-          "reason": "`ColorSpace` cannot become a C# enum: the group is string-valued (`NoColorSpace` = \"\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string",
-          "category": "StringConstantGroup"
-        }
-      ],
+      "constructorParameterCount": 12,
+      "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
         "data",
         "format",
@@ -850,7 +831,8 @@
         "wrapS",
         "wrapT",
         "magFilter",
-        "minFilter"
+        "minFilter",
+        "anisotropy"
       ]
     },
     {
@@ -3821,10 +3803,6 @@
       "members": 126
     },
     {
-      "category": "UnmappedUnion",
-      "members": 125
-    },
-    {
       "category": "CallbackType",
       "members": 112
     },
@@ -3835,6 +3813,10 @@
     {
       "category": "AnonymousObjectType",
       "members": 82
+    },
+    {
+      "category": "UnmappedUnion",
+      "members": 78
     },
     {
       "category": "OptionsInterface",
@@ -3857,12 +3839,12 @@
       "members": 25
     },
     {
-      "category": "UnmappedTypeAlias",
-      "members": 21
-    },
-    {
       "category": "UnwrappedClass",
       "members": 20
+    },
+    {
+      "category": "UnmappedTypeAlias",
+      "members": 19
     },
     {
       "category": "ExternalType",
@@ -3887,10 +3869,6 @@
     {
       "category": "CollectionType",
       "members": 3
-    },
-    {
-      "category": "StringConstantGroup",
-      "members": 2
     },
     {
       "category": "NoHandleForResult",
@@ -3920,6 +3898,13 @@
       "isReferenced": true
     },
     {
+      "name": "BindMode",
+      "source": "ConstantGroup",
+      "members": 2,
+      "backingType": "byte",
+      "isReferenced": true
+    },
+    {
       "name": "Blending",
       "source": "ConstantGroup",
       "members": 7,
@@ -3939,6 +3924,20 @@
       "members": 5,
       "backingType": "byte",
       "isReferenced": true
+    },
+    {
+      "name": "ColorSpace",
+      "source": "ConstantGroup",
+      "members": 3,
+      "backingType": "byte",
+      "isReferenced": true
+    },
+    {
+      "name": "ColorSpaceTransfer",
+      "source": "ConstantGroup",
+      "members": 2,
+      "backingType": "byte",
+      "isReferenced": false
     },
     {
       "name": "Combine",
@@ -3969,6 +3968,13 @@
       "isReferenced": true
     },
     {
+      "name": "CurveType",
+      "source": "ConstantGroup",
+      "members": 3,
+      "backingType": "byte",
+      "isReferenced": true
+    },
+    {
       "name": "DepthModes",
       "source": "ConstantGroup",
       "members": 8,
@@ -3990,6 +3996,13 @@
       "isReferenced": true
     },
     {
+      "name": "GLSLVersion",
+      "source": "ConstantGroup",
+      "members": 2,
+      "backingType": "byte",
+      "isReferenced": true
+    },
+    {
       "name": "InterpolationEndingModes",
       "source": "ConstantGroup",
       "members": 3,
@@ -4002,6 +4015,20 @@
       "members": 4,
       "backingType": "ushort",
       "isReferenced": true
+    },
+    {
+      "name": "LineCap",
+      "source": "ConstantGroup",
+      "members": 3,
+      "backingType": "byte",
+      "isReferenced": false
+    },
+    {
+      "name": "LineJoin",
+      "source": "ConstantGroup",
+      "members": 3,
+      "backingType": "byte",
+      "isReferenced": false
     },
     {
       "name": "MOUSE",
@@ -4039,10 +4066,24 @@
       "isReferenced": true
     },
     {
+      "name": "NormalPacking",
+      "source": "ConstantGroup",
+      "members": 3,
+      "backingType": "byte",
+      "isReferenced": false
+    },
+    {
       "name": "PixelFormat",
       "source": "ConstantGroup",
       "members": 11,
       "backingType": "ushort",
+      "isReferenced": true
+    },
+    {
+      "name": "PixelFormatGPU",
+      "source": "ConstantGroup",
+      "members": 60,
+      "backingType": "byte",
       "isReferenced": true
     },
     {
@@ -4125,128 +4166,112 @@
   ],
   "refusedEnums": [
     {
-      "name": "BindMode",
-      "reason": "the group is string-valued (`AttachedBindMode` = \"attached\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
-    },
-    {
-      "name": "ColorSpace",
-      "reason": "the group is string-valued (`NoColorSpace` = \"\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
-    },
-    {
-      "name": "ColorSpaceTransfer",
-      "reason": "the group is string-valued (`LinearTransfer` = \"linear\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
-    },
-    {
       "name": "CompressedPixelFormat",
       "reason": "constant `RGB_BPTC_SIGNED_Format` has no literal value in the IR (declared type `<none>`)"
     },
     {
-      "name": "GLSLVersion",
-      "reason": "the group is string-valued (`GLSL1` = \"100\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "name": "EulerOrder",
+      "reason": "already hand-written as `Kebechet.Blazor.ThreeJS.Math.EulerOrder`, because `Euler` is a hand-written math value rather than a generated class. Its rotation order crosses inside the tagged Euler value as an index the applier maps through `EULER_ORDERS`, so a second enum here would be a duplicate name carrying a different wire form"
     },
     {
       "name": "GPUAddressMode",
-      "reason": "the enum is string-valued (`ClampToEdge` = \"clamp-to-edge\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUBlendFactor",
-      "reason": "the enum is string-valued (`Zero` = \"zero\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUBlendOperation",
-      "reason": "the enum is string-valued (`Add` = \"add\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUBufferBindingType",
-      "reason": "the enum is string-valued (`Uniform` = \"uniform\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUColorWriteFlags",
-      "reason": "a WebGPU construct, absent from the WebGL bundle this package ships (`THREE.GPUColorWriteFlags === undefined`). Consistent with the standing exclusion of the WebGPU / TSL stack; it is numeric, so nothing but this rule would have kept it out"
+      "reason": "declared by @types/three but not exported by the bundle this package ships (`THREE.GPUColorWriteFlags === undefined`), so a member typed by it could never resolve at runtime. It is numeric, so nothing but this rule would have kept it out"
     },
     {
       "name": "GPUCompareFunction",
-      "reason": "the enum is string-valued (`Never` = \"never\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUCullMode",
-      "reason": "the enum is string-valued (`None` = \"none\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUFeatureMap",
-      "reason": "the enum is string-valued (`texture-compression-s3tc` = \"texture-compression-bc\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUFeatureName",
-      "reason": "the enum is string-valued (`CoreFeaturesAndLimits` = \"core-features-and-limits\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUFilterMode",
-      "reason": "the enum is string-valued (`Linear` = \"linear\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUFrontFace",
-      "reason": "the enum is string-valued (`CCW` = \"ccw\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUIndexFormat",
-      "reason": "the enum is string-valued (`Uint16` = \"uint16\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUInputStepMode",
-      "reason": "the enum is string-valued (`Vertex` = \"vertex\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPULoadOp",
-      "reason": "the enum is string-valued (`Load` = \"load\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUPrimitiveTopology",
-      "reason": "the enum is string-valued (`PointList` = \"point-list\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUSamplerBindingType",
-      "reason": "the enum is string-valued (`Filtering` = \"filtering\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUStencilOperation",
-      "reason": "the enum is string-valued (`Keep` = \"keep\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUStorageTextureAccess",
-      "reason": "the enum is string-valued (`WriteOnly` = \"write-only\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUStoreOp",
-      "reason": "the enum is string-valued (`Store` = \"store\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUTextureAspect",
-      "reason": "the enum is string-valued (`All` = \"all\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUTextureDimension",
-      "reason": "the enum is string-valued (`OneD` = \"1d\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUTextureFormat",
-      "reason": "the enum is string-valued (`R8Unorm` = \"r8unorm\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUTextureSampleType",
-      "reason": "the enum is string-valued (`Float` = \"float\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUTextureViewDimension",
-      "reason": "the enum is string-valued (`OneD` = \"1d\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     },
     {
       "name": "GPUVertexFormat",
-      "reason": "the enum is string-valued (`Uint8x2` = \"uint8x2\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
-    },
-    {
-      "name": "NormalPacking",
-      "reason": "the group is string-valued (`NoNormalPacking` = \"\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string"
+      "reason": "part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to"
     }
   ],
   "members": [
@@ -7115,9 +7140,8 @@
       "member": "type",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`string | \"BufferGeometry\"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery",
+      "type": "string"
     },
     {
       "class": "BufferGeometry",
@@ -7749,9 +7773,8 @@
       "member": "type",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`string | \"CatmullRomCurve3\"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery",
+      "type": "string"
     },
     {
       "class": "CatmullRomCurve3",
@@ -7774,9 +7797,8 @@
       "member": "curveType",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`CurveType` aliases `\"centripetal\" | \"chordal\" | \"catmullrom\"`, which is neither a group of numeric constants nor a type the mirror expresses",
-      "category": "UnmappedTypeAlias"
+      "bucket": "MirroredState",
+      "type": "CurveType"
     },
     {
       "class": "CatmullRomCurve3",
@@ -8440,9 +8462,7 @@
       "member": "fromArray",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'array': `number[] | ArrayLike<number>` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "Command"
     },
     {
       "class": "Color",
@@ -8904,9 +8924,8 @@
       "member": "type",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`string | \"CubicBezierCurve\"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery",
+      "type": "string"
     },
     {
       "class": "CubicBezierCurve",
@@ -9085,9 +9104,8 @@
       "member": "type",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`string | \"CubicBezierCurve3\"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery",
+      "type": "string"
     },
     {
       "class": "CubicBezierCurve3",
@@ -9347,9 +9365,8 @@
       "member": "type",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`string | \"Curve\"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery",
+      "type": "string"
     },
     {
       "class": "Curve",
@@ -9493,9 +9510,8 @@
       "member": "type",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`string | \"CurvePath\"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery",
+      "type": "string"
     },
     {
       "class": "CurvePath",
@@ -10288,9 +10304,8 @@
       "member": "type",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`string | \"EllipseCurve\"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery",
+      "type": "string"
     },
     {
       "class": "EllipseCurve",
@@ -10517,7 +10532,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`EulerOrder` aliases `\"XYZ\" | \"YXZ\" | \"ZXY\" | \"ZYX\" | \"YZX\" | \"XZY\"`, which is neither a group of numeric constants nor a type the mirror expresses",
+      "reason": "`EulerOrder` cannot become a C# enum: already hand-written as `Kebechet.Blazor.ThreeJS.Math.EulerOrder`, because `Euler` is a hand-written math value rather than a generated class. Its rotation order crosses inside the tagged Euler value as an index the applier maps through `EULER_ORDERS`, so a second enum here would be a duplicate name carrying a different wire form",
       "category": "UnmappedTypeAlias"
     },
     {
@@ -10595,7 +10610,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'newOrder': `EulerOrder` aliases `\"XYZ\" | \"YXZ\" | \"ZXY\" | \"ZYX\" | \"YZX\" | \"XZY\"`, which is neither a group of numeric constants nor a type the mirror expresses",
+      "reason": "parameter 'newOrder': `EulerOrder` cannot become a C# enum: already hand-written as `Kebechet.Blazor.ThreeJS.Math.EulerOrder`, because `Euler` is a hand-written math value rather than a generated class. Its rotation order crosses inside the tagged Euler value as an index the applier maps through `EULER_ORDERS`, so a second enum here would be a duplicate name carrying a different wire form",
       "category": "UnmappedTypeAlias"
     },
     {
@@ -11044,9 +11059,8 @@
       "member": "elementSize",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`1 | 2 | 4` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "float"
     },
     {
       "class": "GLBufferAttribute",
@@ -12955,18 +12969,16 @@
       "member": "linecap",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"butt\" | \"round\" | \"square\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineCap"
     },
     {
       "class": "Line2NodeMaterial",
       "member": "linejoin",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "Line3",
@@ -13122,18 +13134,16 @@
       "member": "linecap",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"butt\" | \"round\" | \"square\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineCap"
     },
     {
       "class": "LineBasicMaterial",
       "member": "linejoin",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "LineBasicMaterial",
@@ -13395,18 +13405,16 @@
       "member": "linecap",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"butt\" | \"round\" | \"square\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineCap"
     },
     {
       "class": "LineBasicNodeMaterial",
       "member": "linejoin",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "LineCurve",
@@ -13422,9 +13430,8 @@
       "member": "type",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`string | \"LineCurve\"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery",
+      "type": "string"
     },
     {
       "class": "LineCurve",
@@ -13587,9 +13594,8 @@
       "member": "type",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`string | \"LineCurve3\"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery",
+      "type": "string"
     },
     {
       "class": "LineCurve3",
@@ -13919,18 +13925,16 @@
       "member": "linecap",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"butt\" | \"round\" | \"square\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineCap"
     },
     {
       "class": "LineDashedNodeMaterial",
       "member": "linejoin",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "LineLoop",
@@ -15534,18 +15538,16 @@
       "member": "wireframeLinecap",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshBasicMaterial",
       "member": "wireframeLinejoin",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshBasicMaterial",
@@ -15903,18 +15905,16 @@
       "member": "wireframeLinecap",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshBasicNodeMaterial",
       "member": "wireframeLinejoin",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshDepthMaterial",
@@ -16265,18 +16265,16 @@
       "member": "wireframeLinecap",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshLambertMaterial",
       "member": "wireframeLinejoin",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshLambertMaterial",
@@ -16738,18 +16736,16 @@
       "member": "wireframeLinecap",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshLambertNodeMaterial",
       "member": "wireframeLinejoin",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshLambertNodeMaterial",
@@ -17898,18 +17894,16 @@
       "member": "wireframeLinecap",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshPhongMaterial",
       "member": "wireframeLinejoin",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshPhongMaterial",
@@ -18423,18 +18417,16 @@
       "member": "wireframeLinecap",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshPhongNodeMaterial",
       "member": "wireframeLinejoin",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshPhongNodeMaterial",
@@ -19628,18 +19620,16 @@
       "member": "wireframeLinecap",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshStandardMaterial",
       "member": "wireframeLinejoin",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshStandardMaterial",
@@ -20162,18 +20152,16 @@
       "member": "wireframeLinecap",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshStandardNodeMaterial",
       "member": "wireframeLinejoin",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshStandardNodeMaterial",
@@ -20364,18 +20352,16 @@
       "member": "wireframeLinecap",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshToonMaterial",
       "member": "wireframeLinejoin",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshToonMaterial",
@@ -20781,18 +20767,16 @@
       "member": "wireframeLinecap",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "MeshToonNodeMaterial",
       "member": "wireframeLinejoin",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"round\" | \"bevel\" | \"miter\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "LineJoin"
     },
     {
       "class": "NodeLoader",
@@ -24026,9 +24010,8 @@
       "member": "type",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`string | \"QuadraticBezierCurve\"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery",
+      "type": "string"
     },
     {
       "class": "QuadraticBezierCurve",
@@ -24199,9 +24182,8 @@
       "member": "type",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`string | \"QuadraticBezierCurve3\"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery",
+      "type": "string"
     },
     {
       "class": "QuadraticBezierCurve3",
@@ -24576,9 +24558,7 @@
       "member": "fromArray",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'array': `number[] | ArrayLike<number>` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "Command"
     },
     {
       "class": "Quaternion",
@@ -26706,9 +26686,8 @@
       "member": "glslVersion",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`GLSLVersion` cannot become a C# enum: the group is string-valued (`GLSL1` = \"100\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string",
-      "category": "StringConstantGroup"
+      "bucket": "MirroredState",
+      "type": "GLSLVersion"
     },
     {
       "class": "ShadowMaterial",
@@ -27307,9 +27286,8 @@
       "member": "bindMode",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`BindMode` cannot become a C# enum: the group is string-valued (`AttachedBindMode` = \"attached\"); a C# enum is sent over the wire as its numeric backing value, so it would arrive as a number where three.js expects the string",
-      "category": "StringConstantGroup"
+      "bucket": "MirroredState",
+      "type": "BindMode"
     },
     {
       "class": "SkinnedMesh",
@@ -27846,9 +27824,7 @@
       "member": "fromArray",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'array': `number[] | ArrayLike<number>` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "Command"
     },
     {
       "class": "SphericalHarmonics3",
@@ -27897,9 +27873,8 @@
       "member": "type",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`string | \"SplineCurve\"` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery",
+      "type": "string"
     },
     {
       "class": "SplineCurve",
@@ -29269,9 +29244,8 @@
       "member": "internalFormat",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`PixelFormatGPU` aliases `| \"ALPHA\" | \"RGB\" | \"RGBA\" | \"LUMINANCE\" | \"LUMINANCE_ALPHA\" | \"RED_INTEGER\" | \"R8\" | \"R8_SNORM\" | \"R8I\" | \"R8UI\" | \"R16I\" | \"R16UI\" | \"R16F\" | \"R32I\" | \"R32UI\" | \"R32F\" | \"RG8\" | \"RG8_SNORM\" | \"RG8I\" | \"RG8UI\" | \"RG16I\" | \"RG16UI\" | \"RG16F\" | \"RG32I\" | \"RG32UI\" | \"RG32F\" | \"RGB565\" | \"RGB8\" | \"RGB8_SNORM\" | \"RGB8I\" | \"RGB8UI\" | \"RGB16I\" | \"RGB16UI\" | \"RGB16F\" | \"RGB32I\" | \"RGB32UI\" | \"RGB32F\" | \"RGB9_E5\" | \"SRGB8\" | \"R11F_G11F_B10F\" | \"RGBA4\" | \"RGBA8\" | \"RGBA8_SNORM\" | \"RGBA8I\" | \"RGBA8UI\" | \"RGBA16I\" | \"RGBA16UI\" | \"RGBA16F\" | \"RGBA32I\" | \"RGBA32UI\" | \"RGBA32F\" | \"RGB5_A1\" | \"RGB10_A2\" | \"RGB10_A2UI\" | \"SRGB8_ALPHA8\" | \"SRGB8\" | \"DEPTH_COMPONENT16\" | \"DEPTH_COMPONENT24\" | \"DEPTH_COMPONENT32F\" | \"DEPTH24_STENCIL8\" | \"DEPTH32F_STENCIL8\"`, which is neither a group of numeric constants nor a type the mirror expresses",
-      "category": "UnmappedTypeAlias"
+      "bucket": "MirroredState",
+      "type": "PixelFormatGPU"
     },
     {
       "class": "Texture",
@@ -30461,9 +30435,7 @@
       "member": "fromArray",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'array': `number[] | ArrayLike<number>` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "Command"
     },
     {
       "class": "Vector2",
@@ -31036,9 +31008,7 @@
       "member": "fromArray",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'array': `number[] | ArrayLike<number>` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "Command"
     },
     {
       "class": "Vector3",
@@ -31455,9 +31425,7 @@
       "member": "fromArray",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'array': `number[] | ArrayLike<number>` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "Command"
     },
     {
       "class": "Vector4",

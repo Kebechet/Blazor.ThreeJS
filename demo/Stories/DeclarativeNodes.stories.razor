@@ -33,6 +33,8 @@
                 <ThreeAmbientLight Color="Color.White" Intensity="0.45f" />
                 <ThreeDirectionalLight Color="Color.White" Intensity="1.6f" Position="new(4f, 6f, 6f)" />
                 <ThreePointLight Color="Color.FromHex(0xffb347)" Intensity="26f" Position="new(-2f, 2.2f, 2.6f)" />
+                <ThreeHemisphereLight SkyColor="Color.FromHex(0x88aaff)" GroundColor="Color.FromHex(0x403020)" Intensity="0.8f" />
+                <ThreeSpotLight Color="Color.FromHex(0xfff0d0)" Intensity="60f" Angle="0.5f" Penumbra="0.6f" Position="new(3f, 6f, 3f)" />
 
                 @* A group moves everything under it with one transform - the whole row swings from
                    a single rotation write rather than one per child. *@
@@ -51,6 +53,34 @@
                     </ThreeMesh>
                 </ThreeGroup>
 
+                @* The second row is the geometries that build from numbers alone, one component each. *@
+                <ThreeGroup Position="new(0f, -2.4f, 0f)" Rotation="new(0f, _groupRotationY, 0f)">
+                    <ThreeMesh Position="new(-5.1f, 0f, 0f)">
+                        <ThreeCylinderGeometry RadiusTop="0.55f" RadiusBottom="0.55f" Height="1.3f" />
+                        <ThreeMeshStandardMaterial Color="Color.FromHex(0x7fb069)" Roughness="0.5f" />
+                    </ThreeMesh>
+                    <ThreeMesh Position="new(-3.06f, 0f, 0f)">
+                        <ThreeConeGeometry Radius="0.62f" Height="1.4f" />
+                        <ThreeMeshStandardMaterial Color="Color.FromHex(0xd98d5b)" Roughness="0.5f" />
+                    </ThreeMesh>
+                    <ThreeMesh Position="new(-1.02f, 0f, 0f)">
+                        <ThreeTorusGeometry Radius="0.55f" Tube="0.22f" />
+                        <ThreeMeshStandardMaterial Color="Color.FromHex(0xc45b8d)" Roughness="0.4f" />
+                    </ThreeMesh>
+                    <ThreeMesh Position="new(1.02f, 0f, 0f)">
+                        <ThreeTorusKnotGeometry Radius="0.46f" Tube="0.16f" />
+                        <ThreeMeshStandardMaterial Color="Color.FromHex(0x5bc4c4)" Roughness="0.35f" />
+                    </ThreeMesh>
+                    <ThreeMesh Position="new(3.06f, 0f, 0f)" Rotation="new(-0.6f, 0f, 0f)">
+                        <ThreeRingGeometry InnerRadius="0.32f" OuterRadius="0.7f" />
+                        <ThreeMeshStandardMaterial Color="Color.FromHex(0xd9c85b)" Roughness="0.6f" />
+                    </ThreeMesh>
+                    <ThreeMesh Position="new(5.1f, 0f, 0f)" Rotation="new(-0.6f, 0f, 0f)">
+                        <ThreeCircleGeometry Radius="0.72f" />
+                        <ThreeMeshStandardMaterial Color="Color.FromHex(0x8e9aa6)" Roughness="0.9f" />
+                    </ThreeMesh>
+                </ThreeGroup>
+
                 <ThreePoints Position="new(0f, 3.2f, 0f)">
                     <ThreeSphereGeometry Radius="1.4f" WidthSegments="26" HeightSegments="16" />
                     <ThreePointsMaterial Color="Color.FromHex(0xe0e4e8)" Size="0.06f" />
@@ -60,10 +90,37 @@
                 Used here: <code>ThreeCanvas</code>, <code>ThreePerspectiveCamera</code>,
                 <code>ThreeOrthographicCamera</code>, <code>ThreeAmbientLight</code>,
                 <code>ThreeDirectionalLight</code>, <code>ThreePointLight</code>,
-                <code>ThreeGroup</code>, <code>ThreeMesh</code>, <code>ThreePoints</code>,
-                <code>ThreeBoxGeometry</code>, <code>ThreeSphereGeometry</code>,
-                <code>ThreePlaneGeometry</code>, <code>ThreeMeshStandardMaterial</code>,
-                <code>ThreeMeshBasicMaterial</code> and <code>ThreePointsMaterial</code>.
+                <code>ThreeHemisphereLight</code>, <code>ThreeSpotLight</code>,
+                <code>ThreeGroup</code>, <code>ThreeMesh</code>,
+                <code>ThreePoints</code>, <code>ThreeBoxGeometry</code>,
+                <code>ThreeSphereGeometry</code>, <code>ThreePlaneGeometry</code>,
+                <code>ThreeCylinderGeometry</code>, <code>ThreeConeGeometry</code>,
+                <code>ThreeTorusGeometry</code>, <code>ThreeTorusKnotGeometry</code>,
+                <code>ThreeRingGeometry</code>, <code>ThreeCircleGeometry</code>,
+                <code>ThreeMeshStandardMaterial</code>, <code>ThreeMeshBasicMaterial</code> and
+                <code>ThreePointsMaterial</code>.
+            </p>
+            <p>
+                ⚠️ <code>ThreeHemisphereLight</code> is here, and for a while it was not: adding one
+                used to render every lit material pure black, silently. three.js builds that light -
+                and a directional and a spot light - at <code>(0, 1, 0)</code> rather than the origin,
+                because for those three the position <em>is</em> the direction they light from, and the
+                mirror replayed an untouched <code>(0, 0, 0)</code> over it on attach. It now replays
+                only what you actually wrote, which is both the fix and one fewer op per object.
+            </p>
+            <p>
+                ⚠️ There is deliberately no <code>ThreeRectAreaLight</code>. three.js shades a
+                <code>RectAreaLight</code> from a pair of lookup tables that live in a 315 KB addon and
+                have to be installed globally, through <code>RectAreaLightNode.setLTC</code>, before
+                the first frame is drawn — without them the renderer throws on
+                <code>LTC_FLOAT_1</code>. Loading them on demand needs the render loop to wait for an
+                import mid-scene, which is a change to how frames are driven rather than one more
+                component, so the light is left out until that exists rather than shipped broken.
+            </p>
+            <p>
+                The sphere is <code>MeshBasicMaterial</code>, which no light touches, so it stays the
+                same flat colour however the lights above change - that is the material doing exactly
+                what it should, not a light failing to reach it.
             </p>
             <p>
                 ⚠️ A declarative scene binds its camera <strong>once</strong>. The scene root keeps the

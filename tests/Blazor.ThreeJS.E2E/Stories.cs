@@ -32,6 +32,9 @@ internal static class Stories
 	/// <summary>The same sphere under each mesh material.</summary>
 	public const string CatalogueMaterials = "catalogue-materials--mesh-materials";
 
+	/// <summary>One cube painted per face, through the geometry's own groups and a material list.</summary>
+	public const string CatalogueMultiMaterial = "catalogue-materials--one-mesh-six-materials";
+
 	/// <summary>One scene lit by each light type in turn.</summary>
 	public const string CatalogueLights = "catalogue-lights--light-types";
 
@@ -94,6 +97,7 @@ internal static class Stories
 		FigureWithOrbitControls,
 		CatalogueGeometries,
 		CatalogueMaterials,
+		CatalogueMultiMaterial,
 		CatalogueLights,
 		CatalogueCameras,
 		CatalogueObjectTypes,

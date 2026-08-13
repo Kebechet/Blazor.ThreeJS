@@ -40,6 +40,40 @@
             </p>
         </Template>
     </Story>
+    <Story Name="One mesh, six materials">
+        <Template>
+            <p>
+                A geometry can carry <em>groups</em>, each naming which material in a list draws that
+                run of vertices. <code>BoxGeometry</code> builds six of them, one per face, so handing
+                the mesh six materials paints each face separately from one draw call's worth of setup.
+            </p>
+            <ThreeCanvas Style="width: 100%; height: 320px;" OnReady="BuildMultiMaterialCubeAsync" />
+            <p>
+                ⚠️ This goes through the escape hatch - <code>mesh.Set("material", materials)</code> -
+                rather than through <code>Mesh.Material</code>. three.js declares that property as
+                <code>Material | Material[]</code> and the mirror narrows <code>T | T[]</code> to
+                <code>T</code>, so the typed property holds one material and the list form has no typed
+                spelling. The wire has never been the limitation: an array of mirrored objects already
+                crosses as an array of handles, which is exactly what this writes.
+            </p>
+            <p>
+                <code>BufferGeometry.AddGroup</code> and <code>ClearGroups</code> are both typed, so a
+                geometry that does not come with groups can still be given them.
+            </p>
+            <p>
+                ⚠️ A typed <code>SetMaterials(…)</code> would be worse than the escape hatch here, which
+                is why there is not one. <code>Mesh.Material</code> is mirrored state: C# holds the
+                material it last wrote and its setter returns early when you write that same value
+                again. A multi-value write cannot update a single-value mirror, so after one the mirror
+                still names the old material - and the next
+                <code>mesh.Material = thatSameMaterial</code> would compare equal and send
+                <em>nothing</em>, leaving the mesh multi-material in the browser for good. Reaching for
+                <code>Set</code> keeps that where the mirror-authority rule already puts it: a value
+                written by a route the mirror does not track is stale, and you know it because you went
+                around the mirror to write it.
+            </p>
+        </Template>
+    </Story>
 </Stories>
 
 @code {
@@ -48,6 +82,9 @@
     private const int ColumnCount = 3;
     private const float GridSpacing = 2.6f;
     private const int Tint = 0x5b8dd9;
+
+    /// <summary>One colour per box face, in three.js's group order: +X, -X, +Y, -Y, +Z, -Z.</summary>
+    private static readonly int[] _faceTints = [0xd95b5b, 0x5bd97f, 0x5b8dd9, 0xd9c85b, 0xc45bd9, 0x5bd9d0];
 
     private readonly CancellationTokenSource _animationCancellation = new();
     private IReadOnlyList<string> _sampleNames = [];
@@ -86,6 +123,46 @@
         StateHasChanged();
 
         _ = AnimateAsync(threeContext, meshes);
+    }
+
+    /// <summary>
+    /// One cube drawn with a different material on each face, through the geometry's own groups.
+    /// </summary>
+    private async Task BuildMultiMaterialCubeAsync(ThreeContext threeContext)
+    {
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(2.6f, 2.2f, 3.4f);
+        camera.LookAt(0f, 0f, 0f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.5f));
+
+        var keyLight = new DirectionalLight(Color.White, 2f);
+        keyLight.Position.Set(4f, 5f, 6f);
+        scene.Add(keyLight);
+
+        var faceMaterials = new List<MeshStandardMaterial>();
+        foreach (var faceTint in _faceTints)
+        {
+            var faceMaterial = new MeshStandardMaterial();
+            faceMaterial.Color.SetHex(faceTint);
+            faceMaterial.Roughness = 0.45f;
+            faceMaterials.Add(faceMaterial);
+        }
+
+        // BoxGeometry already carries one group per face, in the order +X, -X, +Y, -Y, +Z, -Z, so the
+        // list index is the face. Written through Set because Mesh.Material is the narrowed single-value
+        // form - see the note under the canvas.
+        var cube = new Mesh(new BoxGeometry(1.6f, 1.6f, 1.6f), faceMaterials.First());
+        cube.Set("material", faceMaterials);
+        scene.Add(cube);
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        _ = AnimateAsync(threeContext, [cube]);
     }
 
     /// <summary>

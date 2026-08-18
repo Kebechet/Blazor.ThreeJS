@@ -1,0 +1,230 @@
+@attribute [Stories("Catalogue/Transform commands")]
+@using System.Globalization
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Driving a mesh with commands">
+        <Template>
+            <p>
+                three.js declares its transform twice: as state you assign (<code>position</code>,
+                <code>rotation</code>) and as commands that compute a new transform for you
+                (<code>rotateX</code>, <code>translateY</code>, <code>lookAt</code>). Both halves reach C#,
+                and they come from different places - the state is hand-written on <code>Object3D</code>,
+                the commands are generated into the other half of the same <code>partial class</code>.
+            </p>
+            <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildTransformSceneAsync" />
+            <p>
+                <button @onclick="RotateAsync">RotateX(+15°)</button>
+                <button @onclick="TranslateAsync">TranslateY(+0.25)</button>
+                <button @onclick="LookAtOriginAsync">LookAt(0, 0, 0)</button>
+                <button @onclick="WritePositionAsync">Write Position.Y = 1.5</button>
+                <button @onclick="ReadWorldPositionAsync">Ask the browser</button>
+            </p>
+            <table>
+                <thead>
+                    <tr><th>Value</th><th>Where it comes from</th><th>Now</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>mesh.Position</code></td>
+                        <td>mirrored state - hand-written half</td>
+                        <td><code>@Format(_mirroredPosition)</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>mesh.Rotation</code></td>
+                        <td>mirrored state - hand-written half</td>
+                        <td><code>@Format(_mirroredRotation)</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>mesh.GetWorldPositionAsync(…)</code></td>
+                        <td>read op - generated half, answered with a tagged <code>Vector3</code></td>
+                        <td><code>@(_worldPosition is null ? "not asked yet" : Format(_worldPosition))</code></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>
+                @_commandLog
+            </p>
+            <p>
+                ⚠️ <strong>A command leaves the mirror stale.</strong> <code>RotateX</code> records a call
+                and reads nothing back, so three.js turns the mesh while <code>mesh.Rotation</code> goes on
+                reporting whatever C# last wrote - press it a few times and watch the mesh move while the
+                second row does not. <code>TranslateY</code> does the same to <code>mesh.Position</code>,
+                which is why the third row (the browser's own answer) is the only one that follows the
+                translate buttons.
+            </p>
+            <p>
+                ⚠️ The consequence worth remembering is what happens next. Writing a stale value back
+                records <strong>nothing</strong>: the setter short-circuits when the value it already
+                holds equals the one being assigned. After <code>TranslateY(+0.25)</code> the mirror still
+                says <code>Position.Y</code> is 0, so assigning 0 is a no-op and the mesh stays where
+                three.js put it. <em>Write Position.Y = 1.5</em> is the way back - a value the mirror does
+                not already hold, so the write is recorded and three.js is told.
+            </p>
+            <p>
+                Where a mirrored property expresses what you want, write the property: it is the one path
+                C# stays authoritative over. Reach for a command when three.js's own maths is the point -
+                <code>LookAt</code>, <code>RotateOnWorldAxis</code>, <code>ApplyMatrix4</code> - and treat
+                the transform as three.js's from then on. <em>Architecture/Mirror authority</em> states the
+                same rule from the other direction.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private const float RotationStep = MathF.PI / 12f;
+    private const float TranslationStep = 0.25f;
+    private const float WrittenPositionY = 1.5f;
+
+    private ThreeContext? _threeContext;
+    private Mesh? _mesh;
+
+    private Vector3 _mirroredPosition = new();
+    private Vector3 _mirroredRotation = new();
+    private Vector3? _worldPosition;
+    private string _commandLog = "No command sent yet.";
+
+    private async Task BuildTransformSceneAsync(ThreeContext threeContext)
+    {
+        _threeContext = threeContext;
+
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(4f, 3.5f, 7f);
+        camera.LookAt(0f, 0f, 0f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.5f));
+
+        var keyLight = new DirectionalLight(Color.White, 1.8f);
+        keyLight.Position.Set(4f, 6f, 5f);
+        scene.Add(keyLight);
+
+        var floorMaterial = new MeshStandardMaterial();
+        floorMaterial.Color.SetHex(0x2c3440);
+        floorMaterial.Roughness = 0.9f;
+
+        var floor = new Mesh(new BoxGeometry(8f, 0.1f, 8f), floorMaterial);
+        floor.Position.Set(0f, -1.5f, 0f);
+        scene.Add(floor);
+
+        var material = new MeshStandardMaterial();
+        material.Color.SetHex(0x5b8dd9);
+        material.Roughness = 0.35f;
+
+        // A cone rather than a cube: rotateX and lookAt both change where it points, which a cube hides.
+        var mesh = new Mesh(new ConeGeometry(0.7f, 1.8f, 24), material);
+        mesh.Position.Set(0f, 0f, 0f);
+        scene.Add(mesh);
+        _mesh = mesh;
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        ReadMirror();
+        await ReadWorldPositionAsync();
+    }
+
+    /// <summary>
+    /// <c>RotateX</c> is generated onto <c>Object3D</c> from three.js's own declaration, so every node in
+    /// the graph has it. It records a call op and nothing more.
+    /// </summary>
+    private async Task RotateAsync()
+    {
+        if (_threeContext is null || _mesh is null)
+        {
+            return;
+        }
+
+        _mesh.RotateX(RotationStep);
+        _commandLog = "Sent rotateX(0.26). The mirrored Rotation below did not move - nothing read it back.";
+        await AfterCommandAsync();
+    }
+
+    private async Task TranslateAsync()
+    {
+        if (_threeContext is null || _mesh is null)
+        {
+            return;
+        }
+
+        _mesh.TranslateY(TranslationStep);
+        _commandLog = "Sent translateY(0.25). The mirrored Position below did not move; the world position did.";
+        await AfterCommandAsync();
+    }
+
+    private async Task LookAtOriginAsync()
+    {
+        if (_threeContext is null || _mesh is null)
+        {
+            return;
+        }
+
+        _mesh.LookAt(0f, 0f, 0f);
+        _commandLog = "Sent lookAt(0, 0, 0). three.js worked out a rotation the mirror never saw.";
+        await AfterCommandAsync();
+    }
+
+    /// <summary>
+    /// The way back from a stale mirror: a value it does not already hold, so the setter records the
+    /// write instead of eliding it.
+    /// </summary>
+    private async Task WritePositionAsync()
+    {
+        if (_threeContext is null || _mesh is null)
+        {
+            return;
+        }
+
+        _mesh.Position.Y = WrittenPositionY;
+        _commandLog = "Wrote Position.Y = 1.5. A typed write is the one path the mirror stays authoritative over.";
+        await AfterCommandAsync();
+    }
+
+    private async Task ReadWorldPositionAsync()
+    {
+        if (_mesh is null)
+        {
+            return;
+        }
+
+        // The target vector is three.js's own out-parameter convention. What comes back is the tagged
+        // value the applier encoded from it, not this instance.
+        _worldPosition = await _mesh.GetWorldPositionAsync(new Vector3());
+        StateHasChanged();
+    }
+
+    private async Task AfterCommandAsync()
+    {
+        if (_threeContext is null)
+        {
+            return;
+        }
+
+        await _threeContext.FlushAsync();
+        ReadMirror();
+        await ReadWorldPositionAsync();
+    }
+
+    private void ReadMirror()
+    {
+        if (_mesh is null)
+        {
+            return;
+        }
+
+        _mirroredPosition = _mesh.Position.Clone();
+        _mirroredRotation = new Vector3(_mesh.Rotation.X, _mesh.Rotation.Y, _mesh.Rotation.Z);
+    }
+
+    /// <summary>
+    /// Invariant rather than the browser's culture: these numbers are separated by commas, and a comma
+    /// decimal separator turns one triple into what reads as six values.
+    /// </summary>
+    /// <param name="vector">The value to render.</param>
+    private static string Format(Vector3 vector)
+    {
+        return string.Format(CultureInfo.InvariantCulture, "({0:0.00}, {1:0.00}, {2:0.00})", vector.X, vector.Y, vector.Z);
+    }
+}

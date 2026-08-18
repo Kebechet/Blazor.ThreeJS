@@ -10,11 +10,16 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// <para>
 /// Hand-written rather than generated, because the attachment machinery and the pre-attach state
 /// replay below are behaviour rather than surface. Its members are subtracted from every generated
-/// descendant, so a three.js member missing here is missing from the whole mirror; which ones those
-/// still are is listed in <c>generator/api-coverage.md</c>.
+/// descendant, so a three.js member missing from this type is missing from the whole mirror.
+/// </para>
+/// <para>
+/// Half of it <em>is</em> generated: <c>Generated/Object3D.cs</c> is the other part of this partial
+/// and carries three.js's <c>Object3D</c> commands and queries — <c>RotateX</c>, <c>Attach</c>,
+/// <c>GetObjectByNameAsync</c> and the rest — which are surface rather than behaviour. What neither
+/// half carries is listed in <c>generator/api-coverage.md</c>.
 /// </para>
 /// </summary>
-public abstract class Object3D : ThreeObject
+public abstract partial class Object3D : ThreeObject
 {
 	private readonly List<Object3D> _children = [];
 	private bool _isVisible = true;

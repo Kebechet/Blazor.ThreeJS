@@ -317,7 +317,7 @@ internal sealed class CoverageReport
 		AppendLine(builder, "|---|---|---|");
 		AppendLine(builder, $"| renderer internals ({prefixes}) | {rendererInternalCount} | the types consumers actually name ({rendererTypes}) are outside those directories and are generated |");
 		AppendLine(builder, $"| `{EmitterConfig.MathSourcePrefix}**` value types | {mathCount} | {EmitterConfig.MathTypeNames.Count} of them ship, hand-ported ({mathTypeNames}); the other {unportedMathTypeNames.Count} do not: {unportedNames}. A math value is arithmetic rather than a signature: the generator has their members but not their behaviour, so each one waits on a hand port |");
-		AppendLine(builder, $"| {handWrittenNames} | {EmitterConfig.HandWrittenClassNames.Count} | hand-written: it carries the scene-graph machinery - attachment, the transform, pre-attach state replay - which is behaviour rather than surface |");
+		AppendLine(builder, $"| {handWrittenNames} | {EmitterConfig.HandWrittenClassNames.Count} | **hybrid**: hand-written for behaviour, generated for surface. The hand-written part carries the scene-graph machinery - attachment, the transform, pre-attach state replay; a generated `partial` beside it carries three.js's `Object3D` commands and queries (`RotateX`, `Attach`, `GetObjectByNameAsync`, …). Not counted as generated above, because no generator makes the type itself |");
 		AppendLine(builder);
 	}
 
@@ -703,9 +703,10 @@ internal sealed class CoverageReport
 	}
 
 	/// <summary>
-	/// What the hand-written <c>Object3D</c> covers and what it does not. Its members are subtracted
-	/// from every descendant, so anything it leaves out is on no C# type at all — the one place in this
-	/// report where a member can go missing without any of the skip rules below having fired.
+	/// How the scene-graph base's surface is split between its hand-written and its generated half, and
+	/// what neither half carries. Its members are subtracted from every descendant, so anything both
+	/// halves leave out is on no C# type at all — the one place in this report where a member can go
+	/// missing without any of the skip rules below having fired.
 	/// </summary>
 	private void AppendHandWrittenBaseSurface(StringBuilder builder)
 	{
@@ -714,27 +715,46 @@ internal sealed class CoverageReport
 			.ToList();
 
 		var mirrorable = members
-			.Where(x => x.Bucket is MemberBucket.MirroredState or MemberBucket.Command)
+			.Where(x => x.Bucket is MemberBucket.MirroredState or MemberBucket.Command or MemberBucket.AsyncQuery)
 			.ToList();
 
-		var implemented = mirrorable
+		var handWritten = mirrorable
 			.Where(x => EmitterConfig.HandWrittenObject3DMemberNames.Contains(x.MemberName))
 			.ToList();
 
-		var missing = mirrorable
+		// Exactly the predicate `ClassEmitter.ResolveHybridSurface` emits on, so this table cannot claim a
+		// member the generated partial does not carry, or miss one it does.
+		var generated = mirrorable
 			.Where(x => !EmitterConfig.HandWrittenObject3DMemberNames.Contains(x.MemberName))
+			.Where(x => x.Bucket is MemberBucket.Command or MemberBucket.AsyncQuery)
 			.ToList();
 
-		AppendLine(builder, "⚠️ **`Object3D` is hand-written, and its members are subtracted from every descendant.** It carries the");
-		AppendLine(builder, "scene-graph machinery — attachment, the transform, the pre-attach state replay — which is behaviour");
-		AppendLine(builder, "rather than surface, and which the generator cannot reproduce. Subtracting its members is right, because");
-		AppendLine(builder, "re-declaring them on each of the ~100 descendants would be worse — but it means a member the hand-written");
-		AppendLine(builder, "class does not implement is on **no C# type at all**, without any skip rule below having fired.");
+		var missing = mirrorable
+			.Except(handWritten)
+			.Except(generated)
+			.ToList();
+
+		AppendLine(builder, "⚠️ **`Object3D` is a hybrid, and its members are subtracted from every descendant.** The hand-written half");
+		AppendLine(builder, "(`src/Blazor.ThreeJS/Objects/Object3D.cs`) carries the scene-graph machinery — attachment, the transform,");
+		AppendLine(builder, "the pre-attach state replay — which is behaviour rather than surface. The generated half");
+		AppendLine(builder, "(`src/Blazor.ThreeJS/Generated/Object3D.cs`) is the other part of the same `partial class`, and carries the");
+		AppendLine(builder, "commands and queries, which are surface rather than behaviour. Subtracting the pair's members from each of");
+		AppendLine(builder, "the ~100 descendants is right, because re-declaring them everywhere would be worse — but it means a member");
+		AppendLine(builder, "**neither** half carries is on **no C# type at all**, without any skip rule below having fired.");
 		AppendLine(builder);
-		var implementedProperties = Pluralize(implemented.Count(x => x.Bucket == MemberBucket.MirroredState), "property", "properties");
-		var implementedMethods = Pluralize(implemented.Count(x => x.Bucket == MemberBucket.Command), "method", "methods");
-		AppendLine(builder, $"Of the {mirrorable.Count} `Object3D` members that could be mirrored, the hand-written class implements {implemented.Count}");
-		AppendLine(builder, $"({implementedProperties} and {implementedMethods}). The {missing.Count} it does not:");
+		var handWrittenProperties = Pluralize(handWritten.Count(x => x.Bucket == MemberBucket.MirroredState), "property", "properties");
+		var handWrittenMethods = Pluralize(handWritten.Count(x => x.Bucket != MemberBucket.MirroredState), "method", "methods");
+		var generatedCommands = Pluralize(generated.Count(x => x.Bucket == MemberBucket.Command), "command", "commands");
+		var generatedQueries = Pluralize(generated.Count(x => x.Bucket == MemberBucket.AsyncQuery), "query", "queries");
+		AppendLine(builder, $"Of the {mirrorable.Count} `Object3D` members that could be mirrored, the hand-written half implements {handWritten.Count}");
+		AppendLine(builder, $"({handWrittenProperties} and {handWrittenMethods}) and the generated half emits {generated.Count}");
+		AppendLine(builder, $"({generatedCommands} and {generatedQueries}), leaving {missing.Count}.");
+		AppendLine(builder);
+		AppendLine(builder, "⚠️ The generated half emits **no mirrored state**, which is why what remains is almost all of that bucket.");
+		AppendLine(builder, "Replaying a property needs an `EmitState` override, and the hand-written half already has one; a second");
+		AppendLine(builder, "would write the same property twice on every attach. `parent` is in here for that reason rather than any");
+		AppendLine(builder, "other — three.js declares it writable, so it classifies as state — and it is still readable through");
+		AppendLine(builder, "`GetObjectAsync(\"parent\")`, which answers with a handle rather than trying to hold one.");
 		AppendLine(builder);
 		if (missing.Count == 0)
 		{
@@ -751,8 +771,8 @@ internal sealed class CoverageReport
 		}
 
 		AppendLine(builder);
-		AppendLine(builder, "Closing this for good means generating `Object3D` itself and layering the hand-written behaviour on");
-		AppendLine(builder, "top of the generated surface.");
+		AppendLine(builder, "Closing the rest means giving the generated half a replay hook the hand-written one cooperates with,");
+		AppendLine(builder, "rather than the two of them both overriding `EmitState`.");
 		AppendLine(builder);
 	}
 

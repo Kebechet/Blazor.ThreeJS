@@ -55,6 +55,15 @@ foreach (var result in coverage.EmittableClasses)
 	emittedFiles.Add(emitter.Emit(result.Class, audit));
 }
 
+// The hybrid classes come last, and through a different entry point, because they are not emittable
+// in the sense the loop above means: nothing generates their constructor, their base or their state
+// replay — the runtime hand-writes all of that. What is generated for them is the other half of a
+// partial, carrying the commands and queries the hand-written half does not implement.
+foreach (var hybridClassName in EmitterConfig.HybridClassNames.Order(StringComparer.Ordinal))
+{
+	emittedFiles.Add(emitter.EmitHybridPartial(emitter.GetClass(hybridClassName)));
+}
+
 // Every generatable enum is emitted, not only the ones a currently emittable class happens to
 // reference. An enum is a leaf: it carries no handle, no wire op and no dependency on the class
 // surface, so gating it on which classes are emittable today would only churn the committed set as

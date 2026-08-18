@@ -80,38 +80,26 @@ Three things are resolved, in this order:
 | folded in from an ancestor with no C# type of its own | 666 |
 | merged in by a `declare module` block | 5 |
 
-⚠️ **`Object3D` is hand-written, and its members are subtracted from every descendant.** It carries the
-scene-graph machinery — attachment, the transform, the pre-attach state replay — which is behaviour
-rather than surface, and which the generator cannot reproduce. Subtracting its members is right, because
-re-declaring them on each of the ~100 descendants would be worse — but it means a member the hand-written
-class does not implement is on **no C# type at all**, without any skip rule below having fired.
+⚠️ **`Object3D` is a hybrid, and its members are subtracted from every descendant.** The hand-written half
+(`src/Blazor.ThreeJS/Objects/Object3D.cs`) carries the scene-graph machinery — attachment, the transform,
+the pre-attach state replay — which is behaviour rather than surface. The generated half
+(`src/Blazor.ThreeJS/Generated/Object3D.cs`) is the other part of the same `partial class`, and carries the
+commands and queries, which are surface rather than behaviour. Subtracting the pair's members from each of
+the ~100 descendants is right, because re-declaring them everywhere would be worse — but it means a member
+**neither** half carries is on **no C# type at all**, without any skip rule below having fired.
 
-Of the 51 `Object3D` members that could be mirrored, the hand-written class implements 20
-(19 properties and 1 method). The 31 it does not:
+Of the 64 `Object3D` members that could be mirrored, the hand-written half implements 20
+(19 properties and 1 method) and the generated half emits 34
+(21 commands and 13 queries), leaving 10.
+
+⚠️ The generated half emits **no mirrored state**, which is why what remains is almost all of that bucket.
+Replaying a property needs an `EmitState` override, and the hand-written half already has one; a second
+would write the same property twice on every attach. `parent` is in here for that reason rather than any
+other — three.js declares it writable, so it classifies as state — and it is still readable through
+`GetObjectAsync("parent")`, which answers with a handle rather than trying to hold one.
 
 | member | bucket | type |
 |---|---|---|
-| `applyMatrix4` | Command | `—` |
-| `applyQuaternion` | Command | `—` |
-| `attach` | Command | `—` |
-| `clone` | Command | `—` |
-| `copy` | Command | `—` |
-| `rotateOnAxis` | Command | `—` |
-| `rotateOnWorldAxis` | Command | `—` |
-| `rotateX` | Command | `—` |
-| `rotateY` | Command | `—` |
-| `rotateZ` | Command | `—` |
-| `setRotationFromAxisAngle` | Command | `—` |
-| `setRotationFromEuler` | Command | `—` |
-| `setRotationFromMatrix` | Command | `—` |
-| `setRotationFromQuaternion` | Command | `—` |
-| `translateOnAxis` | Command | `—` |
-| `translateX` | Command | `—` |
-| `translateY` | Command | `—` |
-| `translateZ` | Command | `—` |
-| `updateMatrix` | Command | `—` |
-| `updateMatrixWorld` | Command | `—` |
-| `updateWorldMatrix` | Command | `—` |
 | `animations` | MirroredState | `AnimationClip?[]` |
 | `count` | MirroredState | `int` |
 | `matrix` | MirroredState | `Matrix4` |
@@ -123,8 +111,8 @@ Of the 51 `Object3D` members that could be mirrored, the hand-written class impl
 | `static` | MirroredState | `bool` |
 | `uuid` | MirroredState | `string` |
 
-Closing this for good means generating `Object3D` itself and layering the hand-written behaviour on
-top of the generated surface.
+Closing the rest means giving the generated half a replay hook the hand-written one cooperates with,
+rather than the two of them both overriding `EmitState`.
 
 ## What gets replayed on attach
 
@@ -164,7 +152,7 @@ they are never folded into a coverage claim.
 |---|---|---|
 | `UnwrappedClass` | 32 | renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table |
 | `MathValueType` | 27 | a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `HandWritten` | 1 | hand-written by the runtime. It carries scene-graph behaviour — attachment, the transform, pre-attach state replay — rather than surface, so the generated classes derive from it instead of replacing it |
+| `HandWritten` | 1 | hand-written by the runtime. It carries scene-graph behaviour — attachment, the transform, pre-attach state replay — rather than surface, so the generated classes derive from it instead of replacing it. A generated `partial` beside it does carry its command and query surface, which is why this is an exclusion from *emitting the type* rather than from the mirror |
 
 The consumer-facing renderer types are checked against the exclusion rather than special-cased:
 

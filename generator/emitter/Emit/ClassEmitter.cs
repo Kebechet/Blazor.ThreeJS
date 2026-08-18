@@ -159,6 +159,196 @@ internal sealed class ClassEmitter
 	}
 
 	/// <summary>
+	/// Emits the generated half of a class the runtime also hand-writes: a partial declaration carrying
+	/// the commands and queries three.js declares on it, so the hand-written half can keep the
+	/// behaviour without also owing the surface.
+	/// <para>
+	/// Only commands and queries. Mirrored state is the hand-written half's, because replaying it needs
+	/// an <c>EmitState</c> override and that half already has one — two would write the same property
+	/// twice. For the same reason nothing structural is emitted here: no constructor, no
+	/// <c>ThreeTypeName</c>, no <c>ConstructorArgs</c>, and no base type, all of which the hand-written
+	/// declaration supplies.
+	/// </para>
+	/// <para>
+	/// The member set is whatever <see cref="MemberClassifier"/> yields, minus the names the
+	/// hand-written half implements (<see cref="EmitterConfig.HandWrittenObject3DMemberNames"/>).
+	/// Nothing is hand-picked, so a member three.js adds upstream arrives here on its own.
+	/// </para>
+	/// </summary>
+	/// <param name="irClass">The hand-written class to supply a generated partial for.</param>
+	/// <returns>The generated file.</returns>
+	/// <exception cref="UnsupportedMemberException">
+	/// Thrown when two emitted members would claim the same C# name. The normal path can record such a
+	/// collision and carry on because the losing member is only absent from one generated class; here
+	/// it would be absent from the base of the whole scene graph, which is worth failing the run over.
+	/// </exception>
+	public EmittedFile EmitHybridPartial(IrClass irClass)
+	{
+		var threeTypeName = ResolveThreeTypeName(irClass);
+		var surface = ResolveHybridSurface(irClass, threeTypeName);
+
+		var writer = new CSharpWriter();
+		WriteFileHeader(writer);
+		writer.WriteLine();
+
+		// The core namespace is not imported unconditionally the way it is for a whole class: this half
+		// declares no constructor and no replay, so it names a core type only when a signature does.
+		if (UsesCoreTypes(surface))
+		{
+			writer.WriteLine($"using {EmitterConfig.CoreNamespace};");
+		}
+
+		if (UsesMathTypes([], surface))
+		{
+			writer.WriteLine($"using {EmitterConfig.MathNamespace};");
+		}
+
+		writer.WriteLine();
+		writer.WriteLine($"namespace {EmitterConfig.GeneratedNamespace};");
+		writer.WriteLine();
+
+		WriteHybridPartialDocumentation(writer, threeTypeName);
+
+		// No base type: the hand-written part declares it, and repeating it here would only be a second
+		// place for it to be wrong. The modifiers do have to match that declaration exactly.
+		writer.WriteLine($"public abstract partial class {threeTypeName}");
+		writer.WriteLine("{");
+		writer.Indent();
+
+		var hasWrittenMember = false;
+		foreach (var command in surface.Commands)
+		{
+			if (hasWrittenMember)
+			{
+				writer.WriteLine();
+			}
+
+			WriteCommand(writer, command, surface.Properties);
+			hasWrittenMember = true;
+		}
+
+		foreach (var query in surface.Queries)
+		{
+			if (hasWrittenMember)
+			{
+				writer.WriteLine();
+			}
+
+			WriteQuery(writer, query);
+			hasWrittenMember = true;
+		}
+
+		writer.Outdent();
+		writer.WriteLine("}");
+
+		return new EmittedFile
+		{
+			RelativePath = $"src/Blazor.ThreeJS/Generated/{threeTypeName}.cs",
+			Contents = writer.ToSource()
+		};
+	}
+
+	/// <summary>
+	/// The commands and queries a hybrid partial emits: every classified member of those two buckets
+	/// except the ones the hand-written half already declares.
+	/// </summary>
+	/// <param name="irClass">Class being emitted.</param>
+	/// <param name="threeTypeName">Export name, which also claims its own C# name.</param>
+	/// <returns>The emitted surface, with no properties in it.</returns>
+	/// <exception cref="UnsupportedMemberException">Thrown when two members claim the same C# name.</exception>
+	private EmittedSurface ResolveHybridSurface(IrClass irClass, string threeTypeName)
+	{
+		var takenCSharpNames = new HashSet<string>(StringComparer.Ordinal) { threeTypeName };
+		var commands = new List<EmittedCommand>();
+		var queries = new List<EmittedQuery>();
+
+		foreach (var member in _classifier.Classify(irClass))
+		{
+			if (member.Bucket is not (MemberBucket.Command or MemberBucket.AsyncQuery))
+			{
+				continue;
+			}
+
+			if (EmitterConfig.HandWrittenObject3DMemberNames.Contains(member.MemberName))
+			{
+				continue;
+			}
+
+			var cSharpName = member.Bucket == MemberBucket.AsyncQuery
+				? ToPascalCase(member.MemberName) + EmitterConfig.QueryMethodSuffix
+				: ToPascalCase(member.MemberName);
+
+			if (!takenCSharpNames.Add(cSharpName))
+			{
+				throw UnsupportedMemberException.For(
+					threeTypeName,
+					$"its member `{member.MemberName}` wants the C# name `{cSharpName}`, which another member of the same partial already holds");
+			}
+
+			if (member.Bucket == MemberBucket.Command)
+			{
+				commands.Add(BuildCommand(member, cSharpName));
+				continue;
+			}
+
+			queries.Add(BuildQuery(member, cSharpName));
+		}
+
+		return new EmittedSurface { Properties = [], Commands = commands, Queries = queries };
+	}
+
+	/// <summary>Writes the documentation block above a hybrid partial's declaration.</summary>
+	/// <param name="writer">Destination.</param>
+	/// <param name="threeTypeName">Export name.</param>
+	private static void WriteHybridPartialDocumentation(CSharpWriter writer, string threeTypeName)
+	{
+		DocCommentEmitter.WriteSummary(
+			writer,
+			$"The generated half of <c>{threeTypeName}</c>: the commands and queries <c>THREE.{threeTypeName}</c> declares, " +
+			$"beside the hand-written half that owns the scene-graph behaviour. See the hand-written part for what this type is. " +
+			$"<para>" +
+			$"⚠️ <b>Every command here leaves the mirror stale.</b> It records a call and reads nothing back, so the state three.js " +
+			$"changes on its side goes on being reported by C# as whatever it was before. A command that writes the transform " +
+			$"(<c>RotateX</c>, <c>TranslateOnAxis</c>, <c>ApplyMatrix4</c> and their kind) leaves <c>Position</c>, " +
+			$"<c>Rotation</c>, <c>Scale</c> and <c>Quaternion</c> reporting their pre-call values, and writing one of those " +
+			$"values back then records nothing at all, because the mirror sees the value it already holds. One that changes the " +
+			$"scene graph (<c>Attach</c>, <c>Copy</c>) leaves <c>Children</c> reporting the parentage the mirror last arranged " +
+			$"itself. Where a property or a hand-written method expresses what you want, use that; where you want the command, " +
+			$"treat what it wrote as three.js's from then on." +
+			$"</para>");
+	}
+
+	/// <summary>
+	/// Whether an emitted surface names a type from the core namespace, and therefore needs it
+	/// imported. Only the typed arrays and the mirror root live there; everything else a signature can
+	/// name is a generated class in this file's own namespace or a hand-written math value.
+	/// </summary>
+	/// <param name="surface">The surface being emitted.</param>
+	/// <returns><see langword="true"/> when the core namespace has to be imported.</returns>
+	private static bool UsesCoreTypes(EmittedSurface surface)
+	{
+		return surface.Properties.Any(x => NamesCoreType(x.Mapping)) ||
+			surface.Commands.Any(command => command.Parameters.Any(x => NamesCoreType(x.Mapping))) ||
+			surface.Queries.Any(query => query.ReturnTypeName == EmitterConfig.RootBaseTypeName ||
+				EmitterConfig.TypedArrayTypeNames.Contains(query.ReturnTypeName) ||
+				NamesCoreType(query.ReturnMapping) ||
+				query.Parameters.Any(x => NamesCoreType(x.Mapping)));
+	}
+
+	/// <summary>Whether a mapping puts a core-namespace type's name in the emitted source.</summary>
+	/// <param name="mapping">The resolved type, absent where the member carries none.</param>
+	/// <returns><see langword="true"/> when the core namespace has to be imported.</returns>
+	private static bool NamesCoreType(TypeMapping? mapping)
+	{
+		if (mapping is null)
+		{
+			return false;
+		}
+
+		return mapping.Kind == TypeMappingKind.HandWrittenTypedArray || NamesCoreType(mapping.ElementMapping);
+	}
+
+	/// <summary>
 	/// Walks the three.js base chain and returns the nearest ancestor that has a C# type of its own,
 	/// falling back to <c>ThreeObject</c>. An ancestor with no mirror is not invented: its members are
 	/// folded into this class by the surface resolver instead.

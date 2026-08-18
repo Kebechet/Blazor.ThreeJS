@@ -53,6 +53,9 @@ internal static class Stories
 	/// <summary>A Vector2 spline and a Vector3 Catmull-Rom curve, sampled by three.js.</summary>
 	public const string CatalogueCurves = "catalogue-curves--two-dimensional-and-three-dimensional-curves";
 
+	/// <summary>The generated <c>Object3D</c> commands, beside the mirrored state they leave stale.</summary>
+	public const string CatalogueTransformCommands = "catalogue-transform-commands--driving-a-mesh-with-commands";
+
 	/// <summary>A DataTexture whose pixels are generated in C#.</summary>
 	public const string CatalogueTextures = "catalogue-textures--a-texture-built-from-a-byte-buffer";
 
@@ -107,6 +110,7 @@ internal static class Stories
 		CatalogueHelpers,
 		CatalogueCustomGeometry,
 		CatalogueCurves,
+		CatalogueTransformCommands,
 		CatalogueTextures,
 		CatalogueMathValues,
 		CatalogueShadows,

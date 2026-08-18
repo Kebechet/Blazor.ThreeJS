@@ -200,9 +200,13 @@ internal sealed class EmissionScope
 	{
 		if (EmitterConfig.HandWrittenClassNames.Contains(irClass.Name))
 		{
+			var hybridNote = EmitterConfig.HybridClassNames.Contains(irClass.Name)
+				? ". A generated `partial` beside it does carry its command and query surface, which is why this is an exclusion from *emitting the type* rather than from the mirror"
+				: string.Empty;
+
 			Exclude(
 				result,
-				"hand-written by the runtime. It carries scene-graph behaviour — attachment, the transform, pre-attach state replay — rather than surface, so the generated classes derive from it instead of replacing it",
+				$"hand-written by the runtime. It carries scene-graph behaviour — attachment, the transform, pre-attach state replay — rather than surface, so the generated classes derive from it instead of replacing it{hybridNote}",
 				SkipCategory.HandWritten);
 			return;
 		}

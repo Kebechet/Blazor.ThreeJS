@@ -51,13 +51,17 @@ internal static class EmitterConfig
 	public const string QueryMethodSuffix = "Async";
 
 	/// <summary>
-	/// Classes the runtime provides by hand, which the generator therefore does not emit. They are
-	/// still mirrored types: a generated class derives from one, and the surface resolver subtracts
-	/// their members so the same three.js member is declared in exactly one C# type.
+	/// Classes the runtime provides by hand, which the generator therefore does not emit as a class of
+	/// its own. They are still mirrored types: a generated class derives from one, and the surface
+	/// resolver subtracts their members so the same three.js member is declared in exactly one C# type.
 	/// <para>
 	/// <c>Object3D</c> is the whole list. It carries the scene-graph machinery — parent/child
 	/// attachment, the transform, and the pre-attach state replay — which is behaviour rather than
 	/// surface, and which two plans went into hardening.
+	/// </para>
+	/// <para>
+	/// A name here may also be in <see cref="HybridClassNames"/>, which is not a contradiction: the
+	/// behaviour stays hand-written and a generated partial supplies the surface beside it.
 	/// </para>
 	/// </summary>
 	public static readonly IReadOnlySet<string> HandWrittenClassNames = new HashSet<string>(StringComparer.Ordinal)
@@ -66,14 +70,34 @@ internal static class EmitterConfig
 	};
 
 	/// <summary>
-	/// The three.js members of <c>Object3D</c> the hand-written class actually implements.
+	/// Hand-written classes that also get a generated partial carrying their command and query surface.
 	/// <para>
-	/// The surface resolver subtracts every <c>Object3D</c> member from all ~100 descendants, so a
-	/// member the hand-written class does not implement is on no C# type at all. That gap is the
-	/// largest one in the mirror, and the report can only name it if it is told what is implemented —
-	/// there is nothing in the IR that knows. Reviewed against
-	/// <c>src/Blazor.ThreeJS/Objects/Object3D.cs</c>: a name listed here that the class does not carry
-	/// would make the report understate the gap, which is the direction that matters.
+	/// The hand-written half owns everything that is behaviour — the constructor, the create op, the
+	/// mirrored transform and its pre-attach replay — and the generated half owns everything that is
+	/// only a signature over the wire. Splitting them this way is what stops the largest gap in the
+	/// mirror (every <c>Object3D</c> member is subtracted from ~100 descendants, so one the base does
+	/// not carry is on no C# type at all) from being a hand-maintained list nobody refreshes.
+	/// </para>
+	/// <para>
+	/// ⚠️ Mirrored state is deliberately <b>not</b> in the generated half. It would need a replay hook,
+	/// and the hand-written half already overrides <c>EmitState</c> — two replays of the same object
+	/// would write the same properties twice.
+	/// </para>
+	/// </summary>
+	public static readonly IReadOnlySet<string> HybridClassNames = new HashSet<string>(StringComparer.Ordinal)
+	{
+		"Object3D"
+	};
+
+	/// <summary>
+	/// The three.js members of <c>Object3D</c> the hand-written half of the partial implements, and
+	/// which the generated half therefore leaves alone.
+	/// <para>
+	/// Load-bearing in both directions. It is the emission exclusion for
+	/// <c>Generated/Object3D.cs</c> — a name missing here would be declared twice on one type and fail
+	/// the build — and it is what lets the coverage report say which half of the partial each member
+	/// landed on, since nothing in the IR knows that a C# file exists. Reviewed against
+	/// <c>src/Blazor.ThreeJS/Objects/Object3D.cs</c>.
 	/// </para>
 	/// </summary>
 	public static readonly IReadOnlySet<string> HandWrittenObject3DMemberNames = new HashSet<string>(StringComparer.Ordinal)

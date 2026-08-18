@@ -26,6 +26,9 @@ internal static class Stories
 	/// <summary>glTF model loaded by the browser, with orbit controls attached.</summary>
 	public const string FigureWithOrbitControls = "addons-gltfloader-and-orbitcontrols--load-and-orbit-a-model";
 
+	/// <summary>A glTF model playing the animation clip its own file brought along.</summary>
+	public const string AnimatedModel = "addons-gltfloader-animations--play-a-clip-the-file-brought-along";
+
 	/// <summary>Grid of every geometry that builds from numbers alone.</summary>
 	public const string CatalogueGeometries = "catalogue-geometries--parametric-geometries";
 
@@ -101,6 +104,7 @@ internal static class Stories
 		DeclarativeClickToRecolour,
 		DeclarativeNodes,
 		FigureWithOrbitControls,
+		AnimatedModel,
 		CatalogueGeometries,
 		CatalogueMaterials,
 		CatalogueMultiMaterial,

@@ -1,8 +1,8 @@
 namespace Kebechet.Blazor.ThreeJS.Addons;
 
 /// <summary>
-/// The result of loading one glTF or GLB file: the graph's root, and the nodes of it the mirror
-/// knows by name.
+/// The result of loading one glTF or GLB file: the graph's root, the nodes of it the mirror knows by
+/// name, and the animation clips the file brought along.
 /// <para>
 /// <b>How much is mirrored, and why not all of it.</b> A C# object is built for the root and for
 /// every <i>named</i> descendant, and for nothing else. A name is glTF's own way of addressing a

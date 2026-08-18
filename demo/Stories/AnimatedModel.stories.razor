@@ -1,0 +1,154 @@
+@attribute [Stories("Addons/GLTFLoader animations")]
+@implements IDisposable
+@inject NavigationManager _navigationManager
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Play a clip the file brought along">
+        <Template>
+            <p>
+                A model that carries its own animation. <code>GLTFLoader</code> surfaces every
+                <code>AnimationClip</code> the file brought along as <code>model.Animations</code>, and
+                each one plays through an ordinary <code>AnimationMixer</code> - the same one the
+                <code>Catalogue/Animation</code> story uses for a clip built by hand. No new playback API
+                was needed: a clip is a clip, whichever side built it.
+            </p>
+            <p>
+                ⚠️ <strong>Box Animated</strong>, © 2017 Cesium, licensed
+                <a href="https://creativecommons.org/licenses/by/4.0/legalcode" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>,
+                from the
+                <a href="https://github.com/KhronosGroup/glTF-Sample-Assets" target="_blank" rel="noopener noreferrer">Khronos glTF-Sample-Assets</a>
+                repository.
+            </p>
+            <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildAnimatedSceneAsync" />
+            <p>
+                Clip@(_clips.Count == 1 ? "" : "s") the file brought along:
+                @foreach (var clip in _clips)
+                {
+                    <text> <strong>@clip.Name</strong> (@clip.Duration.ToString("0.00")s)</text>
+                }
+            </p>
+            <p>
+                <button @onclick="PlayAsync" disabled="@(_action is null || _isPlaying)">Play</button>
+                <button @onclick="StopAsync" disabled="@(_action is null || !_isPlaying)">Stop</button>
+                — @(_isPlaying ? "playing" : "stopped")
+            </p>
+            <p>
+                The file's own animation, played through the mixer, is what moves the boxes below - not
+                any per-frame transform C# is writing. <code>AnimationMixer.Update</code> still has to be
+                called every frame to advance it, at no extra interop cost: the call rides along with the
+                frame's own flush.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+
+    // CC BY 4.0 (Cesium), committed under demo/wwwroot/models. Resolved against the app's base href so
+    // the same story works locally and under the /Blazor.ThreeJS/ path on GitHub Pages.
+    private const string ModelUrl = "models/box-animated.glb";
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+    private AnimationAction? _action;
+    private List<LoadedAnimationClip> _clips = [];
+    private bool _isPlaying = true;
+
+    private async Task BuildAnimatedSceneAsync(ThreeContext threeContext)
+    {
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(3f, 2.2f, 5f);
+        camera.LookAt(0f, 1f, 0f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.6f));
+
+        var keyLight = new DirectionalLight(Color.White, 1.6f);
+        keyLight.Position.Set(3f, 5f, 4f);
+        scene.Add(keyLight);
+
+        var fillLight = new DirectionalLight(Color.White, 0.5f);
+        fillLight.Position.Set(-4f, 1f, -3f);
+        scene.Add(fillLight);
+
+        var model = await new GLTFLoader(threeContext).LoadAsync(_navigationManager.ToAbsoluteUri(ModelUrl).ToString());
+        scene.Add(model.Scene);
+        _clips = model.Animations.ToList();
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        var mixer = new AnimationMixer(model.Scene);
+        threeContext.Attach(mixer);
+
+        var clip = model.Animations.FirstOrDefault();
+        if (clip is not null)
+        {
+            _action = await mixer.ClipActionAsync(clip.Clip, model.Scene, AnimationBlendMode.NormalAnimationBlendMode);
+            if (_action is not null)
+            {
+                await _action.PlayAsync();
+            }
+        }
+
+        StateHasChanged();
+
+        _ = AnimateAsync(threeContext, mixer);
+    }
+
+    private async Task PlayAsync()
+    {
+        if (_action is null)
+        {
+            return;
+        }
+
+        _isPlaying = true;
+        await _action.PlayAsync();
+    }
+
+    private async Task StopAsync()
+    {
+        if (_action is null)
+        {
+            return;
+        }
+
+        _isPlaying = false;
+        await _action.StopAsync();
+    }
+
+    /// <summary>
+    /// Advances the mixer once per frame. The delta is fixed rather than measured, because the frame
+    /// interval here is what the timer guarantees, not what the browser painted.
+    /// </summary>
+    private async Task AnimateAsync(ThreeContext threeContext, AnimationMixer mixer)
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        var delta = (float) FrameInterval.TotalSeconds;
+
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                mixer.Update(delta);
+                await threeContext.FlushAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // See Cube.stories.razor for why this is what stops the loop when a story is swapped.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+}

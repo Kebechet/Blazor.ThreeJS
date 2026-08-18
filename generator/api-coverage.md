@@ -90,7 +90,7 @@ the ~100 descendants is right, because re-declaring them everywhere would be wor
 
 Of the 64 `Object3D` members that could be mirrored, the hand-written half implements 20
 (19 properties and 1 method) and the generated half emits 34
-(21 commands and 13 queries), leaving 10.
+(20 commands and 14 queries), leaving 10.
 
 ⚠️ The generated half emits **no mirrored state**, which is why what remains is almost all of that bucket.
 Replaying a property needs an `EmitState` override, and the hand-written half already has one; a second
@@ -451,8 +451,8 @@ three.js is reachable at all" and "how much of what we mirror is state".
 | bucket | what it means | all classes | emittable classes |
 |---|---|---|---|
 | MirroredState | state C# holds and writes through on change | 1174 | 911 |
-| Command | a method recorded as a call op, returning nothing or `this` | 774 | 305 |
-| AsyncQuery | a method whose result the caller needs back | 829 | 443 |
+| Command | a method recorded as a call op, returning nothing or `this` | 773 | 305 |
+| AsyncQuery | a method whose result the caller needs back | 830 | 443 |
 | Skipped | not mirrored; see the skip list below | 1155 | 831 |
 | **total** | | **3932** | **2490** |
 

@@ -108,6 +108,32 @@ public class Object3DGeneratedSurfaceTests
 	}
 
 	[Fact]
+	public async Task Object3D_Clone_ReadsBackTheObjectItAllocatesRatherThanRecordingACall()
+	{
+		// Arrange: `clone(recursive)` is a self-returning method that takes an argument, which is the
+		// shape three.js also uses for its fluent mutators - but this one allocates, so recording it as a
+		// call op would build a three.js object and drop the only reference to it.
+		var module = AnswerEveryReadWith(AnsweredHandle, "Group");
+		var context = new ThreeContext(module, contextId: 1);
+		var group = new Group();
+		context.Attach(group);
+
+		// Act
+		var clone = await group.CloneAsync(recursive: false);
+
+		// Assert
+		var ops = SentOps(module);
+		ops.ShouldNotContain(x => x.Kind == ThreeOpKind.Call && x.Member == "clone");
+		var op = ops.Single(x => x.Kind == ThreeOpKind.Read);
+		op.Member.ShouldBe("clone");
+		op.Args.ShouldBe([false]);
+		op.MintsHandle.ShouldBeTrue();
+		clone.ShouldNotBeNull();
+		clone.Handle.ShouldBe(AnsweredHandle);
+		clone.ShouldNotBeSameAs(group);
+	}
+
+	[Fact]
 	public async Task Object3D_GetWorldPositionRead_DecodesTheTaggedVectorTheBrowserAnswersWith()
 	{
 		// Arrange

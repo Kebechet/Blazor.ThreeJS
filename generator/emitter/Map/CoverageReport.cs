@@ -207,8 +207,24 @@ internal sealed class CoverageReport
 			.Where(x => x.RelativePath.EndsWith(".cs", StringComparison.Ordinal))
 			.ToList();
 
-		var publicMemberCount = generatedFiles
+		var classFiles = generatedFiles
 			.Where(x => !_enumFilePattern.IsMatch(x.Contents))
+			.ToList();
+
+		// The hybrid partials are counted apart from the class total rather than folded into it. Their
+		// members are real and grep finds them in `Generated/`, but the type they land on is not one of
+		// the classes the headline claims — attributing them to it would be the one figure in this
+		// section that overstates.
+		var hybridPaths = EmitterConfig.HybridClassNames
+			.Select(x => $"src/Blazor.ThreeJS/Generated/{x}.cs")
+			.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+		var hybridMemberCount = classFiles
+			.Where(x => hybridPaths.Contains(x.RelativePath))
+			.Sum(x => _publicMemberPattern.Matches(x.Contents).Count);
+
+		var publicMemberCount = classFiles
+			.Where(x => !hybridPaths.Contains(x.RelativePath))
 			.Sum(x => _publicMemberPattern.Matches(x.Contents).Count);
 
 		var enumMemberCount = generatedFiles
@@ -221,6 +237,16 @@ internal sealed class CoverageReport
 		AppendLine(builder, "constructor argument order and documentation are three.js's own rather than a paraphrase - and so is");
 		AppendLine(builder, "everything below, which is what that same generator run measured about itself.");
 		AppendLine(builder);
+		if (hybridMemberCount > 0)
+		{
+			var hybridNames = string.Join(", ", EmitterConfig.HybridClassNames.Order(StringComparer.Ordinal).Select(x => $"`{x}`"));
+			AppendLine(builder, $"A further {hybridMemberCount} public members are generated onto {hybridNames}, which is hand-written and so is **not**");
+			AppendLine(builder, $"one of those {emittableCount} classes - its command and query surface is emitted as the other half of a");
+			AppendLine(builder, $"`partial class`. So `Generated/**` carries {publicMemberCount + hybridMemberCount} public members in all, and this headline claims");
+			AppendLine(builder, "only the ones that sit on a class the generator made.");
+			AppendLine(builder);
+		}
+
 		AppendLine(builder, $"A further {ReachableClassCount() - emittableCount} classes have no generated type and are still **reachable** untyped, by name -");
 		AppendLine(builder, "[how](#reaching-what-is-not-generated). What is out of reach is what three.js does not export at all.");
 		AppendLine(builder);
@@ -358,7 +384,7 @@ internal sealed class CoverageReport
 		AppendLine(builder, "hand-written math types, tagged exactly as they are sent in the other direction. An **object** cannot:");
 		AppendLine(builder, "serializing one would hand C# a plausible bag of numbers instead of a value. So the applier registers it");
 		AppendLine(builder, "under a handle of its own and answers with a reference to that handle instead, which is what makes");
-		AppendLine(builder, "`renderer.shadowMap` and `mesh.clone()` reachable at all.");
+		AppendLine(builder, "`renderer.shadowMap` and `mesh.CloneAsync()` reachable at all.");
 		AppendLine(builder);
 		AppendLine(builder, $"On the generated classes that reaches **{queries.Count} members**:");
 		AppendLine(builder);
@@ -591,6 +617,8 @@ internal sealed class CoverageReport
 		AppendLine(builder, "  class called reachable is a constructor on that bundle, and no class it leaves out is one, so the number");
 		AppendLine(builder, "  can neither overstate nor understate itself.");
 		AppendLine(builder, "- **Public members**: `grep -c \"^\\tpublic \" src/Blazor.ThreeJS/Generated/*.cs`, summed over the class files.");
+		AppendLine(builder, "  The headline splits that sum, because one of those files is the generated half of a hand-written");
+		AppendLine(builder, "  class rather than a class the generator made: its members are counted, and counted separately.");
 		AppendLine(builder, "- **Everything else**: `generator/api-coverage.json`, written by the run that wrote this section. The");
 		AppendLine(builder, "  per-class and per-member detail behind every figure, including each blocked class and each skipped");
 		AppendLine(builder, "  member with its obstacle named, is in [`generator/api-coverage.md`](generator/api-coverage.md).");

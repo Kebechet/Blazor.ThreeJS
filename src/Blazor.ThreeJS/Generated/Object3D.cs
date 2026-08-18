@@ -8,16 +8,18 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// <summary>
 /// The generated half of <c>Object3D</c>: the commands and queries <c>THREE.Object3D</c> declares,
 /// beside the hand-written half that owns the scene-graph behaviour. See the hand-written part for
-/// what this type is. <para>⚠️ <b>Every command here leaves the mirror stale.</b> It records a call
-/// and reads nothing back, so the state three.js changes on its side goes on being reported by C#
-/// as whatever it was before. A command that writes the transform (<c>RotateX</c>,
-/// <c>TranslateOnAxis</c>, <c>ApplyMatrix4</c> and their kind) leaves <c>Position</c>,
-/// <c>Rotation</c>, <c>Scale</c> and <c>Quaternion</c> reporting their pre-call values, and writing
-/// one of those values back then records nothing at all, because the mirror sees the value it
-/// already holds. One that changes the scene graph (<c>Attach</c>, <c>Copy</c>) leaves
-/// <c>Children</c> reporting the parentage the mirror last arranged itself. Where a property or a
-/// hand-written method expresses what you want, use that; where you want the command, treat what it
-/// wrote as three.js's from then on.</para>
+/// what this type is. <para>⚠️ <b>Every command here leaves the mirror stale, and so do the queries
+/// that mutate.</b> A command records a call and reads nothing back, so the state three.js changes
+/// on its side goes on being reported by C# as whatever it was before. One that writes the
+/// transform (<c>RotateX</c>, <c>TranslateOnAxis</c>, <c>ApplyMatrix4</c> and their kind) leaves
+/// <c>Position</c>, <c>Rotation</c>, <c>Scale</c> and <c>Quaternion</c> reporting their pre-call
+/// values, and writing one of those values back then records nothing at all, because the mirror
+/// sees the value it already holds. One that changes the scene graph (<c>Attach</c>, <c>Copy</c>)
+/// leaves <c>Children</c> reporting the parentage the mirror last arranged itself — and so do
+/// <c>RemoveFromParentAsync</c> and <c>ClearAsync</c>, which are queries only because three.js
+/// hands the changed object back: what they answer with is a handle, not a refreshed mirror. Where
+/// a property or a hand-written method expresses what you want, use that; where you want the
+/// command, treat what it wrote as three.js's from then on.</para>
 /// </summary>
 public abstract partial class Object3D
 {
@@ -180,13 +182,6 @@ public abstract partial class Object3D
 		RecordCall("updateWorldMatrix", updateParents, updateChildren, force);
 	}
 
-	/// <summary>Returns a clone of <c>this</c> object and optionally all descendants.</summary>
-	/// <param name="recursive">If true, descendants of the object are also cloned.</param>
-	public void Clone(bool recursive = true)
-	{
-		RecordCall("clone", recursive);
-	}
-
 	/// <summary>Copies the given object into this object.</summary>
 	/// <param name="object">Value forwarded to the <c>object</c> argument.</param>
 	/// <param name="recursive">
@@ -343,5 +338,16 @@ public abstract partial class Object3D
 	public Task<Vector3> GetWorldDirectionAsync(Vector3 target)
 	{
 		return RecordRead<Vector3>("getWorldDirection", target);
+	}
+
+	/// <summary>
+	/// Returns a clone of <c>this</c> object and optionally all descendants. Records a read op, sends
+	/// it behind every write already pending, and completes with what <c>clone</c> returned.
+	/// </summary>
+	/// <param name="recursive">If true, descendants of the object are also cloned.</param>
+	/// <returns>The value <c>clone</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Object3D?> CloneAsync(bool recursive = true)
+	{
+		return RecordReadObject<Object3D>("clone", (adoptedBatch, adoptedHandle) => new PrimitiveObject3D(adoptedBatch, adoptedHandle, "Object3D"), recursive);
 	}
 }

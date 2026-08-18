@@ -9,8 +9,8 @@
     "reachableClasses": 264,
     "members": 3932,
     "mirroredState": 1174,
-    "commands": 774,
-    "asyncQueries": 829,
+    "commands": 773,
+    "asyncQueries": 830,
     "untypedObjectQueries": 13,
     "skippedMembers": 1155,
     "reachableMembers": 2490,
@@ -22197,7 +22197,8 @@
       "member": "clone",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Command"
+      "bucket": "AsyncQuery",
+      "type": "Object3D"
     },
     {
       "class": "Object3D",

@@ -189,19 +189,24 @@ internal sealed class MemberClassifier
 		{
 			// A `this`-returning method with arguments is three.js's fluent mutator (`copy(source)`), and
 			// recording it as a call op is exact. A `this`-returning method with none has nothing to
-			// mutate itself with, so the return value is the whole point of calling it — `clone()` is the
-			// case, and it allocates a JavaScript object the wire format has no way to hand back a handle
-			// for. Emitting it as a void command would silently create and discard an object.
-			if (signature.Parameters.Count > 0)
+			// mutate itself with, so the return value is the whole point of calling it.
+			//
+			// Except `clone`, which takes an argument and still allocates: `Object3D.clone(recursive)` is
+			// the one signature in the snapshot where both are true. Recording it as a call op would build
+			// a three.js object and drop the only reference to it, behind a C# method whose own upstream
+			// documentation promises a return value. The parameter count cannot tell the two apart, so the
+			// name is what does — see IsAllocatingSelfReturn.
+			if (signature.Parameters.Count > 0 && !IsAllocatingSelfReturn(method.Name))
 			{
 				row.Bucket = MemberBucket.Command;
 				return row;
 			}
 
-			// The return value is the result, so it has to come back. Whether it is a fresh object or
-			// the receiver is not decidable from the declaration - `Object3D.clone` and
-			// `BufferGeometry.center` both say `this` - so the applier decides: an object it already
-			// has a handle for answers with that handle, and only a genuinely new one is registered.
+			// The return value is the result, so it has to come back. Which object it actually is stays
+			// the applier's call rather than this one's: `clone` allocates and `BufferGeometry.center`
+			// returns the receiver, and both say `this`. An object the applier already has a handle for
+			// answers with that handle, and only a genuinely new one is registered - so a
+			// receiver-returning method costs no second mirror of one object.
 			row.CSharpTypeName = irClass.Name;
 			row.IsAdoptedResult = true;
 			row.Bucket = MemberBucket.AsyncQuery;
@@ -356,6 +361,29 @@ internal sealed class MemberClassifier
 	private static bool IsVoid(IrType? returnType)
 	{
 		return returnType is null || returnType is { Kind: "primitive", Name: "void" or "undefined" };
+	}
+
+	/// <summary>
+	/// Whether a self-returning method builds a new object rather than mutating and returning the
+	/// receiver, and therefore has to hand its result back however many arguments it takes.
+	/// <para>
+	/// ⚠️ Read off the name, which is the only thing that knows. The declaration of
+	/// <c>clone(recursive?: boolean): this</c> and of <c>copy(source: T): this</c> are the same shape,
+	/// and only one of them allocates; TypeScript has no way to say which. <c>clone</c> is three.js's
+	/// universal spelling for the allocating one — 57 members in the current snapshot, every one of
+	/// them returning a fresh object — so matching the name is exact here rather than a heuristic.
+	/// </para>
+	/// <para>
+	/// Deliberately just this one name. Widening it to <c>toX</c>, <c>getX</c> or anything else would be
+	/// guessing at semantics the declaration does not carry, and the cost of guessing wrong is a query
+	/// that mints a handle for the receiver on every call.
+	/// </para>
+	/// </summary>
+	/// <param name="name">Three.js method name.</param>
+	/// <returns><see langword="true"/> when the method allocates what it returns.</returns>
+	private static bool IsAllocatingSelfReturn(string name)
+	{
+		return string.Equals(name, "clone", StringComparison.Ordinal);
 	}
 
 	/// <summary>

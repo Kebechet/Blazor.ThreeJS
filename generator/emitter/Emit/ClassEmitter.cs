@@ -307,14 +307,16 @@ internal sealed class ClassEmitter
 			$"The generated half of <c>{threeTypeName}</c>: the commands and queries <c>THREE.{threeTypeName}</c> declares, " +
 			$"beside the hand-written half that owns the scene-graph behaviour. See the hand-written part for what this type is. " +
 			$"<para>" +
-			$"⚠️ <b>Every command here leaves the mirror stale.</b> It records a call and reads nothing back, so the state three.js " +
-			$"changes on its side goes on being reported by C# as whatever it was before. A command that writes the transform " +
-			$"(<c>RotateX</c>, <c>TranslateOnAxis</c>, <c>ApplyMatrix4</c> and their kind) leaves <c>Position</c>, " +
-			$"<c>Rotation</c>, <c>Scale</c> and <c>Quaternion</c> reporting their pre-call values, and writing one of those " +
-			$"values back then records nothing at all, because the mirror sees the value it already holds. One that changes the " +
-			$"scene graph (<c>Attach</c>, <c>Copy</c>) leaves <c>Children</c> reporting the parentage the mirror last arranged " +
-			$"itself. Where a property or a hand-written method expresses what you want, use that; where you want the command, " +
-			$"treat what it wrote as three.js's from then on." +
+			$"⚠️ <b>Every command here leaves the mirror stale, and so do the queries that mutate.</b> A command records a call and " +
+			$"reads nothing back, so the state three.js changes on its side goes on being reported by C# as whatever it was " +
+			$"before. One that writes the transform (<c>RotateX</c>, <c>TranslateOnAxis</c>, <c>ApplyMatrix4</c> and their kind) " +
+			$"leaves <c>Position</c>, <c>Rotation</c>, <c>Scale</c> and <c>Quaternion</c> reporting their pre-call values, and " +
+			$"writing one of those values back then records nothing at all, because the mirror sees the value it already holds. " +
+			$"One that changes the scene graph (<c>Attach</c>, <c>Copy</c>) leaves <c>Children</c> reporting the parentage the " +
+			$"mirror last arranged itself — and so do <c>RemoveFromParentAsync</c> and <c>ClearAsync</c>, which are queries only " +
+			$"because three.js hands the changed object back: what they answer with is a handle, not a refreshed mirror. Where a " +
+			$"property or a hand-written method expresses what you want, use that; where you want the command, treat what it " +
+			$"wrote as three.js's from then on." +
 			$"</para>");
 	}
 
@@ -327,8 +329,9 @@ internal sealed class ClassEmitter
 	/// <returns><see langword="true"/> when the core namespace has to be imported.</returns>
 	private static bool UsesCoreTypes(EmittedSurface surface)
 	{
-		return surface.Properties.Any(x => NamesCoreType(x.Mapping)) ||
-			surface.Commands.Any(command => command.Parameters.Any(x => NamesCoreType(x.Mapping))) ||
+		// No property arm: a hybrid surface never carries one, because mirrored state stays with the
+		// hand-written half.
+		return surface.Commands.Any(command => command.Parameters.Any(x => NamesCoreType(x.Mapping))) ||
 			surface.Queries.Any(query => query.ReturnTypeName == EmitterConfig.RootBaseTypeName ||
 				EmitterConfig.TypedArrayTypeNames.Contains(query.ReturnTypeName) ||
 				NamesCoreType(query.ReturnMapping) ||

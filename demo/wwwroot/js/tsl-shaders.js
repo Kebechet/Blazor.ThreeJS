@@ -12,7 +12,9 @@ import {
     time,
     uniform,
     uv
-} from '/_content/Kebechet.Blazor.ThreeJS/three.tsl.min.js';
+// Relative, not root-absolute: the demo is served from the root by `dotnet run` and from
+// /Blazor.ThreeJS/ on GitHub Pages, and only a relative specifier resolves correctly in both.
+} from '../_content/Kebechet.Blazor.ThreeJS/three.tsl.min.js';
 
 // A uniform is a node whose `value` stays writable after the shader is built, which is what lets C#
 // drive a live shader without recompiling it or paying interop per frame.

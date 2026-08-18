@@ -67,6 +67,12 @@ jobs:
     - name: Test the wire format
       run: node tests/wire-format.test.mjs
 
+    # Every other test serves the demo from the root, where a root-absolute URL happens to resolve.
+    # GitHub Pages serves it from /Blazor.ThreeJS/, where the same URL 404s - so this is the only
+    # check that would catch an asset the deployed site cannot fetch.
+    - name: Check the demo survives a sub-path deploy
+      run: node tests/demo-base-path.test.mjs
+
     # No coverage collection here: --collect is a VSTest flag and this project's test host is
     # Microsoft.Testing.Platform (TestingPlatformDotnetTestSupport + xunit.v3.mtp-v2), which
     # rejects it outright. MTP has its own coverage extension (Microsoft.Testing.Extensions.

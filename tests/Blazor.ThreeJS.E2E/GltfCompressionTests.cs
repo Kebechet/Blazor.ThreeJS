@@ -84,13 +84,22 @@ public sealed class GltfCompressionTests(DemoFixture fixture)
 		storyPage.ConsoleErrors.ShouldBeEmpty();
 	}
 
-	/// <summary>Waits until the compressed model has been fetched, decoded and drawn onto the canvas.</summary>
+	/// <summary>
+	/// Waits until the compressed model has been fetched, decoded and drawn onto the canvas.
+	/// <para>
+	/// The whole sample window has to be opaque, which is the bar <see cref="GltfFigureTests"/> holds its
+	/// own model to and is reachable for the same reason: the window is 12 pixels around the canvas
+	/// centre, and the box is drawn across all of it. The canvas is created with <c>alpha: true</c> and
+	/// nothing clears it, so a load whose geometry never decoded leaves every one of those pixels
+	/// transparent.
+	/// </para>
+	/// </summary>
 	/// <param name="storyPage">Story to wait on.</param>
 	private static async Task WaitForModelAsync(StoryPage storyPage)
 	{
 		var centre = await storyPage.CanvasCentreAsync();
 		await storyPage.WaitUntilAsync(
-			async () => (await storyPage.CaptureAroundAsync(centre, 12)).CoveredFraction > 0.5,
+			async () => (await storyPage.CaptureAroundAsync(centre, 12)).CoveredFraction > 0.99,
 			ModelTimeout,
 			"the decoded model was drawn in the middle of the canvas");
 	}

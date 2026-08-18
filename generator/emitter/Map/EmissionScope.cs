@@ -33,9 +33,20 @@ internal sealed class EmissionScope
 	{
 		mapper.AttachScope(this);
 
-		// Four names are declared in two files each. The file whose basename is the class name is the
-		// primary declaration (`WebGPURenderer.d.ts` over `WebGPURenderer.Nodes.d.ts`); plain path
-		// order would pick whichever sorts first, which is arbitrary and picked the wrong one.
+		// Four names are declared in two files each, and only the first of each pair is emitted, so this
+		// order decides which declaration's surface becomes the C# type.
+		//
+		// ⚠️ The primary-file rule below does less than it looks like it does. IsPrimaryDeclarationFile
+		// cuts a basename at its *first* dot, so `WebGPURenderer.Nodes.d.ts` scores primary exactly as
+		// `WebGPURenderer.d.ts` does, and the tie falls through to ordinal file order — which puts
+		// `.Nodes` first. The emitted `WebGPURenderer` is therefore the `.Nodes` declaration's, and its
+		// `library` is the one the flattened `Renderer` ancestor declares (`NodeLibrary`, skipped as
+		// NotExported) rather than the `StandardNodeLibrary` the other declaration gives it — which is an
+		// emitted class, and would have been mirrored state. The losing declaration is not silent about
+		// it: it gets a blocked row naming the file that won.
+		//
+		// Left as it stands deliberately. Tightening the rule would change emitted code, which is a
+		// change to make on its own rather than inside a comment fix.
 		var orderedClasses = ir.Classes
 			.OrderBy(x => x.Name, StringComparer.Ordinal)
 			.ThenBy(x => IsPrimaryDeclarationFile(x) ? 0 : 1)
@@ -177,9 +188,16 @@ internal sealed class EmissionScope
 		return result.Category;
 	}
 
-	/// <summary>Whether a declaration's file is named after the class, marking it the primary of a duplicate pair.</summary>
+	/// <summary>
+	/// Whether a declaration's file is named after the class, ranking it ahead of one that is not.
+	/// <para>
+	/// ⚠️ The basename is cut at its <b>first</b> dot, so this is true of <c>WebGPURenderer.Nodes.d.ts</c>
+	/// as well as of <c>WebGPURenderer.d.ts</c> — a pair like that is not separated here and falls through
+	/// to file order. See the ordering in the constructor for what that costs.
+	/// </para>
+	/// </summary>
 	/// <param name="irClass">Class to test.</param>
-	/// <returns><see langword="true"/> when the file basename equals the class name.</returns>
+	/// <returns><see langword="true"/> when the basename up to its first dot equals the class name.</returns>
 	private static bool IsPrimaryDeclarationFile(IrClass irClass)
 	{
 		var basename = irClass.File.Split('/').Last();

@@ -297,11 +297,34 @@ internal sealed class ClassEmitter
 		return new EmittedSurface { Properties = [], Commands = commands, Queries = queries };
 	}
 
-	/// <summary>Writes the documentation block above a hybrid partial's declaration.</summary>
+	/// <summary>
+	/// Writes the documentation block above a hybrid partial's declaration.
+	/// <para>
+	/// Parameterised by the type name, but not by the type. The warning below earns its place by naming
+	/// which members go stale and what each one leaves stale, and the ones it names are
+	/// <c>Object3D</c>'s. Deriving that list from the surface being emitted would reduce it to "a command
+	/// leaves something unspecified stale", which is the generic warning a reader already skips — so the
+	/// prose stays specific, and a second hybrid class fails the emit here rather than silently being
+	/// documented with the first one's members.
+	/// </para>
+	/// </summary>
 	/// <param name="writer">Destination.</param>
 	/// <param name="threeTypeName">Export name.</param>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when <see cref="EmitterConfig.HybridClassNames"/> holds more than one class.
+	/// </exception>
 	private static void WriteHybridPartialDocumentation(CSharpWriter writer, string threeTypeName)
 	{
+		if (EmitterConfig.HybridClassNames.Count > 1)
+		{
+			throw new InvalidOperationException(
+				$"The prose below names `Object3D`'s members literally — `RotateX`, `Position`, `Attach`, `ClearAsync` and the rest — " +
+				$"while this method is parameterised only by the type name. " +
+				$"{nameof(EmitterConfig)}.{nameof(EmitterConfig.HybridClassNames)} now holds " +
+				$"{string.Join(", ", EmitterConfig.HybridClassNames.Order(StringComparer.Ordinal))}, so that prose would be emitted onto a class it does not describe. " +
+				$"Give this method a per-class body, or derive the named members from the surface being emitted, before adding a second hybrid class.");
+		}
+
 		DocCommentEmitter.WriteSummary(
 			writer,
 			$"The generated half of <c>{threeTypeName}</c>: the commands and queries <c>THREE.{threeTypeName}</c> declares, " +

@@ -76,6 +76,86 @@ public class ObjectChannelTests
 	}
 
 	[Fact]
+	public async Task Audio_ListenerReadTwice_AnswersTheSameMirrorBothTimes()
+	{
+		// Arrange
+		var module = AnswerEveryQueryWith(AnsweredHandle, "AudioListener");
+		var context = new ThreeContext(module, contextId: 1);
+		var audio = new Audio(new AudioListener());
+		context.Attach(audio);
+
+		// Act
+		var first = await audio.ListenerAsync();
+		var second = await audio.ListenerAsync();
+
+		// Assert
+		// The browser answers the second read with the handle it minted for the first, so the second
+		// adoption has to resolve back to the wrapper the first one built. A fresh one would leave two
+		// mirrors of a single three.js object, and a write through either invisible to the other.
+		second.ShouldBeSameAs(first);
+	}
+
+	[Fact]
+	public async Task Audio_ListenerAnsweringAHandleMirroredAsAnotherType_Throws()
+	{
+		// Arrange
+		var module = new RecordingJsObjectReference();
+		var context = new ThreeContext(module, contextId: 1);
+		var audio = new Audio(new AudioListener());
+		context.Attach(audio);
+
+		// The receiver's own handle, which this context mirrors as an Audio rather than an AudioListener.
+		module.RespondToBatch = ops => AnswerObjectQueries(ops, audio.Handle, "Audio");
+
+		// Act
+		var exception = await Record.ExceptionAsync(() => audio.ListenerAsync());
+
+		// Assert
+		exception.ShouldBeOfType<InvalidOperationException>();
+		exception.Message.ShouldContain(nameof(AudioListener));
+	}
+
+	[Fact]
+	public async Task ThreeObject_UntypedReadTwiceOfTheSameObject_AnswersTheSamePrimitiveBothTimes()
+	{
+		// Arrange
+		var module = AnswerEveryQueryWith(AnsweredHandle, "WebGLShadowMap");
+		var context = new ThreeContext(module, contextId: 1);
+		var renderer = new Primitive("WebGPURenderer");
+		context.Attach(renderer);
+
+		// Act
+		var first = await renderer.GetObjectAsync("shadowMap");
+		var second = await renderer.GetObjectAsync("shadowMap");
+
+		// Assert
+		// An adopted wrapper is registered exactly as an attached object is, so the untyped channel
+		// dedupes on the same terms the typed one does.
+		second.ShouldBeSameAs(first);
+	}
+
+	[Fact]
+	public async Task ThreeObject_UntypedReadOfAHandleMirroredAsAGeneratedType_Throws()
+	{
+		// Arrange
+		var ownListener = new AudioListener();
+		var audio = new Audio(ownListener);
+		var module = new RecordingJsObjectReference();
+		var context = new ThreeContext(module, contextId: 1);
+		context.Attach(audio);
+		module.RespondToBatch = ops => AnswerObjectQueries(ops, ownListener.Handle, "AudioListener");
+
+		// Act
+		var exception = await Record.ExceptionAsync(() => audio.GetObjectAsync("listener"));
+
+		// Assert
+		// The typed mirror is the better answer and the caller already holds one, so this refuses rather
+		// than handing back a second, untyped wrapper whose writes the typed mirror would never see.
+		exception.ShouldBeOfType<InvalidOperationException>();
+		exception.Message.ShouldContain(nameof(AudioListener));
+	}
+
+	[Fact]
 	public async Task Audio_ListenerHoldingNothing_AnswersWithNull()
 	{
 		// Arrange

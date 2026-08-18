@@ -54,6 +54,14 @@ public sealed class GltfAnimationTests(DemoFixture fixture)
 		await using var storyPage = await fixture.OpenStoryAsync(Stories.AnimatedModel);
 		await WaitForModelAsync(storyPage);
 
+		// The clip has to be shown moving in this session before the click, or a canvas that never moved
+		// - a model that failed to load, a mixer nobody updates - would satisfy the assertion below just
+		// as well as a stop that worked.
+		var beforeClick = await storyPage.CaptureWholeCanvasAsync(SignatureColumns, SignatureRows);
+		await storyPage.Page.WaitForTimeoutAsync((float) CaptureGap.TotalMilliseconds);
+		var laterBeforeClick = await storyPage.CaptureWholeCanvasAsync(SignatureColumns, SignatureRows);
+		laterBeforeClick.MeanAbsoluteDifferenceFrom(beforeClick).ShouldBeGreaterThan(ChangedThreshold);
+
 		// Act
 		await storyPage.Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Stop" }).ClickAsync();
 		// One frame for the stop to reach the mixer and the next draw to reflect it, before the pair of

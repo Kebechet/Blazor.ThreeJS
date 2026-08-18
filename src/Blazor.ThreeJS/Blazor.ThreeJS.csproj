@@ -23,7 +23,9 @@
     <PackageIcon>icon.png</PackageIcon>
     <PackageTags>blazor;threejs;three;3d;webgl;graphics;scene;rendering</PackageTags>
     <Version>0.185.1</Version>
-    <PackageReleaseNotes>Initial release wrapping three.js r185. Source-breaking: GLTFLoader.LoadAsync gained a second overload, so a call passing a literal null second argument (e.g. LoadAsync(url, null)) is now ambiguous (CS0121) - use a named argument (options: null or progress: null) or drop the argument.</PackageReleaseNotes>
+    <!-- First release, so nothing here describes a change: a break against a version nobody could
+         have installed is noise on the package page. Breaks belong here from the second release on. -->
+    <PackageReleaseNotes>First release, wrapping three.js r185. A typed C# scene graph generated from @types/three, with batched interop: a frame costs one call however many properties it changed, which is what makes it usable over a Blazor Server circuit. Includes glTF loading with the animation clips a file brings along, optional DRACO and KTX2 decoding, OrbitControls, pointer picking, and TSL shading on the WebGPU renderer. The three.js bundle ships with the package - no npm, no CDN, no script tags.</PackageReleaseNotes>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>

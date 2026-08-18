@@ -7,15 +7,15 @@
     "outOfSurfaceClasses": 60,
     "blockedClasses": 54,
     "reachableClasses": 264,
-    "members": 3932,
-    "mirroredState": 1174,
-    "commands": 783,
-    "asyncQueries": 832,
-    "untypedObjectQueries": 13,
-    "skippedMembers": 1143,
-    "reachableMembers": 2495,
-    "generatedMembers": 1668,
-    "strandedMembers": 1437
+    "members": 3807,
+    "mirroredState": 1153,
+    "commands": 757,
+    "asyncQueries": 792,
+    "untypedObjectQueries": 12,
+    "skippedMembers": 1105,
+    "reachableMembers": 2376,
+    "generatedMembers": 1587,
+    "strandedMembers": 1431
   },
   "classes": [
     {
@@ -3885,39 +3885,39 @@
   "memberSkipReasons": [
     {
       "category": "NodeStackType",
-      "members": 380
+      "members": 375
     },
     {
       "category": "DomOrLibType",
-      "members": 126
+      "members": 113
     },
     {
       "category": "CallbackType",
-      "members": 112
+      "members": 103
     },
     {
       "category": "NotInstanceApi",
-      "members": 87
+      "members": 86
     },
     {
       "category": "AnonymousObjectType",
-      "members": 82
+      "members": 80
     },
     {
       "category": "OptionsInterface",
-      "members": 72
+      "members": 71
     },
     {
       "category": "UnmappedUnion",
-      "members": 62
+      "members": 61
     },
     {
       "category": "UntypedValue",
-      "members": 55
+      "members": 54
     },
     {
       "category": "AbstractClass",
-      "members": 36
+      "members": 35
     },
     {
       "category": "MathValueType",
@@ -3925,11 +3925,11 @@
     },
     {
       "category": "NotExported",
-      "members": 25
+      "members": 22
     },
     {
       "category": "UnmappedTypeAlias",
-      "members": 19
+      "members": 18
     },
     {
       "category": "ExternalType",
@@ -7359,7 +7359,8 @@
       "member": "getIndirect",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "AsyncQuery"
+      "bucket": "AsyncQuery",
+      "isUntypedObject": true
     },
     {
       "class": "BufferGeometry",
@@ -11548,7 +11549,8 @@
       "member": "getRenderer",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "AsyncQuery"
+      "bucket": "AsyncQuery",
+      "isUntypedObject": true
     },
     {
       "class": "InspectorBase",
@@ -22530,51 +22532,6 @@
       "bucket": "Command"
     },
     {
-      "class": "PMREMGenerator",
-      "member": "fromScene",
-      "kind": "Method",
-      "origin": "Declared",
-      "bucket": "AsyncQuery",
-      "type": "WebGLRenderTarget"
-    },
-    {
-      "class": "PMREMGenerator",
-      "member": "fromEquirectangular",
-      "kind": "Method",
-      "origin": "Declared",
-      "bucket": "AsyncQuery",
-      "type": "WebGLRenderTarget"
-    },
-    {
-      "class": "PMREMGenerator",
-      "member": "fromCubemap",
-      "kind": "Method",
-      "origin": "Declared",
-      "bucket": "AsyncQuery",
-      "type": "WebGLRenderTarget"
-    },
-    {
-      "class": "PMREMGenerator",
-      "member": "compileCubemapShader",
-      "kind": "Method",
-      "origin": "Declared",
-      "bucket": "Command"
-    },
-    {
-      "class": "PMREMGenerator",
-      "member": "compileEquirectangularShader",
-      "kind": "Method",
-      "origin": "Declared",
-      "bucket": "Command"
-    },
-    {
-      "class": "PMREMGenerator",
-      "member": "dispose",
-      "kind": "Method",
-      "origin": "Declared",
-      "bucket": "Command"
-    },
-    {
       "class": "Path",
       "member": "currentPoint",
       "kind": "Property",
@@ -26353,7 +26310,8 @@
       "member": "getCanvasTarget",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "AsyncQuery"
+      "bucket": "AsyncQuery",
+      "isUntypedObject": true
     },
     {
       "class": "Renderer",
@@ -28880,37 +28838,6 @@
     {
       "class": "StereoCamera",
       "member": "update",
-      "kind": "Method",
-      "origin": "Declared",
-      "bucket": "Command"
-    },
-    {
-      "class": "Storage3DTexture",
-      "member": "wrapR",
-      "kind": "Property",
-      "origin": "Declared",
-      "bucket": "MirroredState",
-      "type": "Wrapping"
-    },
-    {
-      "class": "Storage3DTexture",
-      "member": "isStorageTexture",
-      "kind": "Property",
-      "origin": "Declared",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "Storage3DTexture",
-      "member": "is3DTexture",
-      "kind": "Property",
-      "origin": "Declared",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "Storage3DTexture",
-      "member": "setSize",
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Command"
@@ -32045,46 +31972,6 @@
       "type": "float"
     },
     {
-      "class": "WebGLCapabilities",
-      "member": "backend",
-      "kind": "Property",
-      "origin": "Declared",
-      "bucket": "MirroredState",
-      "type": "WebGLBackend"
-    },
-    {
-      "class": "WebGLCapabilities",
-      "member": "maxAnisotropy",
-      "kind": "Property",
-      "origin": "Declared",
-      "bucket": "MirroredState",
-      "type": "float"
-    },
-    {
-      "class": "WebGLCapabilities",
-      "member": "maxUniformBlockSize",
-      "kind": "Property",
-      "origin": "Declared",
-      "bucket": "MirroredState",
-      "type": "float"
-    },
-    {
-      "class": "WebGLCapabilities",
-      "member": "getMaxAnisotropy",
-      "kind": "Method",
-      "origin": "Declared",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGLCapabilities",
-      "member": "getUniformBufferLimit",
-      "kind": "Method",
-      "origin": "Declared",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
       "class": "WebGLClipping",
       "member": "uniform",
       "kind": "Property",
@@ -32511,7 +32398,8 @@
       "member": "getUniforms",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "AsyncQuery"
+      "bucket": "AsyncQuery",
+      "isUntypedObject": true
     },
     {
       "class": "WebGLProgram",
@@ -32704,7 +32592,8 @@
       "member": "get",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "AsyncQuery"
+      "bucket": "AsyncQuery",
+      "isUntypedObject": true
     },
     {
       "class": "WebGLRenderTarget",
@@ -34497,902 +34386,8 @@
       "member": "getCanvasTarget",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setRenderObjectFunction",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'renderObjectFunction': `( object: Object3D, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: GeometryGroup | null, lightsNode: LightsNode, clippingContext: ClippingContext, passId?: string | null | undefined, ) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getRenderObjectFunction",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `( object: Object3D, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: GeometryGroup | null, lightsNode: LightsNode, clippingContext: ClippingContext, passId?: string | null | undefined, ) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "compute",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'computeNodes': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
-      "category": "NodeStackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "computeAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'computeNodes': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
-      "category": "NodeStackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "hasFeatureAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<boolean>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "resolveTimestampsAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take",
-      "category": "UnmappedTypeAlias"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "hasFeature",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
       "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "hasInitialized",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "initTextureAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "initTexture",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "initRenderTarget",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "copyFramebufferToTexture",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "copyTextureToTexture",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "readRenderTargetPixelsAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<TypedArray>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "renderObject",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'group': `GeometryGroup` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "hasCompatibility",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "isWebGPURenderer",
-      "kind": "Property",
-      "origin": "Declared",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "isRenderer",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "backend",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "autoClear",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "autoClearColor",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "autoClearDepth",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "autoClearStencil",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "alpha",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "logarithmicDepthBuffer",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "reversedDepthBuffer",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "outputColorSpace",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "string"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "toneMapping",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "ToneMapping"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "toneMappingExposure",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "sortObjects",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "depth",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "stencil",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "info",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`Info` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
-      "category": "NotExported"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "contextNode",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
-      "category": "NodeStackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "library",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`NodeLibrary` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
-      "category": "NotExported"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "lighting",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "Lighting"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "onDeviceLost",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`(info: DeviceLostInfo) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "onError",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`(errorMessage: string) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "_currentSourceMaterial",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "declared `private`, so it is not part of the public API",
-      "category": "NotInstanceApi"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "transparent",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "opaque",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "shadowMap",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`{ /** * - Whether to globally enable shadows or not. */ enabled: boolean; /** * - Whether to enable light transmission through non-opaque materials. */ transmitted: boolean; /** * - The shadow map type. */ type: ShadowMapType; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "xr",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`XRManager` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
-      "category": "NotExported"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "debug",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`{ /** * - Whether shader errors should be checked or not. */ checkShaderErrors: boolean; /** * - A callback function that is executed when a shader error happens. Only supported with WebGL 2 right now. */ onShaderError: | (( gl: WebGL2RenderingContext, programGPU: WebGLProgram, glVertexShader: WebGLShader, glFragmentShader: WebGLShader, ) => void) | null; /** * - Allows the get the raw shader code for the given scene, camera and 3D object. */ getShaderAsync: (scene: Scene, camera: Camera, object: Object3D) => Promise<{ fragmentShader: string | null; vertexShader: string | null; }>; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "domElement",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "coordinateSystem",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "CoordinateSystem"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "inspector",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "InspectorBase"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "highPrecision",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "initialized",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "needsFrameBufferTarget",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "samples",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "currentSamples",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "currentToneMapping",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "ToneMapping"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "currentColorSpace",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "string"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "isOutputTarget",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "compile",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`(scene: Object3D, camera: Camera, targetScene?: Scene | null) => Promise<void>` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "init",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<this>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "compileAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "renderAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "waitForGPU",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setMRT",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'mrt': `MRTNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
-      "category": "NodeStackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getMRT",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `MRTNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
-      "category": "NodeStackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getOutputBufferType",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "TextureDataType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getColorBufferType",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "TextureDataType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "render",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getMaxAnisotropy",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getActiveCubeFace",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getActiveMipmapLevel",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setAnimationLoop",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'callback': `(time: DOMHighResTimeStamp, frame?: XRFrame) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getAnimationLoop",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `(time: DOMHighResTimeStamp, xrFrame?: XRFrame) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getArrayBufferAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<ArrayBuffer>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getContext",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getPixelRatio",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getDrawingBufferSize",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "Vector2"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getSize",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "Vector2"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setPixelRatio",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setDrawingBufferSize",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setSize",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setOpaqueSort",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'method': `(a: RenderItem, b: RenderItem) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setTransparentSort",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'method': `(a: RenderItem, b: RenderItem) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getScissor",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "Vector4"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setScissor",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getScissorTest",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setScissorTest",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getViewport",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "Vector4"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setViewport",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getClearColor",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "Color"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setClearColor",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getClearAlpha",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setClearAlpha",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getClearDepth",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setClearDepth",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getClearStencil",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setClearStencil",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "isOccluded",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "clear",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "clearColor",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "clearDepth",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "clearStencil",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "clearAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "clearColorAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "clearDepthAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "clearStencilAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "dispose",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setRenderTarget",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getRenderTarget",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "RenderTarget"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setOutputRenderTarget",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getOutputRenderTarget",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "RenderTarget"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setCanvasTarget",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'canvasTarget': `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getCanvasTarget",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery"
+      "isUntypedObject": true
     },
     {
       "class": "WebGPURenderer",
@@ -35532,21 +34527,24 @@
       "member": "getHandSpace",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "AsyncQuery"
+      "bucket": "AsyncQuery",
+      "isUntypedObject": true
     },
     {
       "class": "WebXRController",
       "member": "getTargetRaySpace",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "AsyncQuery"
+      "bucket": "AsyncQuery",
+      "isUntypedObject": true
     },
     {
       "class": "WebXRController",
       "member": "getGripSpace",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "AsyncQuery"
+      "bucket": "AsyncQuery",
+      "isUntypedObject": true
     },
     {
       "class": "WebXRController",
@@ -35976,21 +34974,24 @@
       "member": "getController",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "AsyncQuery"
+      "bucket": "AsyncQuery",
+      "isUntypedObject": true
     },
     {
       "class": "XRManager",
       "member": "getControllerGrip",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "AsyncQuery"
+      "bucket": "AsyncQuery",
+      "isUntypedObject": true
     },
     {
       "class": "XRManager",
       "member": "getHand",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "AsyncQuery"
+      "bucket": "AsyncQuery",
+      "isUntypedObject": true
     },
     {
       "class": "XRManager",

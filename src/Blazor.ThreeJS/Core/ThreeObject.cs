@@ -22,6 +22,8 @@ public abstract class ThreeObject
 	/// </summary>
 	private List<PendingOp>? _pendingOps;
 
+	private ThreeBatch? _batch;
+
 	/// <summary>
 	/// Handle identifying this object on the JavaScript side. Allocated monotonically in C# via
 	/// <see cref="Interlocked.Increment(ref int)"/> at construction time, so creating an object
@@ -39,8 +41,30 @@ public abstract class ThreeObject
 	/// <summary>
 	/// Assigned when the object is attached to a context. Until then, writes are held in the
 	/// object's own fields and replayed by <see cref="EmitCreate"/> on attach.
+	/// <para>
+	/// Assigning it is also what registers the object with the context, rather than
+	/// <see cref="AttachTo"/> doing it: an attach is not the only way an object reaches a batch. Every
+	/// object the browser made — a loaded glTF node, an adopted clip, the renderer, the wrapper a read
+	/// hands back — is given its batch directly and never attaches at all, and one the context does not
+	/// know is one a second read of the same member builds a second wrapper for.
+	/// </para>
+	/// <para>
+	/// Clearing it unregisters, so the two directions stay symmetric. <c>OrbitControls.DetachAsync</c> is
+	/// the one caller that clears, and the instance is spent afterwards by design — leaving it in a table
+	/// whose only question is "which mirror holds this handle" would answer that question with an object
+	/// that no longer records anything.
+	/// </para>
 	/// </summary>
-	internal ThreeBatch? Batch { get; set; }
+	internal ThreeBatch? Batch
+	{
+		get { return _batch; }
+		set
+		{
+			_batch?.Context?.Unregister(this);
+			_batch = value;
+			value?.Context?.Register(this);
+		}
+	}
 
 	/// <summary>Whether this object has reached a batch, and therefore records its writes rather than holding them.</summary>
 	internal bool IsAttached
@@ -159,7 +183,6 @@ public abstract class ThreeObject
 		}
 
 		Batch = batch;
-		batch.Context?.Register(this);
 		EmitCreate(batch);
 		EmitState(batch);
 		ReplayPendingOps(batch);
@@ -206,7 +229,7 @@ public abstract class ThreeObject
 	/// <param name="member">Name of the three.js property to write, e.g. <c>"refDistance"</c>.</param>
 	/// <param name="value">
 	/// The new value: any primitive, <see cref="string"/>, <see cref="Enum"/>, <see langword="null"/>,
-	/// another mirrored object, or one of the hand-written math types in
+	/// another mirrored object, a <see cref="TypedArray"/>, or one of the hand-written math types in
 	/// <c>Kebechet.Blazor.ThreeJS.Math</c>.
 	/// </param>
 	/// <exception cref="NotSupportedException">
@@ -336,24 +359,29 @@ public abstract class ThreeObject
 	/// address through a dotted path — <c>renderer.shadowMap</c> being the case that motivated it.
 	/// </para>
 	/// <para>
-	/// The browser side dedupes: an object it has already minted a handle for answers with that same
-	/// handle again rather than a new one. The C# side does not inherit that guarantee for an adopted
-	/// object — <see cref="Adopt"/> only resolves a handle this context registered through
-	/// <c>AttachTo</c>, and an adopted <see cref="Primitive"/> never goes through it — so reading the
-	/// same property twice, or reading one that returns the receiver, can build a second C# wrapper
-	/// over the one handle rather than reusing the first.
+	/// Both sides dedupe, and to the same effect. The browser answers an object it has already minted a
+	/// handle for with that same handle again; C# answers a handle it already mirrors with that same
+	/// mirror. So reading the same property twice, or reading one that returns the receiver, hands back
+	/// the wrapper you already have rather than a second one over the one handle.
+	/// </para>
+	/// <para>
+	/// ⚠️ Where the mirror it already holds is <b>not</b> a <see cref="Primitive"/> — a generated class,
+	/// a loaded glTF node, the renderer — this throws instead of answering. That mirror is the better
+	/// answer and you are already holding it; handing over an untyped second wrapper would take writes
+	/// the typed mirror never learns about.
 	/// </para>
 	/// </summary>
 	/// <param name="member">Name of the property to read.</param>
 	/// <returns>The object under its own handle, or <see langword="null"/> when the property held none.</returns>
 	/// <exception cref="InvalidOperationException">
-	/// Thrown when this object is not attached, or when it has no such property.
+	/// Thrown when this object is not attached, when it has no such property, or when the answered handle
+	/// is one this context already mirrors as something other than a <see cref="Primitive"/>.
 	/// </exception>
 	public async Task<Primitive?> GetObjectAsync(string member)
 	{
 		var context = RequireContext(member);
 		var reference = await context.GetAsync<ThreeObjectReference?>(Handle, member, mintsHandle: true).ConfigureAwait(false);
-		return Adopt(context, reference);
+		return Adopt(context, member, reference);
 	}
 
 	/// <summary>
@@ -369,7 +397,10 @@ public abstract class ThreeObject
 	/// <see cref="Call(string, object?[])"/> for why no overload fixes this.
 	/// </param>
 	/// <returns>The returned object under its own handle, or <see langword="null"/> when it returned none.</returns>
-	/// <exception cref="InvalidOperationException">Thrown when this object is not attached.</exception>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when this object is not attached, or when the answered handle is one this context already
+	/// mirrors as something other than a <see cref="Primitive"/>. See <see cref="GetObjectAsync"/>.
+	/// </exception>
 	public async Task<Primitive?> CallObjectAsync(string member, params object?[] args)
 	{
 		var context = RequireContext(member);
@@ -379,29 +410,35 @@ public abstract class ThreeObject
 			.ToArray();
 
 		var reference = await context.ReadAsync<ThreeObjectReference?>(Handle, member, encodedArgs, mintsHandle: true).ConfigureAwait(false);
-		return Adopt(context, reference);
+		return Adopt(context, member, reference);
 	}
 
-	/// <summary>Wraps a reference the applier answered with, or nothing when it answered with none.</summary>
+	/// <summary>
+	/// Wraps a reference the applier answered with, or nothing when it answered with none.
+	/// <para>
+	/// A handle this context already mirrors resolves to that mirror. Only a handle nothing here holds
+	/// is genuinely new and gets a wrapper of its own.
+	/// </para>
+	/// </summary>
 	/// <param name="context">Context the handle belongs to.</param>
+	/// <param name="member">Member or export that produced the reference, named in any failure.</param>
 	/// <param name="reference">The reference, absent when the member held no object.</param>
 	/// <returns>The adopted object.</returns>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when the handle names a mirror that is not a <see cref="Primitive"/> — a generated class,
+	/// a loaded glTF node, the renderer. That mirror is the better answer and the caller already holds
+	/// one; a second, untyped wrapper over the same handle would take writes the typed mirror never sees.
+	/// </exception>
 	[return: NotNullIfNotNull(nameof(reference))]
-	internal static Primitive? Adopt(ThreeContext context, ThreeObjectReference? reference)
+	internal static Primitive? Adopt(ThreeContext context, string member, ThreeObjectReference? reference)
 	{
 		if (reference is null)
 		{
 			return null;
 		}
 
-		// A handle this context already mirrors resolves to that mirror. Only a handle nothing here
-		// holds is genuinely new and gets a wrapper of its own.
-		if (context.Resolve(reference.Handle) is Primitive existing)
-		{
-			return existing;
-		}
-
-		return new Primitive(context.Batch, reference.Handle, reference.ThreeTypeName ?? "Object");
+		return ResolveMirror<Primitive>(context, member, reference.Handle)
+			?? new Primitive(context.Batch, reference.Handle, reference.ThreeTypeName ?? "Object");
 	}
 
 	/// <summary>
@@ -471,15 +508,39 @@ public abstract class ThreeObject
 			return null;
 		}
 
-		if (context.Resolve(reference.Handle) is { } existing)
+		return ResolveMirror<TValue>(context, member, reference.Handle)
+			?? adopt(context.Batch, reference.Handle);
+	}
+
+	/// <summary>
+	/// The mirror this context already holds for a handle, when it holds one the caller can be given.
+	/// Shared by both adoption paths, so the typed and the untyped channel answer a handle the context
+	/// knows on exactly the same terms rather than only the typed one doing so.
+	/// </summary>
+	/// <typeparam name="TValue">Mirrored type the caller is being handed.</typeparam>
+	/// <param name="context">Context the handle belongs to.</param>
+	/// <param name="member">Member that produced the reference, named in any failure.</param>
+	/// <param name="handle">Handle the applier answered with.</param>
+	/// <returns>The existing mirror, or <see langword="null"/> when this context has none for the handle.</returns>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when the handle names a mirror of an incompatible type. For a typed read that means
+	/// three.js answered with an object the declared return type does not describe; for an untyped one it
+	/// means the caller already holds a better-typed mirror of it. Either way a fresh wrapper would paper
+	/// over it by producing a second mirror of one object.
+	/// </exception>
+	private static TValue? ResolveMirror<TValue>(ThreeContext context, string member, int handle)
+		where TValue : ThreeObject
+	{
+		if (context.Resolve(handle) is not { } existing)
 		{
-			return existing as TValue ?? throw new InvalidOperationException(
-				$"'{member}' answered with handle {reference.Handle}, which this context already mirrors as " +
-				$"'{existing.GetType().Name}' rather than '{typeof(TValue).Name}'. Wrapping it again would leave two " +
-				$"mirrors of one three.js object, and a write through either would be invisible to the other.");
+			return null;
 		}
 
-		return adopt(context.Batch, reference.Handle);
+		return existing as TValue ?? throw new InvalidOperationException(
+			$"'{member}' answered with handle {handle}, which this context already mirrors as " +
+			$"'{existing.GetType().Name}' rather than '{typeof(TValue).Name}'. Wrapping it again would leave two " +
+			$"mirrors of one three.js object, and a write through either would be invisible to the other. " +
+			$"Reach it through the mirror this context already holds.");
 	}
 
 	/// <summary>
@@ -510,7 +571,15 @@ public abstract class ThreeObject
 	/// </remarks>
 	internal void RetireHandle()
 	{
-		Batch?.Dispose(Handle);
+		if (Batch is not { } batch)
+		{
+			return;
+		}
+
+		// Taken out of the context's table as well as the applier's, so a later read answering with this
+		// handle cannot resolve back to a mirror of an object neither side has any more.
+		batch.Context?.Unregister(this);
+		batch.Dispose(Handle);
 	}
 
 	/// <summary>

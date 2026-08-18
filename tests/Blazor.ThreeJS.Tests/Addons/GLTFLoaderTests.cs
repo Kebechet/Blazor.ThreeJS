@@ -463,6 +463,26 @@ public class GLTFLoaderTests
 	}
 
 	[Fact]
+	public async Task GLTFLoader_ReadAnsweringWithALoadedNodeHandle_ResolvesToThatNodeRatherThanASecondMirror()
+	{
+		// Arrange
+		var module = new AddonJsObjectReference { LoadResponse = FigureResponse() };
+		var context = new ThreeContext(module, contextId: 1);
+		var model = await new GLTFLoader(context).LoadAsync(ModelUrl);
+		var head = model.FindNode("Head").ShouldNotBeNull();
+		module.ReadValue = JsonDocument.Parse($$"""{"$ref":{{head.Handle}},"t":"Mesh"}""").RootElement;
+
+		// Act
+		var found = await model.Scene.GetObjectByNameAsync("Head");
+
+		// Assert
+		// A loaded node never attaches - it is handed its batch at construction - so this is the case
+		// that used to build a second mirror of a node the model already holds, with the transform C#
+		// seeded from the load on one of them and nothing on the other.
+		found.ShouldBeSameAs(head);
+	}
+
+	[Fact]
 	public async Task GLTFLoader_LoadedNodeAttachedToASecondContext_Throws()
 	{
 		// Arrange

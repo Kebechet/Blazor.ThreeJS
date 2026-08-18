@@ -25,6 +25,7 @@ import { Worker as NodeWorker } from 'node:worker_threads';
 import {
     applyOp,
     attachOrbitControlsTo,
+    createContextAround,
     detachControls,
     dispatchPointerHit,
     disposeDecoders,
@@ -113,6 +114,10 @@ const OP_DISPOSE = 5;
 const OP_READ = 6;
 const OP_PICK = 7;
 const OP_GET = 8;
+
+// The handle every context registers its renderer under, matching ThreeWireFormat.RendererHandle. The
+// browser's own allocator counts down from below it, so nothing it mints can ever take it.
+const RESERVED_RENDERER_HANDLE = -1;
 
 const ops = JSON.parse(readFileSync(new URL('./wire-format-fixture.json', import.meta.url), 'utf8'));
 const context = { objects: new Map() };
@@ -496,6 +501,26 @@ assert.match(
     /no wire encoding/,
     'an object result must still be refused when the caller did not ask for a handle');
 
+// The renderer the context registers for itself has to be remembered in both directions like anything
+// else, and it is the one object nothing in C# ever attached: `ThreeContext.Renderer` mirrors it under
+// the reserved handle from the moment the context exists. `InspectorBase.getRenderer` is a generated
+// member that answers with it - C#'s `GetRendererAsync` - so a renderer registered only in the forward
+// table would come back here as a freshly minted handle, and C# would build a second, untyped mirror of
+// the renderer it already holds with no way to notice.
+const rendererContext = createContextAround({ isFakeRenderer: true }, createRecordingDotNetRef());
+applyOp(rendererContext, { k: OP_CREATE, h: 1, t: 'InspectorBase', a: [] });
+applyOp(rendererContext, { k: OP_CALL, h: 1, m: 'setRenderer', a: [{ $ref: RESERVED_RENDERER_HANDLE }] });
+
+const objectCountBeforeRendererRead = rendererContext.objects.size;
+const readBackRenderer = applyOp(rendererContext, { k: OP_READ, h: 1, m: 'getRenderer', a: [], n: true });
+
+assert.equal(
+    readBackRenderer.$ref, RESERVED_RENDERER_HANDLE,
+    'a member answering with the renderer must answer with the reserved handle C# already mirrors it under');
+assert.equal(
+    rendererContext.objects.size, objectCountBeforeRendererRead,
+    'answering with the renderer must not register a second entry for it');
+
 console.log('# Handle minting OK - the receiver keeps its handle, a clone gets a new one, values stay values.');
 
 // ---------------------------------------------------------------------------------------------
@@ -814,7 +839,7 @@ assert.equal(new Set(mintedHandles).size, mintedHandles.length, 'no two loaded n
 // would answer to the same handle C# addresses the renderer by, and writes meant for one would land
 // on the other.
 assert.deepEqual(mintedHandles.slice(0, 3), [-2, -3, -4], 'minting should count down from below the reserved renderer handle');
-assert.equal(mintedHandles.includes(-1), false, 'no minted handle may take the reserved renderer handle');
+assert.equal(mintedHandles.includes(RESERVED_RENDERER_HANDLE), false, 'no minted handle may take the reserved renderer handle');
 
 for (const node of loadedNodes) {
     assert.ok(loadingContext.objects.has(node.h), `handle ${node.h} should be registered in the object table`);
@@ -856,7 +881,7 @@ applyOp(loadingContext, { k: OP_PICK, h: head.h, v: true });
 assert.ok(loadingContext.pointerTargets.has(head.h), 'a loaded node must be able to opt into hit-testing');
 
 // A JS-side read that returns a loaded node must answer with the handle the load already minted for
-// it, not a fresh one - this is what rememberHandle inside describeLoadedNode buys: without it,
+// it, not a fresh one - this is what registerObject inside describeLoadedNode buys: without it,
 // handleFor would have no record of the object at all and would mint a duplicate every time.
 const objectCountBeforeReread = loadingContext.objects.size;
 const rereadHead = applyOp(loadingContext, {
@@ -917,6 +942,30 @@ const animatedNodeHandles = animatedResponse.n.map(node => node.h);
 assert.ok(
     animatedNodeHandles.every(nodeHandle => clipRow.h < nodeHandle),
     'the clip handle must be minted after every node handle, since minting counts further down each time');
+
+// The clip half of what registerObject buys, and the one member that reads a clip back:
+// AnimationAction.getClip. Without the reverse entry, handleFor would have no record of the clip
+// object and would mint a second handle for the clip C# already mirrors, so a write through one mirror
+// would be invisible through the other.
+applyOp(animatedLoadingContext, {
+    k: OP_CREATE, h: 300, t: 'AnimationMixer', a: [{ $ref: animatedResponse.n[0].h }]
+});
+
+const clipAction = applyOp(animatedLoadingContext, {
+    k: OP_READ, h: 300, m: 'clipAction', a: [{ $ref: clipRow.h }], n: true
+});
+
+const objectCountBeforeClipReread = animatedLoadingContext.objects.size;
+const rereadClip = applyOp(animatedLoadingContext, {
+    k: OP_READ, h: clipAction.$ref, m: 'getClip', a: [], n: true
+});
+
+assert.equal(
+    rereadClip.$ref, clipRow.h,
+    'reading a clip back off its action must answer with the handle the load minted for it');
+assert.equal(
+    animatedLoadingContext.objects.size, objectCountBeforeClipReread,
+    'answering with an already-minted clip handle must not register a second entry for the same clip');
 
 applyOp(animatedLoadingContext, { k: OP_DISPOSE, h: animatedResponse.n[0].h });
 assert.equal(

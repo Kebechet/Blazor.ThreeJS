@@ -72,7 +72,15 @@ internal sealed class CoverageReport
 		_enums = enums;
 		_mapper = mapper;
 		_members = [];
-		foreach (var irClass in ir.Classes.OrderBy(x => x.Name, StringComparer.Ordinal).ThenBy(x => x.File, StringComparer.Ordinal))
+
+		// One declaration per class name, where every class figure in this document counts one per
+		// declaration. Four names are declared in two files each, and the machinery behind a member row is
+		// keyed by name: `ClassSurfaceResolver` caches a resolved surface under the name, and
+		// `EmissionScope` lets at most one declaration of a name reach C#. So classifying the second
+		// declaration re-reports the first one's surface verbatim — the same members, on the same class
+		// name, counted twice. A class row is about a declaration and there are two of those; a member row
+		// is about a surface and there is one.
+		foreach (var irClass in scope.Results.Select(x => x.Class).DistinctBy(x => x.Name, StringComparer.Ordinal))
 		{
 			_members.AddRange(classifier.Classify(irClass));
 		}
@@ -192,6 +200,7 @@ internal sealed class CoverageReport
 					Origin = x.Origin.ToString(),
 					Bucket = x.Bucket.ToString(),
 					Type = x.CSharpTypeName,
+					IsUntypedObject = x.IsUntypedObjectResult ? true : null,
 					Reason = x.SkipReason,
 					Category = x.SkipCategory == SkipCategory.None ? null : x.SkipCategory.ToString(),
 					DroppedUnionArms = RenderDroppedArms(x.Method?.Overloads.FirstOrDefault() ?? [])
@@ -394,7 +403,15 @@ internal sealed class CoverageReport
 		var noHandleCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.NoHandleForResult);
 		var callbackCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.CallbackType);
 		var domCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.DomOrLibType);
-		var staticCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.NotInstanceApi);
+		// Split rather than labelled "static", which this bucket is only mostly made of: `NotInstanceApi`
+		// also carries the protected and private members, and calling the whole figure static overstates
+		// how much of it a handle-addressable mirror could ever have reached.
+		var notInstanceApi = emittableMembers
+			.Where(x => x.SkipCategory == SkipCategory.NotInstanceApi)
+			.ToList();
+
+		var staticCount = notInstanceApi.Count;
+		var staticMemberCount = notInstanceApi.Count(x => x.IsStatic);
 		var collectionCount = emittableMembers.Count(x =>
 			x.MemberKind == ClassifiedMemberKind.Method &&
 			x.SkipCategory == SkipCategory.CollectionType);
@@ -424,7 +441,9 @@ internal sealed class CoverageReport
 		AppendLine(builder, "  receiver safe - and `null` means the member genuinely held none.");
 		AppendLine(builder, $"- **{untypedObjectCount} answer with an object no generated class mirrors** - `Task<Primitive?>`, the same untyped wrapper");
 		AppendLine(builder, "  the escape hatch hands out. The handle is real and writable; nothing type-checks the members you name");
-		AppendLine(builder, "  on it.");
+		AppendLine(builder, "  on it. Adoption dedupes here on the same terms as above, and a handle this context mirrors as");
+		AppendLine(builder, "  something *other* than a `Primitive` faults instead of being wrapped a second time - that mirror is the");
+		AppendLine(builder, "  better answer and the caller is already holding it.");
 		AppendLine(builder);
 		AppendLine(builder, "What remains out of reach is out for reasons a handle does not fix:");
 		AppendLine(builder);
@@ -432,8 +451,9 @@ internal sealed class CoverageReport
 		AppendLine(builder, "  so there is nothing to call back into C# with.");
 		AppendLine(builder, $"- **{Pluralize(domCount, "member", "members")} typed as a DOM or TypeScript lib type** - C# holds no `HTMLCanvasElement` to hand over,");
 		AppendLine(builder, "  and a handle names a three.js object rather than an arbitrary browser one.");
-		AppendLine(builder, $"- **{Pluralize(staticCount, "static member", "static members")}** - the mirror models instances, and a static belongs to the class rather");
-		AppendLine(builder, "  than to any object the mirror holds.");
+		AppendLine(builder, $"- **{Pluralize(staticCount, "member", "members")} that are not instance API** - {staticMemberCount} of them static, which the mirror has no handle to");
+		AppendLine(builder, $"  address because a static belongs to the class rather than to any object it holds, and {staticCount - staticMemberCount}");
+		AppendLine(builder, "  declared `protected` or `private`, which three.js does not offer a consumer in the first place.");
 		if (collectionCount > 0)
 		{
 			AppendLine(builder, $"- **{Pluralize(collectionCount, "method", "methods")} returning or taking an array** - which is why **`Raycaster.intersectObjects` is still not");
@@ -458,9 +478,10 @@ internal sealed class CoverageReport
 	/// </summary>
 	private void AppendBlockedClassWorkarounds(StringBuilder builder)
 	{
-		// Counted per result, like every other class figure in this document. Two three.js classes share
-		// a name, so counting distinct names instead would put a different total here than the class
-		// table three paragraphs up — one document, two answers for the same question.
+		// Counted per result, like every other class figure in this document. Four three.js names are
+		// declared in two files each, so counting distinct names instead would put a different total here
+		// than the class table three paragraphs up — one document, two answers for the same question. The
+		// member rows are the one place that does count per name, and say why at the constructor.
 		var blocked = _scope.Results
 			.Where(x => x.Status == ClassScopeStatus.Blocked)
 			.ToList();

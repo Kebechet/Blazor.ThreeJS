@@ -61,6 +61,7 @@ internal sealed class MemberClassifier
 			Origin = member.Origin,
 			DeclaringName = member.DeclaringName,
 			Property = property,
+			IsStatic = property.IsStatic,
 			Bucket = MemberBucket.Skipped
 		};
 
@@ -158,6 +159,7 @@ internal sealed class MemberClassifier
 			Origin = member.Origin,
 			DeclaringName = member.DeclaringName,
 			OverloadCount = method.Overloads.Count,
+			IsStatic = method.IsStatic,
 			Bucket = MemberBucket.Skipped
 		};
 
@@ -483,6 +485,14 @@ internal sealed class ClassifiedMember
 
 	/// <summary>The IR declaration behind a property row, read for its documentation and default.</summary>
 	public IrProperty? Property { get; init; }
+
+	/// <summary>
+	/// True when three.js declares the member <c>static</c>. Recorded because
+	/// <see cref="SkipCategory.NotInstanceApi"/> covers the protected and private members too, and a
+	/// report that called the whole bucket static would overstate how much of it is out of reach for
+	/// want of a handle rather than for want of being public.
+	/// </summary>
+	public bool IsStatic { get; init; }
 
 	/// <summary>True for state three.js exposes read-only but the applier writes into in place.</summary>
 	public bool IsWrittenInPlace { get; set; }

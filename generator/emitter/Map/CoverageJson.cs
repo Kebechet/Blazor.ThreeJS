@@ -243,6 +243,18 @@ internal sealed class CoverageMemberJson
 	/// <summary>Resolved C# type, when it has one.</summary>
 	public string? Type { get; init; }
 
+	/// <summary>
+	/// Whether this query answers with a three.js object no generated class mirrors, so it comes back as
+	/// an untyped <c>Primitive</c> under its own handle. Written only when true.
+	/// <para>
+	/// Without it such a row is indistinguishable from a skipped one to a consumer of this file: both
+	/// carry no <see cref="Type"/>, because there is no C# type to name. The bucket separates them, but
+	/// nothing said which of the <c>AsyncQuery</c> rows were the untyped ones, and
+	/// <c>totals.untypedObjectQueries</c> counted them without naming any.
+	/// </para>
+	/// </summary>
+	public bool? IsUntypedObject { get; init; }
+
 	/// <summary>Why it was skipped, when it was.</summary>
 	public string? Reason { get; init; }
 
@@ -251,7 +263,7 @@ internal sealed class CoverageMemberJson
 
 	/// <summary>
 	/// Arms of a parameter's declared union that no emitted overload takes. Omitted rather than written
-	/// empty, for the same reason as on the class rows: it applies to a handful of the 3932 members.
+	/// empty, for the same reason as on the class rows: it applies to a handful of several thousand members.
 	/// </summary>
 	public List<CoverageDroppedArmJson>? DroppedUnionArms { get; init; }
 }

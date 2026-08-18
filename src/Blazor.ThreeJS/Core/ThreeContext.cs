@@ -112,7 +112,7 @@ public sealed class ThreeContext : IAsyncDisposable
 	public WebGPURenderer Renderer { get; }
 
 	/// <summary>
-	/// Every mirrored object this context has attached, by handle. The C# counterpart of the applier's
+	/// Every mirrored object this context has attached or adopted, by handle. The C# counterpart of the applier's
 	/// own object-to-handle map, and needed for the same reason: a member whose result is an object
 	/// answers with a handle, and that handle is often one C# already has a mirror for —
 	/// <c>mesh.geometry</c> answers with the geometry the caller passed in. Building a second C# object
@@ -125,11 +125,27 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// </summary>
 	private readonly Dictionary<int, WeakReference<ThreeObject>> _mirroredObjectsByHandle = [];
 
-	/// <summary>Records a mirrored object so a handle answered by a read can resolve back to it.</summary>
-	/// <param name="mirroredObject">The object being attached.</param>
+	/// <summary>
+	/// Records a mirrored object so a handle answered by a read can resolve back to it. Called for every
+	/// object that reaches this context's batch, whether it attached or was adopted under a handle the
+	/// browser minted — the two are indistinguishable to a read, which answers with a bare handle either
+	/// way.
+	/// </summary>
+	/// <param name="mirroredObject">The object being attached or adopted.</param>
 	internal void Register(ThreeObject mirroredObject)
 	{
 		_mirroredObjectsByHandle[mirroredObject.Handle] = new WeakReference<ThreeObject>(mirroredObject);
+	}
+
+	/// <summary>
+	/// Drops a mirrored object whose handle has been retired. The applier takes the object out of its own
+	/// handle table at the same time, so leaving the entry here would let a resolve answer with a mirror
+	/// of something the browser no longer has.
+	/// </summary>
+	/// <param name="mirroredObject">The object whose handle is being retired.</param>
+	internal void Unregister(ThreeObject mirroredObject)
+	{
+		_mirroredObjectsByHandle.Remove(mirroredObject.Handle);
 	}
 
 	/// <summary>Finds the mirror already holding a handle, if this context has one.</summary>
@@ -428,6 +444,11 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// <exception cref="JSException">
 	/// Thrown when the module cannot be loaded, has no such export, or the export does not produce a node.
 	/// </exception>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when the export answered with an object this context already mirrors as something other than
+	/// a <see cref="Primitive"/> — it hands the node back on the same terms
+	/// <see cref="ThreeObject.GetObjectAsync"/> does, and refuses a second wrapper for the same reason.
+	/// </exception>
 	public async Task<Primitive> LoadNodeAsync(string modulePath, string exportName, params object?[] args)
 	{
 		await FlushAsync().ConfigureAwait(false);
@@ -440,7 +461,7 @@ public sealed class ThreeContext : IAsyncDisposable
 			.InvokeAsync<ThreeObjectReference>("loadNode", _contextId, modulePath, exportName, encodedArgs)
 			.ConfigureAwait(false);
 
-		return ThreeObject.Adopt(this, reference);
+		return ThreeObject.Adopt(this, exportName, reference);
 	}
 
 	/// <summary>

@@ -87,6 +87,13 @@ internal sealed class EmissionAudit
 		AppendLine(builder, "Which classes can be emitted at all, and what happens to every member three.js declares, lives in");
 		AppendLine(builder, "`generator/api-coverage.md`. This file covers only the decisions behind the code that is emitted.");
 		AppendLine(builder);
+		var hybridNames = string.Join(", ", EmitterConfig.HybridClassNames.Order(StringComparer.Ordinal).Select(x => $"`{x}`"));
+		AppendLine(builder, $"⚠️ **The generated half of a hybrid class contributes no rows.** {hybridNames} is hand-written, and the command");
+		AppendLine(builder, "and query surface emitted as the other half of its `partial class` goes through its own entry point -");
+		AppendLine(builder, "one that is not handed this audit. So those members' numeric typings and skips are absent from both");
+		AppendLine(builder, "sections below, and every count in them is of the emitted classes only. `generator/api-coverage.md` does");
+		AppendLine(builder, "classify them, including which half of the partial each one landed on.");
+		AppendLine(builder);
 
 		AppendNumericPolicy(builder);
 		AppendNumericSection(builder);

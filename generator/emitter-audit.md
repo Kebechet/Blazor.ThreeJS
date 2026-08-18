@@ -8,6 +8,12 @@ Emitted classes: `AmbientLight`, `AnimationAction`, `AnimationClip`, `AnimationL
 Which classes can be emitted at all, and what happens to every member three.js declares, lives in
 `generator/api-coverage.md`. This file covers only the decisions behind the code that is emitted.
 
+⚠️ **The generated half of a hybrid class contributes no rows.** `Object3D` is hand-written, and the command
+and query surface emitted as the other half of its `partial class` goes through its own entry point -
+one that is not handed this audit. So those members' numeric typings and skips are absent from both
+sections below, and every count in them is of the emitted classes only. `generator/api-coverage.md` does
+classify them, including which half of the partial each one landed on.
+
 ## How a `number` becomes a C# type
 
 TypeScript erases integers and floats to `number`. The IR carries a kind only where the upstream

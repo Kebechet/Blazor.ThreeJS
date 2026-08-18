@@ -453,29 +453,32 @@ serializing one would hand C# a plausible bag of numbers instead of a value. So 
 under a handle of its own and answers with a reference to that handle instead, which is what makes
 `renderer.shadowMap` and `mesh.CloneAsync()` reachable at all.
 
-On the generated classes that reaches **444 members**:
+On the generated classes that reaches **407 members**:
 
-- **373 answer with a value** - 199 methods (focal length and effective field of view, elapsed time,
-  curve lengths, instance matrices and colours, vertex positions, layer tests) and 174 read-only
+- **339 answer with a value** - 178 methods (focal length and effective field of view, elapsed time,
+  curve lengths, instance matrices and colours, vertex positions, layer tests) and 161 read-only
   properties (`uuid`, `instanceCount`, and three.js's own `isMesh`-style type tags). A read-only property
   is read on demand rather than mirrored, because three.js is the only side that ever assigns it: a C#
   property would imply the mirror knew the value without asking.
-- **67 answer with a mirrored object** - `Task<T?>` over the generated type, adopted under the handle the
+- **65 answer with a mirrored object** - `Task<T?>` over the generated type, adopted under the handle the
   applier registered it beneath. A handle this context already mirrors resolves back to that same C#
   object rather than to a second wrapper of it - which is what makes a method returning its own
   receiver safe - and `null` means the member genuinely held none.
-- **4 answer with an object no generated class mirrors** - `Task<Primitive?>`, the same untyped wrapper
+- **3 answer with an object no generated class mirrors** - `Task<Primitive?>`, the same untyped wrapper
   the escape hatch hands out. The handle is real and writable; nothing type-checks the members you name
-  on it.
+  on it. Adoption dedupes here on the same terms as above, and a handle this context mirrors as
+  something *other* than a `Primitive` faults instead of being wrapped a second time - that mirror is the
+  better answer and the caller is already holding it.
 
 What remains out of reach is out for reasons a handle does not fix:
 
-- **52 members taking or returning a JavaScript callback** - the wire carries ops in one direction only,
+- **43 members taking or returning a JavaScript callback** - the wire carries ops in one direction only,
   so there is nothing to call back into C# with.
-- **76 members typed as a DOM or TypeScript lib type** - C# holds no `HTMLCanvasElement` to hand over,
+- **63 members typed as a DOM or TypeScript lib type** - C# holds no `HTMLCanvasElement` to hand over,
   and a handle names a three.js object rather than an arbitrary browser one.
-- **63 static members** - the mirror models instances, and a static belongs to the class rather
-  than to any object the mirror holds.
+- **62 members that are not instance API** - 51 of them static, which the mirror has no handle to
+  address because a static belongs to the class rather than to any object it holds, and 11
+  declared `protected` or `private`, which three.js does not offer a consumer in the first place.
 
 A read is caller-initiated and costs one interop call. An idle scene still costs **zero** - nothing polls,
 and no callback runs per frame.
@@ -528,7 +531,7 @@ A blocked class is therefore not automatically a missing feature, and a count on
   whose type does not map are dropped; calling the JavaScript constructor with fewer arguments is what
   three.js is built for, so the result is a faithful subset rather than a guess. A **required** parameter
   that does not map blocks the whole class instead.
-- **4 generated methods declare more than one *TypeScript* overload upstream, and only the first
+- **2 generated methods declare more than one *TypeScript* overload upstream, and only the first
   signature is emitted.** Unrelated to the arm overloads below, which come from one signature.
 - **A colour is a `Color`.** three.js also accepts a CSS string or a hex number wherever a colour is
   taken; the hex form is covered by `Color.FromHex`, the string form is not exposed.
@@ -685,7 +688,11 @@ Only values come back over the wire - numbers, booleans, strings, and the hand-p
 `Kebechet.Blazor.ThreeJS.Math`. A property or method whose value is a three.js **object** is refused
 rather than serialized, so `GetAsync` reaches `fov` but not `geometry` - `GetObjectAsync` and
 `CallObjectAsync` reach `geometry` instead, answering with the object under its own handle as an
-untyped `Primitive`. And a class three.js does not export at all is out of reach for this too:
+untyped `Primitive`. Reading the same member twice answers with the same wrapper both times, since a
+handle this context already mirrors resolves back to that mirror rather than being wrapped again - and
+where the mirror it resolves to is **not** a `Primitive`, because you built that object in C# or loaded
+it from a glTF, the read faults instead of handing you an untyped second wrapper whose writes the typed
+mirror would never see. And a class three.js does not export at all is out of reach for this too:
 `THREE[name]` is `undefined` in the browser, and there is nothing there to construct.
 
 ## Wrapping a type yourself

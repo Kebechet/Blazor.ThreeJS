@@ -189,6 +189,30 @@ const KTX2_LOADER_MODULE = './addons/loaders/KTX2Loader.js';
 const contexts = new Map();
 let nextContextId = 1;
 
+// Builds the context object around a renderer the caller already has, and registers that renderer
+// under the handle C# addresses it by. Registered like any other mirrored object so C# can write to it
+// through the ordinary ops - which is the only way to reach shadow maps, tone mapping or the clear
+// colour, none of which is addressable from a scene object - and registered in both directions, so a
+// member answering with the renderer (`inspector.getRenderer()`) comes back as this handle rather than
+// minting a second one for the object `ThreeContext.Renderer` already mirrors.
+//
+// Split out of `createContext` and exported for the same reason `loadGltfInto` and
+// `attachOrbitControlsTo` are: this is the half with no GPU and no DOM in it, so the wire-contract test
+// can drive the real registration in Node rather than restating it and proving nothing.
+export function createContextAround(renderer, dotNetRef) {
+    const context = {
+        renderer,
+        dotNetRef,
+        objects: new Map(),
+        sceneHandle: 0,
+        cameraHandle: 0,
+        isRunning: true
+    };
+
+    registerObject(context, RENDERER_HANDLE, renderer);
+    return context;
+}
+
 // Async because WebGPURenderer's backend is: requesting a GPU adapter and device is a Promise, and
 // `render()` throws outright until it has resolved. The loop below reschedules itself in a `finally`,
 // so starting it before init would spin forever throwing once per frame with nothing to show for it.
@@ -200,19 +224,7 @@ export async function createContext(canvas, dotNetRef) {
     renderer.setPixelRatio(globalThis.devicePixelRatio || 1);
     await renderer.init();
 
-    const context = {
-        renderer,
-        dotNetRef,
-        objects: new Map(),
-        sceneHandle: 0,
-        cameraHandle: 0,
-        isRunning: true
-    };
-
-    // Registered like any other mirrored object so C# can write to it through the ordinary ops - which
-    // is the only way to reach shadow maps, tone mapping or the clear colour, none of which is
-    // addressable from a scene object.
-    context.objects.set(RENDERER_HANDLE, renderer);
+    const context = createContextAround(renderer, dotNetRef);
 
     applySize(context, canvas.clientWidth, canvas.clientHeight);
 
@@ -326,8 +338,7 @@ export function applyOp(context, op) {
 
             const args = (op.a ?? []).map(value => decode(context, value).value);
             const created = new ctor(...args);
-            context.objects.set(op.h, created);
-            rememberHandle(context, op.h, created);
+            registerObject(context, op.h, created);
             break;
         }
         case OP_SET: {
@@ -750,14 +761,20 @@ function handleFor(context, object) {
     }
 
     const handle = mintHandle(context);
-    context.objects.set(handle, object);
-    context.handlesByObject.set(object, handle);
+    registerObject(context, handle, object);
     return handle;
 }
 
-// Records the handle an object was created or registered under, so a later read that returns the same
-// object answers with it rather than minting a second one.
-function rememberHandle(context, handle, object) {
+// Records an object under a handle, in both directions at once: the forward table an op resolves a
+// handle through, and the reverse one `handleFor` consults before it mints.
+//
+// Both or neither, which is why this is one function rather than two calls every registration site has
+// to remember to pair. An object in the forward table alone is one a read hands back under a second,
+// freshly minted handle - so C# ends up with two mirrors of it and a write through either is invisible
+// through the other. That is the failure `handleFor`'s reverse lookup exists to prevent, and leaving a
+// single site unpaired reintroduces it for that one object, silently.
+function registerObject(context, handle, object) {
+    context.objects.set(handle, object);
     if (!context.handlesByObject) {
         context.handlesByObject = new WeakMap();
     }
@@ -1040,8 +1057,7 @@ function registerLoadedGraph(context, gltf) {
 // retires) without being reachable by walking `root`.
 function describeLoadedClip(context, clip, handles) {
     const handle = mintHandle(context);
-    context.objects.set(handle, clip);
-    rememberHandle(context, handle, clip);
+    registerObject(context, handle, clip);
     handles.push(handle);
     return {
         h: handle,
@@ -1052,8 +1068,7 @@ function describeLoadedClip(context, clip, handles) {
 
 function describeLoadedNode(context, object, handles) {
     const handle = mintHandle(context);
-    context.objects.set(handle, object);
-    rememberHandle(context, handle, object);
+    registerObject(context, handle, object);
     handles.push(handle);
     return {
         h: handle,
@@ -1144,7 +1159,7 @@ export async function attachOrbitControlsTo(context, cameraHandle) {
 
     const controls = new OrbitControls(camera, context.renderer.domElement);
     const handle = mintHandle(context);
-    context.objects.set(handle, controls);
+    registerObject(context, handle, controls);
     context.controls = controls;
     context.controlsHandle = handle;
     return handle;

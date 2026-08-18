@@ -817,6 +817,10 @@ export async function loadNode(contextId, modulePath, exportName, args) {
 // Each row carries the node's transform read off the object the loader built, encoded exactly as a
 // read op encodes one, so the C# mirror starts out holding the loader's own values rather than
 // three.js's constructor defaults.
+//
+// Alongside the nodes, one row per animation clip the file brought along: every clip GLTFLoader
+// produced is mirrored, since - unlike a node - a clip has no "unnamed and therefore unaddressable"
+// case to guard against; three.js names every clip it builds from a glTF animation.
 export async function loadGltf(contextId, url, progressRef) {
     const context = contexts.get(contextId);
     if (!context) {
@@ -847,11 +851,14 @@ export async function loadGltfInto(context, url, progressRef) {
         : undefined;
 
     const gltf = await new GLTFLoader().loadAsync(url, onProgress);
-    return registerLoadedGraph(context, gltf.scene);
+    return registerLoadedGraph(context, gltf);
 }
 
-// Mints a handle for the loaded root and for each of its named descendants, and describes them.
-function registerLoadedGraph(context, root) {
+// Mints a handle for the loaded root, for each of its named descendants, and for each animation clip
+// the file brought along - in that order, so a node's handle never depends on whether the file happens
+// to carry any clips. Describes all of them.
+function registerLoadedGraph(context, gltf) {
+    const root = gltf.scene;
     const handles = [];
     const nodes = [describeLoadedNode(context, root, handles)];
     root.traverse(object => {
@@ -862,12 +869,29 @@ function registerLoadedGraph(context, root) {
         nodes.push(describeLoadedNode(context, object, handles));
     });
 
+    const clips = (gltf.animations ?? []).map(clip => describeLoadedClip(context, clip, handles));
+
     if (!context.loadedGraphs) {
         context.loadedGraphs = new Map();
     }
 
     context.loadedGraphs.set(nodes[0].h, { root, handles });
-    return { n: nodes };
+    return { n: nodes, a: clips };
+}
+
+// Mints a handle for one animation clip the file brought along, and describes it. A clip is not part
+// of the node graph `root.traverse` walks - GLTFLoader hands the whole array back separately - so it is
+// registered the same way a node is (a handle, added to the same `handles` list a graph's dispose call
+// retires) without being reachable by walking `root`.
+function describeLoadedClip(context, clip, handles) {
+    const handle = mintHandle(context);
+    context.objects.set(handle, clip);
+    handles.push(handle);
+    return {
+        h: handle,
+        n: clip.name,
+        d: clip.duration
+    };
 }
 
 function describeLoadedNode(context, object, handles) {
@@ -886,7 +910,8 @@ function describeLoadedNode(context, object, handles) {
 }
 
 // Releases everything one loaded graph brought in, if `handle` names a loaded root: the GPU
-// resources hanging off it, and the handles minted for its nodes.
+// resources hanging off it, and the handles minted for its nodes and its animation clips - both live
+// in the same `handles` list, so one loop retires them together.
 //
 // The geometries, materials and textures are the part nothing else covers. A Mesh has no `dispose`,
 // so the generic arm in the dispose op never reaches them, and C# never created them so no dispose

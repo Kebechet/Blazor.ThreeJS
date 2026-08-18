@@ -680,13 +680,27 @@ assert.deepEqual(unreachableCanvas.registrations, [], 'a context with no .NET re
 // ---------------------------------------------------------------------------------------------
 
 const modelPath = fileURLToPath(new URL('../demo/wwwroot/models/figure.gltf', import.meta.url));
+const animatedFixturePath = fileURLToPath(new URL('./animated-fixture.gltf', import.meta.url));
+const fixturesByRoute = new Map([
+    ['/figure.gltf', modelPath],
+    ['/animated-fixture.gltf', animatedFixturePath]
+]);
+
 const modelServer = createServer((request, response) => {
+    const filePath = fixturesByRoute.get(request.url);
+    if (!filePath) {
+        response.writeHead(404);
+        response.end();
+        return;
+    }
+
     response.writeHead(200, { 'Content-Type': 'model/gltf+json' });
-    createReadStream(modelPath).pipe(response);
+    createReadStream(filePath).pipe(response);
 });
 
 await new Promise(resolve => modelServer.listen(0, '127.0.0.1', resolve));
 const modelUrl = `http://127.0.0.1:${modelServer.address().port}/figure.gltf`;
+const animatedFixtureUrl = `http://127.0.0.1:${modelServer.address().port}/animated-fixture.gltf`;
 
 const loadingContext = { objects: new Map() };
 
@@ -721,6 +735,7 @@ const survivedResponse = await loadGltfInto(faultingContext, modelUrl, faultingR
 assert.ok(survivedResponse.n.length > 1, 'a failing progress report must not fail the load');
 
 assert.ok(loadedNodes.length > 1, 'the loaded graph should report a root and its named descendants');
+assert.deepEqual(loadResponse.a, [], 'a model with no animations should report an empty clip list');
 
 // Handle minting, and the property the whole design rests on: the browser allocates downwards and C#
 // upwards from 1, so neither allocator can ever produce a handle the other already used. ThreeObject
@@ -797,6 +812,40 @@ assert.deepEqual(
     [],
     'disposing a loaded root must retire every handle minted for its graph');
 assert.equal(loadingContext.pointerTargets.size, 0, 'a disposed loaded node must stop being hit-testable');
+
+// A model that does carry animations reports one row per clip, minted after every node handle so the
+// wire test's [-2,-3,-4] pin on the demo figure stays untouched by files that bring clips along.
+const animatedLoadingContext = { objects: new Map() };
+const animatedResponse = await loadGltfInto(animatedLoadingContext, animatedFixtureUrl, undefined);
+
+assert.equal(animatedResponse.a.length, 1, 'the animated fixture should report exactly one clip');
+
+const clipRow = animatedResponse.a[0];
+assert.ok(clipRow.h < 0, 'a clip handle must come from the browser-minted half of the space');
+assert.equal(
+    animatedLoadingContext.objects.has(clipRow.h),
+    true,
+    `clip handle ${clipRow.h} should be registered in the object table`);
+
+const registeredClip = animatedLoadingContext.objects.get(clipRow.h);
+assert.equal(
+    typeof registeredClip.duration,
+    'number',
+    'the registered object should be the real three.js AnimationClip, which carries a numeric duration');
+assert.equal(registeredClip.name, 'Spin', 'the registered clip should be named the way the fixture names it');
+assert.equal(clipRow.n, 'Spin', 'the wire row should carry the clip name under n');
+assert.equal(typeof clipRow.d, 'number', 'the wire row should carry the clip duration under d');
+
+const animatedNodeHandles = animatedResponse.n.map(node => node.h);
+assert.ok(
+    animatedNodeHandles.every(nodeHandle => clipRow.h < nodeHandle),
+    'the clip handle must be minted after every node handle, since minting counts further down each time');
+
+applyOp(animatedLoadingContext, { k: OP_DISPOSE, h: animatedResponse.n[0].h });
+assert.equal(
+    animatedLoadingContext.objects.has(clipRow.h),
+    false,
+    'disposing the loaded root must retire the clip handle along with the node handles');
 
 modelServer.close();
 

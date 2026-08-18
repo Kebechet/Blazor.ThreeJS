@@ -20,6 +20,7 @@ import assert from 'node:assert/strict';
 import { createReadStream, readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
+import { Worker as NodeWorker } from 'node:worker_threads';
 
 import {
     applyOp,
@@ -41,6 +42,62 @@ globalThis.ProgressEvent ??= class ProgressEvent extends Event {
         this.lengthComputable = init.lengthComputable ?? false;
         this.loaded = init.loaded ?? 0;
         this.total = init.total ?? 0;
+    }
+};
+
+// Another gap in the test host, reached only by the DRACO section below. DRACOLoader resolves its
+// decoder assets relative to three-interop.js's own import.meta.url, which is an http(s) URL in every
+// browser that ever loads this module and a file:// one here, since this file imports three-interop.js
+// straight off disk. Node's fetch refuses the file:// scheme outright rather than falling back to the
+// filesystem, so the decoder path this package computes for the browser is the one this polyfill has
+// to make Node honour too.
+const originalFetch = globalThis.fetch;
+globalThis.fetch = async (input, init) => {
+    const requestUrl = typeof input === 'string' ? input : (input?.url ?? String(input));
+    if (!requestUrl.startsWith('file://')) {
+        return originalFetch(input, init);
+    }
+
+    const bytes = readFileSync(fileURLToPath(requestUrl));
+    return new Response(bytes, { status: 200 });
+};
+
+// A third gap: DRACOLoader decodes off a Worker, which Node's global scope has none of.
+// `node:worker_threads` ships a Worker too, but it is an EventEmitter that runs a file or an eval
+// string, not an EventTarget that runs a blob: URL - so both DRACOLoader's own worker script and the
+// way DRACOLoader talks to it need a shim. This is only the sliver DRACOLoader actually reaches:
+// postMessage/onmessage at the top of the worker's own global scope (which the script, written for a
+// browser, addresses through `self` - a global Node defines nowhere on its own), and
+// postMessage/onmessage plus arbitrary property storage on the handle held here, which is where
+// DRACOLoader keeps its own callback table.
+globalThis.Worker ??= class Worker {
+    constructor(sourceUrl) {
+        this._ready = fetch(sourceUrl)
+            .then(response => response.text())
+            .then(source => {
+                const bootstrap =
+                    "const { parentPort } = require('node:worker_threads');" +
+                    'globalThis.self = globalThis;' +
+                    'globalThis.postMessage = (message, transfer) => parentPort.postMessage(message, transfer);' +
+                    "Object.defineProperty(globalThis, 'onmessage', " +
+                    '{ set: handler => parentPort.on("message", data => handler({ data })) });';
+
+                this._worker = new NodeWorker(`${bootstrap}\n${source}`, { eval: true });
+                // Unref'd: a decoder worker outliving the load it served must not be what keeps this
+                // one-shot script's process open, the same way it costs a browser tab nothing once the
+                // page has moved on.
+                this._worker.unref();
+                this._worker.on('message', message => this.onmessage?.({ data: message }));
+                this._worker.on('error', error => this.onerror?.(error));
+            });
+    }
+
+    postMessage(message, transfer) {
+        this._ready.then(() => this._worker.postMessage(message, transfer));
+    }
+
+    terminate() {
+        this._ready.then(() => this._worker.terminate());
     }
 };
 
@@ -681,9 +738,13 @@ assert.deepEqual(unreachableCanvas.registrations, [], 'a context with no .NET re
 
 const modelPath = fileURLToPath(new URL('../demo/wwwroot/models/figure.gltf', import.meta.url));
 const animatedFixturePath = fileURLToPath(new URL('./animated-fixture.gltf', import.meta.url));
+const dracoFixturePath = fileURLToPath(new URL('../demo/wwwroot/models/box-draco.gltf', import.meta.url));
+const dracoFixtureBinPath = fileURLToPath(new URL('../demo/wwwroot/models/box-draco.bin', import.meta.url));
 const fixturesByRoute = new Map([
     ['/figure.gltf', modelPath],
-    ['/animated-fixture.gltf', animatedFixturePath]
+    ['/animated-fixture.gltf', animatedFixturePath],
+    ['/box-draco.gltf', dracoFixturePath],
+    ['/box-draco.bin', dracoFixtureBinPath]
 ]);
 
 const modelServer = createServer((request, response) => {
@@ -701,6 +762,7 @@ const modelServer = createServer((request, response) => {
 await new Promise(resolve => modelServer.listen(0, '127.0.0.1', resolve));
 const modelUrl = `http://127.0.0.1:${modelServer.address().port}/figure.gltf`;
 const animatedFixtureUrl = `http://127.0.0.1:${modelServer.address().port}/animated-fixture.gltf`;
+const dracoFixtureUrl = `http://127.0.0.1:${modelServer.address().port}/box-draco.gltf`;
 
 const loadingContext = { objects: new Map() };
 
@@ -847,6 +909,46 @@ assert.equal(
     false,
     'disposing the loaded root must retire the clip handle along with the node handles');
 
+// ---------------------------------------------------------------------------------------------
+// DRACO decoding, opt-in. `box-draco.gltf` is Khronos's own CC-BY-4.0 Box sample, re-exported with
+// KHR_draco_mesh_compression, which is documented (README, GLTFLoader's own class doc) as rejecting
+// unless a caller opts in. Both halves of that documented behaviour are proved here: the file loads
+// and mirrors its root when `{draco:true}` wires a DRACOLoader in, and the exact same file rejects
+// with GLTFLoader's own message when no options are given, since that is the failure a caller who
+// skips the opt-in is meant to see.
+// ---------------------------------------------------------------------------------------------
+
+const dracoRejectedContext = { objects: new Map() };
+await assert.rejects(
+    () => loadGltfInto(dracoRejectedContext, dracoFixtureUrl, undefined),
+    /DRACOLoader/,
+    'a Draco-compressed file must reject the load when no DRACOLoader is wired in');
+
+const dracoLoadingContext = { objects: new Map() };
+const dracoResponse = await loadGltfInto(dracoLoadingContext, dracoFixtureUrl, undefined, { draco: true });
+
+assert.ok(dracoResponse.n.length > 0, 'the Draco fixture should report at least its mirrored root');
+assert.ok(
+    dracoLoadingContext.objects.has(dracoResponse.n[0].h),
+    'the mirrored root should be registered in the object table');
+
+// Not just that the load resolved - that the worker actually decoded the compressed buffer back into
+// the exact vertex data Box.gltf's own accessors declare, which is the only proof that the wasm
+// decoder ran at all rather than a promise that happened to settle.
+let decodedMesh = null;
+dracoLoadingContext.objects.get(dracoResponse.n[0].h).traverse(object => {
+    if (object.isMesh) {
+        decodedMesh = object;
+    }
+});
+assert.ok(decodedMesh, 'the decoded graph should contain the mesh Draco compressed');
+assert.equal(
+    decodedMesh.geometry.attributes.position.count, 24,
+    "the decoded geometry should carry the Box sample's 24 vertices");
+assert.equal(
+    decodedMesh.geometry.index.count, 36,
+    "the decoded geometry should carry the Box sample's 36 indices");
+
 modelServer.close();
 
 // ---------------------------------------------------------------------------------------------
@@ -987,6 +1089,15 @@ console.log(`Wire contract OK - ${ops.length} ops applied against the vendored t
 console.log('Read op OK - values, tagged math values, correlation, ordering and refusals round-tripped.');
 console.log('Picking OK - one callback per hit, none for a miss, and no pointer-movement listener at all.');
 console.log(`GLTFLoader OK - the demo's own model fetched, parsed and mirrored as ${loadedNodes.length} nodes on browser-minted handles, then released.`);
+console.log('DRACO decoding OK - the same compressed file rejects with no options and decodes with {draco:true}.');
 console.log('OrbitControls OK - attached to the real canvas, 120 frames of camera movement, zero interop, every listener removed on detach.');
 console.log(`Generated surface OK - ${generatedClassNames.length} generated classes are constructors on the vendored three.js.`);
 console.log(`Escape hatch OK - '${UNWRAPPED_CLASS}' has no generated wrapper and was still constructed, mutated and read back; ${reachableClassNames.length} classes are reachable, from both sides.`);
+
+// A fourth and final gap in the test host: three-interop.js never disposes the DRACOLoader instance
+// it creates per load - correct in a browser, where an idle Worker costs a page nothing once nobody
+// is talking to it, but this script's own process has no page to unload, so a decode worker's message
+// port keeps the event loop alive even .unref()'d. Every assertion above has already run and passed
+// by the time this line is reached, so exiting here forces the same clean shutdown a browser tab
+// gives this addon for free.
+process.exit(0);

@@ -367,10 +367,18 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// Reference the browser reports fetch progress to, or <see langword="null"/> when the caller asked
 	/// for none. Owned by the caller, which disposes it once the load has settled.
 	/// </param>
+	/// <param name="options">
+	/// Which compressed-asset extensions to decode, or <see langword="null"/> for neither. Sent as its
+	/// wire-form DTO, or as <see langword="null"/> itself when <paramref name="options"/> is, so a
+	/// caller who asked for no options sends the applier no options rather than a DTO of all-false
+	/// flags.
+	/// </param>
 	/// <returns>One row per mirrored node of the loaded graph.</returns>
-	internal async Task<GLTFLoadResponse> LoadGltfAsync(string url, DotNetObjectReference<GltfProgressReporter>? progressReference)
+	internal async Task<GLTFLoadResponse> LoadGltfAsync(
+		string url, DotNetObjectReference<GltfProgressReporter>? progressReference, GLTFLoadOptions? options)
 	{
-		return await _module.InvokeAsync<GLTFLoadResponse>("loadGltf", _contextId, url, progressReference);
+		return await _module.InvokeAsync<GLTFLoadResponse>(
+			"loadGltf", _contextId, url, progressReference, GLTFLoadOptionsDto.FromOptions(options));
 	}
 
 	/// <summary>

@@ -175,13 +175,16 @@ function toComponents(values) {
     });
 }
 
-// The two addons this module wraps. They live outside the three.js bundle, ship as their own static
+// The addons this module wraps. They live outside the three.js bundle, ship as their own static
 // assets under wwwroot/addons, and are imported dynamically: a consumer who never loads a model
-// never fetches 115 KB of loader, and a canvas with no controls never fetches the controls either.
-// The paths are relative to this module, which is what makes them resolve identically from the
-// package's own `_content/` folder and from the demo.
+// never fetches 115 KB of loader, a caller who never opts into a decoder never fetches it either, and
+// a canvas with no controls never fetches the controls either. The paths are relative to this module,
+// which is what makes them resolve identically from the package's own `_content/` folder and from the
+// demo.
 const GLTF_LOADER_MODULE = './addons/loaders/GLTFLoader.js';
 const ORBIT_CONTROLS_MODULE = './addons/controls/OrbitControls.js';
+const DRACO_LOADER_MODULE = './addons/loaders/DRACOLoader.js';
+const KTX2_LOADER_MODULE = './addons/loaders/KTX2Loader.js';
 
 const contexts = new Map();
 let nextContextId = 1;
@@ -821,21 +824,50 @@ export async function loadNode(contextId, modulePath, exportName, args) {
 // Alongside the nodes, one row per animation clip the file brought along: every clip GLTFLoader
 // produced is mirrored, since - unlike a node - a clip has no "unnamed and therefore unaddressable"
 // case to guard against; three.js names every clip it builds from a glTF animation.
-export async function loadGltf(contextId, url, progressRef) {
+export async function loadGltf(contextId, url, progressRef, options) {
     const context = contexts.get(contextId);
     if (!context) {
         throw new Error(`Unknown context '${contextId}'`);
     }
 
-    return loadGltfInto(context, url, progressRef);
+    return loadGltfInto(context, url, progressRef, options);
 }
 
 // Exported for the same reason runOps is: the wire-contract test drives it against a plain
 // `{ objects: new Map() }` and a real HTTP URL, so the fetch, the parse and the minting are all the
 // real thing. Going through loadGltf would be impossible there — createContext needs a WebGL
 // renderer, which Node has not got, so no context id would ever resolve.
-export async function loadGltfInto(context, url, progressRef) {
+//
+// `options` opts into the two compressed-asset extensions GLTFLoader does not handle on its own:
+// `options.draco` wires a DRACOLoader for `KHR_draco_mesh_compression`, `options.ktx2` wires a
+// KTX2Loader for `KHR_texture_basisu`. Left undefined (the caller asked for neither), a compressed
+// file rejects with GLTFLoader's own message — the decoder modules are fetched only when asked for,
+// same as the loader itself.
+export async function loadGltfInto(context, url, progressRef, options) {
     const { GLTFLoader } = await import(GLTF_LOADER_MODULE);
+    const loader = new GLTFLoader();
+
+    if (options?.draco) {
+        const { DRACOLoader } = await import(DRACO_LOADER_MODULE);
+        const dracoLoader = new DRACOLoader()
+            .setDecoderPath(new URL('./addons/libs/draco/gltf/', import.meta.url).href);
+        loader.setDRACOLoader(dracoLoader);
+    }
+
+    if (options?.ktx2) {
+        const { KTX2Loader } = await import(KTX2_LOADER_MODULE);
+        const ktx2Loader = new KTX2Loader()
+            .setTranscoderPath(new URL('./addons/libs/basis/', import.meta.url).href);
+
+        // Feature detection needs a renderer to query, which the wire-contract test's plain
+        // `{ objects: new Map() }` context has not got. A file that never carries a KTX2 texture never
+        // reaches the code path that needs this, so skipping detection there costs nothing real.
+        if (context.renderer) {
+            ktx2Loader.detectSupport(context.renderer);
+        }
+
+        loader.setKTX2Loader(ktx2Loader);
+    }
 
     // The only JavaScript-to-C# call the package makes during an operation, and bounded by the fetch:
     // a handful of events for a model, never per frame. Failures are swallowed on purpose — a circuit
@@ -850,7 +882,7 @@ export async function loadGltfInto(context, url, progressRef) {
         }
         : undefined;
 
-    const gltf = await new GLTFLoader().loadAsync(url, onProgress);
+    const gltf = await loader.loadAsync(url, onProgress);
     return registerLoadedGraph(context, gltf);
 }
 

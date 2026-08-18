@@ -20,9 +20,10 @@ namespace Kebechet.Blazor.ThreeJS.Addons;
 /// </para>
 /// <para>
 /// Compressed-mesh and compressed-texture extensions (<c>KHR_draco_mesh_compression</c>,
-/// <c>KHR_texture_basisu</c>) are <b>not</b> wired up: they need a decoder addon and its worker
-/// scripts, which are separate assets again. A file using one fails the load with the browser's own
-/// message rather than silently loading without its geometry.
+/// <c>KHR_texture_basisu</c>) decode when <see cref="GLTFLoadOptions"/> opts into them; left at the
+/// default, a file using either extension fails the load with the browser's own message rather than
+/// silently loading without its geometry or textures. Each opt-in fetches its own decoder addon and
+/// worker scripts, which are separate assets again, only on the load that asks for it.
 /// </para>
 /// </summary>
 public sealed class GLTFLoader
@@ -60,6 +61,10 @@ public sealed class GLTFLoader
 	/// </para>
 	/// </summary>
 	/// <param name="url">URL of the <c>.gltf</c> or <c>.glb</c> file, as the browser will fetch it.</param>
+	/// <param name="options">
+	/// Which compressed-asset extensions to decode, or <see langword="null"/> to decode neither. See
+	/// <see cref="GLTFLoadOptions"/> for what each flag costs.
+	/// </param>
 	/// <param name="progress">
 	/// Receives the browser's own fetch progress while the file downloads, or <see langword="null"/> to
 	/// ask for none. Reported a handful of times per load rather than continuously, and a report that
@@ -69,7 +74,7 @@ public sealed class GLTFLoader
 	/// <returns>The loaded model, already attached to this loader's context.</returns>
 	/// <exception cref="ArgumentException">Thrown when <paramref name="url"/> is <see langword="null"/>, empty, or whitespace.</exception>
 	/// <exception cref="InvalidOperationException">Thrown when the browser answered without a root node.</exception>
-	public async Task<GLTFModel> LoadAsync(string url, IProgress<GltfLoadProgress>? progress = null)
+	public async Task<GLTFModel> LoadAsync(string url, GLTFLoadOptions? options = null, IProgress<GltfLoadProgress>? progress = null)
 	{
 		if (string.IsNullOrWhiteSpace(url))
 		{
@@ -82,7 +87,7 @@ public sealed class GLTFLoader
 			? null
 			: DotNetObjectReference.Create(new GltfProgressReporter(progress));
 
-		var response = await _context.LoadGltfAsync(url, progressReference);
+		var response = await _context.LoadGltfAsync(url, progressReference, options);
 		if (!response.Nodes.Any())
 		{
 			throw new InvalidOperationException(
@@ -103,5 +108,20 @@ public sealed class GLTFLoader
 			.ToList();
 
 		return new GLTFModel(mirroredNodes.First(), namedDescendants, clips);
+	}
+
+	/// <summary>
+	/// Back-compat overload for callers written against the version of this method whose second
+	/// parameter was the progress reporter. <c>LoadAsync(url, progress)</c> still compiles and still
+	/// asks for neither compressed-asset extension; call the primary overload directly to opt into one.
+	/// </summary>
+	/// <param name="url">URL of the <c>.gltf</c> or <c>.glb</c> file, as the browser will fetch it.</param>
+	/// <param name="progress">Receives the browser's own fetch progress while the file downloads.</param>
+	/// <returns>The loaded model, already attached to this loader's context.</returns>
+	/// <exception cref="ArgumentException">Thrown when <paramref name="url"/> is <see langword="null"/>, empty, or whitespace.</exception>
+	/// <exception cref="InvalidOperationException">Thrown when the browser answered without a root node.</exception>
+	public Task<GLTFModel> LoadAsync(string url, IProgress<GltfLoadProgress> progress)
+	{
+		return LoadAsync(url, options: null, progress);
 	}
 }

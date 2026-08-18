@@ -30,10 +30,82 @@ public class GLTFLoaderTests
 		// Assert
 		var invocation = module.Invocations.Single(x => x.Identifier == "loadGltf");
 
-		// The trailing null is the progress reference the caller did not ask for. Passed rather than
-		// omitted, because the applier's parameter list is positional and a missing argument would make
-		// the URL land in it.
-		invocation.Arguments.ShouldBe([4, ModelUrl, null]);
+		// The trailing nulls are the progress reference and the options DTO the caller did not ask for.
+		// Passed rather than omitted, because the applier's parameter list is positional and a missing
+		// argument would make a later one land in the wrong slot.
+		invocation.Arguments.ShouldBe([4, ModelUrl, null, null]);
+	}
+
+	[Fact]
+	public async Task GLTFLoader_LoadWithoutOptions_PassesNoOptionsDto()
+	{
+		// Arrange
+		var module = new AddonJsObjectReference { LoadResponse = FigureResponse() };
+		var context = new ThreeContext(module, contextId: 4);
+
+		// Act
+		await new GLTFLoader(context).LoadAsync(ModelUrl);
+
+		// Assert
+		// Null rather than a DTO of all-false flags, so a caller who asked for no options is
+		// indistinguishable on the wire from one running the version of this package before options
+		// existed.
+		var invocation = module.Invocations.Single(x => x.Identifier == "loadGltf");
+		invocation.Arguments.Last().ShouldBeNull();
+	}
+
+	[Fact]
+	public async Task GLTFLoader_LoadWithDracoEnabled_PassesAnOptionsDtoWithDracoTrue()
+	{
+		// Arrange
+		var module = new AddonJsObjectReference { LoadResponse = FigureResponse() };
+		var context = new ThreeContext(module, contextId: 4);
+
+		// Act
+		await new GLTFLoader(context).LoadAsync(ModelUrl, new GLTFLoadOptions { IsDracoEnabled = true });
+
+		// Assert
+		var invocation = module.Invocations.Single(x => x.Identifier == "loadGltf");
+		var optionsDto = invocation.Arguments.Last().ShouldBeOfType<GLTFLoadOptionsDto>();
+		optionsDto.Draco.ShouldBeTrue();
+		optionsDto.Ktx2.ShouldBeFalse();
+	}
+
+	[Fact]
+	public async Task GLTFLoader_LoadWithKtx2Enabled_PassesAnOptionsDtoWithKtx2True()
+	{
+		// Arrange
+		var module = new AddonJsObjectReference { LoadResponse = FigureResponse() };
+		var context = new ThreeContext(module, contextId: 4);
+
+		// Act
+		await new GLTFLoader(context).LoadAsync(ModelUrl, new GLTFLoadOptions { IsKtx2Enabled = true });
+
+		// Assert
+		var invocation = module.Invocations.Single(x => x.Identifier == "loadGltf");
+		var optionsDto = invocation.Arguments.Last().ShouldBeOfType<GLTFLoadOptionsDto>();
+		optionsDto.Draco.ShouldBeFalse();
+		optionsDto.Ktx2.ShouldBeTrue();
+	}
+
+	[Fact]
+	public async Task GLTFLoader_LoadThroughTheBackCompatProgressOverload_StillCompilesAndPassesNoOptions()
+	{
+		// Arrange
+		var module = new AddonJsObjectReference { LoadResponse = FigureResponse() };
+		var context = new ThreeContext(module, contextId: 4);
+		var reports = new List<GltfLoadProgress>();
+
+		// Act
+		// The overload existing callers compiled against before options existed: url, then progress,
+		// positionally, with nothing naming which parameter is which.
+		await new GLTFLoader(context).LoadAsync(ModelUrl, new Progress<GltfLoadProgress>(reports.Add));
+
+		// Assert
+		var invocation = module.Invocations.Single(x => x.Identifier == "loadGltf");
+		invocation.Arguments.Length.ShouldBe(4);
+		invocation.Arguments[2].ShouldBeOfType<DotNetObjectReference<GltfProgressReporter>>();
+		invocation.Arguments[3].ShouldBeNull();
 	}
 
 	[Fact]
@@ -64,8 +136,10 @@ public class GLTFLoaderTests
 		await new GLTFLoader(context).LoadAsync(ModelUrl, new Progress<GltfLoadProgress>(reports.Add));
 
 		// Assert
+		// Index 2, not the last argument: the trailing options DTO is what is last now that loadGltf
+		// takes one, and this overload always passes null for it.
 		var invocation = module.Invocations.Single(x => x.Identifier == "loadGltf");
-		invocation.Arguments.Last().ShouldBeOfType<DotNetObjectReference<GltfProgressReporter>>();
+		invocation.Arguments[2].ShouldBeOfType<DotNetObjectReference<GltfProgressReporter>>();
 	}
 
 	[Theory]

@@ -29,6 +29,9 @@ internal static class Stories
 	/// <summary>A glTF model playing the animation clip its own file brought along.</summary>
 	public const string AnimatedModel = "addons-gltfloader-animations--play-a-clip-the-file-brought-along";
 
+	/// <summary>A Draco-compressed glTF model, loaded only once the caller opts a DRACOLoader in.</summary>
+	public const string CompressedModel = "addons-gltfloader-compression--load-a-draco-compressed-model";
+
 	/// <summary>Grid of every geometry that builds from numbers alone.</summary>
 	public const string CatalogueGeometries = "catalogue-geometries--parametric-geometries";
 
@@ -105,6 +108,7 @@ internal static class Stories
 		DeclarativeNodes,
 		FigureWithOrbitControls,
 		AnimatedModel,
+		CompressedModel,
 		CatalogueGeometries,
 		CatalogueMaterials,
 		CatalogueMultiMaterial,

@@ -323,8 +323,9 @@ var model = await new GLTFLoader(threeContext).LoadAsync(
 `IsKtx2Enabled` opts into `KHR_texture_basisu` the same way, wiring a `KTX2Loader` instead of a
 `DRACOLoader`. Each flag fetches its own decoder module only on the load that sets it. Leave both at
 their default `false` and nothing changes from before: a compressed file still fails the load with the
-browser's own message rather than quietly arriving without its geometry or textures - see
-`demo/Stories/CompressedModel.stories.razor` for that failure alongside the opt-in that avoids it.
+browser's own message rather than quietly arriving without its geometry or textures -
+`demo/Stories/CompressedModel.stories.razor` shows the opt-in that avoids it, and
+`tests/wire-format.test.mjs` proves both the failure and the opt-in against the real decoder.
 
 ### Orbiting the camera
 
@@ -429,7 +430,7 @@ These are outside the class total, because the extractor never reads them:
 
 | | classes | |
 |---|---|---|
-| addons (`examples/jsm`) | 383 | **2 wrapped by hand**: `GLTFLoader`, `OrbitControls`, each vendored as its own static asset beside the bundle. The other 381 are not classes of their own - no post-processing passes, no exporters, no other controls. `DRACOLoader` and `KTX2Loader` are vendored too, but only as decoder dependencies `GLTFLoader` wires in when `GLTFLoadOptions` opts a load into one, never as a class a consumer constructs directly. The generator reads none of them either way, which is why they sit outside the class total |
+| addons (`examples/jsm`) | 383 | **2 wrapped by hand**: `GLTFLoader`, `OrbitControls`, each vendored as its own static asset beside the bundle. The other 381 are not wrapped - no post-processing passes, no exporters, no other controls. `DRACOLoader` and `KTX2Loader` are vendored too, but only as decoder dependencies `GLTFLoader` wires in when `GLTFLoadOptions` opts a load into one, never as a class a consumer constructs directly. The generator reads none of them either way, which is why they sit outside the class total |
 | the TSL / WebGPU node stack (`src/nodes`) | 118 | the shipped bundle **does** carry them - the renderer is `WebGPURenderer` and every material it draws is a node graph - but they are outside the surface the extractor reads, and deliberately so: TSL's operators are grafted onto node prototypes at runtime and its typing lives in TypeScript generics no C# signature carries, so a mirror of it would be a lossy shadow. `ThreeContext.LoadNodeAsync` reaches the real thing instead |
 
 And inside the total, deliberately out of the mirrored surface:

@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Shouldly;
 
 namespace Blazor.ThreeJS.E2E;
@@ -60,7 +59,7 @@ public sealed class GltfCompressionTests(DemoFixture fixture)
 		var fetchedUrls = string.Join(Environment.NewLine, storyPage.Responses.Select(x => $"{x.Status} {x.Url}"));
 		foreach (var chunk in RequiredModuleChunks.Append(ModelUrl).Append(ModelBufferUrl))
 		{
-			var pattern = FingerprintedUrlPattern(chunk);
+			var pattern = FingerprintedAssets.UrlPattern(chunk);
 			var responses = storyPage.Responses.Where(x => pattern.IsMatch(x.Url)).ToArray();
 			responses.ShouldNotBeEmpty($"The browser never fetched {chunk}. It fetched:{Environment.NewLine}{fetchedUrls}");
 			responses.Select(x => x.Status).ShouldAllBe(status => status < 400);
@@ -83,19 +82,6 @@ public sealed class GltfCompressionTests(DemoFixture fixture)
 
 		// Assert
 		storyPage.ConsoleErrors.ShouldBeEmpty();
-	}
-
-	/// <summary>
-	/// Matches a static asset by its logical path, with or without the content fingerprint the SDK
-	/// puts before the extension. Shared logic with <see cref="GltfFigureTests"/> - see its own remarks
-	/// for why the fingerprint segment is optional in the pattern.
-	/// </summary>
-	/// <param name="logicalPath">Path as it is written in source, for example <c>/a/b/thing.js</c>.</param>
-	private static Regex FingerprintedUrlPattern(string logicalPath)
-	{
-		var extension = Path.GetExtension(logicalPath);
-		var withoutExtension = logicalPath[..^extension.Length];
-		return new Regex($"{Regex.Escape(withoutExtension)}(\\.[a-z0-9]+)?{Regex.Escape(extension)}$");
 	}
 
 	/// <summary>Waits until the compressed model has been fetched, decoded and drawn onto the canvas.</summary>

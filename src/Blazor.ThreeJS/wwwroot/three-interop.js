@@ -842,31 +842,18 @@ export async function loadGltf(contextId, url, progressRef, options) {
 // `options.draco` wires a DRACOLoader for `KHR_draco_mesh_compression`, `options.ktx2` wires a
 // KTX2Loader for `KHR_texture_basisu`. Left undefined (the caller asked for neither), a compressed
 // file rejects with GLTFLoader's own message — the decoder modules are fetched only when asked for,
-// same as the loader itself.
+// same as the loader itself, and (see getDracoLoader/getKtx2Loader) cached on the context and reused
+// by every later opt-in load on it rather than rebuilt, and its worker pool, per load.
 export async function loadGltfInto(context, url, progressRef, options) {
     const { GLTFLoader } = await import(GLTF_LOADER_MODULE);
     const loader = new GLTFLoader();
 
     if (options?.draco) {
-        const { DRACOLoader } = await import(DRACO_LOADER_MODULE);
-        const dracoLoader = new DRACOLoader()
-            .setDecoderPath(new URL('./addons/libs/draco/gltf/', import.meta.url).href);
-        loader.setDRACOLoader(dracoLoader);
+        loader.setDRACOLoader(await getDracoLoader(context));
     }
 
     if (options?.ktx2) {
-        const { KTX2Loader } = await import(KTX2_LOADER_MODULE);
-        const ktx2Loader = new KTX2Loader()
-            .setTranscoderPath(new URL('./addons/libs/basis/', import.meta.url).href);
-
-        // Feature detection needs a renderer to query, which the wire-contract test's plain
-        // `{ objects: new Map() }` context has not got. A file that never carries a KTX2 texture never
-        // reaches the code path that needs this, so skipping detection there costs nothing real.
-        if (context.renderer) {
-            ktx2Loader.detectSupport(context.renderer);
-        }
-
-        loader.setKTX2Loader(ktx2Loader);
+        loader.setKTX2Loader(await getKtx2Loader(context));
     }
 
     // The only JavaScript-to-C# call the package makes during an operation, and bounded by the fetch:
@@ -884,6 +871,62 @@ export async function loadGltfInto(context, url, progressRef, options) {
 
     const gltf = await loader.loadAsync(url, onProgress);
     return registerLoadedGraph(context, gltf);
+}
+
+// A DRACOLoader owns a worker pool (up to workerLimit workers) that only .dispose() tears down, so a
+// fresh instance per load - the first shape this took - leaked one worker pool per compressed load for
+// as long as the context lived. Cached on the context instead, the same place every other browser
+// resource a context owns lives, and reused by every later opt-in load on that context; disposeContext
+// is what retires it. Lazy rather than built alongside the context itself, so a context that never
+// loads a compressed model never pays for the decoder or its worker at all.
+async function getDracoLoader(context) {
+    if (context.dracoLoader) {
+        return context.dracoLoader;
+    }
+
+    const { DRACOLoader } = await import(DRACO_LOADER_MODULE);
+    context.dracoLoader = new DRACOLoader()
+        .setDecoderPath(new URL('./addons/libs/draco/gltf/', import.meta.url).href);
+    return context.dracoLoader;
+}
+
+// Mirrors getDracoLoader: cached on the context and reused, for the same reason - KTX2Loader owns a
+// worker pool too. Feature detection needs a renderer to query, which the wire-contract test's plain
+// `{ objects: new Map() }` context has not got; a file that never carries a KTX2 texture never reaches
+// the code path that needs this, so skipping detection there costs nothing real.
+async function getKtx2Loader(context) {
+    if (context.ktx2Loader) {
+        return context.ktx2Loader;
+    }
+
+    const { KTX2Loader } = await import(KTX2_LOADER_MODULE);
+    const ktx2Loader = new KTX2Loader()
+        .setTranscoderPath(new URL('./addons/libs/basis/', import.meta.url).href);
+
+    if (context.renderer) {
+        ktx2Loader.detectSupport(context.renderer);
+    }
+
+    context.ktx2Loader = ktx2Loader;
+    return context.ktx2Loader;
+}
+
+// Tears down whichever decoders getDracoLoader/getKtx2Loader cached on a context, if a compressed
+// load ever ran one up. Neither lives in context.objects - they are not mirrored, browser-only state -
+// so disposeContext's generic dispose loop would never reach them, and each owns a worker pool only
+// .dispose() tears down. Its own function, called from disposeContext below, rather than inlined
+// there: the wire-contract test drives this exact path against a plain context that never went
+// through createContext, and a copy of the logic could drift from what actually runs in the browser.
+export function disposeDecoders(context) {
+    if (context.dracoLoader) {
+        context.dracoLoader.dispose();
+        context.dracoLoader = undefined;
+    }
+
+    if (context.ktx2Loader) {
+        context.ktx2Loader.dispose();
+        context.ktx2Loader = undefined;
+    }
 }
 
 // Mints a handle for the loaded root, for each of its named descendants, and for each animation clip
@@ -1118,6 +1161,8 @@ export function disposeContext(contextId) {
             releaseLoadedGraph(context, rootHandle);
         }
     }
+
+    disposeDecoders(context);
 
     for (const object of context.objects.values()) {
         if (object && typeof object.dispose === 'function') {

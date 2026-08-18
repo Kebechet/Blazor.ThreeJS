@@ -68,7 +68,7 @@ public sealed class GltfFigureTests(DemoFixture fixture)
 		var fetchedUrls = string.Join(Environment.NewLine, storyPage.Responses.Select(x => $"{x.Status} {x.Url}"));
 		foreach (var chunk in RequiredModuleChunks.Append(ModelUrl))
 		{
-			var pattern = FingerprintedUrlPattern(chunk);
+			var pattern = FingerprintedAssets.UrlPattern(chunk);
 			var responses = storyPage.Responses.Where(x => pattern.IsMatch(x.Url)).ToArray();
 			responses.ShouldNotBeEmpty($"The browser never fetched {chunk}. It fetched:{Environment.NewLine}{fetchedUrls}");
 			responses.Select(x => x.Status).ShouldAllBe(status => status < 400);
@@ -137,25 +137,6 @@ public sealed class GltfFigureTests(DemoFixture fixture)
 		afterOrbit.Mirror.ShouldBe(beforeOrbit.Mirror);
 		afterOrbit.Browser.ShouldNotBe(afterOrbit.Mirror);
 		storyPage.ConsoleErrors.ShouldBeEmpty();
-	}
-
-	/// <summary>
-	/// Matches a static asset by its logical path, with or without the content fingerprint the SDK
-	/// puts before the extension.
-	/// </summary>
-	/// <remarks>
-	/// .NET 10 publishes static web assets fingerprinted — <c>three-interop.js</c> is served as
-	/// <c>three-interop.bmy27co6t7.js</c> — and rewrites the import map so a plain
-	/// <c>import './three-interop.js'</c> still resolves. The interop module's own relative imports go
-	/// through that map too, which is what keeps the vendored addon siblings reachable; matching on
-	/// the un-fingerprinted name alone would find nothing.
-	/// </remarks>
-	/// <param name="logicalPath">Path as it is written in source, for example <c>/a/b/thing.js</c>.</param>
-	private static Regex FingerprintedUrlPattern(string logicalPath)
-	{
-		var extension = Path.GetExtension(logicalPath);
-		var withoutExtension = logicalPath[..^extension.Length];
-		return new Regex($"{Regex.Escape(withoutExtension)}(\\.[a-z0-9]+)?{Regex.Escape(extension)}$");
 	}
 
 	/// <summary>Waits until the model has been fetched, built and drawn onto the canvas.</summary>

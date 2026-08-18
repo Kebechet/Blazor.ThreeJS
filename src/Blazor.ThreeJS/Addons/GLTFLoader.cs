@@ -116,11 +116,14 @@ public sealed class GLTFLoader
 	/// asks for neither compressed-asset extension; call the primary overload directly to opt into one.
 	/// </summary>
 	/// <param name="url">URL of the <c>.gltf</c> or <c>.glb</c> file, as the browser will fetch it.</param>
-	/// <param name="progress">Receives the browser's own fetch progress while the file downloads.</param>
+	/// <param name="progress">
+	/// Receives the browser's own fetch progress while the file downloads, or <see langword="null"/> to
+	/// ask for none - accepted here for the same reason the overload this replaced accepted it.
+	/// </param>
 	/// <returns>The loaded model, already attached to this loader's context.</returns>
 	/// <exception cref="ArgumentException">Thrown when <paramref name="url"/> is <see langword="null"/>, empty, or whitespace.</exception>
 	/// <exception cref="InvalidOperationException">Thrown when the browser answered without a root node.</exception>
-	public Task<GLTFModel> LoadAsync(string url, IProgress<GltfLoadProgress> progress)
+	public Task<GLTFModel> LoadAsync(string url, IProgress<GltfLoadProgress>? progress)
 	{
 		return LoadAsync(url, options: null, progress);
 	}

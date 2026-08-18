@@ -303,7 +303,7 @@ internal sealed class CoverageReport
 		{
 			var handWrittenAddons = string.Join(", ", EmitterConfig.HandWrittenAddonClassNames.Select(x => $"`{x}`"));
 			var unwrappedAddonCount = addons.Classes - EmitterConfig.HandWrittenAddonClassNames.Count;
-			AppendLine(builder, $"| addons (`{addons.Path}`) | {addons.Classes} | **{EmitterConfig.HandWrittenAddonClassNames.Count} wrapped by hand**: {handWrittenAddons}, each vendored as its own static asset beside the bundle. The other {unwrappedAddonCount} are not classes of their own - no post-processing passes, no exporters, no other controls. `DRACOLoader` and `KTX2Loader` are vendored too, but only as decoder dependencies `GLTFLoader` wires in when `GLTFLoadOptions` opts a load into one, never as a class a consumer constructs directly. The generator reads none of them either way, which is why they sit outside the class total |");
+			AppendLine(builder, $"| addons (`{addons.Path}`) | {addons.Classes} | **{EmitterConfig.HandWrittenAddonClassNames.Count} wrapped by hand**: {handWrittenAddons}, each vendored as its own static asset beside the bundle. The other {unwrappedAddonCount} are not wrapped - no post-processing passes, no exporters, no other controls. `DRACOLoader` and `KTX2Loader` are vendored too, but only as decoder dependencies `GLTFLoader` wires in when `GLTFLoadOptions` opts a load into one, never as a class a consumer constructs directly. The generator reads none of them either way, which is why they sit outside the class total |");
 		}
 
 		foreach (var excluded in _ir.Meta?.ExcludedDirectories ?? [])

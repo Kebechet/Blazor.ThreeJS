@@ -27,6 +27,7 @@ import {
     attachOrbitControlsTo,
     detachControls,
     dispatchPointerHit,
+    disposeDecoders,
     loadGltfInto,
     runOps
 } from '../src/Blazor.ThreeJS/wwwroot/three-interop.js';
@@ -949,6 +950,30 @@ assert.equal(
     decodedMesh.geometry.index.count, 36,
     "the decoded geometry should carry the Box sample's 36 indices");
 
+// A second {draco:true} load on the same context must reuse the cached decoder rather than building a
+// fresh one - and the worker pool it owns - per load. This is what getDracoLoader's cache on the
+// context exists to guarantee; without it, a SPA loading ten compressed models would leak ten worker
+// pools, one per load, none of which anything but disposeContext could ever reach.
+const dracoLoaderAfterFirstLoad = dracoLoadingContext.dracoLoader;
+assert.ok(dracoLoaderAfterFirstLoad, 'the context should cache the DRACOLoader it built for the first load');
+
+await loadGltfInto(dracoLoadingContext, dracoFixtureUrl, undefined, { draco: true });
+assert.equal(
+    dracoLoadingContext.dracoLoader, dracoLoaderAfterFirstLoad,
+    'a second opt-in load on the same context must reuse the cached DRACOLoader instance rather than building another');
+
+// Disposal - disposeDecoders is the exact function disposeContext itself calls, not a copy of its
+// logic - must tear down the worker pool the two loads above built up and clear the cache, or a
+// context that goes on loading compressed models past this point would find a disposed decoder still
+// sitting there instead of building a fresh one.
+disposeDecoders(dracoLoadingContext);
+assert.equal(
+    dracoLoaderAfterFirstLoad.workerPool.length, 0,
+    'disposing the cached decoder must terminate every worker in its pool');
+assert.equal(
+    dracoLoadingContext.dracoLoader, undefined,
+    'disposing the cached decoder must clear it off the context');
+
 modelServer.close();
 
 // ---------------------------------------------------------------------------------------------
@@ -1089,15 +1114,7 @@ console.log(`Wire contract OK - ${ops.length} ops applied against the vendored t
 console.log('Read op OK - values, tagged math values, correlation, ordering and refusals round-tripped.');
 console.log('Picking OK - one callback per hit, none for a miss, and no pointer-movement listener at all.');
 console.log(`GLTFLoader OK - the demo's own model fetched, parsed and mirrored as ${loadedNodes.length} nodes on browser-minted handles, then released.`);
-console.log('DRACO decoding OK - the same compressed file rejects with no options and decodes with {draco:true}.');
+console.log('DRACO decoding OK - the same compressed file rejects with no options, decodes with {draco:true}, reuses its cached decoder on a second load, and releases it on dispose.');
 console.log('OrbitControls OK - attached to the real canvas, 120 frames of camera movement, zero interop, every listener removed on detach.');
 console.log(`Generated surface OK - ${generatedClassNames.length} generated classes are constructors on the vendored three.js.`);
 console.log(`Escape hatch OK - '${UNWRAPPED_CLASS}' has no generated wrapper and was still constructed, mutated and read back; ${reachableClassNames.length} classes are reachable, from both sides.`);
-
-// A fourth and final gap in the test host: three-interop.js never disposes the DRACOLoader instance
-// it creates per load - correct in a browser, where an idle Worker costs a page nothing once nobody
-// is talking to it, but this script's own process has no page to unload, so a decode worker's message
-// port keeps the event loop alive even .unref()'d. Every assertion above has already run and passed
-// by the time this line is reached, so exiting here forces the same clean shutdown a browser tab
-// gives this addon for free.
-process.exit(0);

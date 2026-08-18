@@ -855,6 +855,20 @@ applyOp(loadingContext, { k: OP_SET, h: head.h, m: 'visible', v: true });
 applyOp(loadingContext, { k: OP_PICK, h: head.h, v: true });
 assert.ok(loadingContext.pointerTargets.has(head.h), 'a loaded node must be able to opt into hit-testing');
 
+// A JS-side read that returns a loaded node must answer with the handle the load already minted for
+// it, not a fresh one - this is what rememberHandle inside describeLoadedNode buys: without it,
+// handleFor would have no record of the object at all and would mint a duplicate every time.
+const objectCountBeforeReread = loadingContext.objects.size;
+const rereadHead = applyOp(loadingContext, {
+    k: OP_READ, h: loadedNodes[0].h, m: 'getObjectByName', a: ['Head'], n: true
+});
+assert.equal(
+    rereadHead.$ref, head.h,
+    'reading back an already-loaded node must answer with the handle load minted for it');
+assert.equal(
+    loadingContext.objects.size, objectCountBeforeReread,
+    'answering with an already-minted handle must not register a second entry for the same object');
+
 // Disposal. The geometries, materials and textures a loaded file brings in are the resources nothing
 // else releases: a Mesh has no dispose, so the generic arm never reaches them, and C# never created
 // them so no dispose op will ever name them either. Disposing the root has to release the graph.
@@ -973,6 +987,57 @@ assert.equal(
 assert.equal(
     dracoLoadingContext.dracoLoader, undefined,
     'disposing the cached decoder must clear it off the context');
+
+// Two opt-in loads racing to be the *first* one on a brand-new context - unlike the sequential reuse
+// above, neither has anything cached to reuse yet when it calls getDracoLoader. Both still end up
+// sharing the one decoder getDracoLoader's promise cache hands out, and a load afterwards still reuses
+// it, which is what a context that raced two DRACOLoaders into existence would fail to do once the
+// loser's instance got overwritten and orphaned.
+const racedDracoContext = { objects: new Map() };
+const [racedFirst, racedSecond] = await Promise.all([
+    loadGltfInto(racedDracoContext, dracoFixtureUrl, undefined, { draco: true }),
+    loadGltfInto(racedDracoContext, dracoFixtureUrl, undefined, { draco: true })
+]);
+assert.ok(
+    racedFirst.n.length > 0 && racedSecond.n.length > 0,
+    'both racing opt-in loads should still decode successfully');
+
+const racedDracoLoader = racedDracoContext.dracoLoader;
+assert.ok(racedDracoLoader, 'a racing pair of first opt-in loads should still leave a decoder cached');
+
+await loadGltfInto(racedDracoContext, dracoFixtureUrl, undefined, { draco: true });
+assert.equal(
+    racedDracoContext.dracoLoader, racedDracoLoader,
+    'a load after the race must still reuse the one decoder the race settled on');
+
+disposeDecoders(racedDracoContext);
+
+// ---------------------------------------------------------------------------------------------
+// KTX2, opt-in. There is no small KTX2-compressed sample in this repository's fixtures, so what is
+// proved here is the half that does not need one: `{ktx2:true}` on a file that carries no
+// KHR_texture_basisu texture still loads exactly as it would with no options at all - the loader is
+// wired in and never asked to decode anything - and getKtx2Loader's caching and disposal behave the
+// same way getDracoLoader's do, proven the same way just above.
+// ---------------------------------------------------------------------------------------------
+
+const ktx2LoadingContext = { objects: new Map() };
+const ktx2Response = await loadGltfInto(ktx2LoadingContext, modelUrl, undefined, { ktx2: true });
+assert.ok(
+    ktx2Response.n.length > 1,
+    'a file with no KTX2 texture must still load fully with {ktx2:true} - the loader is attached but never asked to decode anything');
+
+const ktx2LoaderAfterFirstLoad = ktx2LoadingContext.ktx2Loader;
+assert.ok(ktx2LoaderAfterFirstLoad, 'the context should cache the KTX2Loader it built for the first opt-in load');
+
+await loadGltfInto(ktx2LoadingContext, modelUrl, undefined, { ktx2: true });
+assert.equal(
+    ktx2LoadingContext.ktx2Loader, ktx2LoaderAfterFirstLoad,
+    'a second opt-in load on the same context must reuse the cached KTX2Loader instance rather than building another');
+
+disposeDecoders(ktx2LoadingContext);
+assert.equal(
+    ktx2LoadingContext.ktx2Loader, undefined,
+    'disposing the cached decoder must clear the KTX2Loader off the context');
 
 modelServer.close();
 
@@ -1114,7 +1179,8 @@ console.log(`Wire contract OK - ${ops.length} ops applied against the vendored t
 console.log('Read op OK - values, tagged math values, correlation, ordering and refusals round-tripped.');
 console.log('Picking OK - one callback per hit, none for a miss, and no pointer-movement listener at all.');
 console.log(`GLTFLoader OK - the demo's own model fetched, parsed and mirrored as ${loadedNodes.length} nodes on browser-minted handles, then released.`);
-console.log('DRACO decoding OK - the same compressed file rejects with no options, decodes with {draco:true}, reuses its cached decoder on a second load, and releases it on dispose.');
+console.log('DRACO decoding OK - the same compressed file rejects with no options, decodes with {draco:true}, reuses its cached decoder on a second load and on a racing first pair, and releases it on dispose.');
+console.log('KTX2 opt-in OK - {ktx2:true} still loads a file with no KTX2 texture, reuses its cached decoder on a second load, and releases it on dispose.');
 console.log('OrbitControls OK - attached to the real canvas, 120 frames of camera movement, zero interop, every listener removed on detach.');
 console.log(`Generated surface OK - ${generatedClassNames.length} generated classes are constructors on the vendored three.js.`);
 console.log(`Escape hatch OK - '${UNWRAPPED_CLASS}' has no generated wrapper and was still constructed, mutated and read back; ${reachableClassNames.length} classes are reachable, from both sides.`);

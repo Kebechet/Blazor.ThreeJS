@@ -63,6 +63,13 @@ const INTEROP_FILE_NAME = "three-interop.js";
  * makes: `verifyImportClosure` re-derives the closure on every run and fails if this list stops being
  * closed under imports. The `.wasm` decoder payloads carry no imports of their own; `verifyImportClosure`
  * skips them for that reason, not because they are exempt from being vendored.
+ *
+ * `draco_decoder.js` — DRACOLoader's ~500 KB pure-JavaScript fallback decoder — is the one deliberate
+ * exception: it is not vendored at all. DRACOLoader only reaches for it when `WebAssembly` is not an
+ * `object`, and this package sets no `decoderConfig.type` that would force JS decoding on a browser
+ * that does have WebAssembly; every browser target this package supports has had WebAssembly for
+ * years. Vendoring it would ship 500 KB neither this package nor a supported browser can ever fetch.
+ * `draco_wasm_wrapper.js` and `draco_decoder.wasm`, the path every real load takes, still ship below.
  */
 const VENDORED_FILES = new Map([
     ["three.webgpu.min.js", "build/three.webgpu.min.js"],
@@ -78,7 +85,6 @@ const VENDORED_FILES = new Map([
     ["addons/libs/ktx-parse.module.js", "examples/jsm/libs/ktx-parse.module.js"],
     ["addons/libs/zstddec.module.js", "examples/jsm/libs/zstddec.module.js"],
     ["addons/math/ColorSpaces.js", "examples/jsm/math/ColorSpaces.js"],
-    ["addons/libs/draco/gltf/draco_decoder.js", "examples/jsm/libs/draco/gltf/draco_decoder.js"],
     ["addons/libs/draco/gltf/draco_decoder.wasm", "examples/jsm/libs/draco/gltf/draco_decoder.wasm"],
     ["addons/libs/draco/gltf/draco_wasm_wrapper.js", "examples/jsm/libs/draco/gltf/draco_wasm_wrapper.js"],
     ["addons/libs/basis/basis_transcoder.js", "examples/jsm/libs/basis/basis_transcoder.js"],
@@ -90,7 +96,12 @@ const VENDORED_FILES = new Map([
  * as a static asset whether or not anything imports it, so it would go on padding every consumer's
  * publish output with megabytes nothing loads.
  */
-const RETIRED_FILES = ["three.module.js", "three.core.js", "three.module.min.js"];
+const RETIRED_FILES = [
+    "three.module.js",
+    "three.core.js",
+    "three.module.min.js",
+    "addons/libs/draco/gltf/draco_decoder.js"
+];
 
 /**
  * Matches the specifier of a static `import ... from '...'` / `export ... from '...'` clause.

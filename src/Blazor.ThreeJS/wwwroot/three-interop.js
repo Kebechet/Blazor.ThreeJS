@@ -842,8 +842,9 @@ export async function loadGltf(contextId, url, progressRef, options) {
 // `options.draco` wires a DRACOLoader for `KHR_draco_mesh_compression`, `options.ktx2` wires a
 // KTX2Loader for `KHR_texture_basisu`. Left undefined (the caller asked for neither), a compressed
 // file rejects with GLTFLoader's own message — the decoder modules are fetched only when asked for,
-// same as the loader itself, and (see getDracoLoader/getKtx2Loader) cached on the context and reused
-// by every later opt-in load on it rather than rebuilt, and its worker pool, per load.
+// same as the loader itself, and (see getDracoLoader/getKtx2Loader) cached on the context — decoder
+// instance and worker pool alike — and reused by every later opt-in load on it, rather than rebuilt
+// per load.
 export async function loadGltfInto(context, url, progressRef, options) {
     const { GLTFLoader } = await import(GLTF_LOADER_MODULE);
     const loader = new GLTFLoader();
@@ -879,36 +880,49 @@ export async function loadGltfInto(context, url, progressRef, options) {
 // resource a context owns lives, and reused by every later opt-in load on that context; disposeContext
 // is what retires it. Lazy rather than built alongside the context itself, so a context that never
 // loads a compressed model never pays for the decoder or its worker at all.
-async function getDracoLoader(context) {
-    if (context.dracoLoader) {
-        return context.dracoLoader;
+//
+// What is cached is the in-flight *promise*, written before the first await inside it rather than
+// after. Two opt-in loads racing to be first on the same context both call this synchronously, so
+// whichever reaches the assignment first is the only one that ever builds a DRACOLoader; the other
+// sees the promise already sitting there and awaits that instead of a second `import()` + `new
+// DRACOLoader()` of its own. Caching the resolved instance directly, as this first did, left a window
+// between the check and the assignment - both racing calls would see nothing cached, both would build
+// one, and the loser's instance, worker pool included, would be overwritten and never reached again.
+function getDracoLoader(context) {
+    if (!context.dracoLoaderPromise) {
+        context.dracoLoaderPromise = (async () => {
+            const { DRACOLoader } = await import(DRACO_LOADER_MODULE);
+            context.dracoLoader = new DRACOLoader()
+                .setDecoderPath(new URL('./addons/libs/draco/gltf/', import.meta.url).href);
+            return context.dracoLoader;
+        })();
     }
 
-    const { DRACOLoader } = await import(DRACO_LOADER_MODULE);
-    context.dracoLoader = new DRACOLoader()
-        .setDecoderPath(new URL('./addons/libs/draco/gltf/', import.meta.url).href);
-    return context.dracoLoader;
+    return context.dracoLoaderPromise;
 }
 
-// Mirrors getDracoLoader: cached on the context and reused, for the same reason - KTX2Loader owns a
-// worker pool too. Feature detection needs a renderer to query, which the wire-contract test's plain
-// `{ objects: new Map() }` context has not got; a file that never carries a KTX2 texture never reaches
-// the code path that needs this, so skipping detection there costs nothing real.
-async function getKtx2Loader(context) {
-    if (context.ktx2Loader) {
-        return context.ktx2Loader;
+// Mirrors getDracoLoader: the in-flight promise is cached and reused, for the same reason - KTX2Loader
+// owns a worker pool too, and the same race would orphan one. Feature detection needs a renderer to
+// query, which the wire-contract test's plain `{ objects: new Map() }` context has not got; a file
+// that never carries a KTX2 texture never reaches the code path that needs this, so skipping detection
+// there costs nothing real.
+function getKtx2Loader(context) {
+    if (!context.ktx2LoaderPromise) {
+        context.ktx2LoaderPromise = (async () => {
+            const { KTX2Loader } = await import(KTX2_LOADER_MODULE);
+            const ktx2Loader = new KTX2Loader()
+                .setTranscoderPath(new URL('./addons/libs/basis/', import.meta.url).href);
+
+            if (context.renderer) {
+                ktx2Loader.detectSupport(context.renderer);
+            }
+
+            context.ktx2Loader = ktx2Loader;
+            return ktx2Loader;
+        })();
     }
 
-    const { KTX2Loader } = await import(KTX2_LOADER_MODULE);
-    const ktx2Loader = new KTX2Loader()
-        .setTranscoderPath(new URL('./addons/libs/basis/', import.meta.url).href);
-
-    if (context.renderer) {
-        ktx2Loader.detectSupport(context.renderer);
-    }
-
-    context.ktx2Loader = ktx2Loader;
-    return context.ktx2Loader;
+    return context.ktx2LoaderPromise;
 }
 
 // Tears down whichever decoders getDracoLoader/getKtx2Loader cached on a context, if a compressed
@@ -917,15 +931,22 @@ async function getKtx2Loader(context) {
 // .dispose() tears down. Its own function, called from disposeContext below, rather than inlined
 // there: the wire-contract test drives this exact path against a plain context that never went
 // through createContext, and a copy of the logic could drift from what actually runs in the browser.
+//
+// Checked and cleared by the resolved instance, not the promise: by the time anything calls this, a
+// getDracoLoader/getKtx2Loader call that is ever going to finish already has, since nothing disposes a
+// context out from under a load still in flight. Clearing both fields lets a context that goes on
+// loading compressed models past this point build a fresh decoder rather than finding a disposed one.
 export function disposeDecoders(context) {
     if (context.dracoLoader) {
         context.dracoLoader.dispose();
         context.dracoLoader = undefined;
+        context.dracoLoaderPromise = undefined;
     }
 
     if (context.ktx2Loader) {
         context.ktx2Loader.dispose();
         context.ktx2Loader = undefined;
+        context.ktx2LoaderPromise = undefined;
     }
 }
 
@@ -961,6 +982,7 @@ function registerLoadedGraph(context, gltf) {
 function describeLoadedClip(context, clip, handles) {
     const handle = mintHandle(context);
     context.objects.set(handle, clip);
+    rememberHandle(context, handle, clip);
     handles.push(handle);
     return {
         h: handle,
@@ -972,6 +994,7 @@ function describeLoadedClip(context, clip, handles) {
 function describeLoadedNode(context, object, handles) {
     const handle = mintHandle(context);
     context.objects.set(handle, object);
+    rememberHandle(context, handle, object);
     handles.push(handle);
     return {
         h: handle,

@@ -17,9 +17,11 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// sees the value it already holds. One that changes the scene graph (<c>Attach</c>, <c>Copy</c>)
 /// leaves <c>Children</c> reporting the parentage the mirror last arranged itself — and so do
 /// <c>RemoveFromParentAsync</c> and <c>ClearAsync</c>, which are queries only because three.js
-/// hands the changed object back: what they answer with is a handle, not a refreshed mirror. Where
-/// a property or a hand-written method expresses what you want, use that; where you want the
-/// command, treat what it wrote as three.js's from then on.</para>
+/// hands the changed object back: what they answer with is a handle, not a refreshed mirror. Both
+/// answer the receiver, which always exists, so the nullable <c>Task&lt;Object3D?&gt;</c> they
+/// declare never actually resolves null. Where a property or a hand-written method expresses what
+/// you want, use that; where you want the command, treat what it wrote as three.js's from then
+/// on.</para>
 /// </summary>
 public abstract partial class Object3D
 {

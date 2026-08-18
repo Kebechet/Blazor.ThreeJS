@@ -14,7 +14,7 @@
 
 Blazor wrapper for three.js. Typed C# scene graph with batched interop, safe on WebAssembly, Server, and MAUI Hybrid. Ships the three.js bundle - no npm, no CDN, no manual script tags.
 
-> **Generated from `@types/three`.** Most of three.js's class surface is wrapped mechanically from the upstream type declarations, so the property names, constructor argument order and documentation are three.js's own rather than a paraphrase. The 19 hand-written math types in `Kebechet.Blazor.ThreeJS.Math` (`Vector3`, `Color` and the rest), the `Object3D` scene-graph base and the two addon wrappers (`GLTFLoader`, `OrbitControls`) are hand-written. [Coverage](#coverage) is exactly how much is wrapped, what is not, and how those numbers were arrived at; [Reaching a class the mirror does not wrap](#reaching-a-class-the-mirror-does-not-wrap) is how to reach the rest - untyped in three lines, or with a wrapper of your own.
+> **Generated from `@types/three`.** Most of three.js's class surface is wrapped mechanically from the upstream type declarations, so the property names, constructor argument order and documentation are three.js's own rather than a paraphrase. The 19 math types in `Kebechet.Blazor.ThreeJS.Math` (`Vector3`, `Color` and the rest) and the two addon wrappers (`GLTFLoader`, `OrbitControls`) are hand-written; the `Object3D` scene-graph base is hybrid - hand-written for behaviour, with a generated command and query surface beside it. [Coverage](#coverage) is exactly how much is wrapped, what is not, and how those numbers were arrived at; [Reaching a class the mirror does not wrap](#reaching-a-class-the-mirror-does-not-wrap) is how to reach the rest - untyped in three lines, or with a wrapper of your own.
 
 ## Installation
 
@@ -613,9 +613,10 @@ types taking a DOM handle - and none of them blocks you. The three.js bundle thi
 complete library, and the applier resolves a class by **name** off it, so anything three.js exports is
 constructible whether a C# type exists for it or not.
 
-`Primitive` names the class. `Set`, `Call`, `CallAsync` and `GetAsync` reach its members, by their
-three.js names. All four live on `ThreeObject`, so they work on the generated types too - a property
-three.js added last week is a `Set` away rather than a package release away.
+`Primitive` names the class. `Set`, `Call`, `CallAsync`, `GetAsync`, `GetObjectAsync` and
+`CallObjectAsync` reach its members, by their three.js names. All six live on `ThreeObject`, so they
+work on the generated types too - a property three.js added last week is a `Set` away rather than a
+package release away.
 
 ```csharp
 // PositionalAudio has no generated type: the generator refuses it because its base needs a
@@ -668,9 +669,10 @@ call site rather than shipped as a plain object over a live three.js instance.
 
 Only values come back over the wire - numbers, booleans, strings, and the hand-ported math types in
 `Kebechet.Blazor.ThreeJS.Math`. A property or method whose value is a three.js **object** is refused
-rather than serialized, so `GetAsync` reaches `fov` but not `geometry`. And a class three.js does not
-export at all is out of reach for this too: `THREE[name]` is `undefined` in the browser, and there is
-nothing there to construct.
+rather than serialized, so `GetAsync` reaches `fov` but not `geometry` - `GetObjectAsync` and
+`CallObjectAsync` reach `geometry` instead, answering with the object under its own handle as an
+untyped `Primitive`. And a class three.js does not export at all is out of reach for this too:
+`THREE[name]` is `undefined` in the browser, and there is nothing there to construct.
 
 ## Wrapping a type yourself
 

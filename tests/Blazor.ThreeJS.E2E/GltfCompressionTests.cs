@@ -17,13 +17,13 @@ public sealed class GltfCompressionTests(DemoFixture fixture)
 	/// already needs: the DRACOLoader addon itself, and the two decoder files it actually asks for in
 	/// a WebAssembly-capable browser - <c>draco_wasm_wrapper.js</c>, the glue Emscripten generates, and
 	/// <c>draco_decoder.wasm</c>, the decoder itself. <c>draco_decoder.js</c>, the pure-JavaScript
-	/// fallback DRACOLoader only reaches for when <c>WebAssembly</c> is unavailable, is vendored
-	/// alongside them but deliberately left off this list: Chrome always has <c>WebAssembly</c>, so it
-	/// is never fetched, and asserting a file this suite would never see would make the assertion a
-	/// lie about what the load actually requests. A sibling any of these imports but this list omits
-	/// is invisible to every other test layer: the build stays green, the C# tests stay green, and the
-	/// browser fails at <c>ERR_MODULE_NOT_FOUND</c> or "No DRACOLoader instance provided" on the one
-	/// page that actually opts in.
+	/// fallback DRACOLoader only reaches for when <c>WebAssembly</c> is unavailable, is left off this
+	/// list because it is not vendored at all: <c>generator/vendor.mjs</c> deliberately excludes it,
+	/// since Chrome always has <c>WebAssembly</c> and no browser this package targets would ever fetch
+	/// it. A sibling any of these imports but this list omits is invisible to every other test layer:
+	/// the build stays green, the C# tests stay green, and the browser fails at
+	/// <c>ERR_MODULE_NOT_FOUND</c> or "No DRACOLoader instance provided" on the one page that actually
+	/// opts in.
 	/// </summary>
 	private static readonly string[] RequiredModuleChunks =
 	[

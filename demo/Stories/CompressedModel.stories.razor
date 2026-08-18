@@ -13,8 +13,9 @@
                 <code>new GLTFLoadOptions { IsDracoEnabled = true }</code> to <code>LoadAsync</code> is
                 what opts in: only then does this page fetch <code>DRACOLoader.js</code> and the decoder
                 it wraps - about 264 KB in a WebAssembly-capable browser, which is every browser this
-                package targets. A further ~500 KB, a pure-JavaScript fallback decoder for a browser
-                with no WebAssembly, is vendored beside it but sits unfetched here.
+                package targets. DRACOLoader also has a ~500 KB pure-JavaScript fallback decoder for a
+                browser with no WebAssembly; this package deliberately does not ship it, since no
+                browser it targets would ever fetch it.
             </p>
             <ThreeCanvas Style="width: 100%; height: 420px;" OnReady="BuildCompressedSceneAsync" />
             <p>

@@ -1039,6 +1039,40 @@ assert.equal(
     ktx2LoadingContext.ktx2Loader, undefined,
     'disposing the cached decoder must clear the KTX2Loader off the context');
 
+// A transient failure building the decoder must not brick every later opt-in load on the same context
+// with the same stale rejection forever. DRACOLoader/KTX2Loader's own module path is hardcoded, so it
+// cannot be made to fail here, but detectSupport can: a `renderer` with none of the shape KTX2Loader
+// expects makes it throw synchronously inside getKtx2Loader's promise, before context.ktx2Loader is
+// ever assigned - a real failure on the one branch this test host can actually reach into.
+const retryContext = { objects: new Map(), renderer: {} };
+let failedLoadError = null;
+try {
+    await loadGltfInto(retryContext, modelUrl, undefined, { ktx2: true });
+} catch (error) {
+    failedLoadError = error;
+}
+
+assert.ok(
+    failedLoadError,
+    'a KTX2Loader that fails to detect support against a malformed renderer must reject the load');
+assert.equal(
+    retryContext.ktx2LoaderPromise, undefined,
+    'a rejected decoder promise must clear itself off the context rather than staying cached forever');
+assert.equal(
+    retryContext.ktx2Loader, undefined,
+    'a failed decoder build must never have set the resolved instance');
+
+// The same context, retried once the cause of the failure is gone, must get a real second attempt
+// rather than replaying the first attempt's cached rejection.
+retryContext.renderer = undefined;
+const retriedResponse = await loadGltfInto(retryContext, modelUrl, undefined, { ktx2: true });
+assert.ok(
+    retriedResponse.n.length > 1,
+    'a context must be able to retry and succeed on the same opt-in flag once the earlier failure clears');
+assert.ok(retryContext.ktx2Loader, 'a successful retry must leave a decoder cached same as any other first load');
+
+disposeDecoders(retryContext);
+
 modelServer.close();
 
 // ---------------------------------------------------------------------------------------------
@@ -1180,7 +1214,7 @@ console.log('Read op OK - values, tagged math values, correlation, ordering and 
 console.log('Picking OK - one callback per hit, none for a miss, and no pointer-movement listener at all.');
 console.log(`GLTFLoader OK - the demo's own model fetched, parsed and mirrored as ${loadedNodes.length} nodes on browser-minted handles, then released.`);
 console.log('DRACO decoding OK - the same compressed file rejects with no options, decodes with {draco:true}, reuses its cached decoder on a second load and on a racing first pair, and releases it on dispose.');
-console.log('KTX2 opt-in OK - {ktx2:true} still loads a file with no KTX2 texture, reuses its cached decoder on a second load, and releases it on dispose.');
+console.log('KTX2 opt-in OK - {ktx2:true} still loads a file with no KTX2 texture, reuses its cached decoder on a second load, releases it on dispose, and clears a failed build so a retry gets a real second attempt.');
 console.log('OrbitControls OK - attached to the real canvas, 120 frames of camera movement, zero interop, every listener removed on detach.');
 console.log(`Generated surface OK - ${generatedClassNames.length} generated classes are constructors on the vendored three.js.`);
 console.log(`Escape hatch OK - '${UNWRAPPED_CLASS}' has no generated wrapper and was still constructed, mutated and read back; ${reachableClassNames.length} classes are reachable, from both sides.`);

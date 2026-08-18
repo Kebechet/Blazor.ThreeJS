@@ -888,27 +888,49 @@ export async function loadGltfInto(context, url, progressRef, options) {
 // DRACOLoader()` of its own. Caching the resolved instance directly, as this first did, left a window
 // between the check and the assignment - both racing calls would see nothing cached, both would build
 // one, and the loser's instance, worker pool included, would be overwritten and never reached again.
+//
+// A rejected promise is cleared off the context before it is rethrown, rather than left cached: a
+// transient failure - the import() 404ing on a flaky connection, say - must not brick every later
+// opt-in load on this context with the same stale rejection forever. Clearing it here is what makes
+// the next load's call see nothing cached and try again, the same way a synchronous throw would have
+// let it before this was cached at all.
+//
+// The clear is guarded by identity (only clear the field if it still points at the promise that just
+// rejected) rather than unconditional, because disposeDecoders can already have cleared this same
+// field out from under an in-flight promise - a context disposed mid-load, see disposeDecoders - and
+// a fresh opt-in load can have cached a second-generation promise on it by the time the first one's
+// rejection handler finally runs. Clearing unconditionally there would evict a live, unrelated promise
+// a newer load is still waiting on.
 function getDracoLoader(context) {
     if (!context.dracoLoaderPromise) {
-        context.dracoLoaderPromise = (async () => {
+        const promise = (async () => {
             const { DRACOLoader } = await import(DRACO_LOADER_MODULE);
             context.dracoLoader = new DRACOLoader()
                 .setDecoderPath(new URL('./addons/libs/draco/gltf/', import.meta.url).href);
             return context.dracoLoader;
-        })();
+        })().catch(error => {
+            if (context.dracoLoaderPromise === promise) {
+                context.dracoLoaderPromise = undefined;
+            }
+
+            throw error;
+        });
+        context.dracoLoaderPromise = promise;
     }
 
     return context.dracoLoaderPromise;
 }
 
 // Mirrors getDracoLoader: the in-flight promise is cached and reused, for the same reason - KTX2Loader
-// owns a worker pool too, and the same race would orphan one. Feature detection needs a renderer to
+// owns a worker pool too, and the same race would orphan one - and a rejection clears itself off the
+// context the same identity-guarded way, so a transient import or detectSupport failure does not brick
+// every later opt-in load nor evict a newer load's promise. Feature detection needs a renderer to
 // query, which the wire-contract test's plain `{ objects: new Map() }` context has not got; a file
 // that never carries a KTX2 texture never reaches the code path that needs this, so skipping detection
 // there costs nothing real.
 function getKtx2Loader(context) {
     if (!context.ktx2LoaderPromise) {
-        context.ktx2LoaderPromise = (async () => {
+        const promise = (async () => {
             const { KTX2Loader } = await import(KTX2_LOADER_MODULE);
             const ktx2Loader = new KTX2Loader()
                 .setTranscoderPath(new URL('./addons/libs/basis/', import.meta.url).href);
@@ -919,7 +941,14 @@ function getKtx2Loader(context) {
 
             context.ktx2Loader = ktx2Loader;
             return ktx2Loader;
-        })();
+        })().catch(error => {
+            if (context.ktx2LoaderPromise === promise) {
+                context.ktx2LoaderPromise = undefined;
+            }
+
+            throw error;
+        });
+        context.ktx2LoaderPromise = promise;
     }
 
     return context.ktx2LoaderPromise;
@@ -932,22 +961,52 @@ function getKtx2Loader(context) {
 // there: the wire-contract test drives this exact path against a plain context that never went
 // through createContext, and a copy of the logic could drift from what actually runs in the browser.
 //
-// Checked and cleared by the resolved instance, not the promise: by the time anything calls this, a
-// getDracoLoader/getKtx2Loader call that is ever going to finish already has, since nothing disposes a
-// context out from under a load still in flight. Clearing both fields lets a context that goes on
-// loading compressed models past this point build a fresh decoder rather than finding a disposed one.
+// disposeContext runs while a load can still be in flight - ThreeCanvas disposes its context as soon
+// as its own DisposeAsync runs, whether or not the OnReady callback that may be awaiting a compressed
+// LoadAsync has finished - so the decoder this is asked to tear down is not always built yet. Both
+// fields are cleared here regardless, synchronously, so a context looks fully disposed the moment this
+// returns and the next opt-in load (if any) starts clean. What is still in flight cannot be disposed
+// synchronously, since there is nothing to call .dispose() on yet; a continuation on its promise
+// disposes the instance the moment it does resolve instead, so a decoder that finishes arriving after
+// dispose is disposed on arrival rather than left running. A rejection there needs no handling of its
+// own - getDracoLoader/getKtx2Loader's own .catch already cleared the field, and there is nothing left
+// to dispose.
 export function disposeDecoders(context) {
-    if (context.dracoLoader) {
-        context.dracoLoader.dispose();
-        context.dracoLoader = undefined;
-        context.dracoLoaderPromise = undefined;
+    disposeOneDecoder(context, 'dracoLoader', 'dracoLoaderPromise');
+    disposeOneDecoder(context, 'ktx2Loader', 'ktx2LoaderPromise');
+}
+
+/** Tears down one of the two decoder fields disposeDecoders manages; see it for the full picture. */
+function disposeOneDecoder(context, loaderField, promiseField) {
+    const promise = context[promiseField];
+    if (!promise) {
+        return;
     }
 
-    if (context.ktx2Loader) {
-        context.ktx2Loader.dispose();
-        context.ktx2Loader = undefined;
-        context.ktx2LoaderPromise = undefined;
+    context[promiseField] = undefined;
+
+    const loader = context[loaderField];
+    context[loaderField] = undefined;
+
+    if (loader) {
+        loader.dispose();
+        return;
     }
+
+    // Still in flight. Disposing it the moment it resolves, rather than leaving it running, is what
+    // keeps a load that outlives its context from leaking a worker pool nothing will ever call
+    // .dispose() on again; the field is cleared a second time in case getDracoLoader/getKtx2Loader's
+    // own assignment (inside the promise being awaited here) landed after the clear above but before
+    // this runs, and to guard against a *new* opt-in load already having cached a different instance
+    // on the field by the time this old promise finally settles.
+    promise
+        .then(resolvedLoader => {
+            resolvedLoader.dispose();
+            if (context[loaderField] === resolvedLoader) {
+                context[loaderField] = undefined;
+            }
+        })
+        .catch(() => {});
 }
 
 // Mints a handle for the loaded root, for each of its named descendants, and for each animation clip

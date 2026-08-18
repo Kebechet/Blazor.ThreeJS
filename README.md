@@ -276,7 +276,38 @@ and rebuilding it with `Add` would re-parent nodes three.js has already placed. 
 **Handles.** These objects were created by the browser, so the browser allocates their handles: C#
 counts up from 1 and JavaScript counts down from -1, which is why the two never collide without
 having to agree on anything. Disposing the loaded root releases the whole graph it brought in -
-geometries, materials and textures included, which nothing else would ever free.
+geometries, materials and textures included, which nothing else would ever free. Every clip handle
+under `model.Animations` is retired at the same time, for the same reason: nothing else would ever
+release them either.
+
+**Playing a clip the file brought along.** `model.Animations` is every `LoadedAnimationClip` the file
+carries, and `model.FindClip("name")` finds one by its glTF name the way `FindNode` finds a node. No
+new playback machinery is needed - a `LoadedAnimationClip.Clip` is a plain `AnimationClip`, so it plays
+through the same `AnimationMixer` any other clip does:
+
+```csharp
+var mixer = new AnimationMixer(model.Scene);
+threeContext.Attach(mixer);
+
+var spin = model.FindClip("Spin");
+if (spin is not null)
+{
+    var action = await mixer.ClipActionAsync(spin.Clip, model.Scene, AnimationBlendMode.NormalAnimationBlendMode);
+    await action!.PlayAsync();
+}
+```
+
+`mixer.Update(deltaTime)` still has to be called every frame to advance playback. A `PeriodicTimer`
+loop that calls it and then `threeContext.FlushAsync()` - the pattern both `Animation.stories.razor`
+and `AnimatedModel.stories.razor` use - costs no extra interop: the call rides along with whatever the
+frame is already flushing, rather than adding a round trip of its own.
+
+`LoadedAnimationClip` wraps rather than *is* an `AnimationClip`: its `Name` and `Duration` are plain
+`string`/`float` properties read once from the load response, not the generated class's own `Name`/
+`Duration`, because those are constructor-argument state on `AnimationClip` that an adopted instance
+has no way to seed without writing them back to the browser as property sets - a round trip that could
+only confirm values the browser just reported. Reading `spin.Name`/`spin.Duration` costs nothing;
+`spin.Clip` is what a mixer or any other API expecting an `AnimationClip` takes.
 
 Compressed-mesh and compressed-texture extensions (`KHR_draco_mesh_compression`,
 `KHR_texture_basisu`) are not wired up; a file using one fails the load rather than quietly arriving

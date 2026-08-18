@@ -98,6 +98,10 @@ public sealed class GLTFLoader
 			.Skip(1)
 			.ToList();
 
-		return new GLTFModel(mirroredNodes.First(), namedDescendants);
+		var clips = response.Animations
+			.Select(x => new LoadedAnimationClip(_context.Batch, x))
+			.ToList();
+
+		return new GLTFModel(mirroredNodes.First(), namedDescendants, clips);
 	}
 }

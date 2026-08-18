@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Kebechet.Blazor.ThreeJS.Addons;
 using Kebechet.Blazor.ThreeJS.Core;
 using Kebechet.Blazor.ThreeJS.Math;
@@ -105,6 +106,133 @@ public class GLTFLoaderTests
 		model.Scene.Name.ShouldBe("Figure");
 		model.Scene.ThreeType.ShouldBe("Group");
 		model.Nodes.Select(x => x.Name).ShouldBe(["Head", "Torso"]);
+	}
+
+	[Fact]
+	public async Task GLTFLoader_Load_SurfacesEveryClipTheBrowserReported()
+	{
+		// Arrange
+		var module = new AddonJsObjectReference
+		{
+			LoadResponse = new GLTFLoadResponse
+			{
+				Nodes = [LoadedNode.Describe(handle: -1, "Figure", "Group")],
+				Animations = [LoadedNode.DescribeClip(handle: -2, "Spin", 1.5f)]
+			}
+		};
+		var context = new ThreeContext(module, contextId: 1);
+
+		// Act
+		var model = await new GLTFLoader(context).LoadAsync(ModelUrl);
+
+		// Assert
+		model.Animations.Count.ShouldBe(1);
+		model.Animations[0].Name.ShouldBe("Spin");
+		model.Animations[0].Duration.ShouldBe(1.5f);
+	}
+
+	[Fact]
+	public async Task GLTFLoader_LoadWithNoAnimations_AnswersAnEmptyClipList()
+	{
+		// Arrange
+		var module = new AddonJsObjectReference { LoadResponse = FigureResponse() };
+		var context = new ThreeContext(module, contextId: 1);
+
+		// Act
+		var model = await new GLTFLoader(context).LoadAsync(ModelUrl);
+
+		// Assert
+		model.Animations.ShouldBeEmpty();
+	}
+
+	[Fact]
+	public async Task GLTFLoader_LoadWithClips_RecordsNoOpsWhileAdoptingThem()
+	{
+		// Arrange
+		var module = new AddonJsObjectReference
+		{
+			LoadResponse = new GLTFLoadResponse
+			{
+				Nodes = [LoadedNode.Describe(handle: -1, "Figure", "Group")],
+				Animations = [LoadedNode.DescribeClip(handle: -2, "Spin", 1.5f)]
+			}
+		};
+		var context = new ThreeContext(module, contextId: 1);
+
+		// Act
+		await new GLTFLoader(context).LoadAsync(ModelUrl);
+		await context.FlushAsync();
+
+		// Assert
+		// Adopting a clip costs nothing to say, the same way seeding a node's transform does: every
+		// value came from the browser's own answer, so sending any of it back would only confirm it.
+		module.AppliedBatches.ShouldBeEmpty();
+	}
+
+	[Fact]
+	public async Task GLTFLoader_FindClipWithNoMatch_AnswersNull()
+	{
+		// Arrange
+		var module = new AddonJsObjectReference { LoadResponse = FigureResponse() };
+		var context = new ThreeContext(module, contextId: 1);
+		var model = await new GLTFLoader(context).LoadAsync(ModelUrl);
+
+		// Act
+		var clip = model.FindClip("missing");
+
+		// Assert
+		clip.ShouldBeNull();
+	}
+
+	[Fact]
+	public async Task GLTFLoader_FoundClip_ExposesTheHandleTheBrowserMintedForIt()
+	{
+		// Arrange
+		var module = new AddonJsObjectReference
+		{
+			LoadResponse = new GLTFLoadResponse
+			{
+				Nodes = [LoadedNode.Describe(handle: -1, "Figure", "Group")],
+				Animations = [LoadedNode.DescribeClip(handle: -2, "Spin", 1.5f)]
+			}
+		};
+		var context = new ThreeContext(module, contextId: 1);
+		var model = await new GLTFLoader(context).LoadAsync(ModelUrl);
+		var clip = model.FindClip("Spin").ShouldNotBeNull();
+
+		// A clip is exercised the same way any adopted AnimationClip is: handed to a mixer already
+		// attached to this context. What matters here is only that Clip.Handle is the browser-minted
+		// one, and that ClipActionAsync sends it as a $ref rather than a value - not what the mixer
+		// answers, which is out of scope for a fake module that answers nothing.
+		var mixer = new AnimationMixer(model.Scene);
+		context.Attach(mixer);
+
+		// Act
+		await mixer.ClipActionAsync(clip.Clip, model.Scene, AnimationBlendMode.NormalAnimationBlendMode);
+
+		// Assert
+		var op = module.AllOps.Single(x => x.Kind == ThreeOpKind.Read && x.Member == "clipAction");
+		op.Args.ShouldNotBeNull();
+		op.Args!.OfType<ThreeValue.HandleReference>().ShouldContain(x => x.Handle == clip.Clip.Handle);
+		clip.Clip.Handle.ShouldBe(-2);
+	}
+
+	[Fact]
+	public void GLTFLoadResponse_DeserializedWithoutAnAnimationsKey_AnswersWithAnEmptyList()
+	{
+		// Arrange
+		// The shape an old browser tab, running JavaScript cached from before this feature shipped,
+		// would still send - no "a" key at all rather than an empty array for one.
+		const string json = """
+			{"n":[{"h":-1,"n":"Figure","t":"Group","p":{"$t":"Vector3","v":[0,0,0]},"r":{"$t":"Euler","v":[0,0,0]},"s":{"$t":"Vector3","v":[1,1,1]},"v":true}]}
+			""";
+
+		// Act
+		var response = JsonSerializer.Deserialize<GLTFLoadResponse>(json);
+
+		// Assert
+		response.ShouldNotBeNull();
+		response.Animations.ShouldBeEmpty();
 	}
 
 	[Fact]

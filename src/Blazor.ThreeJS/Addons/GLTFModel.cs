@@ -34,14 +34,23 @@ public sealed class GLTFModel
 	public IReadOnlyList<LoadedObject3D> Nodes { get; }
 
 	/// <summary>
-	/// Builds the model over the nodes the browser reported.
+	/// Every animation clip the file brought along, in the order the browser reported them. Empty when
+	/// the file carries none. Play one through an <c>AnimationMixer</c> attached to <see cref="Scene"/>
+	/// (or to whichever node the clip's tracks target) and <c>AnimationMixer.ClipActionAsync</c>.
+	/// </summary>
+	public IReadOnlyList<LoadedAnimationClip> Animations { get; }
+
+	/// <summary>
+	/// Builds the model over the nodes and clips the browser reported.
 	/// </summary>
 	/// <param name="scene">The loaded root.</param>
 	/// <param name="nodes">Its named descendants.</param>
-	internal GLTFModel(LoadedObject3D scene, IReadOnlyList<LoadedObject3D> nodes)
+	/// <param name="animations">Its animation clips.</param>
+	internal GLTFModel(LoadedObject3D scene, IReadOnlyList<LoadedObject3D> nodes, IReadOnlyList<LoadedAnimationClip> animations)
 	{
 		Scene = scene;
 		Nodes = nodes;
+		Animations = animations;
 	}
 
 	/// <summary>
@@ -58,5 +67,21 @@ public sealed class GLTFModel
 	public LoadedObject3D? FindNode(string name)
 	{
 		return Nodes.FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.Ordinal));
+	}
+
+	/// <summary>
+	/// Finds an animation clip by name, or <see langword="null"/> when the file carries no such clip.
+	/// Matching is ordinal and case-sensitive, for the same reason <see cref="FindNode"/>'s is: a glTF
+	/// name is data rather than an identifier the mirror is free to normalize.
+	/// <para>
+	/// The first match wins. glTF does not require animation names to be unique, and a caller who needs
+	/// every match can filter <see cref="Animations"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="name">The clip's name.</param>
+	/// <returns>The clip, or <see langword="null"/> when nothing carries that name.</returns>
+	public LoadedAnimationClip? FindClip(string name)
+	{
+		return Animations.FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.Ordinal));
 	}
 }

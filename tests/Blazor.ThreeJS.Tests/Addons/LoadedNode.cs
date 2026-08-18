@@ -40,4 +40,22 @@ internal static class LoadedNode
 			IsVisible = isVisible
 		};
 	}
+
+	/// <summary>
+	/// Describes one animation clip exactly as the applier would: a handle out of the browser-minted
+	/// half of the space, the clip's name, and its duration in seconds.
+	/// </summary>
+	/// <param name="handle">The minted handle.</param>
+	/// <param name="name">The clip's name.</param>
+	/// <param name="duration">The clip's duration in seconds.</param>
+	/// <returns>The row.</returns>
+	public static GLTFClipDescription DescribeClip(int handle, string name, float duration)
+	{
+		return new GLTFClipDescription
+		{
+			Handle = handle,
+			Name = name,
+			Duration = duration
+		};
+	}
 }

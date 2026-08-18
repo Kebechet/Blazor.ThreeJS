@@ -16,6 +16,34 @@ internal sealed class GLTFLoadResponse
 	/// </summary>
 	[JsonPropertyName("n")]
 	public List<GLTFNodeDescription> Nodes { get; init; } = [];
+
+	/// <summary>
+	/// One row per animation clip the file brought along, minted after every node handle. Absent from
+	/// an old browser's cached response - a file with no <c>a</c> key deserializes to an empty list
+	/// rather than a missing one, which is what keeps a stale cache reading as "no clips" instead of a
+	/// deserialization failure.
+	/// </summary>
+	[JsonPropertyName("a")]
+	public List<GLTFClipDescription> Animations { get; init; } = [];
+}
+
+/// <summary>
+/// One animation clip of a loaded graph, as the browser found it: the handle it minted, and the name
+/// and duration three.js reported for the clip.
+/// </summary>
+internal sealed class GLTFClipDescription
+{
+	/// <summary>Negative handle the JavaScript side registered this clip under.</summary>
+	[JsonPropertyName("h")]
+	public int Handle { get; init; }
+
+	/// <summary>The clip's name, as three.js built it from the glTF animation.</summary>
+	[JsonPropertyName("n")]
+	public required string Name { get; init; }
+
+	/// <summary>The clip's duration in seconds.</summary>
+	[JsonPropertyName("d")]
+	public float Duration { get; init; }
 }
 
 /// <summary>

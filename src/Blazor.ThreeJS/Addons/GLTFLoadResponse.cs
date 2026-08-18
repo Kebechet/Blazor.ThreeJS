@@ -6,7 +6,7 @@ namespace Kebechet.Blazor.ThreeJS.Addons;
 /// <summary>
 /// What <c>loadGltf</c> hands back after the browser has parsed a model. A fixed wire format shared
 /// with <c>three-interop.js</c>: the short property names here and on <see cref="GLTFNodeDescription"/>
-/// must change together on both sides.
+/// and <see cref="GLTFClipDescription"/> must change together on both sides.
 /// </summary>
 internal sealed class GLTFLoadResponse
 {

@@ -206,7 +206,8 @@ public abstract class ThreeObject
 	/// <param name="member">Name of the three.js property to write, e.g. <c>"refDistance"</c>.</param>
 	/// <param name="value">
 	/// The new value: any primitive, <see cref="string"/>, <see cref="Enum"/>, <see langword="null"/>,
-	/// another mirrored object, or one of the five hand-written math types.
+	/// another mirrored object, or one of the hand-written math types in
+	/// <c>Kebechet.Blazor.ThreeJS.Math</c>.
 	/// </param>
 	/// <exception cref="NotSupportedException">
 	/// Thrown for any other reference type. Such a value has no wire contract, and shipping its
@@ -316,9 +317,12 @@ public abstract class ThreeObject
 	/// address through a dotted path — <c>renderer.shadowMap</c> being the case that motivated it.
 	/// </para>
 	/// <para>
-	/// An object the mirror has already seen answers with the handle it already has, so reading the
-	/// same property twice, or reading one that returns the receiver, does not produce two mirrors of
-	/// one object.
+	/// The browser side dedupes: an object it has already minted a handle for answers with that same
+	/// handle again rather than a new one. The C# side does not inherit that guarantee for an adopted
+	/// object — <see cref="Adopt"/> only resolves a handle this context registered through
+	/// <c>AttachTo</c>, and an adopted <see cref="Primitive"/> never goes through it — so reading the
+	/// same property twice, or reading one that returns the receiver, can build a second C# wrapper
+	/// over the one handle rather than reusing the first.
 	/// </para>
 	/// </summary>
 	/// <param name="member">Name of the property to read.</param>

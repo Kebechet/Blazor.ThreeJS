@@ -94,18 +94,6 @@ internal static class ThreeWireFormat
 	public const string UndefinedKey = "$undef";
 
 	/// <summary>
-	/// Wire token for <see cref="float.PositiveInfinity"/> inside a tagged value's component array.
-	/// <para>
-	/// JSON has no numeric form for a non-finite value, and the two runtimes fail differently rather
-	/// than loudly: <c>Utf8JsonWriter</c> throws <c>ArgumentException</c> on the way out, while
-	/// JavaScript's <c>JSON.stringify(Infinity)</c> silently yields <c>null</c> on the way back. A
-	/// default <see cref="Box3"/> is exactly this case - three.js seeds an empty box at ±infinity - so
-	/// a component is carried as a string whenever it is not finite, and turned back into a number on
-	/// both sides. The spelling matches JavaScript's own <c>String(Infinity)</c>, so the applier
-	/// converts with a plain <c>Number(...)</c>.
-	/// </para>
-	/// </summary>
-	/// <summary>
 	/// Handle every context registers its own <c>WebGPURenderer</c> under.
 	/// <para>
 	/// Reserved rather than minted, so C# can address the renderer without a round trip to ask what
@@ -134,6 +122,18 @@ internal static class ThreeWireFormat
 	/// </summary>
 	public const string NonFiniteKey = "$n";
 
+	/// <summary>
+	/// Wire token for <see cref="float.PositiveInfinity"/> inside a tagged value's component array.
+	/// <para>
+	/// JSON has no numeric form for a non-finite value, and the two runtimes fail differently rather
+	/// than loudly: <c>Utf8JsonWriter</c> throws <c>ArgumentException</c> on the way out, while
+	/// JavaScript's <c>JSON.stringify(Infinity)</c> silently yields <c>null</c> on the way back. A
+	/// default <see cref="Box3"/> is exactly this case - three.js seeds an empty box at ±infinity - so
+	/// a component is carried as a string whenever it is not finite, and turned back into a number on
+	/// both sides. The spelling matches JavaScript's own <c>String(Infinity)</c>, so the applier
+	/// converts with a plain <c>Number(...)</c>.
+	/// </para>
+	/// </summary>
 	public const string PositiveInfinityToken = "Infinity";
 
 	/// <summary>Wire token for <see cref="float.NegativeInfinity"/>. See <see cref="PositiveInfinityToken"/>.</summary>

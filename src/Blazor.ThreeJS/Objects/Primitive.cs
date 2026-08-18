@@ -27,10 +27,12 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// </summary>
 /// <example>
 /// <code>
-/// // Vector2 is one of the math types this package does not hand-port, so a material's normalScale
-/// // has no typed spelling. It has an untyped one.
-/// var normalScale = new Primitive("Vector2", 0.5f, 0.5f);
-/// material.Set("normalScale", normalScale);
+/// // InstancedBufferAttribute has no generated type: the generator refuses it for the same
+/// // structural reason as PrimitiveObject3D's PositionalAudio example - its base needs a
+/// // constructor argument a generated subclass has nothing to supply. Passing a Primitive as a
+/// // value sends it as a handle reference, and attaches it first.
+/// var offsets = new Primitive("InstancedBufferAttribute", new Float32Array(0f, 0f, 0f, 1f, 0f, 0f), 3f);
+/// geometry.Call("setAttribute", "offset", offsets);
 /// </code>
 /// </example>
 public sealed class Primitive : ThreeObject
@@ -56,7 +58,8 @@ public sealed class Primitive : ThreeObject
 	/// <param name="constructorArgs">
 	/// Positional constructor arguments, under the same encoding rules as
 	/// <see cref="ThreeObject.Set"/>: any primitive, <see cref="string"/>, <see cref="Enum"/>,
-	/// <see langword="null"/>, another mirrored object, or one of the five hand-written math types.
+	/// <see langword="null"/>, another mirrored object, or one of the hand-written math types in
+	/// <c>Kebechet.Blazor.ThreeJS.Math</c>.
 	/// </param>
 	/// <exception cref="ArgumentException">Thrown when <paramref name="threeTypeName"/> is blank.</exception>
 	/// <exception cref="NotSupportedException">

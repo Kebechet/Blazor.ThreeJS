@@ -14,7 +14,7 @@
 
 Blazor wrapper for three.js. Typed C# scene graph with batched interop, safe on WebAssembly, Server, and MAUI Hybrid. Ships the three.js bundle - no npm, no CDN, no manual script tags.
 
-> **Generated from `@types/three`.** Most of three.js's class surface is wrapped mechanically from the upstream type declarations, so the property names, constructor argument order and documentation are three.js's own rather than a paraphrase. The `Vector3` / `Euler` / `Quaternion` / `Color` / `Matrix4` math types, the `Object3D` scene-graph base and the two addon wrappers (`GLTFLoader`, `OrbitControls`) are hand-written. [Coverage](#coverage) is exactly how much is wrapped, what is not, and how those numbers were arrived at; [Reaching a class the mirror does not wrap](#reaching-a-class-the-mirror-does-not-wrap) is how to reach the rest - untyped in three lines, or with a wrapper of your own.
+> **Generated from `@types/three`.** Most of three.js's class surface is wrapped mechanically from the upstream type declarations, so the property names, constructor argument order and documentation are three.js's own rather than a paraphrase. The 19 hand-written math types in `Kebechet.Blazor.ThreeJS.Math` (`Vector3`, `Color` and the rest), the `Object3D` scene-graph base and the two addon wrappers (`GLTFLoader`, `OrbitControls`) are hand-written. [Coverage](#coverage) is exactly how much is wrapped, what is not, and how those numbers were arrived at; [Reaching a class the mirror does not wrap](#reaching-a-class-the-mirror-does-not-wrap) is how to reach the rest - untyped in three lines, or with a wrapper of your own.
 
 ## Installation
 
@@ -618,14 +618,11 @@ three.js names. All four live on `ThreeObject`, so they work on the generated ty
 three.js added last week is a `Set` away rather than a package release away.
 
 ```csharp
-// Vector2 is a math type this package has not hand-ported, so a material's normalScale has no typed
-// spelling. Passing a Primitive as a value sends it as a handle reference, and attaches it first.
-var normalScale = new Primitive("Vector2", 0.5f, 0.5f);
-material.Set("normalScale", normalScale);
-
-// PositionalAudio has no generated type either: the generator refuses it because its base needs a
+// PositionalAudio has no generated type: the generator refuses it because its base needs a
 // constructor argument a generated subclass has nothing to supply. It belongs in the scene graph, so
-// it gets the transform, the parenting and OnClick that come with Object3D.
+// it gets the transform, the parenting and OnClick that come with Object3D. `listener` here is
+// itself a mirrored object - passing it as a constructor argument sends it as a handle reference and
+// attaches it first, the same way a Primitive passed as any other value would.
 var positionalAudio = new PrimitiveObject3D("PositionalAudio", listener);
 positionalAudio.Position.Set(0f, 1f, 0f);
 positionalAudio.Set("refDistance", 2f);
@@ -637,7 +634,6 @@ await threeContext.FlushAsync();
 // Reading back works on any object, generated or not: GetAsync reads a property, CallAsync invokes a
 // method and hands its return value over.
 var refDistance = await positionalAudio.GetAsync<float>("refDistance");
-var roughness = await material.GetAsync<float>("roughness");
 ```
 
 Use `PrimitiveObject3D` for a class that belongs in the scene graph and `Primitive` for everything
@@ -670,10 +666,11 @@ recorded before an attach is still replayed rather than dropped, writes still co
 a call is still a barrier to that coalescing, and a value with no wire encoding is still refused at the
 call site rather than shipped as a plain object over a live three.js instance.
 
-Only values come back over the wire - numbers, booleans, strings, and the five math types. A property
-or method whose value is a three.js **object** is refused rather than serialized, so `GetAsync` reaches
-`fov` but not `geometry`. And a class three.js does not export at all is out of reach for this too:
-`THREE[name]` is `undefined` in the browser, and there is nothing there to construct.
+Only values come back over the wire - numbers, booleans, strings, and the hand-ported math types in
+`Kebechet.Blazor.ThreeJS.Math`. A property or method whose value is a three.js **object** is refused
+rather than serialized, so `GetAsync` reaches `fov` but not `geometry`. And a class three.js does not
+export at all is out of reach for this too: `THREE[name]` is `undefined` in the browser, and there is
+nothing there to construct.
 
 ## Wrapping a type yourself
 
@@ -754,10 +751,10 @@ replayed. Everything `Object3D` itself carries - `Position`, `Rotation`, `Scale`
 matrix-update flags - is inherited and replayed as usual, whenever you write it.
 
 Values you pass to `RecordSet` and `RecordCall` may be any primitive, `string`, `enum`, `null`,
-another wrapped object (sent as a handle reference), or one of the `Vector3` / `Euler` /
-`Quaternion` / `Color` / `Matrix4` math types. Any other reference type throws
-`NotSupportedException` at the call rather than silently shipping its serialized shape over a live
-three.js instance.
+another wrapped object (sent as a handle reference), or one of the hand-written math types in
+`Kebechet.Blazor.ThreeJS.Math` (`Vector3`, `Color` and the rest of the 19). Any other reference type
+throws `NotSupportedException` at the call rather than silently shipping its serialized shape over a
+live three.js instance.
 
 A type outside the scene graph works the same way: derive from the generated `BufferGeometry` or
 `Material` (or from `ThreeObject` directly) and assign it to `mesh.Geometry` / `mesh.Material`, which

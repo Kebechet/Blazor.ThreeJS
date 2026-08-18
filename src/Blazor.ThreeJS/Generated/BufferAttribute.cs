@@ -320,7 +320,7 @@ public class BufferAttribute : EventDispatcher
 	/// <param name="array">Value forwarded to the <c>array</c> argument.</param>
 	public void CopyArray(float[] array)
 	{
-		RecordCall("copyArray", array);
+		RecordCall("copyArray", (object?) array);
 	}
 
 	/// <summary>
@@ -361,6 +361,18 @@ public class BufferAttribute : EventDispatcher
 	public void TransformDirection(Matrix4 m)
 	{
 		RecordCall("transformDirection", m);
+	}
+
+	/// <summary>
+	/// Calls
+	/// <see href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/set">TypedArray.set</see>(
+	/// <c>value</c>, <c>offset</c> ) on the <c>array</c>.
+	/// </summary>
+	/// <param name="value"><c>Array</c> or <c>TypedArray</c> from which to copy values.</param>
+	/// <param name="offset">index of the <c>array</c> at which to start copying.</param>
+	public void Set(float[] value, int offset = 0)
+	{
+		RecordCall("set", value, offset);
 	}
 
 	/// <summary>Sets the given component of the vector at the given index.</summary>

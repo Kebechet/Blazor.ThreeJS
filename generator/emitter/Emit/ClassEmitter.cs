@@ -118,7 +118,7 @@ internal sealed class ClassEmitter
 
 		WriteFields(writer, fields, surface.Properties);
 		WriteOwnedMathProperties(writer, surface.Properties);
-		WriteConstructor(writer, irClass, threeTypeName, baseTypeName, constructorParameters, surface.Properties);
+		WriteConstructor(writer, irClass, threeTypeName, baseTypeName, constructor, surface.Properties);
 		writer.WriteLine();
 		WriteThreeTypeName(writer, threeTypeName);
 
@@ -332,11 +332,11 @@ internal sealed class ClassEmitter
 	{
 		// No property arm: a hybrid surface never carries one, because mirrored state stays with the
 		// hand-written half.
-		return surface.Commands.Any(command => command.Parameters.Any(x => NamesCoreType(x.Mapping))) ||
+		return surface.Commands.Any(command => command.Overloads.Any(overload => overload.Any(x => NamesCoreType(x.Mapping)))) ||
 			surface.Queries.Any(query => query.ReturnTypeName == EmitterConfig.RootBaseTypeName ||
 				EmitterConfig.TypedArrayTypeNames.Contains(query.ReturnTypeName) ||
 				NamesCoreType(query.ReturnMapping) ||
-				query.Parameters.Any(x => NamesCoreType(x.Mapping)));
+				query.Overloads.Any(overload => overload.Any(x => NamesCoreType(x.Mapping))));
 	}
 
 	/// <summary>Whether a mapping puts a core-namespace type's name in the emitted source.</summary>
@@ -465,7 +465,36 @@ internal sealed class ClassEmitter
 			audit.RecordSkippedMember(threeTypeName, $"constructor parameter {droppedParameter.Name}", droppedParameter.Reason);
 		}
 
+		RecordDroppedAlternatives(audit, threeTypeName, "constructor", constructor.Parameters);
 		return constructor;
+	}
+
+	/// <summary>
+	/// Records the arms of a parameter's declared union that no emitted overload takes. An overload set
+	/// is additive, so the arms that mapped need no note — but an arm that did not is part of the
+	/// declared type the generated member does not accept, and this package narrows nothing without
+	/// saying so.
+	/// </summary>
+	/// <param name="audit">Collector.</param>
+	/// <param name="threeTypeName">Export name of the class being emitted.</param>
+	/// <param name="memberDescription">The member the parameters belong to, e.g. <c>method set</c>.</param>
+	/// <param name="parameters">Parameters of one signature; every overload carries the same arm record.</param>
+	private static void RecordDroppedAlternatives(
+		EmissionAudit audit,
+		string threeTypeName,
+		string memberDescription,
+		IReadOnlyList<MappedParameter> parameters)
+	{
+		foreach (var parameter in parameters)
+		{
+			foreach (var dropped in parameter.DroppedAlternatives)
+			{
+				audit.RecordSkippedMember(
+					threeTypeName,
+					$"{memberDescription} parameter {parameter.ThreeName}, arm {dropped.TypeText}",
+					$"one arm of `{parameter.DeclaredTypeText}` that no emitted overload takes: {dropped.Reason}");
+			}
+		}
 	}
 
 	/// <summary>
@@ -519,6 +548,8 @@ internal sealed class ClassEmitter
 				audit.RecordSkippedMember(threeTypeName, $"fenced code in the {kind} {member.MemberName} summary", $"{fencedBlocks} JavaScript block(s) written inline in the prose, which would be misleading in C# documentation");
 			}
 
+			RecordDroppedAlternatives(audit, threeTypeName, $"{kind} {member.MemberName}", member.Method?.Overloads.FirstOrDefault() ?? []);
+
 			if (member.Bucket == MemberBucket.Command)
 			{
 				commands.Add(BuildCommand(member, cSharpName));
@@ -545,6 +576,20 @@ internal sealed class ClassEmitter
 
 			if (parametersByThreeName.TryGetValue(member.MemberName, out var parameter))
 			{
+				// A widened constructor slot is `object?`, and a property writing through it would have to
+				// be `object?` too — a public member the caller gets no help from. The constructor keeps
+				// the slot; the value is still writable through the escape hatch's `Set`.
+				if (parameter.HasSeveralAlternatives)
+				{
+					audit.RecordSkippedMember(
+						threeTypeName,
+						$"property {member.MemberName}",
+						$"the constructor takes it as `{parameter.DeclaredTypeText ?? "a union"}` and emits one overload per arm, so its backing field holds any of them — a property over that field could only be typed `object`");
+
+					takenCSharpNames.Remove(cSharpName);
+					continue;
+				}
+
 				if (isOwnedMathValue)
 				{
 					// A math value is mirrored as an instance this object owns and watches for changes,
@@ -603,7 +648,7 @@ internal sealed class ClassEmitter
 		{
 			ThreeName = member.MemberName,
 			CSharpName = cSharpName,
-			Parameters = member.Method!.Parameters,
+			Overloads = member.Method!.Overloads,
 			Documentation = member.Method.Signature?.Doc
 		};
 	}
@@ -621,7 +666,7 @@ internal sealed class ClassEmitter
 			{
 				ThreeName = member.MemberName,
 				CSharpName = cSharpName,
-				Parameters = [],
+				Overloads = [[]],
 				ReturnTypeName = member.IsUntypedObjectResult ? EmitterConfig.UntypedObjectTypeName : member.CSharpTypeName!,
 				ReturnMapping = member.Mapping,
 				IsPropertyRead = true,
@@ -635,7 +680,7 @@ internal sealed class ClassEmitter
 		{
 			ThreeName = member.MemberName,
 			CSharpName = cSharpName,
-			Parameters = member.Method!.Parameters,
+			Overloads = member.Method!.Overloads,
 			ReturnTypeName = member.IsUntypedObjectResult ? EmitterConfig.UntypedObjectTypeName : member.CSharpTypeName!,
 			ReturnMapping = member.ReturnMapping,
 			IsAdoptedResult = member.IsAdoptedResult,
@@ -765,12 +810,12 @@ internal sealed class ClassEmitter
 
 	private bool UsesMathTypes(IReadOnlyList<MappedParameter> constructorParameters, EmittedSurface surface)
 	{
-		return constructorParameters.Any(x => NamesMathType(x.Mapping)) ||
+		return constructorParameters.Any(x => x.Alternatives.Any(NamesMathType)) ||
 			surface.Properties.Any(x => NamesMathType(x.Mapping)) ||
-			surface.Commands.Any(command => command.Parameters.Any(x => NamesMathType(x.Mapping))) ||
+			surface.Commands.Any(command => command.Overloads.Any(overload => overload.Any(x => NamesMathType(x.Mapping)))) ||
 			surface.Queries.Any(query => EmitterConfig.MathTypeNames.Contains(query.ReturnTypeName) ||
 				NamesMathType(query.ReturnMapping) ||
-				query.Parameters.Any(x => NamesMathType(x.Mapping)));
+				query.Overloads.Any(overload => overload.Any(x => NamesMathType(x.Mapping))));
 	}
 
 	/// <summary>
@@ -882,74 +927,147 @@ internal sealed class ClassEmitter
 		}
 	}
 
-	/// <summary>Writes the constructor, its documentation, and the field assignments.</summary>
+	/// <summary>
+	/// Writes one constructor per emitted overload, each with its own documentation and field
+	/// assignments, then the adoption constructor.
+	/// </summary>
 	/// <param name="writer">Destination.</param>
 	/// <param name="irClass">Class being emitted.</param>
 	/// <param name="threeTypeName">Export name.</param>
-	/// <param name="parameters">Resolved parameters.</param>
+	/// <param name="baseTypeName">C# base, which decides which adoption constructor to chain to.</param>
+	/// <param name="constructor">Resolved constructor, with its storage view and its overloads.</param>
 	/// <param name="properties">Emitted properties, for wiring the owned math values.</param>
 	private static void WriteConstructor(
 		CSharpWriter writer,
 		IrClass irClass,
 		string threeTypeName,
 		string baseTypeName,
-		IReadOnlyList<MappedParameter> parameters,
+		MappedConstructor constructor,
 		IReadOnlyList<EmittedProperty> properties)
 	{
 		var constructorSummary = irClass.Constructors.FirstOrDefault()?.Doc?.Summary is { Length: > 0 } rawSummary
 			? DocCommentEmitter.EnsureSentenceEnd(DocCommentEmitter.RenderInline(rawSummary))
 			: $"Initializes a new <see cref=\"{threeTypeName}\"/>.";
 
-		DocCommentEmitter.WriteSummary(writer, constructorSummary);
-
-		foreach (var parameter in parameters)
+		foreach (var (index, parameters) in constructor.Overloads.Index())
 		{
-			var text = parameter.Documentation is { Length: > 0 } documentation
-				? DocCommentEmitter.RenderInline(DocCommentEmitter.StripRedundantTail(documentation))
-				: $"Value forwarded to the <c>{parameter.ThreeName}</c> constructor argument.";
+			if (index > 0)
+			{
+				writer.WriteLine();
+			}
 
-			DocCommentEmitter.WriteParam(writer, parameter.Name, text);
+			DocCommentEmitter.WriteSummary(writer, constructorSummary + DescribeArmChoice(parameters));
+
+			foreach (var parameter in parameters)
+			{
+				var text = parameter.Documentation is { Length: > 0 } documentation
+					? DocCommentEmitter.RenderInline(DocCommentEmitter.StripRedundantTail(documentation))
+					: $"Value forwarded to the <c>{parameter.ThreeName}</c> constructor argument.";
+
+				DocCommentEmitter.WriteParam(writer, parameter.Name, text);
+			}
+
+			WriteDeclaration(writer, $"public {threeTypeName}", parameters);
+
+			writer.WriteLine("{");
+			writer.Indent();
+			foreach (var parameter in parameters)
+			{
+				writer.WriteLine($"{parameter.FieldName} = {parameter.DeclarationName};");
+			}
+
+			WriteOwnedMathValueSetup(writer, properties, hasPrecedingStatements: parameters.Count > 0);
+
+			writer.Outdent();
+			writer.WriteLine("}");
 		}
 
+		WriteAdoptionConstructor(writer, threeTypeName, baseTypeName, constructor.Parameters, properties);
+	}
+
+	/// <summary>
+	/// Writes a declaration and its parameter list, breaking onto one line per parameter when the
+	/// single-line form runs past the column budget.
+	/// </summary>
+	/// <param name="writer">Destination.</param>
+	/// <param name="header">Everything before the opening parenthesis.</param>
+	/// <param name="parameters">Parameters of this overload.</param>
+	private static void WriteDeclaration(CSharpWriter writer, string header, IReadOnlyList<MappedParameter> parameters)
+	{
 		var declaredParameters = parameters
 			.Select(x => x.DefaultLiteral is null
 				? $"{x.CSharpTypeName} {x.DeclarationName}"
 				: $"{x.CSharpTypeName} {x.DeclarationName} = {x.DefaultLiteral}")
 			.ToList();
 
-		var singleLine = $"public {threeTypeName}({string.Join(", ", declaredParameters)})";
+		var singleLine = $"{header}({string.Join(", ", declaredParameters)})";
 		if (writer.IndentColumn + singleLine.Length <= EmitterConfig.DeclarationWrapColumn)
 		{
 			writer.WriteLine(singleLine);
-		}
-		else
-		{
-			writer.WriteLine($"public {threeTypeName}(");
-			writer.Indent();
-			foreach (var (index, declaredParameter) in declaredParameters.Index())
-			{
-				var isLast = index == declaredParameters.Count - 1;
-				writer.WriteLine(isLast
-					? declaredParameter + ")"
-					: declaredParameter + ",");
-			}
-
-			writer.Outdent();
+			return;
 		}
 
-		writer.WriteLine("{");
+		writer.WriteLine($"{header}(");
 		writer.Indent();
-		foreach (var parameter in parameters)
+		foreach (var (index, declaredParameter) in declaredParameters.Index())
 		{
-			writer.WriteLine($"{parameter.FieldName} = {parameter.DeclarationName};");
+			writer.WriteLine(index == declaredParameters.Count - 1
+				? declaredParameter + ")"
+				: declaredParameter + ",");
 		}
-
-		WriteOwnedMathValueSetup(writer, properties, hasPrecedingStatements: parameters.Count > 0);
 
 		writer.Outdent();
-		writer.WriteLine("}");
+	}
 
-		WriteAdoptionConstructor(writer, threeTypeName, baseTypeName, parameters, properties);
+	/// <summary>
+	/// Renders the arguments of a recorded call, leading comma included, or an empty string when the
+	/// member takes none.
+	/// <para>
+	/// ⚠️ A lone array argument is cast to <c>object?</c>, and the cast is load-bearing rather than
+	/// decorative. The record helpers take <c>params object?[]</c>, and array covariance makes
+	/// <c>Vector2[]</c> convertible to <c>object?[]</c> — so <c>RecordCall("setFromPoints", points)</c>
+	/// binds the array as the whole parameter array and three.js receives one argument per point
+	/// instead of one array. The cast forces the expanded form, which is the call that was written.
+	/// </para>
+	/// </summary>
+	/// <param name="parameters">Parameters of this overload.</param>
+	/// <returns>The argument list to append to the helper call.</returns>
+	private static string RenderRecordedArguments(IReadOnlyList<MappedParameter> parameters)
+	{
+		if (parameters.Count == 0)
+		{
+			return string.Empty;
+		}
+
+		if (parameters is [{ Mapping.Kind: TypeMappingKind.Sequence } sole])
+		{
+			return $", (object?) {sole.DeclarationName}";
+		}
+
+		return ", " + string.Join(", ", parameters.Select(x => x.DeclarationName));
+	}
+
+	/// <summary>
+	/// The sentence that tells one overload of a union-armed member apart from its siblings. Without it
+	/// several declarations carry the same upstream summary and nothing in the documentation says why
+	/// there is more than one.
+	/// </summary>
+	/// <param name="parameters">Parameters of this overload.</param>
+	/// <returns>The sentence, or an empty string when this member has only the one form.</returns>
+	private static string DescribeArmChoice(IReadOnlyList<MappedParameter> parameters)
+	{
+		var armed = parameters
+			.Where(x => x.HasSeveralAlternatives && x.DeclaredTypeText is { Length: > 0 })
+			.Select(x => $"<c>{x.Name}</c> as <c>{DocCommentEmitter.RenderInline(x.CSharpTypeName)}</c> " +
+				$"out of three.js's <c>{DocCommentEmitter.RenderInline(x.DeclaredTypeText!)}</c>")
+			.ToList();
+
+		if (armed.Count == 0)
+		{
+			return string.Empty;
+		}
+
+		return $" This overload takes {string.Join(", and ", armed)}.";
 	}
 
 	/// <summary>
@@ -1224,56 +1342,37 @@ internal sealed class ClassEmitter
 				$"and writing that value back records nothing at all. Where the property exists, write the property.";
 		}
 
-		DocCommentEmitter.WriteSummary(writer, summary);
-		foreach (var parameter in command.Parameters)
+		foreach (var (index, parameters) in command.Overloads.Index())
 		{
-			var text = parameter.Documentation is { Length: > 0 } documentation
-				? DocCommentEmitter.RenderInline(DocCommentEmitter.StripRedundantTail(documentation))
-				: $"Value forwarded to the <c>{parameter.ThreeName}</c> argument.";
-
-			DocCommentEmitter.WriteParam(writer, parameter.Name, text);
-		}
-
-		var declaredParameters = command.Parameters
-			.Select(x => x.DefaultLiteral is null
-				? $"{x.CSharpTypeName} {x.DeclarationName}"
-				: $"{x.CSharpTypeName} {x.DeclarationName} = {x.DefaultLiteral}")
-			.ToList();
-
-		var declaration = $"public void {command.CSharpName}({string.Join(", ", declaredParameters)})";
-		if (writer.IndentColumn + declaration.Length <= EmitterConfig.DeclarationWrapColumn)
-		{
-			writer.WriteLine(declaration);
-		}
-		else
-		{
-			writer.WriteLine($"public void {command.CSharpName}(");
-			writer.Indent();
-			foreach (var (index, declaredParameter) in declaredParameters.Index())
+			if (index > 0)
 			{
-				writer.WriteLine(index == declaredParameters.Count - 1
-					? declaredParameter + ")"
-					: declaredParameter + ",");
+				writer.WriteLine();
 			}
 
+			DocCommentEmitter.WriteSummary(writer, summary + DescribeArmChoice(parameters));
+			foreach (var parameter in parameters)
+			{
+				var text = parameter.Documentation is { Length: > 0 } documentation
+					? DocCommentEmitter.RenderInline(DocCommentEmitter.StripRedundantTail(documentation))
+					: $"Value forwarded to the <c>{parameter.ThreeName}</c> argument.";
+
+				DocCommentEmitter.WriteParam(writer, parameter.Name, text);
+			}
+
+			WriteDeclaration(writer, $"public void {command.CSharpName}", parameters);
+
+			writer.WriteLine("{");
+			writer.Indent();
+
+			// An argument that is itself a mirrored object has to exist on the JavaScript side before the
+			// call that references it by handle, and RecordCall attaches it. Emitting that here instead
+			// would only cover the case where this object already has a batch: a command invoked before
+			// the attach is held and replayed later, and nothing at this call site can attach anything
+			// then. One owner for the invariant is what keeps the two paths from drifting.
+			writer.WriteLine($"RecordCall(\"{command.ThreeName}\"{RenderRecordedArguments(parameters)});");
 			writer.Outdent();
+			writer.WriteLine("}");
 		}
-
-		writer.WriteLine("{");
-		writer.Indent();
-
-		// An argument that is itself a mirrored object has to exist on the JavaScript side before the
-		// call that references it by handle, and RecordCall attaches it. Emitting that here instead
-		// would only cover the case where this object already has a batch: a command invoked before
-		// the attach is held and replayed later, and nothing at this call site can attach anything
-		// then. One owner for the invariant is what keeps the two paths from drifting.
-		var arguments = command.Parameters.Count == 0
-			? string.Empty
-			: ", " + string.Join(", ", command.Parameters.Select(x => x.DeclarationName));
-
-		writer.WriteLine($"RecordCall(\"{command.ThreeName}\"{arguments});");
-		writer.Outdent();
-		writer.WriteLine("}");
 	}
 
 	/// <summary>
@@ -1331,119 +1430,84 @@ internal sealed class ClassEmitter
 				: $" Records a read op, sends it behind every write already pending, and completes with what <c>{query.ThreeName}</c> returned.";
 		}
 
-		DocCommentEmitter.WriteSummary(writer, summary);
-		foreach (var parameter in query.Parameters)
-		{
-			var text = parameter.Documentation is { Length: > 0 } documentation
-				? DocCommentEmitter.RenderInline(DocCommentEmitter.StripRedundantTail(documentation))
-				: $"Value forwarded to the <c>{parameter.ThreeName}</c> argument.";
-
-			DocCommentEmitter.WriteParam(writer, parameter.Name, text);
-		}
-
-		if (query.IsUntypedObjectResult)
-		{
-			DocCommentEmitter.WriteReturns(writer, query.IsPropertyRead
-				? $"The object <c>{query.ThreeName}</c> held, under its own handle, or <see langword=\"null\"/> when it held none."
-				: $"The object <c>{query.ThreeName}</c> returned, under its own handle, or <see langword=\"null\"/> when it returned none.");
-		}
-		else
-		{
-			DocCommentEmitter.WriteReturns(writer, query.IsPropertyRead
-				? $"The value <c>{query.ThreeName}</c> held, once the JavaScript side has answered."
-				: $"The value <c>{query.ThreeName}</c> returned, once the JavaScript side has answered.");
-		}
-
-		var declaredParameters = query.Parameters
-			.Select(x => x.DefaultLiteral is null
-				? $"{x.CSharpTypeName} {x.DeclarationName}"
-				: $"{x.CSharpTypeName} {x.DeclarationName} = {x.DefaultLiteral}")
-			.ToList();
-
 		// An object result is nullable: three.js answers with nothing when the member held no object,
 		// and a non-nullable signature would make that indistinguishable from an object at handle zero.
 		var returnTypeName = query.IsAdoptedResult || query.IsUntypedObjectResult
 			? $"Task<{query.ReturnTypeName}?>"
 			: $"Task<{query.ReturnTypeName}>";
-		var declaration = $"public {returnTypeName} {query.CSharpName}({string.Join(", ", declaredParameters)})";
-		if (writer.IndentColumn + declaration.Length <= EmitterConfig.DeclarationWrapColumn)
+
+		foreach (var (index, parameters) in query.Overloads.Index())
 		{
-			writer.WriteLine(declaration);
-		}
-		else
-		{
-			writer.WriteLine($"public {returnTypeName} {query.CSharpName}(");
-			writer.Indent();
-			foreach (var (index, declaredParameter) in declaredParameters.Index())
+			if (index > 0)
 			{
-				writer.WriteLine(index == declaredParameters.Count - 1
-					? declaredParameter + ")"
-					: declaredParameter + ",");
+				writer.WriteLine();
+			}
+
+			DocCommentEmitter.WriteSummary(writer, summary + DescribeArmChoice(parameters));
+			foreach (var parameter in parameters)
+			{
+				var text = parameter.Documentation is { Length: > 0 } documentation
+					? DocCommentEmitter.RenderInline(DocCommentEmitter.StripRedundantTail(documentation))
+					: $"Value forwarded to the <c>{parameter.ThreeName}</c> argument.";
+
+				DocCommentEmitter.WriteParam(writer, parameter.Name, text);
+			}
+
+			if (query.IsUntypedObjectResult)
+			{
+				DocCommentEmitter.WriteReturns(writer, query.IsPropertyRead
+					? $"The object <c>{query.ThreeName}</c> held, under its own handle, or <see langword=\"null\"/> when it held none."
+					: $"The object <c>{query.ThreeName}</c> returned, under its own handle, or <see langword=\"null\"/> when it returned none.");
+			}
+			else
+			{
+				DocCommentEmitter.WriteReturns(writer, query.IsPropertyRead
+					? $"The value <c>{query.ThreeName}</c> held, once the JavaScript side has answered."
+					: $"The value <c>{query.ThreeName}</c> returned, once the JavaScript side has answered.");
+			}
+
+			WriteDeclaration(writer, $"public {returnTypeName} {query.CSharpName}", parameters);
+
+			writer.WriteLine("{");
+			writer.Indent();
+
+			var arguments = RenderRecordedArguments(parameters);
+			if (query.IsUntypedObjectResult)
+			{
+				// No adopter lambda, because there is no type to adopt into: the escape hatch's own helpers
+				// answer with the wrapper that names three.js's runtime type instead of asserting a C# one.
+				writer.WriteLine(query.IsPropertyRead
+					? $"return GetObjectAsync(\"{query.ThreeName}\");"
+					: $"return CallObjectAsync(\"{query.ThreeName}\"{arguments});");
+			}
+			else if (query.IsAdoptedResult)
+			{
+				// The lambda is what supplies the concrete type: the helper resolves a handle this context
+				// already mirrors and only calls this for one it has never seen.
+				var adopt = EmitterConfig.AdoptionSubstituteTypeNames.TryGetValue(query.ReturnTypeName, out var substitute)
+					? $"(adoptedBatch, adoptedHandle) => new {substitute}(adoptedBatch, adoptedHandle, \"{query.ReturnTypeName}\")"
+					: $"(adoptedBatch, adoptedHandle) => new {query.ReturnTypeName}(adoptedBatch, adoptedHandle)";
+				// The type argument is spelled out rather than inferred: where the adopter is a substitute
+				// for an abstract declared type, inference would take the substitute and produce a
+				// `Task<PrimitiveObject3D?>` that does not convert to the declared `Task<Object3D?>`.
+				writer.WriteLine(query.IsPropertyRead
+					? $"return RecordGetObject<{query.ReturnTypeName}>(\"{query.ThreeName}\", {adopt});"
+					: $"return RecordReadObject<{query.ReturnTypeName}>(\"{query.ThreeName}\", {adopt}{arguments});");
+			}
+			else if (query.IsPropertyRead)
+			{
+				writer.WriteLine($"return GetAsync<{query.ReturnTypeName}>(\"{query.ThreeName}\");");
+			}
+			else
+			{
+				// RecordRead owns attaching any argument that is itself a mirrored object, for the same reason
+				// RecordCall does: one owner for the invariant is what keeps the two paths from drifting.
+				writer.WriteLine($"return RecordRead<{query.ReturnTypeName}>(\"{query.ThreeName}\"{arguments});");
 			}
 
 			writer.Outdent();
+			writer.WriteLine("}");
 		}
-
-		writer.WriteLine("{");
-		writer.Indent();
-
-		if (query.IsUntypedObjectResult)
-		{
-			// No adopter lambda, because there is no type to adopt into: the escape hatch's own helpers
-			// answer with the wrapper that names three.js's runtime type instead of asserting a C# one.
-			if (query.IsPropertyRead)
-			{
-				writer.WriteLine($"return GetObjectAsync(\"{query.ThreeName}\");");
-			}
-			else
-			{
-				var untypedArguments = query.Parameters.Count == 0
-					? string.Empty
-					: ", " + string.Join(", ", query.Parameters.Select(x => x.DeclarationName));
-
-				writer.WriteLine($"return CallObjectAsync(\"{query.ThreeName}\"{untypedArguments});");
-			}
-		}
-		else if (query.IsAdoptedResult)
-		{
-			// The lambda is what supplies the concrete type: the helper resolves a handle this context
-			// already mirrors and only calls this for one it has never seen.
-			var adopt = EmitterConfig.AdoptionSubstituteTypeNames.TryGetValue(query.ReturnTypeName, out var substitute)
-				? $"(adoptedBatch, adoptedHandle) => new {substitute}(adoptedBatch, adoptedHandle, \"{query.ReturnTypeName}\")"
-				: $"(adoptedBatch, adoptedHandle) => new {query.ReturnTypeName}(adoptedBatch, adoptedHandle)";
-			// The type argument is spelled out rather than inferred: where the adopter is a substitute
-			// for an abstract declared type, inference would take the substitute and produce a
-			// `Task<PrimitiveObject3D?>` that does not convert to the declared `Task<Object3D?>`.
-			if (query.IsPropertyRead)
-			{
-				writer.WriteLine($"return RecordGetObject<{query.ReturnTypeName}>(\"{query.ThreeName}\", {adopt});");
-			}
-			else
-			{
-				var adoptedArguments = query.Parameters.Count == 0
-					? string.Empty
-					: ", " + string.Join(", ", query.Parameters.Select(x => x.DeclarationName));
-
-				writer.WriteLine($"return RecordReadObject<{query.ReturnTypeName}>(\"{query.ThreeName}\", {adopt}{adoptedArguments});");
-			}
-		}
-		else if (query.IsPropertyRead)
-		{
-			writer.WriteLine($"return GetAsync<{query.ReturnTypeName}>(\"{query.ThreeName}\");");
-		}
-		else
-		{
-			// RecordRead owns attaching any argument that is itself a mirrored object, for the same reason
-			// RecordCall does: one owner for the invariant is what keeps the two paths from drifting.
-			var arguments = query.Parameters.Count == 0
-				? string.Empty
-				: ", " + string.Join(", ", query.Parameters.Select(x => x.DeclarationName));
-
-			writer.WriteLine($"return RecordRead<{query.ReturnTypeName}>(\"{query.ThreeName}\"{arguments});");
-		}
-
-		writer.Outdent();
-		writer.WriteLine("}");
 	}
 
 	/// <summary>
@@ -1464,7 +1528,7 @@ internal sealed class ClassEmitter
 		IReadOnlyList<EmittedProperty> properties)
 	{
 		var dependencies = constructorParameters
-			.Where(x => x.Mapping.Kind == TypeMappingKind.GeneratedWrapperClass)
+			.Where(x => x.Alternatives.Any(alternative => alternative.Kind == TypeMappingKind.GeneratedWrapperClass))
 			.ToList();
 
 		var isSceneGraphType = IsSceneGraphType(irClass);
@@ -1490,6 +1554,15 @@ internal sealed class ClassEmitter
 			writer.Indent();
 			foreach (var dependency in dependencies)
 			{
+				// A widened slot holds whichever arm the caller's overload took, so the attach has to test
+				// what is actually in it. Only the arms that are mirrored objects need attaching, and only
+				// those answer the type test.
+				if (dependency.HasSeveralAlternatives)
+				{
+					writer.WriteLine($"({dependency.FieldName} as {EmitterConfig.RootBaseTypeName})?.AttachTo(batch);");
+					continue;
+				}
+
 				writer.WriteLine(dependency.CSharpTypeName.EndsWith('?')
 					? $"{dependency.FieldName}?.AttachTo(batch);"
 					: $"{dependency.FieldName}.AttachTo(batch);");
@@ -1670,8 +1743,8 @@ internal sealed class EmittedCommand
 	/// <summary>C# method name.</summary>
 	public required string CSharpName { get; init; }
 
-	/// <summary>Parameters that reached the C# signature.</summary>
-	public required IReadOnlyList<MappedParameter> Parameters { get; init; }
+	/// <summary>One parameter list per emitted overload.</summary>
+	public required IReadOnlyList<IReadOnlyList<MappedParameter>> Overloads { get; init; }
 
 	/// <summary>Upstream JSDoc for the signature.</summary>
 	public IrDoc? Documentation { get; init; }
@@ -1686,8 +1759,8 @@ internal sealed class EmittedQuery
 	/// <summary>C# method name, which carries the <c>Async</c> suffix the returned task calls for.</summary>
 	public required string CSharpName { get; init; }
 
-	/// <summary>Parameters that reached the C# signature.</summary>
-	public required IReadOnlyList<MappedParameter> Parameters { get; init; }
+	/// <summary>One parameter list per emitted overload.</summary>
+	public required IReadOnlyList<IReadOnlyList<MappedParameter>> Overloads { get; init; }
 
 	/// <summary>C# type of the value read back, without the surrounding task.</summary>
 	public required string ReturnTypeName { get; init; }

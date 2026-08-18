@@ -139,6 +139,32 @@ internal sealed class CoverageClassJson
 
 	/// <summary>Unspecified nullables that trailing-null trimming cannot protect.</summary>
 	public required List<string> MiddlePositionUnspecifiedParameters { get; init; }
+
+	/// <summary>
+	/// Arms of a constructor parameter's declared union that no emitted overload takes. Omitted rather
+	/// than written empty, because it applies to a handful of the 309 classes and an always-present
+	/// empty list would be most of what this document costs to read.
+	/// </summary>
+	public List<CoverageDroppedArmJson>? DroppedConstructorUnionArms { get; init; }
+}
+
+/// <summary>One arm of a declared union that reached no C# overload.</summary>
+internal sealed class CoverageDroppedArmJson
+{
+	/// <summary>Three.js parameter the union belongs to.</summary>
+	public required string Parameter { get; init; }
+
+	/// <summary>The whole declared union, verbatim.</summary>
+	public required string DeclaredType { get; init; }
+
+	/// <summary>The arm that was left out, verbatim.</summary>
+	public required string Arm { get; init; }
+
+	/// <summary>Why that arm could not be mapped.</summary>
+	public required string Reason { get; init; }
+
+	/// <summary>Obstacle family.</summary>
+	public required string Category { get; init; }
 }
 
 /// <summary>A constructor parameter the mirror does not expose.</summary>
@@ -222,4 +248,10 @@ internal sealed class CoverageMemberJson
 
 	/// <summary>Obstacle family.</summary>
 	public string? Category { get; init; }
+
+	/// <summary>
+	/// Arms of a parameter's declared union that no emitted overload takes. Omitted rather than written
+	/// empty, for the same reason as on the class rows: it applies to a handful of the 3932 members.
+	/// </summary>
+	public List<CoverageDroppedArmJson>? DroppedUnionArms { get; init; }
 }

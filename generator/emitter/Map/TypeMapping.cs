@@ -87,6 +87,37 @@ internal sealed class TypeMapping
 	}
 }
 
+/// <summary>
+/// What one parameter's declared type resolves to: the C# types it is emitted as, and the arms it
+/// lost on the way. The two travel together because a caller of
+/// <see cref="TypeMapper.MapAlternatives"/> owes a record of the second whenever it uses the first.
+/// </summary>
+internal sealed class TypeAlternatives
+{
+	/// <summary>One mapping per emitted arm, in declaration order. Never empty.</summary>
+	public required IReadOnlyList<TypeMapping> Arms { get; init; }
+
+	/// <summary>
+	/// Arms of the declared union the mirror could not express, each with the obstacle. Empty for
+	/// everything but a union that reached C# as an overload set with fewer arms than it was declared
+	/// with.
+	/// </summary>
+	public IReadOnlyList<DroppedAlternative> DroppedArms { get; init; } = [];
+}
+
+/// <summary>One arm of a declared union that no emitted overload stands for, and why.</summary>
+internal sealed class DroppedAlternative
+{
+	/// <summary>The arm as three.js declares it.</summary>
+	public required string TypeText { get; init; }
+
+	/// <summary>Why it could not be mapped.</summary>
+	public required string Reason { get; init; }
+
+	/// <summary>Family the reason belongs to.</summary>
+	public required SkipCategory Category { get; init; }
+}
+
 /// <summary>The five things an IR type reference is allowed to resolve to.</summary>
 internal enum TypeMappingKind : byte
 {
@@ -141,7 +172,10 @@ internal enum SkipCategory : byte
 	/// <summary>A three.js math value type with no C# mirror; only five are hand-ported.</summary>
 	MathValueType,
 
-	/// <summary>An array or tuple. The wire encoder has no array arm.</summary>
+	/// <summary>
+	/// A tuple, which has no wire encoding, or an array whose elements have none. The encoder does walk
+	/// a sequence element by element, so an array itself is not the obstacle — what is in it is.
+	/// </summary>
 	CollectionType,
 
 	/// <summary>A JavaScript callback. The wire format carries no callback channel.</summary>
@@ -153,7 +187,10 @@ internal enum SkipCategory : byte
 	/// <summary>A type alias that is neither a constant group nor a known special case.</summary>
 	UnmappedTypeAlias,
 
-	/// <summary>A union of more than one real alternative, which C# cannot express as one parameter.</summary>
+	/// <summary>
+	/// A union of more than one real alternative in a position that holds one type. A required parameter
+	/// takes one overload per arm instead; a property or a return type has nowhere to put the second.
+	/// </summary>
 	UnmappedUnion,
 
 	/// <summary>A TypeScript type-syntax form with no C# equivalent (conditional, mapped, indexed access…).</summary>

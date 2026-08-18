@@ -234,6 +234,32 @@ public class BufferGeometry : EventDispatcher
 		}
 	}
 
+	/// <summary>
+	/// Set the <c>.index</c> buffer. This writes the same three.js state as <see cref="Index"/> and the
+	/// mirror does not learn from it: afterwards <c>Index</c> still reports its previous value, and
+	/// writing that value back records nothing at all. Where the property exists, write the property.
+	/// This overload takes <c>index</c> as <c>BufferAttribute?</c> out of three.js's <c>BufferAttribute
+	/// | number[] | null</c>.
+	/// </summary>
+	/// <param name="index">Value forwarded to the <c>index</c> argument.</param>
+	public void SetIndex(BufferAttribute? index)
+	{
+		RecordCall("setIndex", index);
+	}
+
+	/// <summary>
+	/// Set the <c>.index</c> buffer. This writes the same three.js state as <see cref="Index"/> and the
+	/// mirror does not learn from it: afterwards <c>Index</c> still reports its previous value, and
+	/// writing that value back records nothing at all. Where the property exists, write the property.
+	/// This overload takes <c>index</c> as <c>int[]?</c> out of three.js's <c>BufferAttribute |
+	/// number[] | null</c>.
+	/// </summary>
+	/// <param name="index">Value forwarded to the <c>index</c> argument.</param>
+	public void SetIndex(int[]? index)
+	{
+		RecordCall("setIndex", (object?) index);
+	}
+
 	/// <summary>Adds a group to this geometry.</summary>
 	/// <param name="start">Value forwarded to the <c>start</c> argument.</param>
 	/// <param name="count">Value forwarded to the <c>count</c> argument.</param>
@@ -318,6 +344,34 @@ public class BufferGeometry : EventDispatcher
 	public void LookAt(Vector3 vector)
 	{
 		RecordCall("lookAt", vector);
+	}
+
+	/// <summary>
+	/// Defines a geometry by creating a <c>position</c> attribute based on the given array of points.
+	/// The array can hold instances of <see cref="Vector2"/> or <see cref="Vector3"/>. When using
+	/// two-dimensional data, the <c>z</c> coordinate for all vertices is set to <c>0</c>. If the method
+	/// is used with an existing <c>position</c> attribute, the vertex data are overwritten with the
+	/// data from the array. The length of the array must match the vertex count. This overload takes
+	/// <c>points</c> as <c>Vector3[]</c> out of three.js's <c>Vector3[] | Vector2[]</c>.
+	/// </summary>
+	/// <param name="points">Value forwarded to the <c>points</c> argument.</param>
+	public void SetFromPoints(Vector3[] points)
+	{
+		RecordCall("setFromPoints", (object?) points);
+	}
+
+	/// <summary>
+	/// Defines a geometry by creating a <c>position</c> attribute based on the given array of points.
+	/// The array can hold instances of <see cref="Vector2"/> or <see cref="Vector3"/>. When using
+	/// two-dimensional data, the <c>z</c> coordinate for all vertices is set to <c>0</c>. If the method
+	/// is used with an existing <c>position</c> attribute, the vertex data are overwritten with the
+	/// data from the array. The length of the array must match the vertex count. This overload takes
+	/// <c>points</c> as <c>Vector2[]</c> out of three.js's <c>Vector3[] | Vector2[]</c>.
+	/// </summary>
+	/// <param name="points">Value forwarded to the <c>points</c> argument.</param>
+	public void SetFromPoints(Vector2[] points)
+	{
+		RecordCall("setFromPoints", (object?) points);
 	}
 
 	/// <summary>

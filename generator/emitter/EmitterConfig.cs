@@ -43,6 +43,26 @@ internal static class EmitterConfig
 	public const string TrimUnspecifiedTailCall = "ThreeValue.TrimUnspecifiedTail";
 
 	/// <summary>
+	/// Backing-field type for a constructor argument several overloads write different C# types into.
+	/// <para>
+	/// Only the private slot widens. Every constructor a caller sees keeps the arm's own type, and
+	/// <c>ConstructorArgs</c> forwards the slot unchanged because <c>ThreeValue.Encode</c> dispatches on
+	/// the runtime type — a boxed <c>float</c> and a <c>float[]</c> encode as themselves either way.
+	/// </para>
+	/// </summary>
+	public const string UnionStorageTypeName = "object?";
+
+	/// <summary>
+	/// How many overloads one member may reasonably be expanded into before the set stops reading as an
+	/// API and starts reading as noise. Not enforced — nothing sensible happens by refusing to emit a
+	/// member three.js declares — but <c>api-coverage.md</c> prints the largest set produced beside it,
+	/// so a union that grows upstream is a visible figure in a generated document rather than a silent
+	/// wall of near-identical declarations. The product is multiplicative: two three-arm parameters on
+	/// one member would be nine.
+	/// </summary>
+	public const int UnionOverloadBudget = 4;
+
+	/// <summary>
 	/// Suffix a query's C# name carries that three.js's own does not. The only rename the mirror makes:
 	/// a query returns a <c>Task&lt;T&gt;</c>, and a method that hands back a task without saying so
 	/// reads as a synchronous call at every call site. It also keeps a query from colliding with a
@@ -331,7 +351,6 @@ internal static class EmitterConfig
 		["PositionalAudio"] = "`new PrimitiveObject3D(\"PositionalAudio\", audioListener)` — its C# base needs constructor arguments a generated subclass cannot supply",
 		["InstancedBufferAttribute"] = "`new Primitive(\"InstancedBufferAttribute\", array, itemSize)` — same base-constructor limitation",
 		["InstancedInterleavedBuffer"] = "`new Primitive(\"InstancedInterleavedBuffer\", array, stride)` — same base-constructor limitation",
-		["CubeCamera"] = "`new PrimitiveObject3D(\"CubeCamera\", near, far, renderTarget)`",
 		["VideoTexture"] = "`new Primitive(\"VideoTexture\", videoElement)` — it takes an `HTMLVideoElement`, which C# never holds",
 		["GLBufferAttribute"] = "`new Primitive(\"GLBufferAttribute\", buffer, type, itemSize, elementSize, count)` — it takes a raw WebGL buffer",
 		["Uniform"] = "`new Primitive(\"Uniform\", value)` — its `value` is declared `any`",

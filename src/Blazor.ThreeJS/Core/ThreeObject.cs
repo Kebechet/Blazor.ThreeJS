@@ -249,9 +249,22 @@ public abstract class ThreeObject
 	/// Invoked before this object is attached, the call is held and replayed by <see cref="AttachTo"/>,
 	/// exactly as a generated command is.
 	/// </para>
+	/// <para>
+	/// ⚠️ <b>Cast a lone array argument to <c>object?</c>.</b> <c>args</c> is a <c>params</c> array, and
+	/// C# array covariance makes <c>Vector2[]</c> convertible to <c>object?[]</c> — so
+	/// <c>Call("setFromPoints", points)</c> binds <c>points</c> as the whole argument list and three.js
+	/// receives one argument per point instead of one array. Write
+	/// <c>Call("setFromPoints", (object?) points)</c>, which forces the expanded form. This cannot be
+	/// fixed by adding an overload: the non-expanded form wins on an identity conversion, so it would
+	/// still be chosen. A <b>value-type</b> array (<c>float[]</c>, <c>int[]</c>) is unaffected — there is
+	/// no covariant conversion from one to <c>object?[]</c>, so it already arrives as a single argument.
+	/// </para>
 	/// </summary>
 	/// <param name="member">Name of the three.js method to invoke, e.g. <c>"play"</c>.</param>
-	/// <param name="args">Positional arguments, under the same encoding rules as <see cref="Set"/>.</param>
+	/// <param name="args">
+	/// Positional arguments, under the same encoding rules as <see cref="Set"/>. A lone reference-type
+	/// array needs the <c>(object?)</c> cast described above.
+	/// </param>
 	/// <exception cref="NotSupportedException">Thrown for an argument with no wire encoding.</exception>
 	public void Call(string member, params object?[] args)
 	{
@@ -265,7 +278,13 @@ public abstract class ThreeObject
 	/// </summary>
 	/// <typeparam name="TValue">C# type the caller declares the method returns.</typeparam>
 	/// <param name="member">Name of the three.js method to invoke.</param>
-	/// <param name="args">Positional arguments, under the same encoding rules as <see cref="Set"/>.</param>
+	/// <param name="args">
+	/// Positional arguments, under the same encoding rules as <see cref="Set"/>. ⚠️ A lone
+	/// <b>reference-type</b> array binds as this parameter array itself, so its elements arrive as
+	/// separate arguments — cast it, <c>(object?) points</c>. Value-type arrays (<c>float[]</c>,
+	/// <c>int[]</c>) are unaffected. See <see cref="Call(string, object?[])"/> for why no overload fixes
+	/// this.
+	/// </param>
 	/// <returns>The value three.js returned, decoded into <typeparamref name="TValue"/>.</returns>
 	/// <exception cref="InvalidOperationException">
 	/// Thrown when this object is not attached to a <see cref="ThreeContext"/>, when the applier
@@ -343,7 +362,12 @@ public abstract class ThreeObject
 	/// <see cref="GetObjectAsync"/>; see that for why an object cannot travel as a value.
 	/// </summary>
 	/// <param name="member">Name of the method to invoke.</param>
-	/// <param name="args">Positional arguments to pass to the method.</param>
+	/// <param name="args">
+	/// Positional arguments to pass to the method. ⚠️ A lone <b>reference-type</b> array binds as this
+	/// parameter array itself, so its elements arrive as separate arguments — cast it,
+	/// <c>(object?) points</c>. Value-type arrays (<c>float[]</c>, <c>int[]</c>) are unaffected. See
+	/// <see cref="Call(string, object?[])"/> for why no overload fixes this.
+	/// </param>
 	/// <returns>The returned object under its own handle, or <see langword="null"/> when it returned none.</returns>
 	/// <exception cref="InvalidOperationException">Thrown when this object is not attached.</exception>
 	public async Task<Primitive?> CallObjectAsync(string member, params object?[] args)

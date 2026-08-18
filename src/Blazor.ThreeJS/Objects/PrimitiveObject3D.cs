@@ -34,7 +34,12 @@ public sealed class PrimitiveObject3D : Object3D
 	/// refusals and the same <c>params</c> caveat as <see cref="Primitive(string, object?[])"/>.
 	/// </summary>
 	/// <param name="threeTypeName">Name of the export on the <c>THREE</c> namespace, e.g. <c>"PositionalAudio"</c>.</param>
-	/// <param name="constructorArgs">Positional constructor arguments.</param>
+	/// <param name="constructorArgs">
+	/// Positional constructor arguments. ⚠️ A lone <b>reference-type</b> array binds as this parameter
+	/// array itself, so its elements arrive as separate constructor arguments — cast it,
+	/// <c>(object?) points</c>. Value-type arrays (<c>float[]</c>, <c>int[]</c>) are unaffected. See
+	/// <see cref="ThreeObject.Call(string, object?[])"/> for why no overload fixes this.
+	/// </param>
 	/// <exception cref="ArgumentException">Thrown when <paramref name="threeTypeName"/> is blank.</exception>
 	/// <exception cref="NotSupportedException">Thrown for an argument with no wire encoding.</exception>
 	public PrimitiveObject3D(string threeTypeName, params object?[] constructorArgs)

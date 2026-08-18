@@ -198,6 +198,28 @@ public sealed class BatchedMesh : Mesh
 	}
 
 	/// <summary>
+	/// Sets the given color to the defined geometry instance. This overload takes <c>color</c> as
+	/// <c>Color</c> out of three.js's <c>Color | Vector4</c>.
+	/// </summary>
+	/// <param name="instanceId">The id of the instance to set the color of.</param>
+	/// <param name="color">The color to set the instance to. Use a <c>Vector4</c> to also define alpha.</param>
+	public void SetColorAt(float instanceId, Color color)
+	{
+		RecordCall("setColorAt", instanceId, color);
+	}
+
+	/// <summary>
+	/// Sets the given color to the defined geometry instance. This overload takes <c>color</c> as
+	/// <c>Vector4</c> out of three.js's <c>Color | Vector4</c>.
+	/// </summary>
+	/// <param name="instanceId">The id of the instance to set the color of.</param>
+	/// <param name="color">The color to set the instance to. Use a <c>Vector4</c> to also define alpha.</param>
+	public void SetColorAt(float instanceId, Vector4 color)
+	{
+		RecordCall("setColorAt", instanceId, color);
+	}
+
+	/// <summary>
 	/// Sets the given local transformation matrix to the defined instance. Negatively scaled matrices
 	/// are not supported.
 	/// </summary>

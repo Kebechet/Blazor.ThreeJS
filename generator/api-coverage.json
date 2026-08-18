@@ -3,19 +3,19 @@
   "typesVersion": "0.185.3",
   "totals": {
     "classes": 309,
-    "emittableClasses": 194,
+    "emittableClasses": 195,
     "outOfSurfaceClasses": 60,
-    "blockedClasses": 55,
+    "blockedClasses": 54,
     "reachableClasses": 264,
     "members": 3932,
     "mirroredState": 1174,
-    "commands": 773,
-    "asyncQueries": 830,
+    "commands": 783,
+    "asyncQueries": 832,
     "untypedObjectQueries": 13,
-    "skippedMembers": 1155,
-    "reachableMembers": 2490,
-    "generatedMembers": 1659,
-    "strandedMembers": 1442
+    "skippedMembers": 1143,
+    "reachableMembers": 2495,
+    "generatedMembers": 1668,
+    "strandedMembers": 1437
   },
   "classes": [
     {
@@ -598,13 +598,20 @@
     {
       "name": "CubeCamera",
       "file": "src/cameras/CubeCamera.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "required parameter 'renderTarget' cannot be mapped: `WebGLCubeRenderTarget | CubeRenderTarget` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion",
-      "constructorParameterCount": 0,
+      "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
-      "middlePositionUnspecifiedParameters": []
+      "middlePositionUnspecifiedParameters": [],
+      "droppedConstructorUnionArms": [
+        {
+          "parameter": "renderTarget",
+          "declaredType": "WebGLCubeRenderTarget | CubeRenderTarget",
+          "arm": "WebGLCubeRenderTarget",
+          "reason": "`WebGLCubeRenderTarget` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
+          "category": "NotExported"
+        }
+      ]
     },
     {
       "name": "CubeDepthTexture",
@@ -1026,22 +1033,40 @@
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion",
-      "constructorParameterCount": 0,
+      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "category": "UnreachableBaseConstructor",
+      "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
-      "middlePositionUnspecifiedParameters": []
+      "middlePositionUnspecifiedParameters": [],
+      "droppedConstructorUnionArms": [
+        {
+          "parameter": "array",
+          "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "arm": "ArrayBuffer",
+          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+          "category": "DomOrLibType"
+        }
+      ]
     },
     {
       "name": "Float32BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion",
-      "constructorParameterCount": 0,
+      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "category": "UnreachableBaseConstructor",
+      "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
-      "middlePositionUnspecifiedParameters": []
+      "middlePositionUnspecifiedParameters": [],
+      "droppedConstructorUnionArms": [
+        {
+          "parameter": "array",
+          "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "arm": "ArrayBuffer",
+          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+          "category": "DomOrLibType"
+        }
+      ]
     },
     {
       "name": "Fog",
@@ -1269,7 +1294,7 @@
       "file": "src/renderers/common/IndirectStorageBufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "reason": "its C# base `StorageBufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
       "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
@@ -1342,33 +1367,60 @@
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion",
-      "constructorParameterCount": 0,
+      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "category": "UnreachableBaseConstructor",
+      "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
-      "middlePositionUnspecifiedParameters": []
+      "middlePositionUnspecifiedParameters": [],
+      "droppedConstructorUnionArms": [
+        {
+          "parameter": "array",
+          "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "arm": "ArrayBuffer",
+          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+          "category": "DomOrLibType"
+        }
+      ]
     },
     {
       "name": "Int32BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion",
-      "constructorParameterCount": 0,
+      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "category": "UnreachableBaseConstructor",
+      "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
-      "middlePositionUnspecifiedParameters": []
+      "middlePositionUnspecifiedParameters": [],
+      "droppedConstructorUnionArms": [
+        {
+          "parameter": "array",
+          "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "arm": "ArrayBuffer",
+          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+          "category": "DomOrLibType"
+        }
+      ]
     },
     {
       "name": "Int8BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion",
-      "constructorParameterCount": 0,
+      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "category": "UnreachableBaseConstructor",
+      "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
-      "middlePositionUnspecifiedParameters": []
+      "middlePositionUnspecifiedParameters": [],
+      "droppedConstructorUnionArms": [
+        {
+          "parameter": "array",
+          "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "arm": "ArrayBuffer",
+          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+          "category": "DomOrLibType"
+        }
+      ]
     },
     {
       "name": "InterleavedBuffer",
@@ -2904,9 +2956,9 @@
       "file": "src/renderers/common/StorageBufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "required parameter 'array' cannot be mapped: `TypedArray | number` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion",
-      "constructorParameterCount": 0,
+      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "category": "UnreachableBaseConstructor",
+      "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
     },
@@ -2915,9 +2967,9 @@
       "file": "src/renderers/common/StorageInstancedBufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "required parameter 'array' cannot be mapped: `TypedArray | number` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion",
-      "constructorParameterCount": 0,
+      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "category": "UnreachableBaseConstructor",
+      "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
     },
@@ -3125,44 +3177,80 @@
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion",
-      "constructorParameterCount": 0,
+      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "category": "UnreachableBaseConstructor",
+      "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
-      "middlePositionUnspecifiedParameters": []
+      "middlePositionUnspecifiedParameters": [],
+      "droppedConstructorUnionArms": [
+        {
+          "parameter": "array",
+          "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "arm": "ArrayBuffer",
+          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+          "category": "DomOrLibType"
+        }
+      ]
     },
     {
       "name": "Uint32BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion",
-      "constructorParameterCount": 0,
+      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "category": "UnreachableBaseConstructor",
+      "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
-      "middlePositionUnspecifiedParameters": []
+      "middlePositionUnspecifiedParameters": [],
+      "droppedConstructorUnionArms": [
+        {
+          "parameter": "array",
+          "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "arm": "ArrayBuffer",
+          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+          "category": "DomOrLibType"
+        }
+      ]
     },
     {
       "name": "Uint8BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion",
-      "constructorParameterCount": 0,
+      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "category": "UnreachableBaseConstructor",
+      "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
-      "middlePositionUnspecifiedParameters": []
+      "middlePositionUnspecifiedParameters": [],
+      "droppedConstructorUnionArms": [
+        {
+          "parameter": "array",
+          "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "arm": "ArrayBuffer",
+          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+          "category": "DomOrLibType"
+        }
+      ]
     },
     {
       "name": "Uint8ClampedBufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion",
-      "constructorParameterCount": 0,
+      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "category": "UnreachableBaseConstructor",
+      "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
-      "middlePositionUnspecifiedParameters": []
+      "middlePositionUnspecifiedParameters": [],
+      "droppedConstructorUnionArms": [
+        {
+          "parameter": "array",
+          "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "arm": "ArrayBuffer",
+          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+          "category": "DomOrLibType"
+        }
+      ]
     },
     {
       "name": "Uniform",
@@ -3816,12 +3904,12 @@
       "members": 82
     },
     {
-      "category": "UnmappedUnion",
-      "members": 75
+      "category": "OptionsInterface",
+      "members": 72
     },
     {
-      "category": "OptionsInterface",
-      "members": 71
+      "category": "UnmappedUnion",
+      "members": 62
     },
     {
       "category": "UntypedValue",
@@ -4858,9 +4946,8 @@
       "member": "existingAction",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'clip': `AnimationClip | string` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery",
+      "type": "AnimationAction"
     },
     {
       "class": "AnimationMixer",
@@ -4911,9 +4998,7 @@
       "member": "uncacheAction",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'clip': `AnimationClip | string` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "Command"
     },
     {
       "class": "AnimationObjectGroup",
@@ -5802,9 +5887,7 @@
       "member": "setColorAt",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'color': `Color | Vector4` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "Command"
     },
     {
       "class": "BatchedMesh",
@@ -6990,9 +7073,16 @@
       "member": "set",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'value': `ArrayLike<number> | ArrayBufferView` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "Command",
+      "droppedUnionArms": [
+        {
+          "parameter": "value",
+          "declaredType": "ArrayLike<number> | ArrayBufferView",
+          "arm": "ArrayBufferView",
+          "reason": "`ArrayBufferView` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+          "category": "DomOrLibType"
+        }
+      ]
     },
     {
       "class": "BufferAttribute",
@@ -7152,7 +7242,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`IndirectStorageBufferAttribute` is not an emitted class: its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "reason": "`IndirectStorageBufferAttribute` is not an emitted class: its C# base `StorageBufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
       "category": "UnreachableBaseConstructor"
     },
     {
@@ -7253,9 +7343,7 @@
       "member": "setIndex",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'index': `BufferAttribute | number[] | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "Command"
     },
     {
       "class": "BufferGeometry",
@@ -7263,7 +7351,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'indirect': `IndirectStorageBufferAttribute` is not an emitted class: its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "reason": "parameter 'indirect': `IndirectStorageBufferAttribute` is not an emitted class: its C# base `StorageBufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
       "category": "UnreachableBaseConstructor"
     },
     {
@@ -7399,9 +7487,7 @@
       "member": "setFromPoints",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'points': `Vector3[] | Vector2[]` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "Command"
     },
     {
       "class": "BufferGeometry",
@@ -23687,9 +23773,7 @@
       "member": "setDistanceModel",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'value': `\"linear\" | \"inverse\" | \"exponential\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "Command"
     },
     {
       "class": "PositionalAudio",
@@ -31715,26 +31799,49 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'attribute': `BufferAttribute | InterleavedBufferAttribute | GLBufferAttribute` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "return type: `WebGLAttribute` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
+      "category": "OptionsInterface",
+      "droppedUnionArms": [
+        {
+          "parameter": "attribute",
+          "declaredType": "BufferAttribute | InterleavedBufferAttribute | GLBufferAttribute",
+          "arm": "GLBufferAttribute",
+          "reason": "`GLBufferAttribute` is not an emitted class: required parameter 'buffer' cannot be mapped: `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+          "category": "DomOrLibType"
+        }
+      ]
     },
     {
       "class": "WebGLAttributes",
       "member": "remove",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'attribute': `BufferAttribute | InterleavedBufferAttribute | GLBufferAttribute` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "Command",
+      "droppedUnionArms": [
+        {
+          "parameter": "attribute",
+          "declaredType": "BufferAttribute | InterleavedBufferAttribute | GLBufferAttribute",
+          "arm": "GLBufferAttribute",
+          "reason": "`GLBufferAttribute` is not an emitted class: required parameter 'buffer' cannot be mapped: `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+          "category": "DomOrLibType"
+        }
+      ]
     },
     {
       "class": "WebGLAttributes",
       "member": "update",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'attribute': `BufferAttribute | InterleavedBufferAttribute | GLBufferAttribute` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "Command",
+      "droppedUnionArms": [
+        {
+          "parameter": "attribute",
+          "declaredType": "BufferAttribute | InterleavedBufferAttribute | GLBufferAttribute",
+          "arm": "GLBufferAttribute",
+          "reason": "`GLBufferAttribute` is not an emitted class: required parameter 'buffer' cannot be mapped: `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+          "category": "DomOrLibType"
+        }
+      ]
     },
     {
       "class": "WebGLBackend",
@@ -32918,9 +33025,7 @@
       "member": "setViewport",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'x': `Vector4 | number` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "Command"
     },
     {
       "class": "WebGLRenderer",
@@ -32935,9 +33040,7 @@
       "member": "setScissor",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'x': `Vector4 | number` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "Command"
     },
     {
       "class": "WebGLRenderer",
@@ -33562,9 +33665,17 @@
       "member": "convert",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'p': `PixelFormat | CompressedPixelFormat | TextureDataType` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery",
+      "type": "float",
+      "droppedUnionArms": [
+        {
+          "parameter": "p",
+          "declaredType": "PixelFormat | CompressedPixelFormat | TextureDataType",
+          "arm": "CompressedPixelFormat",
+          "reason": "`CompressedPixelFormat` cannot become a C# enum: constant `RGB_BPTC_SIGNED_Format` has no literal value in the IR (declared type `<none>`)",
+          "category": "UnmappedTypeAlias"
+        }
+      ]
     },
     {
       "class": "WebGPUBackend",

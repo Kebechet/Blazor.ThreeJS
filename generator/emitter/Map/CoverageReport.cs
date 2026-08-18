@@ -140,7 +140,8 @@ internal sealed class CoverageReport
 						Category = dropped.Category.ToString()
 					})
 					.ToList() ?? [],
-				MiddlePositionUnspecifiedParameters = x.Constructor?.MiddlePositionUnspecifiedParameters.ToList() ?? []
+				MiddlePositionUnspecifiedParameters = x.Constructor?.MiddlePositionUnspecifiedParameters.ToList() ?? [],
+				DroppedConstructorUnionArms = RenderDroppedArms(x.Constructor?.Parameters ?? [])
 			})
 			.ToList();
 
@@ -192,13 +193,37 @@ internal sealed class CoverageReport
 					Bucket = x.Bucket.ToString(),
 					Type = x.CSharpTypeName,
 					Reason = x.SkipReason,
-					Category = x.SkipCategory == SkipCategory.None ? null : x.SkipCategory.ToString()
+					Category = x.SkipCategory == SkipCategory.None ? null : x.SkipCategory.ToString(),
+					DroppedUnionArms = RenderDroppedArms(x.Method?.Overloads.FirstOrDefault() ?? [])
 				})
 				.ToList()
 		};
 
 		var json = JsonSerializer.Serialize(document, _coverageJsonOptions);
 		return json.ReplaceLineEndings("\n") + "\n";
+	}
+
+	/// <summary>
+	/// The dropped-arm rows for one parameter list, or <see langword="null"/> when it lost none — the
+	/// JSON omits the key rather than writing an empty list on every one of the thousands of rows that
+	/// never had a union.
+	/// </summary>
+	/// <param name="parameters">Parameters of one signature.</param>
+	/// <returns>The rows, or <see langword="null"/>.</returns>
+	private static List<CoverageDroppedArmJson>? RenderDroppedArms(IReadOnlyList<MappedParameter> parameters)
+	{
+		var rows = parameters
+			.SelectMany(parameter => parameter.DroppedAlternatives.Select(dropped => new CoverageDroppedArmJson
+			{
+				Parameter = parameter.ThreeName,
+				DeclaredType = parameter.DeclaredTypeText ?? "<none>",
+				Arm = dropped.TypeText,
+				Reason = dropped.Reason,
+				Category = dropped.Category.ToString()
+			}))
+			.ToList();
+
+		return rows.Count == 0 ? null : rows;
 	}
 
 	private void AppendReadmeHeadline(StringBuilder builder, IReadOnlyList<EmittedFile> emittedFiles)
@@ -519,7 +544,8 @@ internal sealed class CoverageReport
 		AppendLine(builder, "  that does not map blocks the whole class instead.");
 		if (overloadedCount > 0)
 		{
-			AppendLine(builder, $"- **{overloadedCount} generated methods declare more than one overload upstream, and only the first is emitted.**");
+			AppendLine(builder, $"- **{overloadedCount} generated methods declare more than one *TypeScript* overload upstream, and only the first");
+			AppendLine(builder, "  signature is emitted.** Unrelated to the arm overloads below, which come from one signature.");
 		}
 
 		AppendLine(builder, "- **A colour is a `Color`.** three.js also accepts a CSS string or a hex number wherever a colour is");
@@ -527,6 +553,17 @@ internal sealed class CoverageReport
 		if (_mapper.MultiValueNarrowings.Count > 0)
 		{
 			AppendLine(builder, $"- **`T | T[]` maps to `T`** in {_mapper.MultiValueNarrowings.Count} declared types, so a mesh with several materials is not expressible.");
+		}
+
+		var overloaded = UnionOverloadedMembers();
+		if (overloaded.Count > 0)
+		{
+			AppendLine(builder, $"- **A union in a required parameter becomes one overload per arm** - {Pluralize(overloaded.Count, "member", "members")} carry");
+			AppendLine(builder, $"  {overloaded.Sum(x => x.OverloadCount)} signatures between them, so `BufferGeometry.SetIndex` takes either a `BufferAttribute` or an");
+			AppendLine(builder, "  `int[]`. Two costs: an **optional** union parameter is dropped instead, because every overload would");
+			AppendLine(builder, "  accept the same argument-omitting call and none could win it; and where two arms are reference types");
+			AppendLine(builder, "  anything that converts to both is ambiguous (CS0121) — `SetIndex(null)` and `SetFromPoints([])` do not");
+			AppendLine(builder, "  compile, and need a cast (`SetIndex((int[]?) null)`) or a named argument.");
 		}
 
 		AppendLine(builder);
@@ -588,6 +625,14 @@ internal sealed class CoverageReport
 		AppendLine(builder, "  use it.");
 		AppendLine(builder, "- **A raw `Set` made before the object is attached replays after every typed property**, whichever order the");
 		AppendLine(builder, "  two were written in. A typed property is replayed from its field, which does not know when it was set.");
+		AppendLine(builder, "- **⚠️ A lone array argument needs an `(object?)` cast.** `Call`, `CallAsync`, `CallObjectAsync`,");
+		AppendLine(builder, "  `new Primitive(…)`, `new PrimitiveObject3D(…)` and `ThreeContext.LoadNodeAsync` all take");
+		AppendLine(builder, "  `params object?[]`, and C# array covariance makes a **reference-type** array convertible to it — so");
+		AppendLine(builder, "  `Call(\"setFromPoints\", points)` binds `points` as the whole argument list and three.js receives one");
+		AppendLine(builder, "  argument per point. Write `Call(\"setFromPoints\", (object?) points)`. No overload can fix this: the");
+		AppendLine(builder, "  non-expanded form wins on an identity conversion, so it would still be chosen. A **value-type** array");
+		AppendLine(builder, "  (`float[]`, `int[]`) is unaffected, having no covariant conversion to `object?[]`. The generated");
+		AppendLine(builder, "  classes carry the cast already; this is a limit of the escape hatch, and of the workaround column above.");
 		AppendLine(builder);
 		AppendLine(builder, "What it does **not** bypass: an object-valued write still attaches the object it references before the");
 		AppendLine(builder, "op that names it, a call recorded before an attach is still replayed rather than dropped, writes still");
@@ -655,7 +700,7 @@ internal sealed class CoverageReport
 		AppendLine(builder, "| generated enum | a type alias unioning `typeof` of numeric constants, or a numeric TypeScript `enum` |");
 		AppendLine(builder, "| **skipped** | everything else, with the obstacle named |");
 		AppendLine(builder);
-		AppendLine(builder, "Six rules are worth stating explicitly because they are judgement calls, not mechanics:");
+		AppendLine(builder, "Seven rules are worth stating explicitly because they are judgement calls, not mechanics:");
 		AppendLine(builder);
 		AppendLine(builder, "1. **`ColorRepresentation` maps to `Color`.** three.js accepts `Color | string | number` wherever a colour");
 		AppendLine(builder, "   is taken; the mirror exposes only `Color`, which reaches the browser as a real `THREE.Color` and covers");
@@ -671,12 +716,27 @@ internal sealed class CoverageReport
 		AppendLine(builder, "5. **`T | T[]` maps to `T`.** This is not a choice between two types; it is one type plus three.js's");
 		AppendLine(builder, "   convenience form for supplying several. `Mesh.material` is declared `Material | Material[]`, and");
 		AppendLine(builder, "   refusing it would leave a mesh with no material at all. A **narrowing**: the multi-material form is");
-		AppendLine(builder, "   not exposed. A union of genuinely different types stays refused — there the choice would be real.");
+		AppendLine(builder, "   not exposed. A union of genuinely different types is a real choice, and rule 7 is where it goes.");
 		AppendLine(builder, "6. **A method parameter is optional only when a real default can be written for it.** The `$undef`");
 		AppendLine(builder, "   sentinel is constructor-arguments-only, so a method has no way to say \"not supplied\". Optionality is");
 		AppendLine(builder, "   therefore resolved right to left: the moment a parameter cannot carry a default, every parameter");
 		AppendLine(builder, "   before it becomes required. Emitting an optional three.js parameter as a required C# one is always");
 		AppendLine(builder, "   safe; inventing a default would send a value three.js never agreed to.");
+		AppendLine(builder, "7. **A required parameter whose type is a genuine union becomes one overload per arm.** A parameter is");
+		AppendLine(builder, "   the only position C# lets a union through, because C# overloads on parameters — so");
+		AppendLine(builder, "   `BufferGeometry.setIndex`, declared `BufferAttribute | number[] | null`, emits `SetIndex(BufferAttribute?)`");
+		AppendLine(builder, "   beside `SetIndex(int[]?)`. An arm that does not map is left out rather than blocking the member, and");
+		AppendLine(builder, "   arms that resolve to the same C# type are emitted once — `Iterable<number>` and `ArrayLike<number>`");
+		AppendLine(builder, "   are both `float[]`, and declaring that signature twice would not compile. A **property** or a");
+		AppendLine(builder, "   **return type** holds one type and has nowhere to put the second, so there the union stays refused.");
+		AppendLine(builder);
+		AppendLine(builder, "   ⚠️ Two things this costs the caller. An **optional** parameter is deliberately *not* expanded: every");
+		AppendLine(builder, "   overload would accept the same argument-omitting call and it would be ambiguous (CS0121) in all of");
+		AppendLine(builder, "   them, so an optional union parameter is dropped exactly as any other optional parameter the mapper");
+		AppendLine(builder, "   cannot map. And where two arms are **reference types**, any argument that converts to both is");
+		AppendLine(builder, "   ambiguous — a bare `null`, and an empty collection expression where both arms are arrays. So");
+		AppendLine(builder, "   `geometry.SetIndex(null)` and `geometry.SetFromPoints([])` do not compile; a cast");
+		AppendLine(builder, "   (`SetIndex((int[]?) null)`, `SetFromPoints((Vector3[]) [])`) or a named argument picks the arm.");
 		AppendLine(builder);
 
 		if (_mapper.MultiValueNarrowings.Count > 0)
@@ -690,6 +750,152 @@ internal sealed class CoverageReport
 
 			AppendLine(builder);
 		}
+
+		var overloaded = UnionOverloadedMembers();
+		if (overloaded.Count > 0)
+		{
+			var extraOverloads = overloaded.Sum(x => x.OverloadCount - 1);
+			var largestSet = overloaded.Max(x => x.OverloadCount);
+			AppendLine(builder, $"Emitted members that rule 7 gives more than one signature — {overloaded.Count} of them, carrying");
+			AppendLine(builder, $"{extraOverloads} overloads beyond the one a single-typed parameter would have produced. A list rather");
+			AppendLine(builder, "than a table, because every entry contains the `|` a table cell would split on:");
+			AppendLine(builder);
+			foreach (var member in overloaded)
+			{
+				AppendLine(builder, $"- `{member.Member}` — `{member.DeclaredTypeText}` → {member.OverloadCount} overloads");
+			}
+
+			AppendLine(builder);
+			AppendLine(builder, $"The largest set is **{largestSet}**, against a budget of {EmitterConfig.UnionOverloadBudget}. The expansion is a cartesian product across");
+			AppendLine(builder, "parameters, so it multiplies rather than adds: two three-arm parameters on one member would be nine");
+			AppendLine(builder, "near-identical declarations. The figure is printed rather than enforced, because refusing to emit a");
+			AppendLine(builder, "member three.js declares would be the worse answer — but it makes upstream growth visible here.");
+			AppendLine(builder);
+			if (largestSet > EmitterConfig.UnionOverloadBudget)
+			{
+				AppendLine(builder, $"⚠️ The budget is exceeded. Decide whether that member should still be expanded arm by arm.");
+				AppendLine(builder);
+			}
+		}
+
+		AppendDroppedUnionArms(builder);
+	}
+
+	/// <summary>
+	/// Arms of a declared union that reached no overload. The other half of rule 7, and the half that is
+	/// a loss: an arm that maps is a signature the caller gains, an arm that does not is part of the
+	/// declared type the mirror does not carry — and this package does not narrow anything without
+	/// recording why.
+	/// </summary>
+	/// <param name="builder">Destination.</param>
+	private void AppendDroppedUnionArms(StringBuilder builder)
+	{
+		var rows = DroppedUnionArms();
+		AppendLine(builder, "Arms of a declared union that no overload takes, across the whole snapshot rather than only the");
+		AppendLine(builder, "emitted classes. Each is a narrowing of a member that does exist, so it is listed rather than left to");
+		AppendLine(builder, "be inferred from an overload count:");
+		AppendLine(builder);
+		if (rows.Count == 0)
+		{
+			AppendLine(builder, "None.");
+			AppendLine(builder);
+			return;
+		}
+
+		foreach (var row in rows)
+		{
+			AppendLine(builder, $"- `{row.Member}` — `{row.ArmText}` out of `{row.DeclaredTypeText}`: {row.Reason}");
+		}
+
+		AppendLine(builder);
+	}
+
+	/// <summary>
+	/// The emitted members a union in a required parameter turns into an overload set, read off the
+	/// signatures the emitter actually produces rather than off the unions the mapper saw. A union on a
+	/// class that ends up blocked, or on a member skipped for its return type, produces no overloads at
+	/// all, and listing it here would claim a surface that is not there.
+	/// </summary>
+	/// <returns>One row per member, ordered by member then by declared type.</returns>
+	private List<UnionOverloadedMember> UnionOverloadedMembers()
+	{
+		var rows = new List<UnionOverloadedMember>();
+		foreach (var result in EmittableClasses.Where(x => x.Constructor is { Overloads.Count: > 1 }))
+		{
+			rows.Add(new UnionOverloadedMember
+			{
+				Member = $"{result.Class.Name}(…)",
+				DeclaredTypeText = DescribeArmedParameters(result.Constructor!.Parameters),
+				OverloadCount = result.Constructor.Overloads.Count
+			});
+		}
+
+		foreach (var member in EmittedSurfaceMembers().Where(x => x.Method is { Overloads.Count: > 1 }))
+		{
+			rows.Add(new UnionOverloadedMember
+			{
+				Member = $"{member.ClassName}.{member.MemberName}",
+				DeclaredTypeText = DescribeArmedParameters(member.Method!.Overloads[0]),
+				OverloadCount = member.Method.Overloads.Count
+			});
+		}
+
+		return [.. rows.OrderBy(x => x.Member, StringComparer.Ordinal).ThenBy(x => x.DeclaredTypeText, StringComparer.Ordinal)];
+	}
+
+	/// <summary>
+	/// Every arm of every declared union that reached no C# overload, over the whole snapshot: the
+	/// constructors and the methods, whether or not the declaring class is emitted.
+	/// </summary>
+	/// <returns>One row per dropped arm, ordered by member.</returns>
+	private List<DroppedUnionArm> DroppedUnionArms()
+	{
+		var rows = new List<DroppedUnionArm>();
+		foreach (var result in _scope.Results)
+		{
+			rows.AddRange(DescribeDroppedArms($"{result.Class.Name}(…)", result.Constructor?.Parameters ?? []));
+		}
+
+		foreach (var member in _members)
+		{
+			rows.AddRange(DescribeDroppedArms($"{member.ClassName}.{member.MemberName}", member.Method?.Overloads.FirstOrDefault() ?? []));
+		}
+
+		return [.. rows.OrderBy(x => x.Member, StringComparer.Ordinal).ThenBy(x => x.ArmText, StringComparer.Ordinal)];
+	}
+
+	private static IEnumerable<DroppedUnionArm> DescribeDroppedArms(string member, IReadOnlyList<MappedParameter> parameters)
+	{
+		return parameters.SelectMany(parameter => parameter.DroppedAlternatives.Select(dropped => new DroppedUnionArm
+		{
+			Member = member,
+			DeclaredTypeText = $"{parameter.ThreeName}: {parameter.DeclaredTypeText}",
+			ArmText = dropped.TypeText,
+			Reason = dropped.Reason
+		}));
+	}
+
+	private static string DescribeArmedParameters(IReadOnlyList<MappedParameter> parameters)
+	{
+		return string.Join(", ", parameters
+			.Where(x => x.HasSeveralAlternatives)
+			.Select(x => $"{x.ThreeName}: {x.DeclaredTypeText}"));
+	}
+
+	/// <summary>
+	/// Every classified member that lands on a generated file: the emittable classes' members, plus the
+	/// hybrid classes', whose generated half is a file of the same kind even though the type itself is
+	/// hand-written.
+	/// </summary>
+	/// <returns>The members, in classification order.</returns>
+	private IEnumerable<ClassifiedMember> EmittedSurfaceMembers()
+	{
+		var names = EmittableClasses
+			.Select(x => x.Class.Name)
+			.ToHashSet(StringComparer.Ordinal);
+
+		names.UnionWith(EmitterConfig.HybridClassNames);
+		return _members.Where(x => names.Contains(x.ClassName));
 	}
 
 	/// <summary>
@@ -954,9 +1160,10 @@ internal sealed class CoverageReport
 			.Where(x => x.OverloadCount > 1)
 			.ToList();
 
-		AppendLine(builder, $"⚠️ **{overloadedMethods.Count} methods declare more than one overload, and only the first is classified.** Each stands");
-		AppendLine(builder, "for several C# overloads; the classification says what the first signature is, not how many methods a");
-		AppendLine(builder, "full run would emit.");
+		AppendLine(builder, $"⚠️ **{overloadedMethods.Count} methods declare more than one TypeScript overload, and only the first is classified.** Each");
+		AppendLine(builder, "stands for several C# overloads; the classification says what the first signature is, not how many methods");
+		AppendLine(builder, "a full run would emit. Rule 7's arm overloads are a different thing — those come from one signature whose");
+		AppendLine(builder, "parameter unions several types, and are emitted in full.");
 		AppendLine(builder);
 
 		var augmented = _members
@@ -1289,11 +1496,11 @@ internal sealed class CoverageReport
 			SkipCategory.NodeStackType => "declared under `src/nodes/**`, the TSL / WebGPU node stack outside the extracted surface",
 			SkipCategory.OptionsInterface => "a structural interface — an options bag or an event map — with no C# type to be",
 			SkipCategory.MathValueType => "a `src/math/**` value type that is not one of the hand-written ones",
-			SkipCategory.CollectionType => "an array or tuple; `ThreeValue.Encode` has no array arm",
+			SkipCategory.CollectionType => "a tuple, which has no wire encoding, or an array whose elements have none — `ThreeValue.Encode` does walk a sequence element by element, so an array is exactly as encodable as what is in it",
 			SkipCategory.CallbackType => "a JavaScript callback; the wire format carries ops in one direction only",
 			SkipCategory.StringConstantGroup => "a group of string-valued constants, which a C# enum cannot carry over this wire format",
 			SkipCategory.UnmappedTypeAlias => "a type alias that is neither a constant group nor a rename of a mapped type",
-			SkipCategory.UnmappedUnion => "a union of several real alternatives, which one C# parameter cannot express",
+			SkipCategory.UnmappedUnion => "a union of several real alternatives in a position that holds one type — a property or a return type, since a required parameter becomes one overload per arm",
 			SkipCategory.UnmappedTypeSyntax => "a TypeScript type form with no C# equivalent",
 			SkipCategory.LiteralType => "a literal type — three.js's `isMesh`-style runtime type tags",
 			SkipCategory.AnonymousObjectType => "an anonymous object literal type with no name to give a C# type",
@@ -1316,6 +1523,35 @@ internal sealed class CoverageReport
 			SkipCategory.RestParameter => "a rest parameter, including the rest-union-tuple pseudo-overload form",
 			_ => throw new NotImplementedException($"Unhandled {nameof(SkipCategory)} '{category}'.")
 		};
+	}
+
+	/// <summary>One emitted member that a union in a required parameter gives several signatures.</summary>
+	private sealed class UnionOverloadedMember
+	{
+		/// <summary>Member as the report names it, qualified by its class.</summary>
+		public required string Member { get; init; }
+
+		/// <summary>The declared union, or unions, the overloads stand for.</summary>
+		public required string DeclaredTypeText { get; init; }
+
+		/// <summary>How many signatures are emitted for it.</summary>
+		public required int OverloadCount { get; init; }
+	}
+
+	/// <summary>One arm of a declared union that reached no C# overload.</summary>
+	private sealed class DroppedUnionArm
+	{
+		/// <summary>Member as the report names it, qualified by its class.</summary>
+		public required string Member { get; init; }
+
+		/// <summary>The parameter and its whole declared union.</summary>
+		public required string DeclaredTypeText { get; init; }
+
+		/// <summary>The arm that was left out.</summary>
+		public required string ArmText { get; init; }
+
+		/// <summary>Why it could not be mapped.</summary>
+		public required string Reason { get; init; }
 	}
 
 	/// <summary>Renders a count with the right noun, so a generated sentence never reads "1 methods".</summary>

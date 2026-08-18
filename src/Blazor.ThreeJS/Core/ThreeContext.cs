@@ -418,7 +418,12 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// Path to the module, resolved against the document like any other static asset of your app.
 	/// </param>
 	/// <param name="exportName">Name of the export to read, called with <paramref name="args"/> when it is a function.</param>
-	/// <param name="args">Positional arguments for the exported function.</param>
+	/// <param name="args">
+	/// Positional arguments for the exported function. ⚠️ A lone <b>reference-type</b> array binds as
+	/// this parameter array itself, so its elements arrive as separate arguments — cast it,
+	/// <c>(object?) points</c>. Value-type arrays (<c>float[]</c>, <c>int[]</c>) are unaffected. See
+	/// <see cref="ThreeObject.Call(string, object?[])"/> for why no overload fixes this.
+	/// </param>
 	/// <returns>The node, under a handle this context mirrors.</returns>
 	/// <exception cref="JSException">
 	/// Thrown when the module cannot be loaded, has no such export, or the export does not produce a node.

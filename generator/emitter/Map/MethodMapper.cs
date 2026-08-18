@@ -26,7 +26,7 @@ internal sealed class MethodMapper
 			return MappedMethod.Refused("the method has no signature in the IR", SkipCategory.UnmappedTypeSyntax);
 		}
 
-		var parameters = new List<MappedParameter>();
+		var armsPerPosition = new List<IReadOnlyList<MappedParameter>>();
 		var dropped = new List<DroppedParameter>();
 		var isTailDropped = false;
 
@@ -54,13 +54,14 @@ internal sealed class MethodMapper
 					SkipCategory.RestParameter);
 			}
 
-			var mapping = mapper.Map(irParameter.Type, new TypeMappingContext
+			var alternatives = ConstructorMapper.ResolveAlternatives(mapper, irParameter, new TypeMappingContext
 			{
 				MemberName = irParameter.Name,
 				NumericKind = irParameter.NumericKind,
 				TypeParameters = typeParameters
 			});
 
+			var mapping = alternatives.Arms[0];
 			if (!mapping.IsMapped || mapping.CSharpTypeName == "void")
 			{
 				var reason = mapping.SkipReason ?? "the parameter has no type";
@@ -82,34 +83,43 @@ internal sealed class MethodMapper
 			}
 
 			var name = ConstructorMapper.ToCamelCase(irParameter.Name);
-			parameters.Add(new MappedParameter
-			{
-				Name = name,
-				DeclarationName = CSharpIdentifier.Escape(name),
-				FieldName = "_" + name,
-				ThreeName = irParameter.Name,
-				Mapping = mapping,
-				CSharpTypeName = mapping.IsExplicitlyNullable
-					? mapping.CSharpTypeName + "?"
-					: mapping.CSharpTypeName!,
-				DefaultLiteral = irParameter.IsOptional
-					? RenderDefaultLiteral(irParameter.DefaultValue, mapping)
-					: null,
-				IsOptional = irParameter.IsOptional,
-				IsUnspecifiedNullable = false,
-				DocumentedDefault = irParameter.DefaultValue,
-				Documentation = irParameter.Doc
-			});
+			armsPerPosition.Add(alternatives.Arms
+				.Select(arm => new MappedParameter
+				{
+					Name = name,
+					DeclarationName = CSharpIdentifier.Escape(name),
+					FieldName = "_" + name,
+					ThreeName = irParameter.Name,
+					Mapping = arm,
+					Alternatives = alternatives.Arms,
+					DroppedAlternatives = alternatives.DroppedArms,
+					DeclaredTypeText = irParameter.Type?.Text,
+					CSharpTypeName = arm.IsExplicitlyNullable
+						? arm.CSharpTypeName + "?"
+						: arm.CSharpTypeName!,
+					DefaultLiteral = irParameter.IsOptional
+						? RenderDefaultLiteral(irParameter.DefaultValue, arm)
+						: null,
+					IsOptional = irParameter.IsOptional,
+					IsUnspecifiedNullable = false,
+					DocumentedDefault = irParameter.DefaultValue,
+					Documentation = irParameter.Doc
+				})
+				.ToList());
 		}
 
-		if (signature.Parameters.Count > 0 && parameters.Count == 0)
+		if (signature.Parameters.Count > 0 && armsPerPosition.Count == 0)
 		{
 			return MappedMethod.Refused(
 				"every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take",
 				dropped.FirstOrDefault()?.Category ?? SkipCategory.UnmappedTypeSyntax);
 		}
 
-		return MappedMethod.Mapped(ResolveOptionalTail(parameters), dropped, signature);
+		var overloads = ConstructorMapper.ExpandOverloads(armsPerPosition)
+			.Select(x => (IReadOnlyList<MappedParameter>)ResolveOptionalTail([.. x]))
+			.ToList();
+
+		return MappedMethod.Mapped(overloads, dropped, signature);
 	}
 
 	/// <summary>
@@ -131,20 +141,7 @@ internal sealed class MethodMapper
 			isTailOptional = isTailOptional && parameter.IsOptional && parameter.DefaultLiteral is not null;
 			resolved[index] = isTailOptional
 				? parameter
-				: new MappedParameter
-				{
-					Name = parameter.Name,
-					DeclarationName = parameter.DeclarationName,
-					FieldName = parameter.FieldName,
-					ThreeName = parameter.ThreeName,
-					Mapping = parameter.Mapping,
-					CSharpTypeName = parameter.CSharpTypeName,
-					DefaultLiteral = null,
-					IsOptional = false,
-					IsUnspecifiedNullable = false,
-					DocumentedDefault = parameter.DocumentedDefault,
-					Documentation = parameter.Documentation
-				};
+				: parameter with { DefaultLiteral = null, IsOptional = false, IsUnspecifiedNullable = false };
 		}
 
 		return [.. resolved];
@@ -221,8 +218,12 @@ internal sealed class MappedMethod
 	/// <summary>Whether the signature could be mirrored.</summary>
 	public required bool IsMapped { get; init; }
 
-	/// <summary>Parameters that reached the C# signature, in three.js order.</summary>
-	public IReadOnlyList<MappedParameter> Parameters { get; init; } = [];
+	/// <summary>
+	/// The methods a caller sees, one per distinct C# signature, each carrying the parameters that
+	/// reached it in three.js order. More than one only where a parameter's declared type unions several
+	/// types the mirror can express separately.
+	/// </summary>
+	public IReadOnlyList<IReadOnlyList<MappedParameter>> Overloads { get; init; } = [];
 
 	/// <summary>Parameters left out, each with the reason.</summary>
 	public IReadOnlyList<DroppedParameter> DroppedParameters { get; init; } = [];
@@ -237,16 +238,19 @@ internal sealed class MappedMethod
 	public SkipCategory RefusalCategory { get; init; }
 
 	/// <summary>Builds a successful mapping.</summary>
-	/// <param name="parameters">Parameters that reached the signature.</param>
+	/// <param name="overloads">The methods a caller sees, one per distinct C# signature.</param>
 	/// <param name="dropped">Parameters left out.</param>
 	/// <param name="signature">The signature that was mapped.</param>
 	/// <returns>The mapping.</returns>
-	public static MappedMethod Mapped(IReadOnlyList<MappedParameter> parameters, IReadOnlyList<DroppedParameter> dropped, IrSignature signature)
+	public static MappedMethod Mapped(
+		IReadOnlyList<IReadOnlyList<MappedParameter>> overloads,
+		IReadOnlyList<DroppedParameter> dropped,
+		IrSignature signature)
 	{
 		return new MappedMethod
 		{
 			IsMapped = true,
-			Parameters = parameters,
+			Overloads = overloads,
 			DroppedParameters = dropped,
 			Signature = signature
 		};

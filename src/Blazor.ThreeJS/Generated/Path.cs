@@ -193,14 +193,14 @@ public class Path : CurvePath
 	/// <param name="vectors">Value forwarded to the <c>vectors</c> argument.</param>
 	public void SetFromPoints(Vector2[] vectors)
 	{
-		RecordCall("setFromPoints", vectors);
+		RecordCall("setFromPoints", (object?) vectors);
 	}
 
 	/// <summary>Connects a new <c>SplineCurve</c> onto the path.</summary>
 	/// <param name="pts">An array of <see cref="Vector2">Vector2's</see>.</param>
 	public void SplineThru(Vector2[] pts)
 	{
-		RecordCall("splineThru", pts);
+		RecordCall("splineThru", (object?) pts);
 	}
 
 	/// <summary>

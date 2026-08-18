@@ -59,7 +59,10 @@ public sealed class Primitive : ThreeObject
 	/// Positional constructor arguments, under the same encoding rules as
 	/// <see cref="ThreeObject.Set"/>: any primitive, <see cref="string"/>, <see cref="Enum"/>,
 	/// <see langword="null"/>, another mirrored object, or one of the hand-written math types in
-	/// <c>Kebechet.Blazor.ThreeJS.Math</c>.
+	/// <c>Kebechet.Blazor.ThreeJS.Math</c>. ⚠️ A lone <b>reference-type</b> array binds as this parameter
+	/// array itself, so its elements arrive as separate constructor arguments — cast it,
+	/// <c>(object?) points</c>. Value-type arrays (<c>float[]</c>, <c>int[]</c>) are unaffected. See
+	/// <see cref="ThreeObject.Call(string, object?[])"/> for why no overload fixes this.
 	/// </param>
 	/// <exception cref="ArgumentException">Thrown when <paramref name="threeTypeName"/> is blank.</exception>
 	/// <exception cref="NotSupportedException">

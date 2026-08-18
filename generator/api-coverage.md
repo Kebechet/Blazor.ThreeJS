@@ -20,7 +20,7 @@ so nothing reaches generated code without either a mapping or a recorded reason.
 | generated enum | a type alias unioning `typeof` of numeric constants, or a numeric TypeScript `enum` |
 | **skipped** | everything else, with the obstacle named |
 
-Six rules are worth stating explicitly because they are judgement calls, not mechanics:
+Seven rules are worth stating explicitly because they are judgement calls, not mechanics:
 
 1. **`ColorRepresentation` maps to `Color`.** three.js accepts `Color | string | number` wherever a colour
    is taken; the mirror exposes only `Color`, which reaches the browser as a real `THREE.Color` and covers
@@ -36,12 +36,27 @@ Six rules are worth stating explicitly because they are judgement calls, not mec
 5. **`T | T[]` maps to `T`.** This is not a choice between two types; it is one type plus three.js's
    convenience form for supplying several. `Mesh.material` is declared `Material | Material[]`, and
    refusing it would leave a mesh with no material at all. A **narrowing**: the multi-material form is
-   not exposed. A union of genuinely different types stays refused — there the choice would be real.
+   not exposed. A union of genuinely different types is a real choice, and rule 7 is where it goes.
 6. **A method parameter is optional only when a real default can be written for it.** The `$undef`
    sentinel is constructor-arguments-only, so a method has no way to say "not supplied". Optionality is
    therefore resolved right to left: the moment a parameter cannot carry a default, every parameter
    before it becomes required. Emitting an optional three.js parameter as a required C# one is always
    safe; inventing a default would send a value three.js never agreed to.
+7. **A required parameter whose type is a genuine union becomes one overload per arm.** A parameter is
+   the only position C# lets a union through, because C# overloads on parameters — so
+   `BufferGeometry.setIndex`, declared `BufferAttribute | number[] | null`, emits `SetIndex(BufferAttribute?)`
+   beside `SetIndex(int[]?)`. An arm that does not map is left out rather than blocking the member, and
+   arms that resolve to the same C# type are emitted once — `Iterable<number>` and `ArrayLike<number>`
+   are both `float[]`, and declaring that signature twice would not compile. A **property** or a
+   **return type** holds one type and has nowhere to put the second, so there the union stays refused.
+
+   ⚠️ Two things this costs the caller. An **optional** parameter is deliberately *not* expanded: every
+   overload would accept the same argument-omitting call and it would be ambiguous (CS0121) in all of
+   them, so an optional union parameter is dropped exactly as any other optional parameter the mapper
+   cannot map. And where two arms are **reference types**, any argument that converts to both is
+   ambiguous — a bare `null`, and an empty collection expression where both arms are arrays. So
+   `geometry.SetIndex(null)` and `geometry.SetFromPoints([])` do not compile; a cast
+   (`SetIndex((int[]?) null)`, `SetFromPoints((Vector3[]) [])`) or a named argument picks the arm.
 
 Declared types narrowed by rule 5, each of which lost its multi-value form:
 
@@ -55,6 +70,41 @@ Declared types narrowed by rule 5, each of which lost its multi-value form:
 - `Shape | Shape[]`
 - `Uniform | Uniform[]`
 - `number | number[]`
+
+Emitted members that rule 7 gives more than one signature — 5 of them, carrying
+5 overloads beyond the one a single-typed parameter would have produced. A list rather
+than a table, because every entry contains the `|` a table cell would split on:
+
+- `AnimationMixer.existingAction` — `clip: AnimationClip | string` → 2 overloads
+- `AnimationMixer.uncacheAction` — `clip: AnimationClip | string` → 2 overloads
+- `BatchedMesh.setColorAt` — `color: Color | Vector4` → 2 overloads
+- `BufferGeometry.setFromPoints` — `points: Vector3[] | Vector2[]` → 2 overloads
+- `BufferGeometry.setIndex` — `index: BufferAttribute | number[] | null` → 2 overloads
+
+The largest set is **2**, against a budget of 4. The expansion is a cartesian product across
+parameters, so it multiplies rather than adds: two three-arm parameters on one member would be nine
+near-identical declarations. The figure is printed rather than enforced, because refusing to emit a
+member three.js declares would be the worse answer — but it makes upstream growth visible here.
+
+Arms of a declared union that no overload takes, across the whole snapshot rather than only the
+emitted classes. Each is a narrowing of a member that does exist, so it is listed rather than left to
+be inferred from an overload count:
+
+- `BufferAttribute.set` — `ArrayBufferView` out of `value: ArrayLike<number> | ArrayBufferView`: `ArrayBufferView` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one
+- `CubeCamera(…)` — `WebGLCubeRenderTarget` out of `renderTarget: WebGLCubeRenderTarget | CubeRenderTarget`: `WebGLCubeRenderTarget` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on
+- `Float16BufferAttribute(…)` — `ArrayBuffer` out of `array: Iterable<number> | ArrayLike<number> | ArrayBuffer | number`: `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one
+- `Float32BufferAttribute(…)` — `ArrayBuffer` out of `array: Iterable<number> | ArrayLike<number> | ArrayBuffer | number`: `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one
+- `Int16BufferAttribute(…)` — `ArrayBuffer` out of `array: Iterable<number> | ArrayLike<number> | ArrayBuffer | number`: `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one
+- `Int32BufferAttribute(…)` — `ArrayBuffer` out of `array: Iterable<number> | ArrayLike<number> | ArrayBuffer | number`: `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one
+- `Int8BufferAttribute(…)` — `ArrayBuffer` out of `array: Iterable<number> | ArrayLike<number> | ArrayBuffer | number`: `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one
+- `Uint16BufferAttribute(…)` — `ArrayBuffer` out of `array: Iterable<number> | ArrayLike<number> | ArrayBuffer | number`: `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one
+- `Uint32BufferAttribute(…)` — `ArrayBuffer` out of `array: Iterable<number> | ArrayLike<number> | ArrayBuffer | number`: `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one
+- `Uint8BufferAttribute(…)` — `ArrayBuffer` out of `array: Iterable<number> | ArrayLike<number> | ArrayBuffer | number`: `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one
+- `Uint8ClampedBufferAttribute(…)` — `ArrayBuffer` out of `array: Iterable<number> | ArrayLike<number> | ArrayBuffer | number`: `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one
+- `WebGLAttributes.get` — `GLBufferAttribute` out of `attribute: BufferAttribute | InterleavedBufferAttribute | GLBufferAttribute`: `GLBufferAttribute` is not an emitted class: required parameter 'buffer' cannot be mapped: `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one
+- `WebGLAttributes.remove` — `GLBufferAttribute` out of `attribute: BufferAttribute | InterleavedBufferAttribute | GLBufferAttribute`: `GLBufferAttribute` is not an emitted class: required parameter 'buffer' cannot be mapped: `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one
+- `WebGLAttributes.update` — `GLBufferAttribute` out of `attribute: BufferAttribute | InterleavedBufferAttribute | GLBufferAttribute`: `GLBufferAttribute` is not an emitted class: required parameter 'buffer' cannot be mapped: `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one
+- `WebGLUtils.convert` — `CompressedPixelFormat` out of `p: PixelFormat | CompressedPixelFormat | TextureDataType`: `CompressedPixelFormat` cannot become a C# enum: constant `RGB_BPTC_SIGNED_Format` has no literal value in the IR (declared type `<none>`)
 
 ## How a class's member set is worked out
 
@@ -136,9 +186,9 @@ as a mutable array, so a change to it cannot be observed, and matrix-typed prope
 
 | status | classes |
 |---|---|
-| emittable | 194 |
+| emittable | 195 |
 | deliberately out of the mirrored surface | 60 |
-| blocked | 55 |
+| blocked | 54 |
 | **total** | **309** |
 
 Emittability and **reachability** are different questions. 264 of these classes are names the shipped
@@ -167,13 +217,13 @@ The consumer-facing renderer types are checked against the exclusion rather than
 
 | obstacle | classes | example reason |
 |---|---|---|
+| `UnreachableBaseConstructor` | 16 | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with |
 | `NotExported` | 15 | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
-| `UnmappedUnion` | 14 | required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `AbstractClass` | 9 | the class is abstract, so it has no constructor to mirror |
-| `UnreachableBaseConstructor` | 5 | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with |
 | `DuplicateClassName` | 3 | another class named `PMREMGenerator` is declared in `src/extras/PMREMGenerator.d.ts`, and a C# namespace holds one type of a given name |
 | `OptionsInterface` | 3 | required parameter 'mipmaps' cannot be mapped: `CompressedTextureMipmap[]` is an array whose element type cannot be mapped: `CompressedTextureMipmap` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `DomOrLibType` | 2 | required parameter 'buffer' cannot be mapped: `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
+| `UnmappedUnion` | 2 | required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `AbsentFromShippedBundle` | 1 | the types re-export it but the shipped three.js bundle carries no such runtime value, so constructing it would throw `Unknown three.js type` |
 | `NodeStackType` | 1 | required parameter 'builder' cannot be mapped: `NodeBuilder` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `UnerasableTypeParameter` | 1 | required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
@@ -191,22 +241,21 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `CompressedCubeTexture` | required parameter 'images' cannot be mapped: `CompressedTextureImageData[]` is an array whose element type cannot be mapped: `CompressedTextureImageData` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle | `src/textures/CompressedCubeTexture.d.ts` |
 | `CompressedTexture` | required parameter 'mipmaps' cannot be mapped: `CompressedTextureMipmap[]` is an array whose element type cannot be mapped: `CompressedTextureMipmap` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle | `src/textures/CompressedTexture.d.ts` |
 | `Controls` | the class is abstract, so it has no constructor to mirror | `src/extras/Controls.d.ts` |
-| `CubeCamera` | required parameter 'renderTarget' cannot be mapped: `WebGLCubeRenderTarget | CubeRenderTarget` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/cameras/CubeCamera.d.ts` |
 | `Curve` | the class is abstract, so it has no constructor to mirror | `src/extras/core/Curve.d.ts` |
 | `DataTextureLoader` | the class is abstract, so it has no constructor to mirror | `src/loaders/DataTextureLoader.d.ts` |
 | `DirectionalLightShadow` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/lights/DirectionalLightShadow.d.ts` |
 | `Earcut` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/extras/Earcut.d.ts` |
-| `Float16BufferAttribute` | required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/core/BufferAttribute.d.ts` |
-| `Float32BufferAttribute` | required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/core/BufferAttribute.d.ts` |
+| `Float16BufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
+| `Float32BufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
 | `GLBufferAttribute` | required parameter 'buffer' cannot be mapped: `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one | `src/core/GLBufferAttribute.d.ts` |
 | `GLSLNodeBuilder` | required parameter 'renderer' cannot be mapped: `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror | `src/renderers/webgl-fallback/nodes/GLSLNodeBuilder.d.ts` |
-| `IndirectStorageBufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/renderers/common/IndirectStorageBufferAttribute.d.ts` |
+| `IndirectStorageBufferAttribute` | its C# base `StorageBufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/renderers/common/IndirectStorageBufferAttribute.d.ts` |
 | `Info` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/renderers/common/Info.d.ts` |
 | `InstancedBufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/InstancedBufferAttribute.d.ts` |
 | `InstancedInterleavedBuffer` | its C# base `InterleavedBuffer` has a constructor requiring `array`, `stride`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/InstancedInterleavedBuffer.d.ts` |
-| `Int16BufferAttribute` | required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/core/BufferAttribute.d.ts` |
-| `Int32BufferAttribute` | required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/core/BufferAttribute.d.ts` |
-| `Int8BufferAttribute` | required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/core/BufferAttribute.d.ts` |
+| `Int16BufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
+| `Int32BufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
+| `Int8BufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
 | `KeyframeTrack` | required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/animation/KeyframeTrack.d.ts` |
 | `Light` | the class is abstract, so it has no constructor to mirror | `src/lights/Light.d.ts` |
 | `LightShadow` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/lights/LightShadow.d.ts` |
@@ -224,13 +273,13 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `SourceJSON` | the types re-export it but the shipped three.js bundle carries no such runtime value, so constructing it would throw `Unknown three.js type` | `src/textures/Source.d.ts` |
 | `SpotLightShadow` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/lights/SpotLightShadow.d.ts` |
 | `Storage3DTexture` | another class named `Storage3DTexture` is declared in `src/renderers/common/Storage3DTexture.d.ts`, and a C# namespace holds one type of a given name | `src/renderers/common/StorageArrayTexture.d.ts` |
-| `StorageBufferAttribute` | required parameter 'array' cannot be mapped: `TypedArray | number` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/renderers/common/StorageBufferAttribute.d.ts` |
-| `StorageInstancedBufferAttribute` | required parameter 'array' cannot be mapped: `TypedArray | number` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/renderers/common/StorageInstancedBufferAttribute.d.ts` |
+| `StorageBufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/renderers/common/StorageBufferAttribute.d.ts` |
+| `StorageInstancedBufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/renderers/common/StorageInstancedBufferAttribute.d.ts` |
 | `TimestampQueryPool` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/renderers/common/TimestampQueryPool.d.ts` |
-| `Uint16BufferAttribute` | required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/core/BufferAttribute.d.ts` |
-| `Uint32BufferAttribute` | required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/core/BufferAttribute.d.ts` |
-| `Uint8BufferAttribute` | required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/core/BufferAttribute.d.ts` |
-| `Uint8ClampedBufferAttribute` | required parameter 'array' cannot be mapped: `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` unions 4 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/core/BufferAttribute.d.ts` |
+| `Uint16BufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
+| `Uint32BufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
+| `Uint8BufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
+| `Uint8ClampedBufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
 | `Uniform` | required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express | `src/core/Uniform.d.ts` |
 | `VideoTexture` | required parameter 'video' cannot be mapped: `HTMLVideoElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one | `src/textures/VideoTexture.d.ts` |
 | `WGSLNodeBuilder` | required parameter 'renderer' cannot be mapped: `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror | `src/renderers/webgpu/nodes/WGSLNodeBuilder.d.ts` |
@@ -284,6 +333,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `ColorKeyframeTrack` | 4 | — | `src/animation/tracks/ColorKeyframeTrack.d.ts` |
 | `CompressedTextureLoader` | 1 | — | `src/loaders/CompressedTextureLoader.d.ts` |
 | `ConeGeometry` | 7 | — | `src/geometries/ConeGeometry.d.ts` |
+| `CubeCamera` | 3 | — | `src/cameras/CubeCamera.d.ts` |
 | `CubeDepthTexture` | 9 | — | `src/textures/CubeDepthTexture.d.ts` |
 | `CubeRenderTarget` | 1 | `options` | `src/renderers/common/CubeRenderTarget.d.ts` |
 | `CubeTexture` | 0 | `images`, `mapping`, `wrapS`, `wrapT`, `magFilter`, `minFilter`, `format`, `type`, `anisotropy`, `colorSpace` | `src/textures/CubeTexture.d.ts` |
@@ -450,20 +500,21 @@ three.js is reachable at all" and "how much of what we mirror is state".
 
 | bucket | what it means | all classes | emittable classes |
 |---|---|---|---|
-| MirroredState | state C# holds and writes through on change | 1174 | 911 |
-| Command | a method recorded as a call op, returning nothing or `this` | 773 | 305 |
-| AsyncQuery | a method whose result the caller needs back | 830 | 443 |
-| Skipped | not mirrored; see the skip list below | 1155 | 831 |
-| **total** | | **3932** | **2490** |
+| MirroredState | state C# holds and writes through on change | 1174 | 913 |
+| Command | a method recorded as a call op, returning nothing or `this` | 783 | 311 |
+| AsyncQuery | a method whose result the caller needs back | 832 | 444 |
+| Skipped | not mirrored; see the skip list below | 1143 | 827 |
+| **total** | | **3932** | **2495** |
 
 Two op kinds answer: **read**, which invokes a method, and **get**, which reads a property.
-443 of the async queries above sit on an emitted class and are generated as `…Async` methods, 175 of
+444 of the async queries above sit on an emitted class and are generated as `…Async` methods, 175 of
 them over the get op rather than the read op. Both kinds answer with a value where one can travel, and
 with a handle to an object where it cannot.
 
-⚠️ **36 methods declare more than one overload, and only the first is classified.** Each stands
-for several C# overloads; the classification says what the first signature is, not how many methods a
-full run would emit.
+⚠️ **36 methods declare more than one TypeScript overload, and only the first is classified.** Each
+stands for several C# overloads; the classification says what the first signature is, not how many methods
+a full run would emit. Rule 7's arm overloads are a different thing — those come from one signature whose
+parameter unions several types, and are emitted in full.
 
 ### Members merged in from module augmentations
 
@@ -491,8 +542,8 @@ the README's coverage table.
 | `CallbackType` | 112 | a JavaScript callback; the wire format carries ops in one direction only |
 | `NotInstanceApi` | 87 | static, non-public or `@internal` — not part of the mirrored instance API |
 | `AnonymousObjectType` | 82 | an anonymous object literal type with no name to give a C# type |
-| `UnmappedUnion` | 75 | a union of several real alternatives, which one C# parameter cannot express |
-| `OptionsInterface` | 71 | a structural interface — an options bag or an event map — with no C# type to be |
+| `OptionsInterface` | 72 | a structural interface — an options bag or an event map — with no C# type to be |
+| `UnmappedUnion` | 62 | a union of several real alternatives in a position that holds one type — a property or a return type, since a required parameter becomes one overload per arm |
 | `UntypedValue` | 55 | declared `any` / `unknown`, or with no type at all |
 | `AbstractClass` | 36 | the class is abstract, so it has no constructor to mirror |
 | `MathValueType` | 29 | a `src/math/**` value type that is not one of the hand-written ones |
@@ -504,9 +555,9 @@ the README's coverage table.
 | `UnerasableTypeParameter` | 8 | a type parameter with neither a default nor a constraint to erase to |
 | `RestParameter` | 6 | a rest parameter, including the rest-union-tuple pseudo-overload form |
 | `UnreachableBaseConstructor` | 4 | its C# base requires constructor arguments the generated class has nothing to supply |
-| `CollectionType` | 3 | an array or tuple; `ThreeValue.Encode` has no array arm |
+| `CollectionType` | 3 | a tuple, which has no wire encoding, or an array whose elements have none — `ThreeValue.Encode` does walk a sequence element by element, so an array is exactly as encodable as what is in it |
 
-<details><summary>Every skipped member (1155)</summary>
+<details><summary>Every skipped member (1143)</summary>
 
 | class | member | obstacle | why |
 |---|---|---|---|
@@ -529,8 +580,6 @@ the README's coverage table.
 | `AnimationMixer` | `property _actionsByClip` | `NotInstanceApi` | declared `protected`, so it is not part of the public API |
 | `AnimationMixer` | `property _accuIndex` | `NotInstanceApi` | declared `protected`, so it is not part of the public API |
 | `AnimationMixer` | `property stats` | `OptionsInterface` | `AnimationMixerStats` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `AnimationMixer` | `method existingAction` | `UnmappedUnion` | parameter 'clip': `AnimationClip | string` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `AnimationMixer` | `method uncacheAction` | `UnmappedUnion` | parameter 'clip': `AnimationClip | string` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `AnimationObjectGroup` | `method add` | `RestParameter` | parameter 'args' is a rest parameter (`Object3D[]`) |
 | `AnimationObjectGroup` | `method remove` | `RestParameter` | parameter 'args' is a rest parameter (`Object3D[]`) |
 | `AnimationObjectGroup` | `method uncache` | `RestParameter` | parameter 'args' is a rest parameter (`Object3D[]`) |
@@ -580,7 +629,6 @@ the README's coverage table.
 | `BatchedMesh` | `property customSort` | `CallbackType` | `(this: this, list: Array<{ start: number; count: number; z: number }>, camera: Camera) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BatchedMesh` | `method setCustomSort` | `CallbackType` | parameter 'sortFunction': `(this: this, list: Array<{ start: number; count: number; z: number }>, camera: Camera) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BatchedMesh` | `method getGeometryRangeAt` | `OptionsInterface` | return type: `BatchedMeshGeometryRange` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `BatchedMesh` | `method setColorAt` | `UnmappedUnion` | parameter 'color': `Color | Vector4` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BezierInterpolant` | `property settings` | `AnonymousObjectType` | `{}` is an anonymous object literal type with no named C# equivalent |
 | `BezierInterpolant` | `property DefaultSettings_` | `AnonymousObjectType` | `{}` is an anonymous object literal type with no named C# equivalent |
 | `BezierInterpolant` | `method getSettings_` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
@@ -603,21 +651,18 @@ the README's coverage table.
 | `BufferAttribute` | `property updateRanges` | `DomOrLibType` | `Array<{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `BufferAttribute` | `property onUploadCallback` | `CallbackType` | `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BufferAttribute` | `method onUpload` | `CallbackType` | parameter 'callback': `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `BufferAttribute` | `method set` | `UnmappedUnion` | parameter 'value': `ArrayLike<number> | ArrayBufferView` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BufferAttribute` | `method toJSON` | `OptionsInterface` | return type: `BufferAttributeJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `BufferGeometry` | `property indirect` | `UnreachableBaseConstructor` | `IndirectStorageBufferAttribute` is not an emitted class: its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with |
+| `BufferGeometry` | `property indirect` | `UnreachableBaseConstructor` | `IndirectStorageBufferAttribute` is not an emitted class: its C# base `StorageBufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with |
 | `BufferGeometry` | `property attributes` | `DomOrLibType` | `Record<string, BufferAttribute | InterleavedBufferAttribute>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `BufferGeometry` | `property morphAttributes` | `AnonymousObjectType` | `{ position?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; normal?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; color?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; }` is an anonymous object literal type with no named C# equivalent |
 | `BufferGeometry` | `property groups` | `OptionsInterface` | `GeometryGroup[]` is an array whose element type cannot be mapped: `GeometryGroup` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `BufferGeometry` | `property drawRange` | `AnonymousObjectType` | `{ start: number; count: number }` is an anonymous object literal type with no named C# equivalent |
 | `BufferGeometry` | `property userData` | `DomOrLibType` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `BufferGeometry` | `method setIndex` | `UnmappedUnion` | parameter 'index': `BufferAttribute | number[] | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `BufferGeometry` | `method setIndirect` | `UnreachableBaseConstructor` | parameter 'indirect': `IndirectStorageBufferAttribute` is not an emitted class: its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with |
+| `BufferGeometry` | `method setIndirect` | `UnreachableBaseConstructor` | parameter 'indirect': `IndirectStorageBufferAttribute` is not an emitted class: its C# base `StorageBufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with |
 | `BufferGeometry` | `method setAttribute` | `UnerasableTypeParameter` | parameter 'name': type parameter `K` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `BufferGeometry` | `method getAttribute` | `UnerasableTypeParameter` | parameter 'name': type parameter `K` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `BufferGeometry` | `method deleteAttribute` | `UnmappedTypeSyntax` | parameter 'name': `keyof Attributes` is a TypeScript `typeOperator` type, which has no C# equivalent |
 | `BufferGeometry` | `method hasAttribute` | `UnmappedTypeSyntax` | parameter 'name': `keyof Attributes` is a TypeScript `typeOperator` type, which has no C# equivalent |
-| `BufferGeometry` | `method setFromPoints` | `UnmappedUnion` | parameter 'points': `Vector3[] | Vector2[]` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BufferGeometry` | `method toJSON` | `OptionsInterface` | return type: `BufferGeometryJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `BufferGeometryLoader` | `method parse` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
 | `CameraHelper` | `property pointMap` | `AnonymousObjectType` | `{ [x: string]: number[]; }` is an anonymous object literal type with no named C# equivalent |
@@ -1219,7 +1264,6 @@ the README's coverage table.
 | `PolyhedronGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `PositionalAudio` | `property panner` | `DomOrLibType` | `PannerNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `PositionalAudio` | `method getDistanceModel` | `UnmappedUnion` | return type: `"linear" | "inverse" | "exponential"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `PositionalAudio` | `method setDistanceModel` | `UnmappedUnion` | parameter 'value': `"linear" | "inverse" | "exponential"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `PostProcessing` | `property renderer` | `AbstractClass` | `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `PostProcessing` | `property outputNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PostProcessing` | `method renderAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -1451,9 +1495,7 @@ the README's coverage table.
 | `VideoFrameTexture` | `method setFrame` | `UntypedValue` | parameter 'frame': `unknown` carries no type information a C# signature could express |
 | `VolumeNodeMaterial` | `property offsetNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `VolumeNodeMaterial` | `property scatteringNode` | `CallbackType` | `(params: { positionRay: Node<"vec3"> }) => Node | null` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `WebGLAttributes` | `method get` | `UnmappedUnion` | parameter 'attribute': `BufferAttribute | InterleavedBufferAttribute | GLBufferAttribute` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `WebGLAttributes` | `method remove` | `UnmappedUnion` | parameter 'attribute': `BufferAttribute | InterleavedBufferAttribute | GLBufferAttribute` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `WebGLAttributes` | `method update` | `UnmappedUnion` | parameter 'attribute': `BufferAttribute | InterleavedBufferAttribute | GLBufferAttribute` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `WebGLAttributes` | `method get` | `OptionsInterface` | return type: `WebGLAttribute` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `WebGLBackend` | `property renderer` | `AbstractClass` | `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `WebGLBackend` | `property domElement` | `UnmappedUnion` | `HTMLCanvasElement | OffscreenCanvas | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `WebGLBackend` | `method init` | `AbstractClass` | parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
@@ -1513,8 +1555,6 @@ the README's coverage table.
 | `WebGLRenderer` | `method getContext` | `UnmappedUnion` | return type: `WebGLRenderingContext | WebGL2RenderingContext` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `WebGLRenderer` | `method getContextAttributes` | `DomOrLibType` | return type: `WebGLContextAttributes` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGLRenderer` | `method setEffects` | `OptionsInterface` | parameter 'effects': `Effect[]` is an array whose element type cannot be mapped: `Effect` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `WebGLRenderer` | `method setViewport` | `UnmappedUnion` | parameter 'x': `Vector4 | number` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `WebGLRenderer` | `method setScissor` | `UnmappedUnion` | parameter 'x': `Vector4 | number` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `WebGLRenderer` | `method setOpaqueSort` | `CallbackType` | parameter 'method': `(a: any, b: any) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGLRenderer` | `method setTransparentSort` | `CallbackType` | parameter 'method': `(a: any, b: any) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGLRenderer` | `method setNodesHandler` | `OptionsInterface` | parameter 'nodesHandler': `NodesHandler` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
@@ -1539,7 +1579,6 @@ the README's coverage table.
 | `WebGLState` | `method texStorage3D` | `DomOrLibType` | parameter 'target': `GLenum` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGLState` | `method texImage2D` | `DomOrLibType` | parameter 'target': `GLenum` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGLState` | `method texImage3D` | `DomOrLibType` | parameter 'target': `GLenum` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGLUtils` | `method convert` | `UnmappedUnion` | parameter 'p': `PixelFormat | CompressedPixelFormat | TextureDataType` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `WebGPUBackend` | `property renderer` | `AbstractClass` | `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `WebGPUBackend` | `property domElement` | `UnmappedUnion` | `HTMLCanvasElement | OffscreenCanvas | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `WebGPUBackend` | `method init` | `AbstractClass` | parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |

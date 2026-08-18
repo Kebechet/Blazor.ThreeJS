@@ -419,15 +419,127 @@ internal sealed class TypeMapper
 	/// <summary>
 	/// Maps a union. Only the <c>T | null</c> / <c>T | undefined</c> shape survives, because it is the
 	/// one union C# can express as a single parameter. Anything wider is a genuine overload set and
-	/// resolving it to one arbitrary arm would silently narrow the API.
+	/// resolving it to one arbitrary arm would silently narrow the API — see
+	/// <see cref="MapAlternatives"/>, which is what a parameter position asks instead.
 	/// </summary>
 	private TypeMapping MapUnion(IrType type, TypeMappingContext context)
 	{
-		var alternatives = type.Types
+		return TryReduceUnion(type, context, out var alternatives, out _)
+			?? RefuseUnion(type, alternatives);
+	}
+
+	/// <summary>
+	/// Resolves a type in a position that can carry several C# signatures, answering with one mapping
+	/// per distinct arm rather than with a refusal.
+	/// <para>
+	/// A parameter is the only such position. C# overloads on parameters, so a union of genuinely
+	/// different types is expressible there — as several methods — where a property or a return type
+	/// has exactly one type and has to keep refusing. Only the top level of the parameter's own type is
+	/// expanded: a union nested inside an array (<c>ArrayLike&lt;number | string | boolean&gt;</c>)
+	/// would need one overload per element type of a sequence the encoder writes element by element,
+	/// which is a different question and stays refused.
+	/// </para>
+	/// <para>
+	/// Arms that cannot be mapped are dropped rather than disqualifying the union, because an overload
+	/// set is additive: the arms that do map are signatures a caller gains, and the ones that do not are
+	/// no worse off than under the refusal. ⚠️ A dropped arm is still a narrowing, so it comes back in
+	/// <see cref="TypeAlternatives.DroppedArms"/> and is reported — nothing about the declared type may
+	/// be lost without a recorded reason, and an arm that silently disappears is exactly that.
+	/// </para>
+	/// <para>
+	/// Arms are deduplicated by C# type name for the same reason <see cref="TryTakeAgreedMapping"/>
+	/// compares on it — two arms that produce the same name are the same signature, and emitting both is
+	/// CS0111. A duplicate is not a narrowing: the signature it wanted is already there.
+	/// </para>
+	/// </summary>
+	/// <param name="type">The IR type node, or <see langword="null"/> when the declaration had none.</param>
+	/// <param name="context">Declaring member and class.</param>
+	/// <returns>
+	/// One mapping per distinct arm, in declaration order, beside the arms that were left out. A
+	/// single-element list for everything that is not a genuine multi-type union, and a single refusal
+	/// when no arm maps.
+	/// </returns>
+	public TypeAlternatives MapAlternatives(IrType? type, TypeMappingContext context)
+	{
+		if (type is not { Kind: "union" })
+		{
+			return new TypeAlternatives { Arms = [Map(type, context)] };
+		}
+
+		if (TryReduceUnion(type, context, out var alternatives, out var hasNullArm) is { } reduced)
+		{
+			return new TypeAlternatives { Arms = [reduced] };
+		}
+
+		var arms = new List<TypeMapping>();
+		var dropped = new List<DroppedAlternative>();
+		var takenTypeNames = new HashSet<string>(StringComparer.Ordinal);
+		foreach (var alternative in alternatives)
+		{
+			var mapping = Map(alternative, context);
+			if (!mapping.IsMapped || mapping.CSharpTypeName == "void")
+			{
+				dropped.Add(new DroppedAlternative
+				{
+					TypeText = alternative.Text,
+					Reason = mapping.SkipReason ?? "the arm carries no type",
+					Category = mapping.SkipCategory
+				});
+
+				continue;
+			}
+
+			if (!takenTypeNames.Add(mapping.CSharpTypeName!))
+			{
+				continue;
+			}
+
+			arms.Add(hasNullArm && !mapping.IsExplicitlyNullable
+				? TypeMapping.Mapped(
+					mapping.CSharpTypeName!,
+					mapping.Kind,
+					mapping.RequiredGeneratedTypeName,
+					isExplicitlyNullable: true,
+					numeric: mapping.Numeric,
+					elementMapping: mapping.ElementMapping)
+				: mapping);
+		}
+
+		// No arm mapped, so this is a refusal rather than a narrowing: the refusal reason names the whole
+		// union, and listing its arms a second time as "dropped" would double-count the same loss.
+		return arms.Count == 0
+			? new TypeAlternatives { Arms = [RefuseUnion(type, alternatives)] }
+			: new TypeAlternatives { Arms = arms, DroppedArms = dropped };
+	}
+
+	private static TypeMapping RefuseUnion(IrType type, IReadOnlyList<IrType> alternatives)
+	{
+		return TypeMapping.Skipped(
+			SkipCategory.UnmappedUnion,
+			$"`{type.Text}` unions {alternatives.Count} distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently");
+	}
+
+	/// <summary>
+	/// Collapses a union onto the one C# type it really is, when it is one. Answers <see langword="null"/>
+	/// for a genuinely heterogeneous union, handing back the arms it was left with so the caller can
+	/// either refuse them or turn them into overloads.
+	/// </summary>
+	/// <param name="type">The union node.</param>
+	/// <param name="context">Declaring member and class.</param>
+	/// <param name="alternatives">The union's arms, stripped of <c>null</c> and <c>undefined</c>.</param>
+	/// <param name="hasNullArm">Whether the declaration admitted <c>null</c> or <c>undefined</c>.</param>
+	/// <returns>The collapsed mapping, or <see langword="null"/>.</returns>
+	private TypeMapping? TryReduceUnion(
+		IrType type,
+		TypeMappingContext context,
+		out List<IrType> alternatives,
+		out bool hasNullArm)
+	{
+		alternatives = type.Types
 			.Where(x => x is not { Kind: "primitive", Name: "null" } and not { Kind: "primitive", Name: "undefined" })
 			.ToList();
 
-		var hasNullArm = alternatives.Count != type.Types.Count;
+		hasNullArm = alternatives.Count != type.Types.Count;
 
 		// `T | T[]` is not a choice between two types — it is one type, with three.js's convenience form
 		// for supplying several of it. `Material | Material[]` is what `Mesh.material` is declared as,
@@ -496,9 +608,7 @@ internal sealed class TypeMapper
 
 		if (alternatives.Count != 1)
 		{
-			return TypeMapping.Skipped(
-				SkipCategory.UnmappedUnion,
-				$"`{type.Text}` unions {alternatives.Count} distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently");
+			return null;
 		}
 
 		var mapping = Map(alternatives[0], context);

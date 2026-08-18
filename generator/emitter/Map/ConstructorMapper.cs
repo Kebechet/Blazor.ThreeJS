@@ -20,7 +20,7 @@ internal sealed class ConstructorMapper
 	{
 		if (irClass.Constructors.Count == 0)
 		{
-			return MappedConstructor.Mapped([], [], []);
+			return MappedConstructor.Mapped([], [[]], [], []);
 		}
 
 		var selected = SelectSubsumingConstructor(irClass.Constructors);
@@ -32,6 +32,7 @@ internal sealed class ConstructorMapper
 		}
 
 		var parameters = new List<MappedParameter>();
+		var armsPerPosition = new List<IReadOnlyList<MappedParameter>>();
 		var dropped = new List<DroppedParameter>();
 		var isTailDropped = false;
 
@@ -76,7 +77,8 @@ internal sealed class ConstructorMapper
 				TypeParameters = irClass.TypeParameters
 			};
 
-			var mapping = mapper.Map(irParameter.Type, context);
+			var alternatives = ResolveAlternatives(mapper, irParameter, context);
+			var mapping = alternatives.Arms[0];
 			if (!mapping.IsMapped || mapping.CSharpTypeName == "void")
 			{
 				var reason = mapping.SkipReason ?? "the parameter has no type";
@@ -99,43 +101,16 @@ internal sealed class ConstructorMapper
 				continue;
 			}
 
-			var defaultLiteral = irParameter.IsOptional
-				? RenderDefaultLiteral(irParameter.DefaultValue, mapping)
-				: null;
+			var arms = alternatives.Arms
+				.Select(x => BuildParameter(irParameter, x, alternatives))
+				.ToList();
 
-			// An optional parameter with no expressible default still needs a C# default, and the only
-			// honest one is null: "the caller did not supply this", which ConstructorArgs then forwards
-			// as the `$undef` sentinel or trims off rather than sending as a JSON null.
-			var isUnspecifiedNullable = irParameter.IsOptional && defaultLiteral is null;
-			if (isUnspecifiedNullable)
-			{
-				defaultLiteral = "null";
-			}
-
-			parameters.Add(new MappedParameter
-			{
-				Name = ToCamelCase(irParameter.Name),
-				DeclarationName = CSharpIdentifier.Escape(ToCamelCase(irParameter.Name)),
-				FieldName = "_" + ToCamelCase(irParameter.Name),
-				ThreeName = irParameter.Name,
-				Mapping = mapping,
-				CSharpTypeName = isUnspecifiedNullable || mapping.IsExplicitlyNullable
-					? mapping.CSharpTypeName + "?"
-					: mapping.CSharpTypeName!,
-				DefaultLiteral = defaultLiteral,
-				IsOptional = irParameter.IsOptional,
-				IsUnspecifiedNullable = isUnspecifiedNullable,
-				DocumentedDefault = irParameter.DefaultValue,
-				Documentation = irParameter.Doc
-			});
+			armsPerPosition.Add(arms);
+			parameters.Add(ToStorage(arms));
 		}
 
-		var required = parameters
-			.Where(x => !x.IsOptional)
-			.ToList();
-
 		var firstOptionalIndex = parameters.FindIndex(x => x.IsOptional);
-		if (firstOptionalIndex >= 0 && required.Any(x => parameters.IndexOf(x) > firstOptionalIndex))
+		if (firstOptionalIndex >= 0 && parameters.Index().Any(x => !x.Item.IsOptional && x.Index > firstOptionalIndex))
 		{
 			return MappedConstructor.Refused(
 				"a required parameter follows an optional one, which C# forbids",
@@ -153,7 +128,137 @@ internal sealed class ConstructorMapper
 			.Select(x => x.Item.ThreeName)
 			.ToList();
 
-		return MappedConstructor.Mapped(parameters, dropped, middlePositionHazards);
+		return MappedConstructor.Mapped(parameters, ExpandOverloads(armsPerPosition), dropped, middlePositionHazards);
+	}
+
+	/// <summary>
+	/// Resolves a parameter's type into the arms it is emitted as: one each for a required parameter
+	/// whose declared type unions several types the mirror can express, and exactly one for everything
+	/// else.
+	/// <para>
+	/// ⚠️ An <b>optional</b> parameter is never expanded, and the reason is not taste. Optionality is
+	/// resolved so that everything after a parameter carrying a C# default carries one too, so every
+	/// overload of a member with an optional union parameter accepts the very same shortest call — the
+	/// one that omits the argument. That call would be CS0121-ambiguous in all of them, which takes away
+	/// a call site that compiles today. Dropping the parameter instead is what the mapper already does
+	/// with an optional parameter it cannot map, and it loses only the argument.
+	/// </para>
+	/// </summary>
+	/// <param name="mapper">Type mapper.</param>
+	/// <param name="irParameter">The three.js parameter.</param>
+	/// <param name="context">Scope the type resolves against.</param>
+	/// <returns>The emitted arms and the ones left out, never empty of arms.</returns>
+	public static TypeAlternatives ResolveAlternatives(TypeMapper mapper, IrParameter irParameter, TypeMappingContext context)
+	{
+		return irParameter.IsOptional
+			? new TypeAlternatives { Arms = [mapper.Map(irParameter.Type, context)] }
+			: mapper.MapAlternatives(irParameter.Type, context);
+	}
+
+	/// <summary>
+	/// Builds one C# parameter for one arm of its declared type.
+	/// </summary>
+	/// <param name="irParameter">The three.js parameter.</param>
+	/// <param name="mapping">The arm this parameter is being written for.</param>
+	/// <param name="alternatives">Every arm and every dropped one, carried through for the storage view and the report.</param>
+	/// <returns>The parameter, as one overload declares it.</returns>
+	private static MappedParameter BuildParameter(IrParameter irParameter, TypeMapping mapping, TypeAlternatives alternatives)
+	{
+		var defaultLiteral = irParameter.IsOptional
+			? RenderDefaultLiteral(irParameter.DefaultValue, mapping)
+			: null;
+
+		// An optional parameter with no expressible default still needs a C# default, and the only
+		// honest one is null: "the caller did not supply this", which ConstructorArgs then forwards
+		// as the `$undef` sentinel or trims off rather than sending as a JSON null.
+		var isUnspecifiedNullable = irParameter.IsOptional && defaultLiteral is null;
+		if (isUnspecifiedNullable)
+		{
+			defaultLiteral = "null";
+		}
+
+		return new MappedParameter
+		{
+			Name = ToCamelCase(irParameter.Name),
+			DeclarationName = CSharpIdentifier.Escape(ToCamelCase(irParameter.Name)),
+			FieldName = "_" + ToCamelCase(irParameter.Name),
+			ThreeName = irParameter.Name,
+			Mapping = mapping,
+			Alternatives = alternatives.Arms,
+			DroppedAlternatives = alternatives.DroppedArms,
+			DeclaredTypeText = irParameter.Type?.Text,
+			CSharpTypeName = isUnspecifiedNullable || mapping.IsExplicitlyNullable
+				? mapping.CSharpTypeName + "?"
+				: mapping.CSharpTypeName!,
+			DefaultLiteral = defaultLiteral,
+			IsOptional = irParameter.IsOptional,
+			IsUnspecifiedNullable = isUnspecifiedNullable,
+			DocumentedDefault = irParameter.DefaultValue,
+			Documentation = irParameter.Doc
+		};
+	}
+
+	/// <summary>
+	/// Collapses a parameter's arms into the one form the object stores.
+	/// <para>
+	/// A widened parameter's backing field is <c>object?</c>, because the several overloads write
+	/// different C# types into the same slot and <c>ConstructorArgs</c> forwards whatever is in it —
+	/// <c>ThreeValue.Encode</c> dispatches on the runtime type, so the field never has to be the
+	/// declared one. Only the field widens; every constructor a caller sees stays strongly typed.
+	/// </para>
+	/// <para>
+	/// ⚠️ No emitted class reaches the widening branch today. Every class whose constructor has a
+	/// multi-arm parameter — the nine <c>*BufferAttribute</c> subclasses, <c>StorageBufferAttribute</c>,
+	/// <c>StorageInstancedBufferAttribute</c> — maps its arms cleanly and is then blocked by
+	/// <c>EmissionScope.DescribeUnreachableBaseConstructor</c>, because a generated constructor emits no
+	/// <c>: base(…)</c> and their C# base requires arguments. Base-constructor chaining is what will
+	/// unblock them, and this branch is the first thing it will need: the branch is kept rather than
+	/// deleted because it is that feature's prerequisite, not because anything exercises it now.
+	/// </para>
+	/// </summary>
+	/// <param name="arms">The parameter as each of its arms declares it.</param>
+	/// <returns>The storage view of the parameter.</returns>
+	private static MappedParameter ToStorage(IReadOnlyList<MappedParameter> arms)
+	{
+		// Only a required parameter is ever expanded, so no arm here can be an unspecified nullable and
+		// the flag carries over from the first arm unchanged.
+		return arms.Count == 1
+			? arms[0]
+			: arms[0] with { CSharpTypeName = EmitterConfig.UnionStorageTypeName };
+	}
+
+	/// <summary>
+	/// Turns a per-position list of arms into the overload set that covers them: the cartesian product
+	/// across parameter positions.
+	/// <para>
+	/// Every signature it produces is distinct, and nothing here has to check that.
+	/// <see cref="TypeMapper.MapAlternatives"/> has already dropped any arm whose C# type another arm of
+	/// the same parameter produced — <c>Iterable&lt;number&gt;</c> and <c>ArrayLike&lt;number&gt;</c> are
+	/// both <c>float[]</c>, and all three arms of <c>PositionalAudio.setDistanceModel</c> are
+	/// <c>string</c> — and positions are independent, so two different arm tuples always differ in at
+	/// least one position's type. A dedup filter here could not fire; it would only look like a guard.
+	/// </para>
+	/// <para>
+	/// ⚠️ The product is multiplicative, not additive: two two-arm parameters are four declarations of
+	/// the same member, and two three-arm ones would be nine.
+	/// <see cref="EmitterConfig.UnionOverloadBudget"/> is what that is measured against, and
+	/// <c>api-coverage.md</c> prints the largest set produced beside it so growth is visible in a
+	/// generated document rather than only in a diff.
+	/// </para>
+	/// </summary>
+	/// <param name="armsPerPosition">Arms of each parameter, in three.js parameter order.</param>
+	/// <returns>One parameter list per signature, the all-first-arm one first.</returns>
+	public static IReadOnlyList<IReadOnlyList<MappedParameter>> ExpandOverloads(IReadOnlyList<IReadOnlyList<MappedParameter>> armsPerPosition)
+	{
+		IReadOnlyList<IReadOnlyList<MappedParameter>> overloads = [[]];
+		foreach (var arms in armsPerPosition)
+		{
+			overloads = overloads
+				.SelectMany(prefix => arms.Select(arm => (IReadOnlyList<MappedParameter>)[.. prefix, arm]))
+				.ToList();
+		}
+
+		return overloads;
 	}
 
 	/// <summary>
@@ -301,8 +406,18 @@ internal sealed class MappedConstructor
 	/// <summary>Whether the signature could be mirrored.</summary>
 	public required bool IsMapped { get; init; }
 
-	/// <summary>Parameters that reached the C# signature, in three.js order.</summary>
+	/// <summary>
+	/// Parameters that reached the C# signature, in three.js order, as the object <b>stores</b> them.
+	/// One entry per three.js parameter however many overloads declare it, so the backing fields, the
+	/// argument list and the attachment of object-valued arguments all have a single answer.
+	/// </summary>
 	public IReadOnlyList<MappedParameter> Parameters { get; init; } = [];
+
+	/// <summary>
+	/// The constructors a caller sees, one per distinct C# signature. More than one only where a
+	/// parameter's declared type unions several types the mirror can express separately.
+	/// </summary>
+	public IReadOnlyList<IReadOnlyList<MappedParameter>> Overloads { get; init; } = [];
 
 	/// <summary>Parameters left out, each with the reason, so the narrowing is visible.</summary>
 	public IReadOnlyList<DroppedParameter> DroppedParameters { get; init; } = [];
@@ -326,12 +441,14 @@ internal sealed class MappedConstructor
 	}
 
 	/// <summary>Builds a successful mapping.</summary>
-	/// <param name="parameters">Parameters that reached the signature.</param>
+	/// <param name="parameters">Parameters that reached the signature, as the object stores them.</param>
+	/// <param name="overloads">The constructors a caller sees, one per distinct C# signature.</param>
 	/// <param name="dropped">Parameters left out.</param>
 	/// <param name="middlePositionUnspecifiedParameters">Unspecified nullables that trimming cannot protect.</param>
 	/// <returns>The mapping.</returns>
 	public static MappedConstructor Mapped(
 		IReadOnlyList<MappedParameter> parameters,
+		IReadOnlyList<IReadOnlyList<MappedParameter>> overloads,
 		IReadOnlyList<DroppedParameter> dropped,
 		IReadOnlyList<string> middlePositionUnspecifiedParameters)
 	{
@@ -339,6 +456,7 @@ internal sealed class MappedConstructor
 		{
 			IsMapped = true,
 			Parameters = parameters,
+			Overloads = overloads,
 			DroppedParameters = dropped,
 			MiddlePositionUnspecifiedParameters = middlePositionUnspecifiedParameters
 		};
@@ -360,7 +478,7 @@ internal sealed class MappedConstructor
 }
 
 /// <summary>One constructor parameter, resolved from the IR into C# terms.</summary>
-internal sealed class MappedParameter
+internal sealed record MappedParameter
 {
 	/// <summary>
 	/// C# parameter name, unescaped. This is what an XML <c>&lt;param name="…"/&gt;</c> has to say, since
@@ -382,6 +500,27 @@ internal sealed class MappedParameter
 
 	/// <summary>The resolved type, with its basis.</summary>
 	public required TypeMapping Mapping { get; init; }
+
+	/// <summary>
+	/// Every type the declared one resolves to. One entry for all but a genuine multi-type union, where
+	/// each entry is an overload of its own and the backing field widens to hold any of them.
+	/// </summary>
+	public IReadOnlyList<TypeMapping> Alternatives { get; init; } = [];
+
+	/// <summary>
+	/// Arms of the declared union no overload stands for. A narrowing, so it is reported rather than
+	/// only implied by the arms that are there.
+	/// </summary>
+	public IReadOnlyList<DroppedAlternative> DroppedAlternatives { get; init; } = [];
+
+	/// <summary>Declared type verbatim, so an overload can say which arm of a union it takes.</summary>
+	public string? DeclaredTypeText { get; init; }
+
+	/// <summary>Whether the declared type resolves to more than one C# type, and so to more than one overload.</summary>
+	public bool HasSeveralAlternatives
+	{
+		get { return Alternatives.Count > 1; }
+	}
 
 	/// <summary>C# type as written in the signature, including any nullable annotation.</summary>
 	public required string CSharpTypeName { get; init; }

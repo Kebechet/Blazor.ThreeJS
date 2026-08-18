@@ -139,6 +139,32 @@ public sealed class AnimationMixer : EventDispatcher
 	}
 
 	/// <summary>
+	/// Deallocates all memory resources for an action. The action is identified by the given clip and
+	/// an optional root object. Before using this method make sure to call <c>AnimationAction#stop</c>
+	/// to deactivate the action. This overload takes <c>clip</c> as <c>AnimationClip</c> out of
+	/// three.js's <c>AnimationClip | string</c>.
+	/// </summary>
+	/// <param name="clip">An animation clip or alternatively the name of the animation clip.</param>
+	/// <param name="optionalRoot">An alternative root object.</param>
+	public void UncacheAction(AnimationClip clip, ThreeObject optionalRoot)
+	{
+		RecordCall("uncacheAction", clip, optionalRoot);
+	}
+
+	/// <summary>
+	/// Deallocates all memory resources for an action. The action is identified by the given clip and
+	/// an optional root object. Before using this method make sure to call <c>AnimationAction#stop</c>
+	/// to deactivate the action. This overload takes <c>clip</c> as <c>string</c> out of three.js's
+	/// <c>AnimationClip | string</c>.
+	/// </summary>
+	/// <param name="clip">An animation clip or alternatively the name of the animation clip.</param>
+	/// <param name="optionalRoot">An alternative root object.</param>
+	public void UncacheAction(string clip, ThreeObject optionalRoot)
+	{
+		RecordCall("uncacheAction", clip, optionalRoot);
+	}
+
+	/// <summary>
 	/// Returns an instance of <see cref="AnimationAction"/> for the passed clip. If an action fitting
 	/// the clip and root parameters doesn't yet exist, it will be created by this method. Calling this
 	/// method several times with the same clip and root parameters always returns the same action.
@@ -155,6 +181,33 @@ public sealed class AnimationMixer : EventDispatcher
 		AnimationBlendMode blendMode)
 	{
 		return RecordReadObject<AnimationAction>("clipAction", (adoptedBatch, adoptedHandle) => new AnimationAction(adoptedBatch, adoptedHandle), clip, optionalRoot, blendMode);
+	}
+
+	/// <summary>
+	/// Returns an existing animation action for the passed clip. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>existingAction</c> returned. This
+	/// overload takes <c>clip</c> as <c>AnimationClip</c> out of three.js's <c>AnimationClip |
+	/// string</c>.
+	/// </summary>
+	/// <param name="clip">An animation clip or alternatively the name of the animation clip.</param>
+	/// <param name="optionalRoot">An alternative root object.</param>
+	/// <returns>The value <c>existingAction</c> returned, once the JavaScript side has answered.</returns>
+	public Task<AnimationAction?> ExistingActionAsync(AnimationClip clip, ThreeObject optionalRoot)
+	{
+		return RecordReadObject<AnimationAction>("existingAction", (adoptedBatch, adoptedHandle) => new AnimationAction(adoptedBatch, adoptedHandle), clip, optionalRoot);
+	}
+
+	/// <summary>
+	/// Returns an existing animation action for the passed clip. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>existingAction</c> returned. This
+	/// overload takes <c>clip</c> as <c>string</c> out of three.js's <c>AnimationClip | string</c>.
+	/// </summary>
+	/// <param name="clip">An animation clip or alternatively the name of the animation clip.</param>
+	/// <param name="optionalRoot">An alternative root object.</param>
+	/// <returns>The value <c>existingAction</c> returned, once the JavaScript side has answered.</returns>
+	public Task<AnimationAction?> ExistingActionAsync(string clip, ThreeObject optionalRoot)
+	{
+		return RecordReadObject<AnimationAction>("existingAction", (adoptedBatch, adoptedHandle) => new AnimationAction(adoptedBatch, adoptedHandle), clip, optionalRoot);
 	}
 
 	/// <summary>

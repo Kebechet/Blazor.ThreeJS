@@ -418,6 +418,9 @@ internal sealed class ClassEmitter
 	{
 		// A property read has no IR method behind it, so its parameters are empty by construction rather
 		// than by mapping — the get op names a property and takes nothing.
+		//
+		// An untyped object result has no resolved C# type by definition, since the mapping is what
+		// failed, so the wrapper it answers with is named here rather than carried from the map.
 		if (member.IsPropertyRead)
 		{
 			return new EmittedQuery
@@ -425,10 +428,11 @@ internal sealed class ClassEmitter
 				ThreeName = member.MemberName,
 				CSharpName = cSharpName,
 				Parameters = [],
-				ReturnTypeName = member.CSharpTypeName!,
+				ReturnTypeName = member.IsUntypedObjectResult ? EmitterConfig.UntypedObjectTypeName : member.CSharpTypeName!,
 				ReturnMapping = member.Mapping,
 				IsPropertyRead = true,
 				IsAdoptedResult = member.IsAdoptedResult,
+				IsUntypedObjectResult = member.IsUntypedObjectResult,
 				Documentation = member.Property?.Doc
 			};
 		}
@@ -438,9 +442,10 @@ internal sealed class ClassEmitter
 			ThreeName = member.MemberName,
 			CSharpName = cSharpName,
 			Parameters = member.Method!.Parameters,
-			ReturnTypeName = member.CSharpTypeName!,
+			ReturnTypeName = member.IsUntypedObjectResult ? EmitterConfig.UntypedObjectTypeName : member.CSharpTypeName!,
 			ReturnMapping = member.ReturnMapping,
 			IsAdoptedResult = member.IsAdoptedResult,
+			IsUntypedObjectResult = member.IsUntypedObjectResult,
 			Documentation = member.Method.Signature?.Doc
 		};
 	}
@@ -1115,9 +1120,22 @@ internal sealed class ClassEmitter
 			? DocCommentEmitter.EnsureSentenceEnd(DocCommentEmitter.RenderInline(rawSummary))
 			: $"Reads <c>{query.ThreeName}</c> back from the JavaScript-side object.";
 
-		summary += query.IsPropertyRead
-			? $" Read-only in three.js, so it is read on demand rather than mirrored: records a get op, sends it behind every write already pending, and completes with the value <c>{query.ThreeName}</c> held."
-			: $" Records a read op, sends it behind every write already pending, and completes with what <c>{query.ThreeName}</c> returned.";
+		if (query.IsUntypedObjectResult)
+		{
+			// The one query shape whose result the mirror cannot describe. Saying so in the summary is the
+			// point: the caller gets a working object and no compiler help with its members.
+			summary += query.IsPropertyRead
+				? $" Holds a three.js object no generated class mirrors: records a get op, sends it behind every write already pending, and completes with whatever <c>{query.ThreeName}</c> held, under its own handle, as an untyped <see cref=\"{EmitterConfig.UntypedObjectTypeName}\"/>."
+				: $" Answers with a three.js object no generated class mirrors: records a read op, sends it behind every write already pending, and completes with what <c>{query.ThreeName}</c> returned, under its own handle, as an untyped <see cref=\"{EmitterConfig.UntypedObjectTypeName}\"/>.";
+
+			summary += " The mirror learns nothing from it — its members are reached by their three.js names, and nothing here checks them.";
+		}
+		else
+		{
+			summary += query.IsPropertyRead
+				? $" Read-only in three.js, so it is read on demand rather than mirrored: records a get op, sends it behind every write already pending, and completes with the value <c>{query.ThreeName}</c> held."
+				: $" Records a read op, sends it behind every write already pending, and completes with what <c>{query.ThreeName}</c> returned.";
+		}
 
 		DocCommentEmitter.WriteSummary(writer, summary);
 		foreach (var parameter in query.Parameters)
@@ -1129,9 +1147,18 @@ internal sealed class ClassEmitter
 			DocCommentEmitter.WriteParam(writer, parameter.Name, text);
 		}
 
-		DocCommentEmitter.WriteReturns(writer, query.IsPropertyRead
-			? $"The value <c>{query.ThreeName}</c> held, once the JavaScript side has answered."
-			: $"The value <c>{query.ThreeName}</c> returned, once the JavaScript side has answered.");
+		if (query.IsUntypedObjectResult)
+		{
+			DocCommentEmitter.WriteReturns(writer, query.IsPropertyRead
+				? $"The object <c>{query.ThreeName}</c> held, under its own handle, or <see langword=\"null\"/> when it held none."
+				: $"The object <c>{query.ThreeName}</c> returned, under its own handle, or <see langword=\"null\"/> when it returned none.");
+		}
+		else
+		{
+			DocCommentEmitter.WriteReturns(writer, query.IsPropertyRead
+				? $"The value <c>{query.ThreeName}</c> held, once the JavaScript side has answered."
+				: $"The value <c>{query.ThreeName}</c> returned, once the JavaScript side has answered.");
+		}
 
 		var declaredParameters = query.Parameters
 			.Select(x => x.DefaultLiteral is null
@@ -1139,9 +1166,9 @@ internal sealed class ClassEmitter
 				: $"{x.CSharpTypeName} {x.DeclarationName} = {x.DefaultLiteral}")
 			.ToList();
 
-		// An adopted result is nullable: three.js answers with nothing when the member held no object,
+		// An object result is nullable: three.js answers with nothing when the member held no object,
 		// and a non-nullable signature would make that indistinguishable from an object at handle zero.
-		var returnTypeName = query.IsAdoptedResult
+		var returnTypeName = query.IsAdoptedResult || query.IsUntypedObjectResult
 			? $"Task<{query.ReturnTypeName}?>"
 			: $"Task<{query.ReturnTypeName}>";
 		var declaration = $"public {returnTypeName} {query.CSharpName}({string.Join(", ", declaredParameters)})";
@@ -1166,7 +1193,24 @@ internal sealed class ClassEmitter
 		writer.WriteLine("{");
 		writer.Indent();
 
-		if (query.IsAdoptedResult)
+		if (query.IsUntypedObjectResult)
+		{
+			// No adopter lambda, because there is no type to adopt into: the escape hatch's own helpers
+			// answer with the wrapper that names three.js's runtime type instead of asserting a C# one.
+			if (query.IsPropertyRead)
+			{
+				writer.WriteLine($"return GetObjectAsync(\"{query.ThreeName}\");");
+			}
+			else
+			{
+				var untypedArguments = query.Parameters.Count == 0
+					? string.Empty
+					: ", " + string.Join(", ", query.Parameters.Select(x => x.DeclarationName));
+
+				writer.WriteLine($"return CallObjectAsync(\"{query.ThreeName}\"{untypedArguments});");
+			}
+		}
+		else if (query.IsAdoptedResult)
 		{
 			// The lambda is what supplies the concrete type: the helper resolves a handle this context
 			// already mirrors and only calls this for one it has never seen.
@@ -1465,6 +1509,12 @@ internal sealed class EmittedQuery
 
 	/// <summary>True when the result is a three.js object adopted by handle rather than a value.</summary>
 	public bool IsAdoptedResult { get; init; }
+
+	/// <summary>
+	/// True when the result is a three.js object no generated class mirrors, so it comes back by handle
+	/// as an untyped <c>Primitive</c> rather than as the declared type.
+	/// </summary>
+	public bool IsUntypedObjectResult { get; init; }
 
 	/// <summary>Upstream JSDoc for the signature.</summary>
 	public IrDoc? Documentation { get; init; }

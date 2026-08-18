@@ -1,0 +1,283 @@
+@attribute [Stories("Architecture/Object results")]
+@using System.Globalization
+@implements IDisposable
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="When the answer is an object">
+        <Template>
+            <p>
+                <em>Architecture/Reading state back</em> covers the answers that are <strong>values</strong>:
+                a number, a string, a tagged <code>Vector3</code>. Some members answer with a three.js
+                <strong>object</strong> instead, and an object has no wire form - serializing one would hand
+                C# a plausible bag of numbers rather than a value. So the op asks for a
+                <strong>handle</strong>: the applier registers the object under one of its own and answers
+                with a reference, which C# adopts into something it can go on writing to.
+            </p>
+            <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildAdoptedSceneAsync" />
+            <p>
+                <button @onclick="ToggleShadowsAsync" disabled="@(_shadowMap is null)">
+                    @(_areShadowsEnabled ? "Turn shadows off" : "Turn shadows on")
+                </button>
+                — written through the adopted <code>shadowMap</code>, which nothing in the scene graph
+                holds a reference to.
+            </p>
+            <table>
+                <thead>
+                    <tr><th>Call</th><th>C# signature</th><th>three.js answered with</th><th>Read through it</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>geometry.GetIndexAsync()</code></td>
+                        <td><code>Task&lt;BufferAttribute?&gt;</code> — generated, typed</td>
+                        <td><code>@(_indexType ?? "—")</code></td>
+                        <td><code>@(_indexCount is null ? "—" : $"count {_indexCount}")</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>geometry.CloneAsync()</code></td>
+                        <td><code>Task&lt;BufferGeometry?&gt;</code> — generated, typed</td>
+                        <td><code>@(_cloneType ?? "—")</code></td>
+                        <td>drawn on the right, built into a second <code>Mesh</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>renderer.GetCanvasTargetAsync()</code></td>
+                        <td><code>Task&lt;Primitive?&gt;</code> — generated, untyped</td>
+                        <td><code>@(_canvasTargetType ?? "—")</code></td>
+                        <td><code>@(_canvasTargetSize ?? "—")</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>renderer.GetObjectAsync("shadowMap")</code></td>
+                        <td><code>Task&lt;Primitive?&gt;</code> — escape hatch</td>
+                        <td><code>@(_shadowMapType ?? "—")</code></td>
+                        <td><code>enabled @(_areShadowsEnabled.ToString().ToLowerInvariant())</code>, written not read</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>
+                The two halves differ only in what C# is handed. Where a generated class describes the
+                result, the read adopts it into that class and the compiler knows every member -
+                <code>GetIndexAsync</code> hands back a real <code>BufferAttribute</code>, and
+                <code>CloneAsync</code> hands back a <code>BufferGeometry</code> a generated
+                <code>Mesh</code> constructor accepts. Where no generated class describes it, the same
+                handle comes back as a <code>Primitive</code>:
+            </p>
+            <pre><code>var index = await geometry.GetIndexAsync();       // BufferAttribute?
+var count = await index!.CountAsync();            // 2 ops, 2 interop calls
+
+var canvasTarget = await renderer.GetCanvasTargetAsync();          // Primitive?
+var size = await canvasTarget!.CallAsync&lt;Vector2&gt;("getSize", new Vector2());</code></pre>
+            <p>
+                ⚠️ A <code>Primitive</code> is <strong>untyped by definition</strong>. The handle is real
+                and every write through it is an ordinary op, but nothing checks that the member you name
+                exists - three.js is the only thing in a position to know, and it says so when the batch
+                runs. A member the typed surface does describe is still better reached through it.
+            </p>
+            <p>
+                ⚠️ <code>null</code> is a real answer, which is why every one of these returns a nullable
+                task. It means the member genuinely held no object - an unindexed geometry has no index
+                buffer - rather than that the read failed. A read that fails faults instead.
+            </p>
+            <p>
+                The typed half covers methods and read-only properties alike: <code>Audio.ListenerAsync()</code>
+                is the property case in today's surface, adopted from the get op exactly as the method
+                cases are adopted from the read op.
+            </p>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private const float RadiansPerFrame = 0.006f;
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+    private ThreeContext? _threeContext;
+    private Primitive? _shadowMap;
+
+    private string? _indexType;
+    private int? _indexCount;
+    private string? _cloneType;
+    private string? _canvasTargetType;
+    private string? _canvasTargetSize;
+    private string? _shadowMapType;
+    private bool _areShadowsEnabled = true;
+
+    private async Task BuildAdoptedSceneAsync(ThreeContext threeContext)
+    {
+        _threeContext = threeContext;
+
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 2.4f, 9.5f);
+        camera.LookAt(0f, -0.2f, 0f);
+        scene.Add(camera);
+
+        scene.Add(new AmbientLight(Color.White, 0.4f));
+
+        var keyLight = new DirectionalLight(Color.White, 2f);
+        keyLight.Position.Set(4f, 7f, 5f);
+        keyLight.CastShadow = true;
+        scene.Add(keyLight);
+
+        var floorMaterial = new MeshStandardMaterial();
+        floorMaterial.Color.SetHex(0x9aa0a6);
+        floorMaterial.Roughness = 0.9f;
+
+        var floor = new Mesh(new PlaneGeometry(24f, 24f), floorMaterial);
+        floor.Rotation.Set(-MathF.PI / 2f, 0f, 0f, EulerOrder.XYZ);
+        floor.Position.Set(0f, -2.2f, 0f);
+        floor.ReceiveShadow = true;
+        scene.Add(floor);
+
+        var geometry = new TorusKnotGeometry(1.1f, 0.34f);
+        var material = new MeshStandardMaterial();
+        material.Color.SetHex(0x5b8dd9);
+        material.Roughness = 0.35f;
+        material.Metalness = 0.2f;
+
+        var original = new Mesh(geometry, material);
+        original.Position.Set(-2.4f, 0f, 0f);
+        original.CastShadow = true;
+        original.ReceiveShadow = true;
+        scene.Add(original);
+
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        var spinning = await AdoptEverythingAsync(scene, geometry);
+        StateHasChanged();
+
+        _ = AnimateAsync(threeContext, original, spinning);
+    }
+
+    /// <summary>
+    /// Runs one of each shape of object-valued read, in the order the story's table lists them.
+    /// <para>
+    /// Sequential rather than batched together: each one asks a question whose answer the next line
+    /// uses, which is the honest shape for this. <em>Architecture/Reading state back</em> is where
+    /// several independent reads share one interop call.
+    /// </para>
+    /// </summary>
+    /// <param name="scene">Scene the cloned geometry is drawn into.</param>
+    /// <param name="geometry">Geometry the two typed reads are made against.</param>
+    /// <returns>The mesh built from the cloned geometry, so the frame loop can turn it too.</returns>
+    private async Task<Object3D?> AdoptEverythingAsync(Scene scene, BufferGeometry geometry)
+    {
+        if (_threeContext is null)
+        {
+            return null;
+        }
+
+        // Typed and adopted: three.js made the index buffer, and the generated signature says what it
+        // is, so the second read below is an ordinary typed call on an ordinary mirrored object.
+        var index = await geometry.GetIndexAsync();
+        if (index is not null)
+        {
+            _indexType = nameof(BufferAttribute);
+            _indexCount = await index.CountAsync();
+        }
+
+        // Also typed and adopted, and the returned object is a first-class one: a generated constructor
+        // takes it, and the create op that references it resolves the handle three.js minted.
+        var clonedGeometry = await geometry.CloneAsync();
+        Object3D? spinning = null;
+        if (clonedGeometry is not null)
+        {
+            _cloneType = nameof(BufferGeometry);
+
+            var cloneMaterial = new MeshStandardMaterial();
+            cloneMaterial.Color.SetHex(0xffb347);
+            cloneMaterial.Roughness = 0.35f;
+            cloneMaterial.Metalness = 0.2f;
+
+            var clone = new Mesh(clonedGeometry, cloneMaterial);
+            clone.Position.Set(2.4f, 0f, 0f);
+            clone.CastShadow = true;
+            clone.ReceiveShadow = true;
+            scene.Add(clone);
+            spinning = clone;
+        }
+
+        // Generated, but untyped: `CanvasTarget` takes a canvas element in its constructor, which C#
+        // has no way to hand over, so no class is generated for it and the handle arrives as a Primitive.
+        var canvasTarget = await _threeContext.Renderer.GetCanvasTargetAsync();
+        if (canvasTarget is not null)
+        {
+            _canvasTargetType = canvasTarget.ThreeType;
+
+            // Named rather than checked: `getSize` writes into the Vector2 it is handed and returns it,
+            // which comes back as the same tagged value C# sends in the other direction.
+            var size = await canvasTarget.CallAsync<Vector2>("getSize", new Vector2());
+            _canvasTargetSize = $"{size.X.ToString("F0", CultureInfo.InvariantCulture)} x {size.Y.ToString("F0", CultureInfo.InvariantCulture)}";
+        }
+
+        // The escape hatch's version of the same thing, for a property no generated member names.
+        _shadowMap = await _threeContext.Renderer.GetObjectAsync("shadowMap");
+        _shadowMapType = _shadowMap?.ThreeType;
+        ApplyShadowSettings();
+        await _threeContext.FlushAsync();
+
+        return spinning;
+    }
+
+    private async Task ToggleShadowsAsync()
+    {
+        if (_threeContext is null)
+        {
+            return;
+        }
+
+        _areShadowsEnabled = !_areShadowsEnabled;
+        ApplyShadowSettings();
+        await _threeContext.FlushAsync();
+    }
+
+    /// <summary>
+    /// Writes the adopted shadow map's own settings. <c>needsUpdate</c> is what makes three.js rebuild
+    /// the shadow textures after the flag changes.
+    /// </summary>
+    private void ApplyShadowSettings()
+    {
+        if (_shadowMap is null)
+        {
+            return;
+        }
+
+        _shadowMap.Set("enabled", _areShadowsEnabled);
+        _shadowMap.Set("type", ShadowMapType.PCFSoftShadowMap);
+        _shadowMap.Set("needsUpdate", true);
+    }
+
+    private async Task AnimateAsync(ThreeContext threeContext, Object3D original, Object3D? clone)
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                var nextRotationY = original.Rotation.Y + RadiansPerFrame;
+                var wrapped = nextRotationY >= MathF.Tau ? nextRotationY - MathF.Tau : nextRotationY;
+                original.Rotation.Y = wrapped;
+                if (clone is not null)
+                {
+                    clone.Rotation.Y = -wrapped;
+                }
+
+                await threeContext.FlushAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // See Cube.stories.razor for why this is what stops the loop when a story is swapped.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+}

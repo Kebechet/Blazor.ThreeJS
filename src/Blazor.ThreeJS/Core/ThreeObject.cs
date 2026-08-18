@@ -277,18 +277,19 @@ public abstract class ThreeObject
 
 	/// <summary>
 	/// Reads a property off the three.js object, by its three.js name. The escape hatch for reading
-	/// state back, and the only member here with no generated counterpart: the read op invokes a
-	/// method, so three.js's read-only properties are on no generated class at all, and this is what
-	/// reaches them.
+	/// state back: it reaches a property of any object you hold, generated or not, including one no
+	/// generated class carries.
 	/// <para>
 	/// Like every read it travels inside the batch, behind the writes already pending, so it observes
 	/// them. Unlike a write it cannot be held for replay — an unattached object has no JavaScript side
 	/// to ask and no value to hand back now — so it fails at the call site instead.
 	/// </para>
 	/// <para>
-	/// ⚠️ Only values come back: numbers, booleans, strings, and the five hand-written math types. A
-	/// property holding a three.js object is refused by the applier rather than serialized, because a
-	/// plain JSON object would arrive here as a plausible bag of numbers instead of a value.
+	/// ⚠️ Only values come back this way: numbers, booleans, strings, and the hand-written math types.
+	/// A property holding a three.js <b>object</b> is refused by the applier rather than serialized,
+	/// because a plain JSON object would arrive here as a plausible bag of numbers instead of a value.
+	/// Use <see cref="GetObjectAsync"/> for one of those: it asks the applier to register the object and
+	/// answers with a handle to it.
 	/// </para>
 	/// </summary>
 	/// <typeparam name="TValue">C# type the caller declares the property holds.</typeparam>

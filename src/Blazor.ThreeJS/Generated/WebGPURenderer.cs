@@ -935,6 +935,22 @@ public sealed class WebGPURenderer : ThreeObject
 	}
 
 	/// <summary>
+	/// Returns the current canvas target. Answers with a three.js object no generated class mirrors:
+	/// records a read op, sends it behind every write already pending, and completes with what
+	/// <c>getCanvasTarget</c> returned, under its own handle, as an untyped <see cref="Primitive"/>.
+	/// The mirror learns nothing from it — its members are reached by their three.js names, and nothing
+	/// here checks them.
+	/// </summary>
+	/// <returns>
+	/// The object <c>getCanvasTarget</c> returned, under its own handle, or <see langword="null"/> when
+	/// it returned none.
+	/// </returns>
+	public Task<Primitive?> GetCanvasTargetAsync()
+	{
+		return CallObjectAsync("getCanvasTarget");
+	}
+
+	/// <summary>
 	/// Checks if the given feature is supported by the selected backend. If the renderer has not been
 	/// initialized, this method always returns <c>false</c>. Records a read op, sends it behind every
 	/// write already pending, and completes with what <c>hasFeature</c> returned.

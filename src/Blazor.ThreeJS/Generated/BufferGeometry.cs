@@ -413,6 +413,22 @@ public class BufferGeometry : EventDispatcher
 	}
 
 	/// <summary>
+	/// Reads <c>getIndirect</c> back from the JavaScript-side object. Answers with a three.js object no
+	/// generated class mirrors: records a read op, sends it behind every write already pending, and
+	/// completes with what <c>getIndirect</c> returned, under its own handle, as an untyped
+	/// <see cref="Primitive"/>. The mirror learns nothing from it — its members are reached by their
+	/// three.js names, and nothing here checks them.
+	/// </summary>
+	/// <returns>
+	/// The object <c>getIndirect</c> returned, under its own handle, or <see langword="null"/> when it
+	/// returned none.
+	/// </returns>
+	public Task<Primitive?> GetIndirectAsync()
+	{
+		return CallObjectAsync("getIndirect");
+	}
+
+	/// <summary>
 	/// Center the geometry based on the bounding box. Records a read op, sends it behind every write
 	/// already pending, and completes with what <c>center</c> returned.
 	/// </summary>

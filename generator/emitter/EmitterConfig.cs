@@ -27,6 +27,12 @@ internal static class EmitterConfig
 	public const string RootBaseTypeName = "ThreeObject";
 
 	/// <summary>
+	/// Concrete wrapper a query answers with when three.js hands back an object no generated class
+	/// mirrors. It lives in <see cref="GeneratedNamespace"/> too, so naming it costs no <c>using</c>.
+	/// </summary>
+	public const string UntypedObjectTypeName = "Primitive";
+
+	/// <summary>
 	/// Wire-encoder call that turns an argument the caller left unspecified into the <c>$undef</c>
 	/// sentinel. Written out rather than derived, because the emitter compiles separately from the
 	/// package and cannot <c>nameof</c> a runtime member.

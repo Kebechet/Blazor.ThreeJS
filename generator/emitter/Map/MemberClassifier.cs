@@ -78,6 +78,18 @@ internal sealed class MemberClassifier
 
 		if (!mapping.IsMapped)
 		{
+			// A read-only property holding a three.js class the generator does not mirror still has a
+			// value worth handing back: the get op registers the object and answers with a handle, which
+			// becomes an untyped `Primitive`. A writable one stays skipped — a setter needs an encodable
+			// value, and a handle the mirror cannot type is not one C# could construct to write.
+			if (property.IsReadonly && IsThreeObjectShape(property.Type))
+			{
+				row.Bucket = MemberBucket.AsyncQuery;
+				row.IsPropertyRead = true;
+				row.IsUntypedObjectResult = true;
+				return row;
+			}
+
 			return Skip(row, mapping.SkipReason!, mapping.SkipCategory);
 		}
 
@@ -107,10 +119,27 @@ internal sealed class MemberClassifier
 		// and a C# property would imply the mirror knew it without asking.
 		if (!IsReadable(mapping))
 		{
-			return Skip(
-				row,
-				$"read-only in three.js and typed `{property.Type?.Text ?? "?"}`, a handle-backed object — the get op carries values, and no op mints a handle for an object JavaScript created",
-				SkipCategory.NoHandleForResult);
+			// A three.js object comes back by handle rather than by value: the get op marked `n:true` asks
+			// the applier to register it and answer with a reference. Where a mirrored class describes it
+			// the read adopts it into that class; where none does, the untyped wrapper carries it; and an
+			// array of objects is neither, because one handle cannot name several objects.
+			if (mapping.Kind != TypeMappingKind.GeneratedWrapperClass)
+			{
+				if (IsThreeObjectShape(property.Type))
+				{
+					row.Bucket = MemberBucket.AsyncQuery;
+					row.IsPropertyRead = true;
+					row.IsUntypedObjectResult = true;
+					return row;
+				}
+
+				return Skip(
+					row,
+					$"read-only in three.js and typed `{property.Type?.Text ?? "?"}`, which is neither a value the get op carries nor a three.js object a handle could name",
+					SkipCategory.NoHandleForResult);
+			}
+
+			row.IsAdoptedResult = true;
 		}
 
 		row.Bucket = MemberBucket.AsyncQuery;
@@ -188,6 +217,16 @@ internal sealed class MemberClassifier
 
 		if (!returnMapping.IsMapped)
 		{
+			// The mapper refused the return type, but a three.js class is still an object the read op can
+			// register and answer with a handle for. The parameters all mapped — the method mapper's own
+			// refusal above is still a skip, because an argument has to be encodable to be sent at all.
+			if (IsThreeObjectShape(signature.ReturnType))
+			{
+				row.IsUntypedObjectResult = true;
+				row.Bucket = MemberBucket.AsyncQuery;
+				return row;
+			}
+
 			return Skip(row, $"return type: {returnMapping.SkipReason}", returnMapping.SkipCategory);
 		}
 
@@ -198,9 +237,16 @@ internal sealed class MemberClassifier
 			// Anything else genuinely has nowhere to go.
 			if (returnMapping.Kind != TypeMappingKind.GeneratedWrapperClass)
 			{
+				if (IsThreeObjectShape(signature.ReturnType))
+				{
+					row.IsUntypedObjectResult = true;
+					row.Bucket = MemberBucket.AsyncQuery;
+					return row;
+				}
+
 				return Skip(
 					row,
-					$"returns `{returnMapping.CSharpTypeName}`, which is neither a value the read op carries nor a mirrored class a handle could name",
+					$"returns `{returnMapping.CSharpTypeName}`, which is neither a value the read op carries nor a three.js object a handle could name",
 					SkipCategory.NoHandleForResult);
 			}
 
@@ -219,10 +265,12 @@ internal sealed class MemberClassifier
 	/// a hand-written math type as the same <c>$t</c>-tagged form C# encodes in the other direction, and
 	/// a typed array as its <c>$ta</c>-tagged components.
 	/// <para>
-	/// A generated wrapper class cannot: it is mirrored by handle, and no op mints a handle for an
-	/// object JavaScript created. Serializing its public shape instead would hand C# a plausible bag of
-	/// numbers, which is the one outcome a read must never produce, so <c>three-interop.js</c> refuses
-	/// it at runtime too rather than trusting this rule alone.
+	/// A generated wrapper class cannot: it is mirrored by handle, and serializing its public shape
+	/// would hand C# a plausible bag of numbers, which is the one outcome a read must never produce —
+	/// so <c>three-interop.js</c> refuses it at runtime too rather than trusting this rule alone. That
+	/// is not the end of it: an op marked <c>n:true</c> asks the applier to register the object and
+	/// answer with a reference, which is the channel every object-valued query here travels on. This
+	/// predicate decides only whether the <b>value</b> channel will carry the result.
 	/// </para>
 	/// <para>
 	/// An array is readable exactly when its elements are, which is not the same as being sendable: the
@@ -244,6 +292,62 @@ internal sealed class MemberClassifier
 			TypeMappingKind.GeneratedEnum or
 			TypeMappingKind.HandWrittenMathType or
 			TypeMappingKind.HandWrittenTypedArray;
+	}
+
+	/// <summary>
+	/// Whether a declared type names a three.js <b>object</b> — something the applier can register under
+	/// a handle and answer a <c>$ref</c> for, even where no C# type mirrors it. Read off the declaration
+	/// rather than off the mapping, because this is asked exactly where the mapping failed.
+	/// <para>
+	/// ⚠️ A math class never qualifies, and neither does anything declared under
+	/// <see cref="EmitterConfig.MathSourcePrefix"/>. The applier answers a math value as a tagged value
+	/// rather than as a reference, so a member declared to return one would decode a
+	/// <c>ThreeObjectReference</c> out of a <c>$t</c>-tagged tuple and fault. The exclusion is
+	/// correctness, not taste.
+	/// </para>
+	/// </summary>
+	/// <param name="type">Declared type, absent on a signature with none.</param>
+	/// <returns><see langword="true"/> when a value of that type is a handle-able object.</returns>
+	private static bool IsThreeObjectShape(IrType? type)
+	{
+		if (type is null)
+		{
+			return false;
+		}
+
+		if (type.Kind == "reference")
+		{
+			return IsClassArm(type);
+		}
+
+		// `Foo | null` is one object or none, which is what a nullable result already means. A union of
+		// several classes qualifies too, and only here: a typed result would have to pick one arm, but
+		// every arm answers as the same untyped wrapper, so nothing is narrowed by taking them together.
+		if (type.Kind == "union")
+		{
+			var arms = type.Types ?? [];
+			return arms.Any(IsClassArm) && arms.All(x => IsClassArm(x) || IsNullishArm(x));
+		}
+
+		return false;
+	}
+
+	/// <summary>Whether one union arm is an in-scope three.js class that is not a math value.</summary>
+	/// <param name="type">The arm.</param>
+	/// <returns><see langword="true"/> when it names such a class.</returns>
+	private static bool IsClassArm(IrType type)
+	{
+		return type is { Kind: "reference", Target: { RefKind: "class", Origin: "in-scope" } }
+			&& !EmitterConfig.MathTypeNames.Contains(type.Name ?? string.Empty)
+			&& type.Target.File?.StartsWith(EmitterConfig.MathSourcePrefix, StringComparison.Ordinal) != true;
+	}
+
+	/// <summary>Whether one union arm is the absence of a value rather than an alternative to it.</summary>
+	/// <param name="type">The arm.</param>
+	/// <returns><see langword="true"/> for <c>null</c> and <c>undefined</c>.</returns>
+	private static bool IsNullishArm(IrType type)
+	{
+		return type is { Kind: "primitive", Name: "null" or "undefined" };
 	}
 
 	/// <summary>Whether a return type means no value comes back at all.</summary>
@@ -367,6 +471,13 @@ internal sealed class ClassifiedMember
 	/// rather than with a value. The result is a three.js object, which has no wire form of its own.
 	/// </summary>
 	public bool IsAdoptedResult { get; set; }
+
+	/// <summary>
+	/// True when an <see cref="MemberBucket.AsyncQuery"/> row answers with a three.js object that has no
+	/// mirrored C# type to be. The handle still comes back, so the object is reachable — as an untyped
+	/// <c>Primitive</c> whose members are named the way three.js names them.
+	/// </summary>
+	public bool IsUntypedObjectResult { get; set; }
 
 	/// <summary>Number of overloads, on a method.</summary>
 	public int OverloadCount { get; init; }

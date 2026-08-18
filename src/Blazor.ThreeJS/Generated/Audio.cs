@@ -205,6 +205,17 @@ public class Audio : Object3D
 	}
 
 	/// <summary>
+	/// The global audio listener. Read-only in three.js, so it is read on demand rather than mirrored:
+	/// records a get op, sends it behind every write already pending, and completes with the value
+	/// <c>listener</c> held.
+	/// </summary>
+	/// <returns>The value <c>listener</c> held, once the JavaScript side has answered.</returns>
+	public Task<AudioListener?> ListenerAsync()
+	{
+		return RecordGetObject<AudioListener>("listener", (adoptedBatch, adoptedHandle) => new AudioListener(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
 	/// Modify pitch, measured in cents. +/- 100 is a semitone. +/- 1200 is an octave. Defined via
 	/// <c>Audio#setDetune</c>. Read-only in three.js, so it is read on demand rather than mirrored:
 	/// records a get op, sends it behind every write already pending, and completes with the value

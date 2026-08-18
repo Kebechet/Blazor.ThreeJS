@@ -202,9 +202,10 @@ internal enum SkipCategory : byte
 	NotInstanceApi,
 
 	/// <summary>
-	/// Its result is a JavaScript object rather than a value. The read and get ops carry values —
-	/// numbers, booleans, strings, the tagged math types — and no op mints a handle for an object the
-	/// browser created, so there is nothing to hand back.
+	/// Its result is neither a value the read and get ops carry — numbers, booleans, strings, the
+	/// tagged math types — nor a single object a handle could name. An op marked <c>n:true</c> mints a
+	/// handle for one object the browser answered with; an array of them would need a handle per
+	/// element, which nothing in the wire format describes.
 	/// </summary>
 	NoHandleForResult,
 

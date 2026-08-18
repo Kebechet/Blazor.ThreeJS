@@ -159,6 +159,7 @@ internal sealed class CoverageReport
 				MirroredState = CountBucket(MemberBucket.MirroredState),
 				Commands = CountBucket(MemberBucket.Command),
 				AsyncQueries = CountBucket(MemberBucket.AsyncQuery),
+				UntypedObjectQueries = _members.Count(x => x.IsUntypedObjectResult),
 				SkippedMembers = CountBucket(MemberBucket.Skipped),
 				ReachableMembers = EmittableMembers().Count(),
 				GeneratedMembers = EmittableMembers().Count(x => x.Bucket != MemberBucket.Skipped),
@@ -281,7 +282,7 @@ internal sealed class CoverageReport
 
 		foreach (var excluded in _ir.Meta?.ExcludedDirectories ?? [])
 		{
-			AppendLine(builder, $"| the TSL / WebGPU node stack (`{excluded.Path}`) | {excluded.Classes} | this package ships three.js's WebGL build, which does not include them |");
+			AppendLine(builder, $"| the TSL / WebGPU node stack (`{excluded.Path}`) | {excluded.Classes} | the shipped bundle **does** carry them - the renderer is `WebGPURenderer` and every material it draws is a node graph - but they are outside the surface the extractor reads, and deliberately so: TSL's operators are grafted onto node prototypes at runtime and its typing lives in TypeScript generics no C# signature carries, so a mirror of it would be a lossy shadow. `ThreeContext.LoadNodeAsync` reaches the real thing instead |");
 		}
 
 		AppendLine(builder);
@@ -325,45 +326,73 @@ internal sealed class CoverageReport
 	/// the coverage report, because "can I get a value back" is the first thing a consumer asks and the
 	/// honest answer is "some of them" — a figure that reads worse than the previous "none" did but is
 	/// the one that survives being checked.
+	/// <para>
+	/// Every figure here is counted from the classification rather than written down, so the section
+	/// cannot claim a channel is shut after the generator has opened it. It said exactly that once.
+	/// </para>
 	/// </summary>
 	private void AppendReadmeReadChannel(StringBuilder builder)
 	{
 		var emittableMembers = EmittableMembers().ToList();
-		var asyncQueryCount = emittableMembers.Count(x => x.Bucket == MemberBucket.AsyncQuery);
-		var propertyReadCount = emittableMembers.Count(x => x.Bucket == MemberBucket.AsyncQuery && x.IsPropertyRead);
-		var methodReadCount = asyncQueryCount - propertyReadCount;
+		var queries = emittableMembers.Where(x => x.Bucket == MemberBucket.AsyncQuery).ToList();
+		var adoptedCount = queries.Count(x => x.IsAdoptedResult);
+		var untypedObjectCount = queries.Count(x => x.IsUntypedObjectResult);
+		var valueQueries = queries.Where(x => !x.IsAdoptedResult && !x.IsUntypedObjectResult).ToList();
+		var valuePropertyCount = valueQueries.Count(x => x.IsPropertyRead);
+		var valueMethodCount = valueQueries.Count - valuePropertyCount;
 		var noHandleCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.NoHandleForResult);
+		var callbackCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.CallbackType);
+		var domCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.DomOrLibType);
+		var staticCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.NotInstanceApi);
 		var collectionCount = emittableMembers.Count(x =>
 			x.MemberKind == ClassifiedMemberKind.Method &&
 			x.SkipCategory == SkipCategory.CollectionType);
 
 		AppendLine(builder, "### ⚠️ What reads back, and what does not");
 		AppendLine(builder);
-		AppendLine(builder, "Two of the wire format's op kinds answer with a value: **read** invokes a three.js method, and **get**");
-		AppendLine(builder, "reads a property. Both travel inside the batch they were recorded in, so either always observes the");
-		AppendLine(builder, $"writes made before it. They carry **values** - numbers, booleans, strings, and the {EmitterConfig.MathTypeNames.Count} hand-written math");
-		AppendLine(builder, "types, tagged exactly as they are sent in the other direction.");
+		AppendLine(builder, "Two of the wire format's op kinds answer: **read** invokes a three.js method, and **get** reads a");
+		AppendLine(builder, "property. Both travel inside the batch they were recorded in, so either always observes the writes made");
+		AppendLine(builder, "before it, and both are generated as `…Async` methods returning a task.");
 		AppendLine(builder);
-		AppendLine(builder, $"On the generated classes that reaches **{asyncQueryCount} members**, each emitted as `…Async` returning a `Task<T>`:");
+		AppendLine(builder, $"They answer in two ways. A **value** comes back as itself - numbers, booleans, strings, and the {EmitterConfig.MathTypeNames.Count}");
+		AppendLine(builder, "hand-written math types, tagged exactly as they are sent in the other direction. An **object** cannot:");
+		AppendLine(builder, "serializing one would hand C# a plausible bag of numbers instead of a value. So the applier registers it");
+		AppendLine(builder, "under a handle of its own and answers with a reference to that handle instead, which is what makes");
+		AppendLine(builder, "`renderer.shadowMap` and `mesh.clone()` reachable at all.");
 		AppendLine(builder);
-		AppendLine(builder, $"- **{methodReadCount} methods** - focal length and effective field of view, elapsed time, curve lengths, instance");
-		AppendLine(builder, "  matrices and colours, vertex positions, layer tests.");
-		AppendLine(builder, $"- **{propertyReadCount} read-only properties** - `uuid`, `instanceCount`, `unusedVertexCount`, and three.js's own");
-		AppendLine(builder, "  `isMesh`-style type tags. Read on demand rather than mirrored, because three.js is the only side that");
-		AppendLine(builder, "  ever assigns them: a C# property would imply the mirror knew the value without asking.");
+		AppendLine(builder, $"On the generated classes that reaches **{queries.Count} members**:");
 		AppendLine(builder);
-		AppendLine(builder, "It does **not** carry handles, and that is what still puts members out of reach:");
+		AppendLine(builder, $"- **{valueQueries.Count} answer with a value** - {Pluralize(valueMethodCount, "method", "methods")} (focal length and effective field of view, elapsed time,");
+		AppendLine(builder, $"  curve lengths, instance matrices and colours, vertex positions, layer tests) and {valuePropertyCount} read-only");
+		AppendLine(builder, "  properties (`uuid`, `instanceCount`, and three.js's own `isMesh`-style type tags). A read-only property");
+		AppendLine(builder, "  is read on demand rather than mirrored, because three.js is the only side that ever assigns it: a C#");
+		AppendLine(builder, "  property would imply the mirror knew the value without asking.");
+		AppendLine(builder, $"- **{adoptedCount} answer with a mirrored object** - `Task<T?>` over the generated type, adopted under the handle the");
+		AppendLine(builder, "  applier registered it beneath. A handle this context already mirrors resolves back to that same C#");
+		AppendLine(builder, "  object rather than to a second wrapper of it - which is what makes a method returning its own");
+		AppendLine(builder, "  receiver safe - and `null` means the member genuinely held none.");
+		AppendLine(builder, $"- **{untypedObjectCount} answer with an object no generated class mirrors** - `Task<Primitive?>`, the same untyped wrapper");
+		AppendLine(builder, "  the escape hatch hands out. The handle is real and writable; nothing type-checks the members you name");
+		AppendLine(builder, "  on it.");
 		AppendLine(builder);
-		AppendLine(builder, $"- **{noHandleCount} methods returning a three.js object** - `clone`, `getObjectByName`, `getRenderTarget`,");
-		AppendLine(builder, "  `createMaterialFromType`. No op mints a handle for an object the browser created, and serializing one");
-		AppendLine(builder, "  as a plain object would hand C# a plausible bag of numbers instead of a value. `GLTFLoader` is the one");
-		AppendLine(builder, "  thing in the package that does mint handles for browser-made objects, and it is deliberately not an op:");
-		AppendLine(builder, "  the loader reports the graph it built and C# mirrors the nodes it names. Nothing generalises that to an");
-		AppendLine(builder, "  arbitrary method return, which would have to describe an object nobody asked it to describe.");
+		AppendLine(builder, "What remains out of reach is out for reasons a handle does not fix:");
+		AppendLine(builder);
+		AppendLine(builder, $"- **{Pluralize(callbackCount, "member", "members")} taking or returning a JavaScript callback** - the wire carries ops in one direction only,");
+		AppendLine(builder, "  so there is nothing to call back into C# with.");
+		AppendLine(builder, $"- **{Pluralize(domCount, "member", "members")} typed as a DOM or TypeScript lib type** - C# holds no `HTMLCanvasElement` to hand over,");
+		AppendLine(builder, "  and a handle names a three.js object rather than an arbitrary browser one.");
+		AppendLine(builder, $"- **{Pluralize(staticCount, "static member", "static members")}** - the mirror models instances, and a static belongs to the class rather");
+		AppendLine(builder, "  than to any object the mirror holds.");
 		if (collectionCount > 0)
 		{
-			AppendLine(builder, $"- **{collectionCount} methods returning or taking an array** - which is why **`Raycaster.intersectObjects` is still not");
+			AppendLine(builder, $"- **{Pluralize(collectionCount, "method", "methods")} returning or taking an array** - which is why **`Raycaster.intersectObjects` is still not");
 			AppendLine(builder, "  callable**: it answers with `Intersection[]`, and the wire has no array encoding in either direction.");
+		}
+
+		if (noHandleCount > 0)
+		{
+			AppendLine(builder, $"- **{Pluralize(noHandleCount, "member", "members")} whose result is neither** - an array of objects, say, which would need a handle minted per");
+			AppendLine(builder, "  element rather than one for the result.");
 		}
 
 		AppendLine(builder);
@@ -506,6 +535,9 @@ internal sealed class CoverageReport
 		AppendLine(builder, "- **`Set` / `Call` / `CallAsync` / `GetAsync`** reach any member of any object you hold, generated or");
 		AppendLine(builder, "  not, by its three.js name. `GetAsync` reads a **property**, which is what puts the read-only ones above");
 		AppendLine(builder, "  within reach.");
+		AppendLine(builder, "- **`GetObjectAsync` / `CallObjectAsync`** are those two again for a member whose answer is an **object**:");
+		AppendLine(builder, "  the applier registers it and hands back a `Primitive` you can write to, which is how a nested object no");
+		AppendLine(builder, "  dotted path addresses - `renderer.shadowMap` - is reached.");
 		AppendLine(builder);
 		AppendLine(builder, "| | classes |");
 		AppendLine(builder, "|---|---|");
@@ -862,11 +894,12 @@ internal sealed class CoverageReport
 		AppendBucketRow(builder, MemberBucket.Skipped, "not mirrored; see the skip list below");
 		AppendLine(builder, $"| **total** | | **{_members.Count}** | **{EmittableMembers().Count()}** |");
 		AppendLine(builder);
-		var emittableAsyncQueryCount = EmittableMembers().Count(x => x.Bucket == MemberBucket.AsyncQuery);
-		AppendLine(builder, "Two op kinds answer with a value: **read**, which invokes a method, and **get**, which reads a property.");
-		AppendLine(builder, $"{emittableAsyncQueryCount} of the async queries above sit on an emitted class and are generated as `…Async` methods over the");
-		AppendLine(builder, "read op. A property has no method to route through that op, so none is generated for one — the untyped");
-		AppendLine(builder, "`GetAsync` reads any property by name instead.");
+		var emittableQueries = EmittableMembers().Where(x => x.Bucket == MemberBucket.AsyncQuery).ToList();
+		var emittablePropertyReadCount = emittableQueries.Count(x => x.IsPropertyRead);
+		AppendLine(builder, "Two op kinds answer: **read**, which invokes a method, and **get**, which reads a property.");
+		AppendLine(builder, $"{emittableQueries.Count} of the async queries above sit on an emitted class and are generated as `…Async` methods, {emittablePropertyReadCount} of");
+		AppendLine(builder, "them over the get op rather than the read op. Both kinds answer with a value where one can travel, and");
+		AppendLine(builder, "with a handle to an object where it cannot.");
 		AppendLine(builder);
 
 		var overloadedMethods = _members
@@ -1228,7 +1261,7 @@ internal sealed class CoverageReport
 			SkipCategory.ExternalType => "declared outside the scanned `src/` surface",
 			SkipCategory.UnresolvedType => "the TypeScript checker could not resolve the name",
 			SkipCategory.NotInstanceApi => "static, non-public or `@internal` — not part of the mirrored instance API",
-			SkipCategory.NoHandleForResult => "its result is a JavaScript object, and no op mints a handle for one the browser created",
+			SkipCategory.NoHandleForResult => "its result is neither a value the read op carries nor one object a handle could name — an array of objects needs a handle per element, not one for the result",
 			SkipCategory.ShadowedByConstructorParameter => "the constructor already takes it under the same name",
 			SkipCategory.HandWritten => "the package provides the class by hand, and the generated classes derive from it",
 			SkipCategory.UnreachableBaseConstructor => "its C# base requires constructor arguments the generated class has nothing to supply",

@@ -66,6 +66,15 @@ internal sealed class CoverageTotalsJson
 	/// <summary>Members classified as async queries.</summary>
 	public required int AsyncQueries { get; init; }
 
+	/// <summary>
+	/// The subset of <see cref="AsyncQueries"/> whose answer is a three.js object no generated class
+	/// mirrors, so it comes back as an untyped <c>Primitive</c> under its own handle. Counted on its own
+	/// because it is the one query shape the typed surface cannot describe: it moves as the generator
+	/// covers more classes, and a covered class turns its callers typed without changing this total's
+	/// meaning.
+	/// </summary>
+	public required int UntypedObjectQueries { get; init; }
+
 	/// <summary>Members skipped, with a reason recorded against each.</summary>
 	public required int SkippedMembers { get; init; }
 

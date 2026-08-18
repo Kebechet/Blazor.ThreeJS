@@ -90,4 +90,20 @@ public sealed class InspectorBase : EventDispatcher
 	{
 		RecordCall("copyFramebufferToTexture", framebufferTexture);
 	}
+
+	/// <summary>
+	/// Returns the renderer associated with this inspector. Answers with a three.js object no generated
+	/// class mirrors: records a read op, sends it behind every write already pending, and completes
+	/// with what <c>getRenderer</c> returned, under its own handle, as an untyped
+	/// <see cref="Primitive"/>. The mirror learns nothing from it — its members are reached by their
+	/// three.js names, and nothing here checks them.
+	/// </summary>
+	/// <returns>
+	/// The object <c>getRenderer</c> returned, under its own handle, or <see langword="null"/> when it
+	/// returned none.
+	/// </returns>
+	public Task<Primitive?> GetRendererAsync()
+	{
+		return CallObjectAsync("getRenderer");
+	}
 }

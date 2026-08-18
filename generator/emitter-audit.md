@@ -288,7 +288,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Audio` | `property context` | `AudioContext` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `property filters` | `AudioNode[]` is an array whose element type cannot be mapped: `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `property gain` | `GainNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Audio` | `property listener` | read-only in three.js and typed `AudioListener`, a handle-backed object — the get op carries values, and no op mints a handle for an object JavaScript created |
 | `Audio` | `property source` | `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `property sourceType` | `"empty" | "audioNode" | "mediaNode" | "mediaStreamNode" | "buffer"` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `AudioAnalyser` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
@@ -331,7 +330,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `BufferGeometry` | `@example` | 2 TypeScript example block(s), which would be misleading in C# documentation |
 | `BufferGeometry` | `method deleteAttribute` | parameter 'name': `keyof Attributes` is a TypeScript `typeOperator` type, which has no C# equivalent |
 | `BufferGeometry` | `method getAttribute` | parameter 'name': type parameter `K` has neither a default nor a constraint, so erasing it leaves nothing to map to |
-| `BufferGeometry` | `method getIndirect` | return type: `IndirectStorageBufferAttribute` is not an emitted class: its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with |
 | `BufferGeometry` | `method hasAttribute` | parameter 'name': `keyof Attributes` is a TypeScript `typeOperator` type, which has no C# equivalent |
 | `BufferGeometry` | `method setAttribute` | parameter 'name': type parameter `K` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `BufferGeometry` | `method setFromPoints` | parameter 'points': `Vector3[] | Vector2[]` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -487,7 +485,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `ImageUtils` | `method sRGBToLinear` | static; the mirror models instances, and a static write has no handle to address |
 | `InspectorBase` | `method beginCompute` | parameter 'computeNode': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `InspectorBase` | `method computeAsync` | parameter 'computeNode': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `InspectorBase` | `method getRenderer` | return type: `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `InspectorBase` | `method inspect` | parameter 'node': `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `InspectorBase` | `method setRenderer` | parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `InspectorBase` | `property currentFrame` | `unknown` carries no type information a C# signature could express |
@@ -1208,7 +1205,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `WebGPURenderer` | `method computeAsync` | parameter 'computeNodes': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `WebGPURenderer` | `method getAnimationLoop` | return type: `(time: DOMHighResTimeStamp, xrFrame?: XRFrame) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGPURenderer` | `method getArrayBufferAsync` | return type: `Promise<ArrayBuffer>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGPURenderer` | `method getCanvasTarget` | return type: `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `WebGPURenderer` | `method getContext` | return type: `unknown` carries no type information a C# signature could express |
 | `WebGPURenderer` | `method getMRT` | return type: `MRTNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `WebGPURenderer` | `method getRenderObjectFunction` | return type: `( object: Object3D, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: GeometryGroup | null, lightsNode: LightsNode, clippingContext: ClippingContext, passId?: string | null | undefined, ) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |

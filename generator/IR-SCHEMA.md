@@ -111,9 +111,9 @@ rather than a run that looks entirely normal.
 
 Every `.d.ts` under `src/` uses the `export` keyword, so "does this file export it" answers yes for
 everything and says only that a sibling module could import it. What decides whether a consumer can
-reach a name is the barrel graph out of `src/Three.d.ts`, which is what `index.d.ts` re-exports and
-therefore the public surface of the WebGL build this package ships — `src/Three.WebGPU.d.ts` is the
-barrel for the build it does not. `isExported` on every entry below is resolved against that graph.
+reach a name is the barrel graph out of `src/Three.WebGPU.d.ts`, which is the public surface of the
+build this package vendors — `src/Three.d.ts` is the barrel for the WebGL build it does not ship.
+`isExported` on every entry below is resolved against that graph.
 
 The two lists are the drift between the types and the runtime, and both are floors. `@types/three`
 declares `SourceJSON` an `export class` where every other JSON shape is an `interface`, so the barrel

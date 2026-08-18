@@ -10,10 +10,11 @@
     "members": 3932,
     "mirroredState": 1174,
     "commands": 774,
-    "asyncQueries": 815,
-    "skippedMembers": 1169,
+    "asyncQueries": 829,
+    "untypedObjectQueries": 13,
+    "skippedMembers": 1155,
     "reachableMembers": 2490,
-    "generatedMembers": 1654,
+    "generatedMembers": 1659,
     "strandedMembers": 1442
   },
   "classes": [
@@ -3816,7 +3817,7 @@
     },
     {
       "category": "UnmappedUnion",
-      "members": 78
+      "members": 75
     },
     {
       "category": "OptionsInterface",
@@ -3828,7 +3829,7 @@
     },
     {
       "category": "AbstractClass",
-      "members": 37
+      "members": 36
     },
     {
       "category": "MathValueType",
@@ -3839,16 +3840,16 @@
       "members": 25
     },
     {
-      "category": "UnwrappedClass",
-      "members": 20
-    },
-    {
       "category": "UnmappedTypeAlias",
       "members": 19
     },
     {
       "category": "ExternalType",
       "members": 14
+    },
+    {
+      "category": "UnwrappedClass",
+      "members": 12
     },
     {
       "category": "UnmappedTypeSyntax",
@@ -3864,15 +3865,11 @@
     },
     {
       "category": "UnreachableBaseConstructor",
-      "members": 5
+      "members": 4
     },
     {
       "category": "CollectionType",
       "members": 3
-    },
-    {
-      "category": "NoHandleForResult",
-      "members": 1
     }
   ],
   "generatedEnums": [
@@ -5106,10 +5103,8 @@
       "member": "listener",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "type": "AudioListener",
-      "reason": "read-only in three.js and typed `AudioListener`, a handle-backed object — the get op carries values, and no op mints a handle for an object JavaScript created",
-      "category": "NoHandleForResult"
+      "bucket": "AsyncQuery",
+      "type": "AudioListener"
     },
     {
       "class": "Audio",
@@ -7276,9 +7271,7 @@
       "member": "getIndirect",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `IndirectStorageBufferAttribute` is not an emitted class: its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
-      "category": "UnreachableBaseConstructor"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "BufferGeometry",
@@ -11469,9 +11462,7 @@
       "member": "getRenderer",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "InspectorBase",
@@ -26277,9 +26268,7 @@
       "member": "getCanvasTarget",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "Renderer",
@@ -32414,9 +32403,7 @@
       "member": "getUniforms",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `WebGLUniforms` is not an emitted class: renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
-      "category": "UnwrappedClass"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "WebGLProgram",
@@ -32609,9 +32596,7 @@
       "member": "get",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `WebGLRenderList` is not an emitted class: renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table",
-      "category": "UnwrappedClass"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "WebGLRenderTarget",
@@ -34400,9 +34385,7 @@
       "member": "getCanvasTarget",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "WebGPURenderer",
@@ -35297,9 +35280,7 @@
       "member": "getCanvasTarget",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "WebGPURenderer",
@@ -35439,27 +35420,21 @@
       "member": "getHandSpace",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `XRHandSpace` is not an emitted class: renderer internals under `src/renderers/webxr/**`; no consumer instantiates them and emitting them would inflate the coverage table",
-      "category": "UnwrappedClass"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "WebXRController",
       "member": "getTargetRaySpace",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `XRTargetRaySpace` is not an emitted class: renderer internals under `src/renderers/webxr/**`; no consumer instantiates them and emitting them would inflate the coverage table",
-      "category": "UnwrappedClass"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "WebXRController",
       "member": "getGripSpace",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `XRGripSpace` is not an emitted class: renderer internals under `src/renderers/webxr/**`; no consumer instantiates them and emitting them would inflate the coverage table",
-      "category": "UnwrappedClass"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "WebXRController",
@@ -35889,27 +35864,21 @@
       "member": "getController",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `XRTargetRaySpace` is not an emitted class: renderer internals under `src/renderers/webxr/**`; no consumer instantiates them and emitting them would inflate the coverage table",
-      "category": "UnwrappedClass"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "XRManager",
       "member": "getControllerGrip",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `XRGripSpace` is not an emitted class: renderer internals under `src/renderers/webxr/**`; no consumer instantiates them and emitting them would inflate the coverage table",
-      "category": "UnwrappedClass"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "XRManager",
       "member": "getHand",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `XRHandSpace` is not an emitted class: renderer internals under `src/renderers/webxr/**`; no consumer instantiates them and emitting them would inflate the coverage table",
-      "category": "UnwrappedClass"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "XRManager",

@@ -65,6 +65,9 @@ internal static class Stories
 	/// <summary>The adopted WebGPURenderer: tone mapping, exposure and clear colour from C#.</summary>
 	public const string Renderer = "architecture-the-renderer--reaching-the-renderer-itself";
 
+	/// <summary>Members whose answer is a three.js object, typed and untyped, adopted by handle.</summary>
+	public const string ObjectResults = "architecture-object-results--when-the-answer-is-an-object";
+
 	/// <summary>Shadow casting, reached by adopting the renderer's nested shadow map.</summary>
 	public const string CatalogueShadows = "catalogue-shadows--casting-and-receiving-shadows";
 
@@ -112,6 +115,7 @@ internal static class Stories
 		CatalogueShaders,
 		ReadingState,
 		Renderer,
+		ObjectResults,
 		InteropBudget,
 		EscapeHatch,
 		MirrorAuthority

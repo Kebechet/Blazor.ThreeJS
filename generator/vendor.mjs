@@ -57,9 +57,12 @@ const INTEROP_FILE_NAME = "three-interop.js";
  * WebGPU bundle's exports and undescribable as C# members. Consumers write TSL in a small JavaScript
  * module of their own and hand the resulting node back through `ThreeContext.LoadNodeAsync`.
  *
- * The two utils below the entry points are here because `GLTFLoader` imports them, which is a fact
- * about upstream rather than a choice — `verifyImportClosure` re-derives it on every run and fails if
- * this list stops being closed under imports.
+ * `BufferGeometryUtils` and `SkeletonUtils` are here because `GLTFLoader` imports them; `DRACOLoader`
+ * and `KTX2Loader` and everything below them are here because they decode compressed glTF geometry
+ * and textures when a caller opts in (`GLTFLoadOptions`) — none of which is a choice this script
+ * makes: `verifyImportClosure` re-derives the closure on every run and fails if this list stops being
+ * closed under imports. The `.wasm` decoder payloads carry no imports of their own; `verifyImportClosure`
+ * skips them for that reason, not because they are exempt from being vendored.
  */
 const VENDORED_FILES = new Map([
     ["three.webgpu.min.js", "build/three.webgpu.min.js"],
@@ -68,7 +71,18 @@ const VENDORED_FILES = new Map([
     ["addons/controls/OrbitControls.js", "examples/jsm/controls/OrbitControls.js"],
     ["addons/loaders/GLTFLoader.js", "examples/jsm/loaders/GLTFLoader.js"],
     ["addons/utils/BufferGeometryUtils.js", "examples/jsm/utils/BufferGeometryUtils.js"],
-    ["addons/utils/SkeletonUtils.js", "examples/jsm/utils/SkeletonUtils.js"]
+    ["addons/utils/SkeletonUtils.js", "examples/jsm/utils/SkeletonUtils.js"],
+    ["addons/loaders/DRACOLoader.js", "examples/jsm/loaders/DRACOLoader.js"],
+    ["addons/loaders/KTX2Loader.js", "examples/jsm/loaders/KTX2Loader.js"],
+    ["addons/utils/WorkerPool.js", "examples/jsm/utils/WorkerPool.js"],
+    ["addons/libs/ktx-parse.module.js", "examples/jsm/libs/ktx-parse.module.js"],
+    ["addons/libs/zstddec.module.js", "examples/jsm/libs/zstddec.module.js"],
+    ["addons/math/ColorSpaces.js", "examples/jsm/math/ColorSpaces.js"],
+    ["addons/libs/draco/gltf/draco_decoder.js", "examples/jsm/libs/draco/gltf/draco_decoder.js"],
+    ["addons/libs/draco/gltf/draco_decoder.wasm", "examples/jsm/libs/draco/gltf/draco_decoder.wasm"],
+    ["addons/libs/draco/gltf/draco_wasm_wrapper.js", "examples/jsm/libs/draco/gltf/draco_wasm_wrapper.js"],
+    ["addons/libs/basis/basis_transcoder.js", "examples/jsm/libs/basis/basis_transcoder.js"],
+    ["addons/libs/basis/basis_transcoder.wasm", "examples/jsm/libs/basis/basis_transcoder.wasm"]
 ]);
 
 /**
@@ -103,8 +117,12 @@ verifyInteropImportsTheBundle();
 const drift = [];
 for (const [vendoredPath, contents] of vendoredContentsByFile) {
     const targetPath = path.join(VENDOR_ROOT, vendoredPath);
-    const existing = fs.existsSync(targetPath) ? fs.readFileSync(targetPath, "utf8") : null;
-    if (existing === contents) {
+    const isBinary = Buffer.isBuffer(contents);
+    const existing = fs.existsSync(targetPath)
+        ? fs.readFileSync(targetPath, isBinary ? undefined : "utf8")
+        : null;
+    const unchanged = isBinary ? (Buffer.isBuffer(existing) && existing.equals(contents)) : existing === contents;
+    if (unchanged) {
         continue;
     }
 
@@ -144,9 +162,18 @@ console.log(`three.js OK - ${VENDORED_FILES.size} files ${verb}, import closure 
  * imports are left exactly as they are, which is why the vendored tree mirrors the upstream
  * directory layout: `../utils/BufferGeometryUtils.js` then resolves without being touched, so the
  * only edit this script makes to three.js's own source is the one a browser cannot do without.
+ *
+ * `.wasm` files are read and returned as a raw `Buffer` instead: they are not text, carry no import
+ * specifiers to rewrite, and decoding/re-encoding them as utf8 corrupts the bytes a WASM runtime
+ * instantiates.
  */
 function vendorOne(vendoredPath, upstreamPath) {
-    const source = fs.readFileSync(path.join(UPSTREAM_ROOT, upstreamPath), "utf8");
+    const upstreamFullPath = path.join(UPSTREAM_ROOT, upstreamPath);
+    if (vendoredPath.endsWith(".wasm")) {
+        return fs.readFileSync(upstreamFullPath);
+    }
+
+    const source = fs.readFileSync(upstreamFullPath, "utf8");
     const depth = vendoredPath.split("/").length - 1;
     const bundleSpecifier = `${"../".repeat(depth) || "./"}${BUNDLE_FILE_NAME}`;
     return source.replace(BARE_THREE_SPECIFIER_PATTERN, (_, quote) => `from ${quote}${bundleSpecifier}${quote}`);
@@ -160,6 +187,10 @@ function vendorOne(vendoredPath, upstreamPath) {
 function verifyImportClosure(contentsByFile) {
     const missing = [];
     for (const [vendoredPath, contents] of contentsByFile) {
+        if (Buffer.isBuffer(contents)) {
+            continue;
+        }
+
         for (const specifier of readImportSpecifiers(contents)) {
             if (!specifier.startsWith(".")) {
                 missing.push(`${vendoredPath} imports the bare specifier '${specifier}', which no browser can resolve`);

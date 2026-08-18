@@ -13,9 +13,9 @@
             </p>
             <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildShaderSceneAsync" />
             <p>
-                <button @onclick="() => ApplySpeedAsync(0.4f)">Slow</button>
-                <button @onclick="() => ApplySpeedAsync(1.5f)">Normal</button>
-                <button @onclick="() => ApplySpeedAsync(4f)">Fast</button>
+                <button disabled="@(!_isSceneReady)" @onclick="() => ApplySpeedAsync(0.4f)">Slow</button>
+                <button disabled="@(!_isSceneReady)" @onclick="() => ApplySpeedAsync(1.5f)">Normal</button>
+                <button disabled="@(!_isSceneReady)" @onclick="() => ApplySpeedAsync(4f)">Fast</button>
                 — the shader reports it is sweeping at
                 <strong data-testid="shader-speed">@_speed.ToString("0.0")</strong>×
             </p>
@@ -59,6 +59,13 @@
     private Primitive? _speedNode;
     private float _speed = InitialSpeed;
 
+    /// <summary>
+    /// Until this is true, a button's handler would find nothing to act on and return without doing
+    /// anything - silently. Set last in the scene-building method, after every await that can throw, so
+    /// a build that fails partway leaves the buttons disabled instead of inert but clickable.
+    /// </summary>
+    private bool _isSceneReady;
+
     private async Task BuildShaderSceneAsync(ThreeContext threeContext)
     {
         var scene = new Scene();
@@ -91,6 +98,8 @@
         scene.Add(mesh);
 
         await threeContext.SetActiveSceneAsync(scene, camera);
+
+        _isSceneReady = true;
     }
 
     private async Task ApplySpeedAsync(float speed)

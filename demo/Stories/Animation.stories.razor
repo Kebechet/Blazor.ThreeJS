@@ -13,11 +13,11 @@
             </p>
             <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildAnimationSceneAsync" />
             <p>
-                <button @onclick="PlayAsync" disabled="@_isPlaying">Play</button>
-                <button @onclick="StopAsync" disabled="@(!_isPlaying)">Stop</button>
-                <button @onclick="() => SetSpeedAsync(0.4f)">Slow</button>
-                <button @onclick="() => SetSpeedAsync(1f)">Normal</button>
-                <button @onclick="() => SetSpeedAsync(2.5f)">Fast</button>
+                <button @onclick="PlayAsync" disabled="@(!_isSceneReady || _isPlaying)">Play</button>
+                <button @onclick="StopAsync" disabled="@(!_isSceneReady || !_isPlaying)">Stop</button>
+                <button disabled="@(!_isSceneReady)" @onclick="() => SetSpeedAsync(0.4f)">Slow</button>
+                <button disabled="@(!_isSceneReady)" @onclick="() => SetSpeedAsync(1f)">Normal</button>
+                <button disabled="@(!_isSceneReady)" @onclick="() => SetSpeedAsync(2.5f)">Fast</button>
                 — @(_isPlaying ? "playing" : "stopped") at @_timeScale×
             </p>
             <p>
@@ -58,6 +58,13 @@
     private int _keyframeCount;
     private float _timeScale = 1f;
     private bool _isPlaying = true;
+
+    /// <summary>
+    /// Until this is true, a button's handler would find nothing to act on and return without doing
+    /// anything - silently. Set last in the scene-building method, after every await that can throw, so
+    /// a build that fails partway leaves the buttons disabled instead of inert but clickable.
+    /// </summary>
+    private bool _isSceneReady;
 
     private async Task BuildAnimationSceneAsync(ThreeContext threeContext)
     {
@@ -129,6 +136,7 @@
 
         StateHasChanged();
 
+        _isSceneReady = true;
         _ = AnimateAsync(threeContext, mixer);
     }
 

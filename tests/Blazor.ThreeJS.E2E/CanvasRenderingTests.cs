@@ -191,6 +191,10 @@ public sealed class CanvasRenderingTests(DemoFixture fixture, ITestOutputHelper 
 		storyPage.Responses.Where(x => x.Status >= 400).Select(x => $"{x.Status} {x.Url}").ShouldBeEmpty();
 		storyPage.FailedRequests.ShouldBeEmpty();
 		storyPage.ConsoleErrors.ShouldBeEmpty();
+
+		// A story whose scene-building throws leaves its controls rendered and inert: nothing here
+		// fails, the canvas is merely empty, and the only sign is a banner no other assertion reads.
+		(await storyPage.ReadVisibleFailuresAsync()).ShouldBeEmpty();
 	}
 
 	/// <summary>Every story id in the demo, as theory data.</summary>

@@ -11,7 +11,7 @@
             </p>
             <ThreeCanvas Style="width: 100%; height: 400px;" OnReady="BuildMirrorSceneAsync" />
             <p>
-                <button @onclick="CompareAsync">Compare the mirror with the browser</button>
+                <button disabled="@(!_isSceneReady)" @onclick="CompareAsync">Compare the mirror with the browser</button>
             </p>
             <table>
                 <tbody>
@@ -58,6 +58,13 @@
     private string _commandComparison = "not asked yet";
     private string _untypedComparison = "not asked yet";
 
+    /// <summary>
+    /// Until this is true, a button's handler would find nothing to act on and return without doing
+    /// anything - silently. Set last in the scene-building method, after every await that can throw, so
+    /// a build that fails partway leaves the buttons disabled instead of inert but clickable.
+    /// </summary>
+    private bool _isSceneReady;
+
     private async Task BuildMirrorSceneAsync(ThreeContext threeContext)
     {
         _threeContext = threeContext;
@@ -99,6 +106,8 @@
 
         _untypedCube.Set("position", new Vector3(3f, UntypedPositionY, 0f));
         await threeContext.FlushAsync();
+
+        _isSceneReady = true;
     }
 
     private async Task CompareAsync()

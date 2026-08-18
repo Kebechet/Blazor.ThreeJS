@@ -15,7 +15,7 @@
             </p>
             <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildAdoptedSceneAsync" />
             <p>
-                <button @onclick="ToggleShadowsAsync" disabled="@(_shadowMap is null)">
+                <button @onclick="ToggleShadowsAsync" disabled="@(!_isSceneReady || _shadowMap is null)">
                     @(_areShadowsEnabled ? "Turn shadows off" : "Turn shadows on")
                 </button>
                 — written through the adopted <code>shadowMap</code>, which nothing in the scene graph
@@ -101,6 +101,13 @@ var size = await canvasTarget!.CallAsync&lt;Vector2&gt;("getSize", new Vector2()
     private string? _shadowMapType;
     private bool _areShadowsEnabled = true;
 
+    /// <summary>
+    /// Until this is true, a button's handler would find nothing to act on and return without doing
+    /// anything - silently. Set last in the scene-building method, after every await that can throw, so
+    /// a build that fails partway leaves the buttons disabled instead of inert but clickable.
+    /// </summary>
+    private bool _isSceneReady;
+
     private async Task BuildAdoptedSceneAsync(ThreeContext threeContext)
     {
         _threeContext = threeContext;
@@ -147,6 +154,7 @@ var size = await canvasTarget!.CallAsync&lt;Vector2&gt;("getSize", new Vector2()
         var spinning = await AdoptEverythingAsync(scene, geometry);
         StateHasChanged();
 
+        _isSceneReady = true;
         _ = AnimateAsync(threeContext, original, spinning);
     }
 

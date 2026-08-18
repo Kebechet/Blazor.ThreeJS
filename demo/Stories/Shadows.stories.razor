@@ -12,7 +12,7 @@
             </p>
             <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildShadowSceneAsync" />
             <p>
-                <button @onclick="ToggleShadowsAsync">@(_areShadowsEnabled ? "Turn shadows off" : "Turn shadows on")</button>
+                <button disabled="@(!_isSceneReady)" @onclick="ToggleShadowsAsync">@(_areShadowsEnabled ? "Turn shadows off" : "Turn shadows on")</button>
                 — shadow map <strong>@(_areShadowsEnabled ? "enabled" : "disabled")</strong>,
                 adopted as <code>@(_shadowMapType ?? "…")</code>
             </p>
@@ -52,6 +52,13 @@ shadowMap.Set("type", ShadowMapType.PCFSoftShadowMap);</code></pre>
     private Primitive? _shadowMap;
     private string? _shadowMapType;
     private bool _areShadowsEnabled = true;
+
+    /// <summary>
+    /// Until this is true, a button's handler would find nothing to act on and return without doing
+    /// anything - silently. Set last in the scene-building method, after every await that can throw, so
+    /// a build that fails partway leaves the buttons disabled instead of inert but clickable.
+    /// </summary>
+    private bool _isSceneReady;
 
     private async Task BuildShadowSceneAsync(ThreeContext threeContext)
     {
@@ -112,6 +119,7 @@ shadowMap.Set("type", ShadowMapType.PCFSoftShadowMap);</code></pre>
         await threeContext.FlushAsync();
         StateHasChanged();
 
+        _isSceneReady = true;
         _ = AnimateAsync(threeContext, casters);
     }
 

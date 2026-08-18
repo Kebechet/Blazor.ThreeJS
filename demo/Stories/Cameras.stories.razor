@@ -9,8 +9,8 @@
                 keeps every box the size it really is, however far away it is.
             </p>
             <p>
-                <button disabled="@_isPerspectiveActive" @onclick="UsePerspectiveAsync">PerspectiveCamera</button>
-                <button disabled="@(!_isPerspectiveActive)" @onclick="UseOrthographicAsync">OrthographicCamera</button>
+                <button disabled="@(!_isSceneReady || _isPerspectiveActive)" @onclick="UsePerspectiveAsync">PerspectiveCamera</button>
+                <button disabled="@(!_isSceneReady || !_isPerspectiveActive)" @onclick="UseOrthographicAsync">OrthographicCamera</button>
             </p>
             @* ⚠️ A fixed aspect ratio, not a fixed height. The interop module overwrites a perspective
                camera's Aspect with the canvas's own, so that one is right whatever shape the canvas is -
@@ -41,6 +41,13 @@
     private PerspectiveCamera? _perspectiveCamera;
     private OrthographicCamera? _orthographicCamera;
     private bool _isPerspectiveActive = true;
+
+    /// <summary>
+    /// Until this is true, a button's handler would find nothing to act on and return without doing
+    /// anything - silently. Set last in the scene-building method, after every await that can throw, so
+    /// a build that fails partway leaves the buttons disabled instead of inert but clickable.
+    /// </summary>
+    private bool _isSceneReady;
 
     private async Task BuildCameraGalleryAsync(ThreeContext threeContext)
     {
@@ -85,6 +92,8 @@
         _orthographicCamera = orthographicCamera;
 
         await threeContext.SetActiveSceneAsync(scene, perspectiveCamera);
+
+        _isSceneReady = true;
     }
 
     private async Task UsePerspectiveAsync()

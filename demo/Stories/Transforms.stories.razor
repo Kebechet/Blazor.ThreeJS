@@ -13,11 +13,11 @@
             </p>
             <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildTransformSceneAsync" />
             <p>
-                <button @onclick="RotateAsync">RotateX(+15°)</button>
-                <button @onclick="TranslateAsync">TranslateY(+0.25)</button>
-                <button @onclick="LookAtOriginAsync">LookAt(0, 0, 0)</button>
-                <button @onclick="WritePositionAsync">Write Position.Y = 1.5</button>
-                <button @onclick="ReadWorldPositionAsync">Ask the browser</button>
+                <button disabled="@(!_isSceneReady)" @onclick="RotateAsync">RotateX(+15°)</button>
+                <button disabled="@(!_isSceneReady)" @onclick="TranslateAsync">TranslateY(+0.25)</button>
+                <button disabled="@(!_isSceneReady)" @onclick="LookAtOriginAsync">LookAt(0, 0, 0)</button>
+                <button disabled="@(!_isSceneReady)" @onclick="WritePositionAsync">Write Position.Y = 1.5</button>
+                <button disabled="@(!_isSceneReady)" @onclick="ReadWorldPositionAsync">Ask the browser</button>
             </p>
             <table>
                 <thead>
@@ -84,6 +84,13 @@
     private Vector3? _worldPosition;
     private string _commandLog = "No command sent yet.";
 
+    /// <summary>
+    /// Until this is true, a button's handler would find nothing to act on and return without doing
+    /// anything - silently. Set last in the scene-building method, after every await that can throw, so
+    /// a build that fails partway leaves the buttons disabled instead of inert but clickable.
+    /// </summary>
+    private bool _isSceneReady;
+
     private async Task BuildTransformSceneAsync(ThreeContext threeContext)
     {
         _threeContext = threeContext;
@@ -124,6 +131,8 @@
 
         ReadMirror();
         await ReadWorldPositionAsync();
+
+        _isSceneReady = true;
     }
 
     /// <summary>

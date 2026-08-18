@@ -11,7 +11,7 @@
                 canvas.
             </p>
             <p>
-                <button @onclick="ToggleCamera">@(_isPerspectiveActive ? "Switch to ThreeOrthographicCamera" : "Switch to ThreePerspectiveCamera")</button>
+                <button disabled="@(!_isSceneReady)" @onclick="ToggleCamera">@(_isPerspectiveActive ? "Switch to ThreeOrthographicCamera" : "Switch to ThreePerspectiveCamera")</button>
                 Rendering through: <strong>@(_isPerspectiveActive ? "ThreePerspectiveCamera" : "ThreeOrthographicCamera")</strong>
             </p>
             @* Keyed on the camera choice so the toggle rebuilds the whole canvas. A declarative scene
@@ -20,7 +20,7 @@
             @* A fixed aspect ratio because one of the two cameras is orthographic: its frustum is spelled
                out in world units and nothing rescales it to the canvas, so a canvas of another shape
                would render it stretched. See Catalogue/Cameras for the same note. *@
-            <ThreeCanvas @key="_isPerspectiveActive" Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;">
+            <ThreeCanvas @key="_isPerspectiveActive" Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="MarkSceneReady">
                 @if (_isPerspectiveActive)
                 {
                     <ThreePerspectiveCamera Fov="45f" Aspect="16f / 9f" Near="0.1f" Far="100f" Position="new(0f, 1.5f, 11f)" />
@@ -147,9 +147,26 @@
     private float _groupRotationY;
     private bool _isPerspectiveActive = true;
 
+    /// <summary>
+    /// Until this is true, a button's handler would find nothing to act on and return without doing
+    /// anything - silently. Set last in the scene-building method, after every await that can throw, so
+    /// a build that fails partway leaves the buttons disabled instead of inert but clickable.
+    /// </summary>
+    private bool _isSceneReady;
+
     protected override void OnInitialized()
     {
         _ = AnimateAsync();
+    }
+
+    /// <summary>
+    /// Wired to the canvas's <c>OnReady</c> so the toggle above stays disabled while the declarative
+    /// scene it swaps is still being built - there is no imperative build method here to set this at
+    /// the end of, since this story's scene is written entirely as markup.
+    /// </summary>
+    private void MarkSceneReady()
+    {
+        _isSceneReady = true;
     }
 
     private void ToggleCamera()

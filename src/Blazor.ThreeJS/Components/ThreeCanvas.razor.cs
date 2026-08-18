@@ -45,6 +45,17 @@ public partial class ThreeCanvas
 	/// </summary>
 	[Parameter] public RenderFragment? ChildContent { get; set; }
 
+	/// <summary>
+	/// Raised when the JavaScript-side context could not be created, with the exception that stopped
+	/// it. <see cref="OnReady"/> never fires in that case, so this is the callback that says why.
+	/// <para>
+	/// Handling it is optional: the component already replaces the canvas with a message naming the
+	/// failure, which is the part that matters to whoever is looking at the page. Subscribe when the
+	/// page has its own state to correct — controls to disable, a retry to offer, telemetry to send.
+	/// </para>
+	/// </summary>
+	[Parameter] public EventCallback<Exception> OnInitializationFailed { get; set; }
+
 	private const string ModulePath = "./_content/Kebechet.Blazor.ThreeJS/three-interop.js";
 
 	private ElementReference _canvasElement;
@@ -52,6 +63,14 @@ public partial class ThreeCanvas
 	private ThreeContext? _threeContext;
 	private Task? _initializationTask;
 	private bool _isDisposed;
+
+	/// <summary>
+	/// What stopped <see cref="CreateContextAsync"/>, once something has. Rendered in place of the
+	/// canvas, because a canvas with no renderer behind it is indistinguishable from one whose scene
+	/// simply has nothing in it — and that silence is what turns a failed renderer into a page whose
+	/// every control does nothing for no visible reason.
+	/// </summary>
+	private Exception? _initializationError;
 
 	/// <summary>
 	/// The declarative scene's root, present only while <see cref="ChildContent"/> is supplied. Captured
@@ -121,7 +140,16 @@ public partial class ThreeCanvas
 		}
 
 		_initializationTask = CreateContextAsync();
-		await _initializationTask;
+
+		try
+		{
+			await _initializationTask;
+		}
+		catch (Exception exception)
+		{
+			await ReportInitializationFailureAsync(exception);
+			return;
+		}
 
 		var threeContext = _threeContext;
 		if (_isDisposed || threeContext is null)
@@ -149,6 +177,35 @@ public partial class ThreeCanvas
 	/// throws — it does when WebGL is unavailable or the browser's live-context limit is reached. The
 	/// reference to this component is stored before the call for the same reason.
 	/// </summary>
+	/// <summary>
+	/// Shows a failed <c>createContext</c> where the canvas was and hands it to
+	/// <see cref="OnInitializationFailed"/>, rather than letting it reach the renderer as an unhandled
+	/// exception.
+	/// <para>
+	/// ⚠️ Swallowing it is the point, and it is a narrow swallow: this covers the package's own
+	/// initialization, not a caller's <see cref="OnReady"/>, which still faults the way any other
+	/// component's callback does. Left unhandled, this one surfaces as the framework's generic error
+	/// banner — the same wording for a dead renderer as for any other fault, naming neither the canvas
+	/// nor the cause, while every control the page wired to the scene goes quietly inert.
+	/// </para>
+	/// <para>
+	/// Nothing is reported for a disposed component or a dead circuit: there is no page left to tell.
+	/// </para>
+	/// </summary>
+	/// <param name="exception">What <see cref="CreateContextAsync"/> threw.</param>
+	private async Task ReportInitializationFailureAsync(Exception exception)
+	{
+		if (_isDisposed || exception is JSDisconnectedException)
+		{
+			return;
+		}
+
+		_initializationError = exception;
+		StateHasChanged();
+
+		await OnInitializationFailed.InvokeAsync(exception);
+	}
+
 	private async Task CreateContextAsync()
 	{
 		var module = await _jsRuntime.InvokeAsync<IJSObjectReference>("import", ModulePath);

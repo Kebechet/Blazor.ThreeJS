@@ -11,7 +11,7 @@
             <p>
                 @foreach (var lightName in _lightNames)
                 {
-                    <button disabled="@(lightName == _activeLightName)" @onclick="@(() => ShowOnlyAsync(lightName))">@lightName</button>
+                    <button disabled="@(!_isSceneReady || lightName == _activeLightName)" @onclick="@(() => ShowOnlyAsync(lightName))">@lightName</button>
                 }
             </p>
             <ThreeCanvas Style="width: 100%; height: 420px;" OnReady="BuildLightGalleryAsync" />
@@ -42,6 +42,13 @@
     private readonly Dictionary<string, Object3D> _lightsByName = [];
     private ThreeContext? _threeContext;
     private string _activeLightName = DirectionalName;
+
+    /// <summary>
+    /// Until this is true, a button's handler would find nothing to act on and return without doing
+    /// anything - silently. Set last in the scene-building method, after every await that can throw, so
+    /// a build that fails partway leaves the buttons disabled instead of inert but clickable.
+    /// </summary>
+    private bool _isSceneReady;
 
     private async Task BuildLightGalleryAsync(ThreeContext threeContext)
     {
@@ -83,6 +90,8 @@
         }
 
         await threeContext.SetActiveSceneAsync(scene, camera);
+
+        _isSceneReady = true;
     }
 
     /// <summary>

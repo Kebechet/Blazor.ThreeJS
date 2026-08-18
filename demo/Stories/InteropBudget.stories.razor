@@ -25,7 +25,7 @@
                 </tbody>
             </table>
             <p>
-                <button @onclick="ToggleSpin">@(_isSpinning ? "Stop the C#-driven spin" : "Start a C#-driven spin")</button>
+                <button disabled="@(!_isSceneReady)" @onclick="ToggleSpin">@(_isSpinning ? "Stop the C#-driven spin" : "Start a C#-driven spin")</button>
                 C#-driven spin: <strong>@(_isSpinning ? "running" : "stopped")</strong>
             </p>
             <ThreeCanvas Style="width: 100%; height: 400px;" OnReady="BuildBudgetSceneAsync" />
@@ -54,6 +54,13 @@
     private long _previousBatchCount;
     private string _opsPerBatch = "0.0";
     private bool _isSpinning;
+
+    /// <summary>
+    /// Until this is true, a button's handler would find nothing to act on and return without doing
+    /// anything - silently. Set last in the scene-building method, after every await that can throw, so
+    /// a build that fails partway leaves the buttons disabled instead of inert but clickable.
+    /// </summary>
+    private bool _isSceneReady;
 
     private async Task BuildBudgetSceneAsync(ThreeContext threeContext)
     {
@@ -91,6 +98,7 @@
         orbitControls.IsDampingEnabled = true;
         await threeContext.FlushAsync();
 
+        _isSceneReady = true;
         _ = RunReadoutAsync();
         _ = RunSpinAsync();
     }

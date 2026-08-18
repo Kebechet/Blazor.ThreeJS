@@ -1,5 +1,18 @@
 @implements IAsyncDisposable
 @inject IJSRuntime _jsRuntime
 
-<canvas @ref="_canvasElement" class="@Class" style="@Style"></canvas>
-@_declarativeScene
+@if (_initializationError is null)
+{
+    <canvas @ref="_canvasElement" class="@Class" style="@Style"></canvas>
+    @_declarativeScene
+}
+else
+{
+    @* Where the canvas would have been, at the size the caller asked for: a renderer that never
+       started is worth saying out loud, because everything downstream of it - OnReady, the scene,
+       every control a page wired to it - silently does nothing instead. *@
+    <div class="@Class" style="@Style" role="alert" data-testid="three-canvas-error">
+        <strong>This canvas has no three.js renderer.</strong>
+        <span>@_initializationError.Message</span>
+    </div>
+}

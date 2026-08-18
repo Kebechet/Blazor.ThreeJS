@@ -13,16 +13,16 @@
             </p>
             <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildRendererSceneAsync" />
             <p>
-                <button @onclick="() => ApplyToneMappingAsync(ToneMapping.NoToneMapping)">No tone mapping</button>
-                <button @onclick="() => ApplyToneMappingAsync(ToneMapping.ACESFilmicToneMapping)">ACES filmic</button>
-                <button @onclick="() => ApplyToneMappingAsync(ToneMapping.ReinhardToneMapping)">Reinhard</button>
+                <button disabled="@(!_isSceneReady)" @onclick="() => ApplyToneMappingAsync(ToneMapping.NoToneMapping)">No tone mapping</button>
+                <button disabled="@(!_isSceneReady)" @onclick="() => ApplyToneMappingAsync(ToneMapping.ACESFilmicToneMapping)">ACES filmic</button>
+                <button disabled="@(!_isSceneReady)" @onclick="() => ApplyToneMappingAsync(ToneMapping.ReinhardToneMapping)">Reinhard</button>
                 — showing <strong>@_toneMapping</strong>
             </p>
             <p>
-                <button @onclick="() => ApplyExposureAsync(0.6f)">Exposure 0.6</button>
-                <button @onclick="() => ApplyExposureAsync(1.0f)">Exposure 1.0</button>
-                <button @onclick="() => ApplyExposureAsync(1.8f)">Exposure 1.8</button>
-                <button @onclick="CycleBackgroundAsync">Cycle clear colour</button>
+                <button disabled="@(!_isSceneReady)" @onclick="() => ApplyExposureAsync(0.6f)">Exposure 0.6</button>
+                <button disabled="@(!_isSceneReady)" @onclick="() => ApplyExposureAsync(1.0f)">Exposure 1.0</button>
+                <button disabled="@(!_isSceneReady)" @onclick="() => ApplyExposureAsync(1.8f)">Exposure 1.8</button>
+                <button disabled="@(!_isSceneReady)" @onclick="CycleBackgroundAsync">Cycle clear colour</button>
             </p>
             <p>
                 The emissive spheres are deliberately brighter than white. Without tone mapping they
@@ -56,6 +56,13 @@
     private ThreeContext? _threeContext;
     private ToneMapping _toneMapping = ToneMapping.NoToneMapping;
     private int _backgroundIndex;
+
+    /// <summary>
+    /// Until this is true, a button's handler would find nothing to act on and return without doing
+    /// anything - silently. Set last in the scene-building method, after every await that can throw, so
+    /// a build that fails partway leaves the buttons disabled instead of inert but clickable.
+    /// </summary>
+    private bool _isSceneReady;
 
     private async Task BuildRendererSceneAsync(ThreeContext threeContext)
     {
@@ -100,6 +107,7 @@
 
         await threeContext.SetActiveSceneAsync(scene, camera);
 
+        _isSceneReady = true;
         _ = AnimateAsync(threeContext, group);
     }
 

@@ -12,7 +12,7 @@
             </p>
             <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="BuildReadableSceneAsync" />
             <p>
-                <button @onclick="ReadEverythingAsync" disabled="@_isReading">Read it all again</button>
+                <button @onclick="ReadEverythingAsync" disabled="@(!_isSceneReady || _isReading)">Read it all again</button>
                 @if (_readCount > 0)
                 {
                     <text> — read @_readCount time@(_readCount == 1 ? "" : "s")</text>
@@ -84,6 +84,13 @@
     private bool _isReading;
     private int _readCount;
 
+    /// <summary>
+    /// Until this is true, a button's handler would find nothing to act on and return without doing
+    /// anything - silently. Set last in the scene-building method, after every await that can throw, so
+    /// a build that fails partway leaves the buttons disabled instead of inert but clickable.
+    /// </summary>
+    private bool _isSceneReady;
+
     private async Task BuildReadableSceneAsync(ThreeContext threeContext)
     {
         _threeContext = threeContext;
@@ -121,6 +128,7 @@
         geometry.ComputeBoundingSphere();
         await ReadEverythingAsync();
 
+        _isSceneReady = true;
         _ = AnimateAsync(threeContext, mesh);
     }
 

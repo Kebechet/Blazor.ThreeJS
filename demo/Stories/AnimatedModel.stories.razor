@@ -28,8 +28,8 @@
                 }
             </p>
             <p>
-                <button @onclick="PlayAsync" disabled="@(_action is null || _isPlaying)">Play</button>
-                <button @onclick="StopAsync" disabled="@(_action is null || !_isPlaying)">Stop</button>
+                <button @onclick="PlayAsync" disabled="@(!_isSceneReady || _action is null || _isPlaying)">Play</button>
+                <button @onclick="StopAsync" disabled="@(!_isSceneReady || _action is null || !_isPlaying)">Stop</button>
                 — @(_isPlaying ? "playing" : "stopped")
             </p>
             <p>
@@ -53,6 +53,13 @@
     private AnimationAction? _action;
     private List<LoadedAnimationClip> _clips = [];
     private bool _isPlaying = true;
+
+    /// <summary>
+    /// Until this is true, a button's handler would find nothing to act on and return without doing
+    /// anything - silently. Set last in the scene-building method, after every await that can throw, so
+    /// a build that fails partway leaves the buttons disabled instead of inert but clickable.
+    /// </summary>
+    private bool _isSceneReady;
 
     private async Task BuildAnimatedSceneAsync(ThreeContext threeContext)
     {
@@ -95,6 +102,7 @@
 
         StateHasChanged();
 
+        _isSceneReady = true;
         _ = AnimateAsync(threeContext, mixer);
     }
 

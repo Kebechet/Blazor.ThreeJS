@@ -146,6 +146,33 @@ internal sealed class StoryPage : IAsyncDisposable
 		}
 	}
 
+	/// <summary>
+	/// What the page itself is admitting went wrong, in the two places a failure can end up on screen
+	/// without failing anything else a test looks at: the framework's own error banner, raised by any
+	/// unhandled exception a story's scene-building throws, and the canvas's failure box, rendered when
+	/// the renderer never started. Both leave the story looking merely empty — the console is the only
+	/// other trace, and a story that swallows its own exception does not even leave that.
+	/// </summary>
+	/// <returns>One line per visible failure, empty when the page is admitting nothing.</returns>
+	public async Task<IReadOnlyList<string>> ReadVisibleFailuresAsync()
+	{
+		var failures = new List<string>();
+
+		var errorBanner = Page.Locator("#blazor-error-ui");
+		if (await errorBanner.CountAsync() > 0 && await errorBanner.First.IsVisibleAsync())
+		{
+			failures.Add("the framework's unhandled-error banner is showing");
+		}
+
+		var canvasFailure = Page.Locator("[data-testid=three-canvas-error]");
+		if (await canvasFailure.CountAsync() > 0)
+		{
+			failures.Add($"the canvas reported no renderer: {(await canvasFailure.First.TextContentAsync())?.Trim()}");
+		}
+
+		return failures;
+	}
+
 	private StoryPage(IBrowserContext browserContext, IPage page)
 	{
 		_browserContext = browserContext;

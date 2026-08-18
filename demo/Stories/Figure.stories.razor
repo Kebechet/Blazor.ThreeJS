@@ -48,7 +48,7 @@
                 rather than sit at 0% forever.
             </p>
             <p>
-                <button @onclick="ReadCameraPositionAsync">Where is the camera?</button>
+                <button disabled="@(!_isSceneReady)" @onclick="ReadCameraPositionAsync">Where is the camera?</button>
                 @_cameraReadout
             </p>
         </Template>
@@ -67,6 +67,13 @@
     private string _lastClickedPartName = "nothing yet";
     private GltfLoadProgress? _loadProgress;
     private string _cameraReadout = "not asked yet";
+
+    /// <summary>
+    /// Until this is true, a button's handler would find nothing to act on and return without doing
+    /// anything - silently. Set last in the scene-building method, after every await that can throw, so
+    /// a build that fails partway leaves the buttons disabled instead of inert but clickable.
+    /// </summary>
+    private bool _isSceneReady;
 
     private async Task BuildFigureSceneAsync(ThreeContext threeContext)
     {
@@ -120,6 +127,8 @@
         _orbitControls.Target.Set(0f, 0.2f, 0f);
 
         await threeContext.FlushAsync();
+
+        _isSceneReady = true;
     }
 
     // The camera's mirror goes stale the moment the controls start driving it, and this is the honest

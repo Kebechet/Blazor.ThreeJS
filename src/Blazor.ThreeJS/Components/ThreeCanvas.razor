@@ -13,6 +13,6 @@ else
        every control a page wired to it - silently does nothing instead. *@
     <div class="@Class" style="@Style" role="alert" data-testid="three-canvas-error">
         <strong>This canvas has no three.js renderer.</strong>
-        <span>@_initializationError.Message</span>
+        <span>@FirstLineOf(_initializationError.Message)</span>
     </div>
 }

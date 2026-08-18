@@ -178,6 +178,22 @@ public partial class ThreeCanvas
 	/// reference to this component is stored before the call for the same reason.
 	/// </summary>
 	/// <summary>
+	/// The first line of a failure message, which for a JavaScript exception is the sentence naming the
+	/// cause — everything after it is the browser's stack, addressed to whoever opens the console rather
+	/// than to whoever is looking at the page. The whole exception still reaches
+	/// <see cref="OnInitializationFailed"/> and the console; only what is drawn is trimmed.
+	/// </summary>
+	/// <param name="message">The exception's message.</param>
+	/// <returns>Everything up to the first line break, trimmed.</returns>
+	private static string FirstLineOf(string message)
+	{
+		var lineBreak = message.IndexOf('\n');
+		return lineBreak < 0
+			? message.Trim()
+			: message[..lineBreak].Trim();
+	}
+
+	/// <summary>
 	/// Shows a failed <c>createContext</c> where the canvas was and hands it to
 	/// <see cref="OnInitializationFailed"/>, rather than letting it reach the renderer as an unhandled
 	/// exception.

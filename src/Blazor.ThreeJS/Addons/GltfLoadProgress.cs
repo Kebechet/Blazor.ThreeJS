@@ -24,12 +24,20 @@ public sealed class GltfLoadProgress
 	/// Fraction complete in the range 0 to 1, or <see langword="null"/> when
 	/// <see cref="BytesTotal"/> is unknown. A caller with nothing to divide by wants an indeterminate
 	/// progress bar, and this says so instead of answering zero forever.
+	/// <para>
+	/// ⚠️ Also null once the two numbers contradict each other, which a compressed response makes
+	/// ordinary rather than exotic: <c>Content-Length</c> counts the bytes on the wire while the browser
+	/// counts the bytes it decoded, so a gzipped model passes its own declared total long before it has
+	/// finished — the demo's own figure reported 597%. A total the load has already overtaken is not a
+	/// total, and the same rule applies as above: say unknown rather than answer with a number that is
+	/// wrong in a direction nobody checks for.
+	/// </para>
 	/// </summary>
 	public double? Fraction
 	{
 		get
 		{
-			return BytesTotal is > 0
+			return BytesTotal is > 0 && BytesLoaded <= BytesTotal.Value
 				? (double) BytesLoaded / BytesTotal.Value
 				: null;
 		}

@@ -81,6 +81,29 @@ public class ThreeCanvasInitializationFailureTests
 		rendered.FindAll("[data-testid=three-canvas-error]").ShouldBeEmpty();
 	}
 
+	/// <summary>
+	/// A JavaScript exception carries its stack in the message. The page gets the sentence; the console
+	/// and the callback keep the rest.
+	/// </summary>
+	[Fact]
+	public void ThreeCanvas_CreateContextThrowsWithAStack_ShowsOnlyTheSentenceNamingTheCause()
+	{
+		// Arrange
+		using var bunitContext = new BunitContext();
+		const string cause = "Cannot read properties of null (reading 'getSupportedExtensions')";
+		var failure = new InvalidOperationException($"{cause}\n    at new _R (https://example.test/three.webgpu.min.js:6:508360)\n    at wR.init");
+		bunitContext.Services.AddSingleton<IJSRuntime>(new FailingCreateContextJsRuntime(failure));
+
+		// Act
+		var rendered = bunitContext.Render<ThreeCanvas>();
+
+		// Assert
+		rendered.WaitForAssertion(() => rendered.Find("[data-testid=three-canvas-error]").TextContent.ShouldContain(cause));
+		var shown = rendered.Find("[data-testid=three-canvas-error]").TextContent;
+		shown.ShouldNotContain("at new _R");
+		shown.ShouldNotContain("three.webgpu.min.js");
+	}
+
 	/// <summary>The path that already worked, so the failure branch cannot quietly take it over.</summary>
 	[Fact]
 	public void ThreeCanvas_CreateContextSucceeds_RendersTheCanvasAndSaysNothingAboutFailure()

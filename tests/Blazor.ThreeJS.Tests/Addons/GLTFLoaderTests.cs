@@ -154,6 +154,21 @@ public class GLTFLoaderTests
 		progress.Fraction.ShouldBe(expected);
 	}
 
+	/// <summary>
+	/// The demo's own figure, served gzipped by GitHub Pages, reported 6301 of 1056 bytes — 597%. The
+	/// browser counts what it decoded, <c>Content-Length</c> counts what crossed the wire, and a total
+	/// the load has already overtaken is not a total.
+	/// </summary>
+	[Fact]
+	public void GltfLoadProgress_CompressedResponseOvertakesItsTotal_ReportsNoFractionRatherThanOverOneHundredPercent()
+	{
+		// Arrange & Act
+		var progress = new GltfLoadProgress { BytesLoaded = 6301L, BytesTotal = 1056L };
+
+		// Assert
+		progress.Fraction.ShouldBeNull();
+	}
+
 	[Fact]
 	public void GltfLoadProgress_TotalUnknown_ReportsNoFraction()
 	{

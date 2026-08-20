@@ -48,6 +48,17 @@ public sealed class BufferGeometryLoader : Loader
 	}
 
 	/// <summary>
+	/// Reads <c>parse</c> back from the JavaScript-side object. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>parse</c> returned.
+	/// </summary>
+	/// <param name="json">Value forwarded to the <c>json</c> argument.</param>
+	/// <returns>The value <c>parse</c> returned, once the JavaScript side has answered.</returns>
+	public Task<ThreeObject?> ParseAsync(object? json)
+	{
+		return RecordReadObject<ThreeObject>("parse", (adoptedBatch, adoptedHandle) => new Primitive(adoptedBatch, adoptedHandle, "ThreeObject"), json);
+	}
+
+	/// <summary>
 	/// Attaches the objects <c>THREE.BufferGeometryLoader</c> is constructed from, so their create ops
 	/// reach the batch before the one that references them by handle, then emits this object's own.
 	/// </summary>

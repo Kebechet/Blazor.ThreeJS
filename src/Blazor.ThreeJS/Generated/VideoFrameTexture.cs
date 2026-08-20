@@ -88,6 +88,13 @@ public sealed class VideoFrameTexture : Texture
 		}
 	}
 
+	/// <summary>Records a call to <c>setFrame</c> on the JavaScript-side object.</summary>
+	/// <param name="frame">Value forwarded to the <c>frame</c> argument.</param>
+	public void SetFrame(object? frame)
+	{
+		RecordCall("setFrame", frame);
+	}
+
 	/// <summary>
 	/// This is called automatically and sets <c>.needsUpdate</c> to <c>true</c> every time a new frame
 	/// is available.

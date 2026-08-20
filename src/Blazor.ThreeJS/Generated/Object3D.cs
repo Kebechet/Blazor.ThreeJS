@@ -303,6 +303,19 @@ public abstract partial class Object3D
 	}
 
 	/// <summary>
+	/// Searches through an object and its children, starting with the object itself, and returns the
+	/// first with a property that matches the value given. Records a read op, sends it behind every
+	/// write already pending, and completes with what <c>getObjectByProperty</c> returned.
+	/// </summary>
+	/// <param name="name">the property name to search for.</param>
+	/// <param name="value">value of the given property.</param>
+	/// <returns>The value <c>getObjectByProperty</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Object3D?> GetObjectByPropertyAsync(string name, object? value)
+	{
+		return RecordReadObject<Object3D>("getObjectByProperty", (adoptedBatch, adoptedHandle) => new PrimitiveObject3D(adoptedBatch, adoptedHandle, "Object3D"), name, value);
+	}
+
+	/// <summary>
 	/// Returns a vector representing the position of the object in world space. Records a read op,
 	/// sends it behind every write already pending, and completes with what <c>getWorldPosition</c>
 	/// returned.

@@ -9,12 +9,12 @@
     "reachableClasses": 264,
     "members": 3648,
     "mirroredState": 1153,
-    "commands": 770,
-    "asyncQueries": 870,
+    "commands": 771,
+    "asyncQueries": 877,
     "untypedObjectQueries": 11,
-    "skippedMembers": 855,
+    "skippedMembers": 847,
     "reachableMembers": 2439,
-    "generatedMembers": 1791,
+    "generatedMembers": 1798,
     "strandedMembers": 1209
   },
   "classes": [
@@ -3920,7 +3920,7 @@
   "memberSkipReasons": [
     {
       "category": "NodeStackType",
-      "members": 383
+      "members": 384
     },
     {
       "category": "CallbackType",
@@ -3931,10 +3931,6 @@
       "members": 79
     },
     {
-      "category": "UntypedValue",
-      "members": 48
-    },
-    {
       "category": "UnmappedUnion",
       "members": 42
     },
@@ -3943,11 +3939,15 @@
       "members": 38
     },
     {
-      "category": "OptionsInterface",
-      "members": 31
+      "category": "AnonymousObjectType",
+      "members": 33
     },
     {
-      "category": "AnonymousObjectType",
+      "category": "OptionsInterface",
+      "members": 33
+    },
+    {
+      "category": "UntypedValue",
       "members": 30
     },
     {
@@ -3979,16 +3979,16 @@
       "members": 8
     },
     {
+      "category": "NoHandleForResult",
+      "members": 6
+    },
+    {
       "category": "RestParameter",
       "members": 6
     },
     {
       "category": "CollectionType",
       "members": 3
-    },
-    {
-      "category": "NoHandleForResult",
-      "members": 2
     }
   ],
   "generatedEnums": [
@@ -5071,9 +5071,8 @@
       "member": "isTypedArray",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'object': `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "AnimationUtils",
@@ -6527,7 +6526,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'b': `any` carries no type information a C# signature could express",
+      "reason": "return type: `any` carries no type information a C# signature could express",
       "category": "UntypedValue"
     },
     {
@@ -7550,9 +7549,8 @@
       "member": "parse",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "ThreeObject"
     },
     {
       "class": "BundleGroup",
@@ -14659,9 +14657,8 @@
       "member": "parse",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "Material"
     },
     {
       "class": "MaterialLoader",
@@ -20655,8 +20652,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'json': `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "reason": "return type: `NodeLoaderResult` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
+      "category": "OptionsInterface"
     },
     {
       "class": "NodeLoader",
@@ -20664,8 +20661,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'json': `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "reason": "return type: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
+      "category": "NodeStackType"
     },
     {
       "class": "NodeLoader",
@@ -21258,8 +21255,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'json': `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "reason": "return type: `NodeLoaderResult` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
+      "category": "OptionsInterface"
     },
     {
       "class": "NumberKeyframeTrack",
@@ -21930,9 +21927,8 @@
       "member": "getObjectByProperty",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'value': `any` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "Object3D"
     },
     {
       "class": "Object3D",
@@ -21940,8 +21936,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'value': `any` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "reason": "returns `Object3D?[]`, which is neither a value the read op carries nor a three.js object a handle could name",
+      "category": "NoHandleForResult"
     },
     {
       "class": "Object3D",
@@ -22075,18 +22071,16 @@
       "member": "parse",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "Object3D"
     },
     {
       "class": "ObjectLoader",
       "member": "parseAsync",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "Object3D"
     },
     {
       "class": "ObjectLoader",
@@ -22094,8 +22088,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'json': `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "reason": "returns `Dictionary<string, ThreeObject>`, which is neither a value the read op carries nor a three.js object a handle could name",
+      "category": "NoHandleForResult"
     },
     {
       "class": "ObjectLoader",
@@ -22103,8 +22097,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'json': `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "reason": "returns `Dictionary<string, Material>`, which is neither a value the read op carries nor a three.js object a handle could name",
+      "category": "NoHandleForResult"
     },
     {
       "class": "ObjectLoader",
@@ -22112,8 +22106,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'json': `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "reason": "returns `Dictionary<string, AnimationClip>`, which is neither a value the read op carries nor a three.js object a handle could name",
+      "category": "NoHandleForResult"
     },
     {
       "class": "ObjectLoader",
@@ -22121,8 +22115,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'json': `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "reason": "return type: `{ [key: string]: Source<unknown> }` is a dictionary whose values cannot be mapped: `Source<unknown>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to",
+      "category": "AnonymousObjectType"
     },
     {
       "class": "ObjectLoader",
@@ -22130,8 +22124,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'json': `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "reason": "return type: `{ [key: string]: Source<unknown> }` is a dictionary whose values cannot be mapped: `Source<unknown>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to",
+      "category": "AnonymousObjectType"
     },
     {
       "class": "ObjectLoader",
@@ -22139,17 +22133,16 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'json': `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "reason": "parameter 'images': `{ [key: string]: Source<unknown> }` is a dictionary whose values cannot be mapped: `Source<unknown>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to",
+      "category": "AnonymousObjectType"
     },
     {
       "class": "ObjectLoader",
       "member": "parseObject",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'data': `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "Object3D"
     },
     {
       "class": "OrthographicCamera",
@@ -22697,7 +22690,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'l': `any` carries no type information a C# signature could express",
+      "reason": "return type: `any` carries no type information a C# signature could express",
       "category": "UntypedValue"
     },
     {
@@ -24747,7 +24740,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'b': `any` carries no type information a C# signature could express",
+      "reason": "return type: `any` carries no type information a C# signature could express",
       "category": "UntypedValue"
     },
     {
@@ -24756,7 +24749,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'p': `any` carries no type information a C# signature could express",
+      "reason": "return type: `any` carries no type information a C# signature could express",
       "category": "UntypedValue"
     },
     {
@@ -24765,7 +24758,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 's': `any` carries no type information a C# signature could express",
+      "reason": "return type: `any` carries no type information a C# signature could express",
       "category": "UntypedValue"
     },
     {
@@ -31131,9 +31124,7 @@
       "member": "setFrame",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'frame': `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "bucket": "Command"
     },
     {
       "class": "VideoFrameTexture",

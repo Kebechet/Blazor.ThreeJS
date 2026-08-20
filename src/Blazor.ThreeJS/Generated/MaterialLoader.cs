@@ -81,6 +81,17 @@ public class MaterialLoader : Loader
 	}
 
 	/// <summary>
+	/// Reads <c>parse</c> back from the JavaScript-side object. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>parse</c> returned.
+	/// </summary>
+	/// <param name="json">Value forwarded to the <c>json</c> argument.</param>
+	/// <returns>The value <c>parse</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Material?> ParseAsync(object? json)
+	{
+		return RecordReadObject<Material>("parse", (adoptedBatch, adoptedHandle) => new Material(adoptedBatch, adoptedHandle), json);
+	}
+
+	/// <summary>
 	/// Reads <c>createMaterialFromType</c> back from the JavaScript-side object. Records a read op,
 	/// sends it behind every write already pending, and completes with what
 	/// <c>createMaterialFromType</c> returned.

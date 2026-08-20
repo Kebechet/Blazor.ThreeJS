@@ -63,6 +63,7 @@ Declared types narrowed by rule 5, each of which lost its multi-value form:
 - `BufferAttribute | InterleavedBufferAttribute`
 - `ComputeNode | ComputeNode[]`
 - `Fog | FogExp2`
+- `InstancedBufferGeometry | BufferGeometry`
 - `Material | Material[]`
 - `Object3D | AnimationObjectGroup`
 - `Object3D | Skeleton`
@@ -139,9 +140,9 @@ commands and queries, which are surface rather than behaviour. Subtracting the p
 the ~100 descendants is right, because re-declaring them everywhere would be worse — but it means a member
 **neither** half carries is on **no C# type at all**, without any skip rule below having fired.
 
-Of the 65 `Object3D` members that could be mirrored, the hand-written half implements 20
-(19 properties and 1 method) and the generated half emits 35
-(21 commands and 14 queries), leaving 10.
+Of the 66 `Object3D` members that could be mirrored, the hand-written half implements 20
+(19 properties and 1 method) and the generated half emits 36
+(21 commands and 15 queries), leaving 10.
 
 ⚠️ The generated half emits **no mirrored state**, which is why what remains is almost all of that bucket.
 Replaying a property needs an `EmitState` override, and the hand-written half already has one; a second
@@ -508,13 +509,13 @@ three.js is reachable at all" and "how much of what we mirror is state".
 | bucket | what it means | all classes | emittable classes |
 |---|---|---|---|
 | MirroredState | state C# holds and writes through on change | 1153 | 936 |
-| Command | a method recorded as a call op, returning nothing or `this` | 770 | 322 |
-| AsyncQuery | a method whose result the caller needs back | 870 | 533 |
-| Skipped | not mirrored; see the skip list below | 855 | 648 |
+| Command | a method recorded as a call op, returning nothing or `this` | 771 | 323 |
+| AsyncQuery | a method whose result the caller needs back | 877 | 539 |
+| Skipped | not mirrored; see the skip list below | 847 | 641 |
 | **total** | | **3648** | **2439** |
 
 Two op kinds answer: **read**, which invokes a method, and **get**, which reads a property.
-533 of the async queries above sit on an emitted class and are generated as `…Async` methods, 186 of
+539 of the async queries above sit on an emitted class and are generated as `…Async` methods, 186 of
 them over the get op rather than the read op. Both kinds answer with a value where one can travel, and
 with a handle to an object where it cannot.
 
@@ -544,14 +545,14 @@ the README's coverage table.
 
 | obstacle | members | what it is |
 |---|---|---|
-| `NodeStackType` | 383 | declared under `src/nodes/**`, the TSL / WebGPU node stack outside the extracted surface |
+| `NodeStackType` | 384 | declared under `src/nodes/**`, the TSL / WebGPU node stack outside the extracted surface |
 | `CallbackType` | 95 | a JavaScript callback; the wire format carries ops in one direction only |
 | `DomOrLibType` | 79 | a TypeScript lib or DOM type; C# holds no browser object and the wire has no encoding for one |
-| `UntypedValue` | 48 | declared `any` / `unknown`, or with no type at all |
 | `UnmappedUnion` | 42 | a union of several real alternatives in a position that holds one type — a property or a return type, since a required parameter becomes one overload per arm |
 | `NotInstanceApi` | 38 | static, non-public or `@internal` — not part of the mirrored instance API |
-| `OptionsInterface` | 31 | a structural interface — an options bag or an event map — with no C# type to be |
-| `AnonymousObjectType` | 30 | an anonymous object literal type with no name to give a C# type |
+| `AnonymousObjectType` | 33 | an anonymous object literal type with no name to give a C# type |
+| `OptionsInterface` | 33 | a structural interface — an options bag or an event map — with no C# type to be |
+| `UntypedValue` | 30 | declared `any` / `unknown`, or with no type at all |
 | `NotExported` | 19 | three.js's public barrel does not re-export it as a value, so the applier cannot reach it on `THREE` |
 | `UnmappedTypeAlias` | 18 | a type alias that is neither a constant group nor a rename of a mapped type |
 | `ExternalType` | 15 | declared outside the scanned `src/` surface |
@@ -559,11 +560,11 @@ the README's coverage table.
 | `UnmappedTypeSyntax` | 13 | a TypeScript type form with no C# equivalent |
 | `UnwrappedClass` | 12 | an in-scope class that is itself not emitted |
 | `UnerasableTypeParameter` | 8 | a type parameter with neither a default nor a constraint to erase to |
+| `NoHandleForResult` | 6 | its result is neither a value the read op carries nor one object a handle could name — an array of objects needs a handle per element, not one for the result |
 | `RestParameter` | 6 | a rest parameter, including the rest-union-tuple pseudo-overload form |
 | `CollectionType` | 3 | a tuple, which has no wire encoding, or an array whose elements have none — `ThreeValue.Encode` does walk a sequence element by element, so an array is exactly as encodable as what is in it |
-| `NoHandleForResult` | 2 | its result is neither a value the read op carries nor one object a handle could name — an array of objects needs a handle per element, not one for the result |
 
-<details><summary>Every skipped member (855)</summary>
+<details><summary>Every skipped member (847)</summary>
 
 | class | member | obstacle | why |
 |---|---|---|---|
@@ -585,7 +586,6 @@ the README's coverage table.
 | `AnimationObjectGroup` | `method remove` | `RestParameter` | parameter 'args' is a rest parameter (`Object3D[]`) |
 | `AnimationObjectGroup` | `method uncache` | `RestParameter` | parameter 'args' is a rest parameter (`Object3D[]`) |
 | `AnimationUtils` | `method convertArray` | `UnmappedTypeAlias` | parameter 'type': `TypedArrayConstructor` aliases `| Int8ArrayConstructor | Uint8ArrayConstructor | Uint8ClampedArrayConstructor | Int16ArrayConstructor | Uint16ArrayConstructor | Int32ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `AnimationUtils` | `method isTypedArray` | `UntypedValue` | parameter 'object': `unknown` carries no type information a C# signature could express |
 | `Audio` | `property context` | `DomOrLibType` | `AudioContext` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `property gain` | `DomOrLibType` | `GainNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `property buffer` | `DomOrLibType` | `AudioBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -626,7 +626,7 @@ the README's coverage table.
 | `BooleanKeyframeTrack` | `property ValueBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BooleanKeyframeTrack` | `method toJSON` | `UnmappedUnion` | parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Box2` | `method empty` | `UntypedValue` | return type: `any` carries no type information a C# signature could express |
-| `Box2` | `method isIntersectionBox` | `UntypedValue` | parameter 'b': `any` carries no type information a C# signature could express |
+| `Box2` | `method isIntersectionBox` | `UntypedValue` | return type: `any` carries no type information a C# signature could express |
 | `BoxGeometry` | `method fromJSON` | `NotInstanceApi` | marked `@internal` upstream, so it is not public API |
 | `BufferAttribute` | `property onUploadCallback` | `CallbackType` | `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BufferAttribute` | `method onUpload` | `CallbackType` | parameter 'callback': `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
@@ -638,7 +638,6 @@ the README's coverage table.
 | `BufferGeometry` | `method deleteAttribute` | `UnmappedTypeSyntax` | parameter 'name': `keyof Attributes` is a TypeScript `typeOperator` type, which has no C# equivalent |
 | `BufferGeometry` | `method hasAttribute` | `UnmappedTypeSyntax` | parameter 'name': `keyof Attributes` is a TypeScript `typeOperator` type, which has no C# equivalent |
 | `BufferGeometry` | `method toJSON` | `OptionsInterface` | return type: `BufferGeometryJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `BufferGeometryLoader` | `method parse` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
 | `CanvasTarget` | `property domElement` | `DomOrLibType` | `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `CapsuleGeometry` | `method fromJSON` | `NotInstanceApi` | marked `@internal` upstream, so it is not public API |
 | `CatmullRomCurve3` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
@@ -804,7 +803,6 @@ the README's coverage table.
 | `Material` | `property blendSrc` | `UnmappedTypeAlias` | `BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Material` | `property blendSrcAlpha` | `UnmappedTypeAlias` | `BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Material` | `property userData` | `DomOrLibType` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `MaterialLoader` | `method parse` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
 | `MaterialLoader` | `method registerMaterial` | `CallbackType` | parameter 'materialClass': `new() => Material` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Matrix2` | `property elements` | `UnmappedTypeAlias` | `Matrix2Tuple` aliases `[ n11: number, n12: number, n21: number, n22: number, ]`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Matrix3` | `property elements` | `UnmappedTypeAlias` | `Matrix3Tuple` aliases `[ n11: number, n12: number, n13: number, n21: number, n22: number, n23: number, n31: number, n32: number, n33: number, ]`, which is neither a group of numeric constants nor a type the mirror expresses |
@@ -1026,8 +1024,8 @@ the README's coverage table.
 | `MeshToonMaterial` | `property vertexNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeLoader` | `property nodes` | `AnonymousObjectType` | `{ [type: string]: Node }` is a dictionary whose values cannot be mapped: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `NodeLoader` | `method parseNodes` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
-| `NodeLoader` | `method parse` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
+| `NodeLoader` | `method parseNodes` | `OptionsInterface` | return type: `NodeLoaderResult` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
+| `NodeLoader` | `method parse` | `NodeStackType` | return type: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeLoader` | `method setNodes` | `AnonymousObjectType` | parameter 'value': `{ [type: string]: Node }` is a dictionary whose values cannot be mapped: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeLoader` | `method createNodeFromType` | `NodeStackType` | return type: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeMaterial` | `method build` | `NodeStackType` | parameter 'builder': `NodeBuilder` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1081,7 +1079,7 @@ the README's coverage table.
 | `NodeMaterialObserver` | `method containsNode` | `NodeStackType` | parameter 'builder': `NodeBuilder` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeObjectLoader` | `property nodes` | `AnonymousObjectType` | `{ [type: string]: Node }` is a dictionary whose values cannot be mapped: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeObjectLoader` | `method setNodes` | `AnonymousObjectType` | parameter 'value': `{ [type: string]: Node }` is a dictionary whose values cannot be mapped: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `NodeObjectLoader` | `method parseNodes` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
+| `NodeObjectLoader` | `method parseNodes` | `OptionsInterface` | return type: `NodeLoaderResult` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `NumberKeyframeTrack` | `property TimeBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `NumberKeyframeTrack` | `property ValueBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `NumberKeyframeTrack` | `method toJSON` | `UnmappedUnion` | parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -1095,22 +1093,18 @@ the README's coverage table.
 | `Object3D` | `method onAfterRender` | `NotExported` | parameter 'renderer': `WebGLRenderer` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `Object3D` | `method add` | `RestParameter` | parameter 'object' is a rest parameter (`Object3D[]`) |
 | `Object3D` | `method remove` | `RestParameter` | parameter 'object' is a rest parameter (`Object3D[]`) |
-| `Object3D` | `method getObjectByProperty` | `UntypedValue` | parameter 'value': `any` carries no type information a C# signature could express |
-| `Object3D` | `method getObjectsByProperty` | `UntypedValue` | parameter 'value': `any` carries no type information a C# signature could express |
+| `Object3D` | `method getObjectsByProperty` | `NoHandleForResult` | returns `Object3D?[]`, which is neither a value the read op carries nor a three.js object a handle could name |
 | `Object3D` | `method traverse` | `CallbackType` | parameter 'callback': `(object: Object3D) => any` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Object3D` | `method traverseVisible` | `CallbackType` | parameter 'callback': `(object: Object3D) => any` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Object3D` | `method traverseAncestors` | `CallbackType` | parameter 'callback': `(object: Object3D) => any` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Object3D` | `method toJSON` | `OptionsInterface` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
-| `ObjectLoader` | `method parse` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
-| `ObjectLoader` | `method parseAsync` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
-| `ObjectLoader` | `method parseGeometries` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
-| `ObjectLoader` | `method parseMaterials` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
-| `ObjectLoader` | `method parseAnimations` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
-| `ObjectLoader` | `method parseImages` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
-| `ObjectLoader` | `method parseImagesAsync` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
-| `ObjectLoader` | `method parseTextures` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
-| `ObjectLoader` | `method parseObject` | `UntypedValue` | parameter 'data': `unknown` carries no type information a C# signature could express |
-| `Plane` | `method isIntersectionLine` | `UntypedValue` | parameter 'l': `any` carries no type information a C# signature could express |
+| `ObjectLoader` | `method parseGeometries` | `NoHandleForResult` | returns `Dictionary<string, ThreeObject>`, which is neither a value the read op carries nor a three.js object a handle could name |
+| `ObjectLoader` | `method parseMaterials` | `NoHandleForResult` | returns `Dictionary<string, Material>`, which is neither a value the read op carries nor a three.js object a handle could name |
+| `ObjectLoader` | `method parseAnimations` | `NoHandleForResult` | returns `Dictionary<string, AnimationClip>`, which is neither a value the read op carries nor a three.js object a handle could name |
+| `ObjectLoader` | `method parseImages` | `AnonymousObjectType` | return type: `{ [key: string]: Source<unknown> }` is a dictionary whose values cannot be mapped: `Source<unknown>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
+| `ObjectLoader` | `method parseImagesAsync` | `AnonymousObjectType` | return type: `{ [key: string]: Source<unknown> }` is a dictionary whose values cannot be mapped: `Source<unknown>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
+| `ObjectLoader` | `method parseTextures` | `AnonymousObjectType` | parameter 'images': `{ [key: string]: Source<unknown> }` is a dictionary whose values cannot be mapped: `Source<unknown>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
+| `Plane` | `method isIntersectionLine` | `UntypedValue` | return type: `any` carries no type information a C# signature could express |
 | `PlaneGeometry` | `method fromJSON` | `NotInstanceApi` | marked `@internal` upstream, so it is not public API |
 | `PointLight` | `property shadow` | `NotExported` | `PointLightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `PointLightShadow` | `property biasNode` | `NodeStackType` | `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1162,9 +1156,9 @@ the README's coverage table.
 | `QuaternionLinearInterpolant` | `property settings` | `AnonymousObjectType` | `{}` is an anonymous object literal type with no named C# equivalent |
 | `QuaternionLinearInterpolant` | `property DefaultSettings_` | `AnonymousObjectType` | `{}` is an anonymous object literal type with no named C# equivalent |
 | `QuaternionLinearInterpolant` | `method getSettings_` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
-| `Ray` | `method isIntersectionBox` | `UntypedValue` | parameter 'b': `any` carries no type information a C# signature could express |
-| `Ray` | `method isIntersectionPlane` | `UntypedValue` | parameter 'p': `any` carries no type information a C# signature could express |
-| `Ray` | `method isIntersectionSphere` | `UntypedValue` | parameter 's': `any` carries no type information a C# signature could express |
+| `Ray` | `method isIntersectionBox` | `UntypedValue` | return type: `any` carries no type information a C# signature could express |
+| `Ray` | `method isIntersectionPlane` | `UntypedValue` | return type: `any` carries no type information a C# signature could express |
+| `Ray` | `method isIntersectionSphere` | `UntypedValue` | return type: `any` carries no type information a C# signature could express |
 | `Raycaster` | `property params` | `OptionsInterface` | `RaycasterParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `Raycaster` | `method setFromXRController` | `UnwrappedClass` | parameter 'controller': `XRTargetRaySpace` is not an emitted class: renderer internals under `src/renderers/webxr/**`; no consumer instantiates them and emitting them would inflate the coverage table |
 | `ReadbackBuffer` | `property buffer` | `DomOrLibType` | `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -1302,7 +1296,6 @@ the README's coverage table.
 | `VectorKeyframeTrack` | `property TimeBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `VectorKeyframeTrack` | `property ValueBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `VectorKeyframeTrack` | `method toJSON` | `UnmappedUnion` | parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `VideoFrameTexture` | `method setFrame` | `UntypedValue` | parameter 'frame': `unknown` carries no type information a C# signature could express |
 | `VolumeNodeMaterial` | `property offsetNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `VolumeNodeMaterial` | `property scatteringNode` | `CallbackType` | `(params: { positionRay: Node<"vec3"> }) => Node | null` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGLAttributes` | `method get` | `OptionsInterface` | return type: `WebGLAttribute` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |

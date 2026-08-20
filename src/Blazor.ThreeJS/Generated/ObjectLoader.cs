@@ -47,6 +47,46 @@ public class ObjectLoader : Loader
 	}
 
 	/// <summary>
+	/// Reads <c>parse</c> back from the JavaScript-side object. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>parse</c> returned.
+	/// </summary>
+	/// <param name="json">Value forwarded to the <c>json</c> argument.</param>
+	/// <returns>The value <c>parse</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Object3D?> ParseAsync(object? json)
+	{
+		return RecordReadObject<Object3D>("parse", (adoptedBatch, adoptedHandle) => new PrimitiveObject3D(adoptedBatch, adoptedHandle, "Object3D"), json);
+	}
+
+	/// <summary>
+	/// Reads <c>parseAsync</c> back from the JavaScript-side object. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>parseAsync</c> returned.
+	/// </summary>
+	/// <param name="json">Value forwarded to the <c>json</c> argument.</param>
+	/// <returns>The value <c>parseAsync</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Object3D?> ParseAsyncAsync(object? json)
+	{
+		return RecordReadObject<Object3D>("parseAsync", (adoptedBatch, adoptedHandle) => new PrimitiveObject3D(adoptedBatch, adoptedHandle, "Object3D"), json);
+	}
+
+	/// <summary>
+	/// Reads <c>parseObject</c> back from the JavaScript-side object. Records a read op, sends it
+	/// behind every write already pending, and completes with what <c>parseObject</c> returned.
+	/// </summary>
+	/// <param name="data">Value forwarded to the <c>data</c> argument.</param>
+	/// <param name="geometries">Value forwarded to the <c>geometries</c> argument.</param>
+	/// <param name="materials">Value forwarded to the <c>materials</c> argument.</param>
+	/// <param name="animations">Value forwarded to the <c>animations</c> argument.</param>
+	/// <returns>The value <c>parseObject</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Object3D?> ParseObjectAsync(
+		object? data,
+		Dictionary<string, ThreeObject> geometries,
+		Dictionary<string, Material> materials,
+		Dictionary<string, AnimationClip> animations)
+	{
+		return RecordReadObject<Object3D>("parseObject", (adoptedBatch, adoptedHandle) => new PrimitiveObject3D(adoptedBatch, adoptedHandle, "Object3D"), data, geometries, materials, animations);
+	}
+
+	/// <summary>
 	/// Attaches the objects <c>THREE.ObjectLoader</c> is constructed from, so their create ops reach
 	/// the batch before the one that references them by handle, then emits this object's own.
 	/// </summary>

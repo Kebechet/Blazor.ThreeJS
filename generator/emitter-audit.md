@@ -538,7 +538,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `LineBasicMaterial` | `property backdropNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property castShadowNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property castShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `LineBasicMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `LineBasicMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property contextNode` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property depthNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -628,7 +628,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshBasicMaterial` | `property backdropNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property castShadowNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property castShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshBasicMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `MeshBasicMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property contextNode` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property depthNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -655,7 +655,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshLambertMaterial` | `property backdropNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property castShadowNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property castShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshLambertMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `MeshLambertMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property contextNode` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property depthNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -680,7 +680,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshMatcapMaterial` | `property backdropNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshMatcapMaterial` | `property castShadowNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshMatcapMaterial` | `property castShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshMatcapMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `MeshMatcapMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshMatcapMaterial` | `property contextNode` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshMatcapMaterial` | `property depthNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshMatcapMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -705,7 +705,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshNormalMaterial` | `property backdropNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshNormalMaterial` | `property castShadowNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshNormalMaterial` | `property castShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshNormalMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `MeshNormalMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshNormalMaterial` | `property contextNode` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshNormalMaterial` | `property depthNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshNormalMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -730,7 +730,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshPhongMaterial` | `property backdropNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property castShadowNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property castShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshPhongMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `MeshPhongMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property contextNode` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property depthNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -805,7 +805,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshStandardMaterial` | `property backdropNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property castShadowNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property castShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshStandardMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `MeshStandardMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property contextNode` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property depthNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property emissiveNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -836,7 +836,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshToonMaterial` | `property backdropNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property castShadowNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property castShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshToonMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `MeshToonMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property contextNode` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property depthNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -890,7 +890,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `NodeMaterial` | `property backdropNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeMaterial` | `property castShadowNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeMaterial` | `property castShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `NodeMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `NodeMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeMaterial` | `property contextNode` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeMaterial` | `property depthNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -957,7 +957,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `PointsMaterial` | `property backdropNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property castShadowNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property castShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `PointsMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `PointsMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property contextNode` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property depthNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1054,7 +1054,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `ShadowMaterial` | `property backdropNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property castShadowNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property castShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `ShadowMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `ShadowMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property contextNode` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property depthNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1112,7 +1112,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `SpriteMaterial` | `property backdropNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `SpriteMaterial` | `property castShadowNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `SpriteMaterial` | `property castShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `SpriteMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `SpriteMaterial` | `property colorNode` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `SpriteMaterial` | `property contextNode` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `SpriteMaterial` | `property depthNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `SpriteMaterial` | `property envNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1199,15 +1199,15 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `WebGL3DRenderTarget` | `constructor parameter options` | `RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `WebGLArrayRenderTarget` | `constructor parameter options` | `RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `WebGLBackend` | `constructor parameter parameters` | `WebGLBackendParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
-| `WebGLBackend` | `method getDomElement` | return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `WebGLBackend` | `method getDomElement` | return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGLBackend` | `method init` | parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
-| `WebGLBackend` | `property domElement` | `HTMLCanvasElement | OffscreenCanvas | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `WebGLBackend` | `property domElement` | `HTMLCanvasElement | OffscreenCanvas | null` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGLBackend` | `property renderer` | `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `WebGLRenderTarget` | `constructor parameter options` | `RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `WebGPUBackend` | `constructor parameter parameters` | `WebGPUBackendParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
-| `WebGPUBackend` | `method getDomElement` | return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `WebGPUBackend` | `method getDomElement` | return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPUBackend` | `method init` | parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
-| `WebGPUBackend` | `property domElement` | `HTMLCanvasElement | OffscreenCanvas | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `WebGPUBackend` | `property domElement` | `HTMLCanvasElement | OffscreenCanvas | null` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPUBackend` | `property renderer` | `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `WebGPURenderer` | `constructor parameter parameters` | `WebGPURendererParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `WebGPURenderer` | `fenced code in the method setDrawingBufferSize summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
@@ -1221,7 +1221,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `WebGPURenderer` | `method renderObject` | parameter 'group': `GeometryGroup` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `WebGPURenderer` | `method resolveTimestampsAsync` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
 | `WebGPURenderer` | `method setAnimationLoop` | parameter 'callback': `(time: DOMHighResTimeStamp, frame?: XRFrame) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `WebGPURenderer` | `method setCanvasTarget` | parameter 'canvasTarget': `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `WebGPURenderer` | `method setCanvasTarget` | parameter 'canvasTarget': `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPURenderer` | `method setMRT` | parameter 'mrt': `MRTNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `WebGPURenderer` | `method setOpaqueSort` | parameter 'method': `(a: RenderItem, b: RenderItem) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGPURenderer` | `method setRenderObjectFunction` | parameter 'renderObjectFunction': `( object: Object3D, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: GeometryGroup | null, lightsNode: LightsNode, clippingContext: ClippingContext, passId?: string | null | undefined, ) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |

@@ -424,8 +424,28 @@ internal sealed class TypeMapper
 	/// </summary>
 	private TypeMapping MapUnion(IrType type, TypeMappingContext context)
 	{
-		return TryReduceUnion(type, context, out var alternatives, out _)
-			?? RefuseUnion(type, alternatives);
+		if (TryReduceUnion(type, context, out var alternatives, out _) is { } reduced)
+		{
+			return reduced;
+		}
+
+		// Each arm is mapped even though none of them can be used here, because why they fail is what
+		// the refusal has to say. A property cannot become an overload set the way a parameter can, so
+		// this position refuses either way - but "every arm is the node stack" and "these arms are each
+		// expressible and C# has nowhere to put all of them" are different facts about the same member.
+		var dropped = alternatives
+			.Select(x => new { Alternative = x, Mapping = Map(x, context) })
+			.Where(x => !x.Mapping.IsMapped || x.Mapping.CSharpTypeName == "void")
+			.Select(x => new DroppedAlternative
+			{
+				TypeText = x.Alternative.Text,
+				Reason = x.Mapping.SkipReason ?? "the arm carries no type",
+				Category = x.Mapping.SkipCategory
+			})
+			.ToList();
+
+		// Only when *every* arm failed. An arm that maps means the plurality really is the obstacle.
+		return RefuseUnion(type, alternatives, dropped.Count == alternatives.Count ? dropped : []);
 	}
 
 	/// <summary>
@@ -508,12 +528,40 @@ internal sealed class TypeMapper
 		// No arm mapped, so this is a refusal rather than a narrowing: the refusal reason names the whole
 		// union, and listing its arms a second time as "dropped" would double-count the same loss.
 		return arms.Count == 0
-			? new TypeAlternatives { Arms = [RefuseUnion(type, alternatives)] }
+			? new TypeAlternatives { Arms = [RefuseUnion(type, alternatives, dropped)] }
 			: new TypeAlternatives { Arms = arms, DroppedArms = dropped };
 	}
 
-	private static TypeMapping RefuseUnion(IrType type, IReadOnlyList<IrType> alternatives)
+	/// <summary>
+	/// Refuses a union no arm of which mapped, naming the obstacle that actually stopped it.
+	/// <para>
+	/// "C# cannot express that as one parameter" is only true of a union whose arms are each
+	/// expressible on their own. Where every arm failed for the same reason, that reason is the whole
+	/// story and the plurality is incidental: <c>Node&lt;"float"&gt; | … | Node&lt;"color"&gt;</c> is
+	/// five arms of the TSL node stack, and saying C# cannot hold five types implies that holding one
+	/// of them would have worked. It would not.
+	/// </para>
+	/// <para>
+	/// Kept as the union refusal only where the arms disagree about why, which is the case the original
+	/// wording describes.
+	/// </para>
+	/// </summary>
+	/// <param name="type">The union being refused.</param>
+	/// <param name="alternatives">Its arms, nulls already removed.</param>
+	/// <param name="dropped">Why each arm was refused, one entry per arm.</param>
+	/// <returns>The refusal.</returns>
+	private static TypeMapping RefuseUnion(
+		IrType type,
+		IReadOnlyList<IrType> alternatives,
+		IReadOnlyList<DroppedAlternative> dropped)
 	{
+		if (dropped.Count > 0 && dropped.DistinctBy(x => x.Category).Count() == 1)
+		{
+			return TypeMapping.Skipped(
+				dropped[0].Category,
+				$"`{type.Text}` unions {alternatives.Count} types, and every one of them is refused for the same reason: {dropped[0].Reason}");
+		}
+
 		return TypeMapping.Skipped(
 			SkipCategory.UnmappedUnion,
 			$"`{type.Text}` unions {alternatives.Count} distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently");

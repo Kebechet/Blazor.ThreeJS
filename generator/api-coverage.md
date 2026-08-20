@@ -220,13 +220,13 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `NotExported` | 15 | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `UnreachableBaseConstructor` | 12 | its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's |
 | `AbstractClass` | 10 | the class is abstract, so it has no constructor to mirror |
+| `DomOrLibType` | 3 | required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `DuplicateClassName` | 3 | another class named `PMREMGenerator` is declared in `src/extras/PMREMGenerator.d.ts`, and a C# namespace holds one type of a given name |
 | `OptionsInterface` | 3 | required parameter 'mipmaps' cannot be mapped: `CompressedTextureMipmap[]` is an array whose element type cannot be mapped: `CompressedTextureMipmap` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `DomOrLibType` | 2 | required parameter 'buffer' cannot be mapped: `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `UnmappedUnion` | 2 | required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `AbsentFromShippedBundle` | 1 | the types re-export it but the shipped three.js bundle carries no such runtime value, so constructing it would throw `Unknown three.js type` |
 | `NodeStackType` | 1 | required parameter 'builder' cannot be mapped: `NodeBuilder` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `UnerasableTypeParameter` | 1 | required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
+| `UnmappedUnion` | 1 | required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `UntypedValue` | 1 | required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express |
 
 <details><summary>Every blocked class</summary>
@@ -234,7 +234,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | class | why | file |
 |---|---|---|
 | `Backend` | the class is abstract, so it has no constructor to mirror | `src/renderers/common/Backend.d.ts` |
-| `CanvasTarget` | required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/renderers/common/CanvasTarget.d.ts` |
+| `CanvasTarget` | required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one | `src/renderers/common/CanvasTarget.d.ts` |
 | `ClippingContext` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/renderers/common/ClippingContext.d.ts` |
 | `Composite` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/animation/PropertyBinding.d.ts` |
 | `CompressedArrayTexture` | required parameter 'mipmaps' cannot be mapped: `CompressedTextureMipmap[]` is an array whose element type cannot be mapped: `CompressedTextureMipmap` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle | `src/textures/CompressedArrayTexture.d.ts` |
@@ -537,19 +537,19 @@ the README's coverage table.
 
 | obstacle | members | what it is |
 |---|---|---|
-| `NodeStackType` | 375 | declared under `src/nodes/**`, the TSL / WebGPU node stack outside the extracted surface |
+| `NodeStackType` | 387 | declared under `src/nodes/**`, the TSL / WebGPU node stack outside the extracted surface |
 | `CallbackType` | 103 | a JavaScript callback; the wire format carries ops in one direction only |
 | `NotInstanceApi` | 86 | static, non-public or `@internal` — not part of the mirrored instance API |
 | `AnonymousObjectType` | 84 | an anonymous object literal type with no name to give a C# type |
+| `DomOrLibType` | 83 | a TypeScript lib or DOM type; C# holds no browser object and the wire has no encoding for one |
 | `OptionsInterface` | 73 | a structural interface — an options bag or an event map — with no C# type to be |
-| `DomOrLibType` | 71 | a TypeScript lib or DOM type; C# holds no browser object and the wire has no encoding for one |
-| `UnmappedUnion` | 62 | a union of several real alternatives in a position that holds one type — a property or a return type, since a required parameter becomes one overload per arm |
 | `UntypedValue` | 56 | declared `any` / `unknown`, or with no type at all |
 | `AbstractClass` | 37 | the class is abstract, so it has no constructor to mirror |
+| `UnmappedUnion` | 37 | a union of several real alternatives in a position that holds one type — a property or a return type, since a required parameter becomes one overload per arm |
 | `MathValueType` | 29 | a `src/math/**` value type that is not one of the hand-written ones |
 | `NotExported` | 22 | three.js's public barrel does not re-export it as a value, so the applier cannot reach it on `THREE` |
 | `UnmappedTypeAlias` | 18 | a type alias that is neither a constant group nor a rename of a mapped type |
-| `ExternalType` | 14 | declared outside the scanned `src/` surface |
+| `ExternalType` | 15 | declared outside the scanned `src/` surface |
 | `UnwrappedClass` | 12 | an in-scope class that is itself not emitted |
 | `UnmappedTypeSyntax` | 11 | a TypeScript type form with no C# equivalent |
 | `UnerasableTypeParameter` | 8 | a type parameter with neither a default nor a constraint to erase to |
@@ -622,10 +622,10 @@ the README's coverage table.
 | `AudioListener` | `method getFilter` | `DomOrLibType` | return type: `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `AudioListener` | `method setFilter` | `DomOrLibType` | parameter 'value': `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Backend` | `property renderer` | `AbstractClass` | `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
-| `Backend` | `property domElement` | `UnmappedUnion` | `HTMLCanvasElement | OffscreenCanvas | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `Backend` | `property domElement` | `DomOrLibType` | `HTMLCanvasElement | OffscreenCanvas | null` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Backend` | `property coordinateSystem` | `NotInstanceApi` | abstract, so there is no implementation to mirror |
 | `Backend` | `method init` | `AbstractClass` | parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
-| `Backend` | `method getDomElement` | `UnmappedUnion` | return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `Backend` | `method getDomElement` | `DomOrLibType` | return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `BatchedMesh` | `property customSort` | `CallbackType` | `(this: this, list: Array<{ start: number; count: number; z: number }>, camera: Camera) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BatchedMesh` | `method setCustomSort` | `CallbackType` | parameter 'sortFunction': `(this: this, list: Array<{ start: number; count: number; z: number }>, camera: Camera) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BatchedMesh` | `method getGeometryRangeAt` | `OptionsInterface` | return type: `BatchedMeshGeometryRange` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
@@ -663,7 +663,7 @@ the README's coverage table.
 | `BufferGeometry` | `method toJSON` | `OptionsInterface` | return type: `BufferGeometryJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `BufferGeometryLoader` | `method parse` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
 | `CameraHelper` | `property pointMap` | `AnonymousObjectType` | `{ [x: string]: number[]; }` is an anonymous object literal type with no named C# equivalent |
-| `CanvasTarget` | `property domElement` | `UnmappedUnion` | `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `CanvasTarget` | `property domElement` | `DomOrLibType` | `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `CapsuleGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly radius: number; readonly height: number; readonly capSegments: number; readonly radialSegments: number; readonly heightSegments: number; }` is an anonymous object literal type with no named C# equivalent |
 | `CapsuleGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `CatmullRomCurve3` | `property isCatmullRomCurve3` | `UntypedValue` | the declaration carries no type |
@@ -688,8 +688,8 @@ the README's coverage table.
 | `ColorKeyframeTrack` | `method InterpolantFactoryMethodSmooth` | `MathValueType` | return type: `CubicInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `ColorKeyframeTrack` | `method InterpolantFactoryMethodBezier` | `MathValueType` | return type: `BezierInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `CompressedArrayTexture` | `property layerUpdates` | `DomOrLibType` | `Set<number>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Controls` | `property domElement` | `UnmappedUnion` | `HTMLElement | SVGElement | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `Controls` | `method connect` | `UnmappedUnion` | parameter 'element': `HTMLElement | SVGElement` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `Controls` | `property domElement` | `DomOrLibType` | `HTMLElement | SVGElement | null` unions 2 types, and every one of them is refused for the same reason: `HTMLElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
+| `Controls` | `method connect` | `DomOrLibType` | parameter 'element': `HTMLElement | SVGElement` unions 2 types, and every one of them is refused for the same reason: `HTMLElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `CubeCamera` | `property renderTarget` | `NotExported` | `WebGLCubeRenderTarget` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `CubeCamera` | `method update` | `OptionsInterface` | parameter 'renderer': `CubeCameraRenderer` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CubeDepthTexture` | `property images` | `UnmappedTypeAlias` | `CubeDepthTextureImageData` aliases `[ DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, ]`, which is neither a group of numeric constants nor a type the mirror expresses |
@@ -823,7 +823,7 @@ the README's coverage table.
 | `LineBasicMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `LineBasicMaterial` | `property colorNode` | `UnmappedUnion` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `LineBasicMaterial` | `property colorNode` | `NodeStackType` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property normalNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property opacityNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property backdropNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -908,7 +908,7 @@ the README's coverage table.
 | `MeshBasicMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshBasicMaterial` | `property colorNode` | `UnmappedUnion` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `MeshBasicMaterial` | `property colorNode` | `NodeStackType` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property normalNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property opacityNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property backdropNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -931,7 +931,7 @@ the README's coverage table.
 | `MeshLambertMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshLambertMaterial` | `property colorNode` | `UnmappedUnion` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `MeshLambertMaterial` | `property colorNode` | `NodeStackType` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property normalNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property opacityNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshLambertMaterial` | `property backdropNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -954,7 +954,7 @@ the README's coverage table.
 | `MeshMatcapMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshMatcapMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshMatcapMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshMatcapMaterial` | `property colorNode` | `UnmappedUnion` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `MeshMatcapMaterial` | `property colorNode` | `NodeStackType` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshMatcapMaterial` | `property normalNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshMatcapMaterial` | `property opacityNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshMatcapMaterial` | `property backdropNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -977,7 +977,7 @@ the README's coverage table.
 | `MeshNormalMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshNormalMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshNormalMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshNormalMaterial` | `property colorNode` | `UnmappedUnion` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `MeshNormalMaterial` | `property colorNode` | `NodeStackType` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshNormalMaterial` | `property normalNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshNormalMaterial` | `property opacityNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshNormalMaterial` | `property backdropNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1002,7 +1002,7 @@ the README's coverage table.
 | `MeshPhongMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshPhongMaterial` | `property colorNode` | `UnmappedUnion` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `MeshPhongMaterial` | `property colorNode` | `NodeStackType` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property normalNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property opacityNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongMaterial` | `property backdropNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1073,7 +1073,7 @@ the README's coverage table.
 | `MeshStandardMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshStandardMaterial` | `property colorNode` | `UnmappedUnion` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `MeshStandardMaterial` | `property colorNode` | `NodeStackType` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property normalNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property opacityNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshStandardMaterial` | `property backdropNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1099,7 +1099,7 @@ the README's coverage table.
 | `MeshToonMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshToonMaterial` | `property colorNode` | `UnmappedUnion` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `MeshToonMaterial` | `property colorNode` | `NodeStackType` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property normalNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property opacityNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property backdropNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1152,7 +1152,7 @@ the README's coverage table.
 | `NodeMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `NodeMaterial` | `property colorNode` | `UnmappedUnion` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `NodeMaterial` | `property colorNode` | `NodeStackType` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeMaterial` | `property normalNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeMaterial` | `property opacityNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeMaterial` | `property backdropNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1233,7 +1233,7 @@ the README's coverage table.
 | `PointsMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `PointsMaterial` | `property colorNode` | `UnmappedUnion` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `PointsMaterial` | `property colorNode` | `NodeStackType` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property normalNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property opacityNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property backdropNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1325,7 +1325,7 @@ the README's coverage table.
 | `Renderer` | `method getContext` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
 | `Renderer` | `method setOpaqueSort` | `CallbackType` | parameter 'method': `(a: RenderItem, b: RenderItem) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Renderer` | `method setTransparentSort` | `CallbackType` | parameter 'method': `(a: RenderItem, b: RenderItem) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `Renderer` | `method setCanvasTarget` | `UnmappedUnion` | parameter 'canvasTarget': `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `Renderer` | `method setCanvasTarget` | `DomOrLibType` | parameter 'canvasTarget': `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Renderer` | `method setRenderObjectFunction` | `CallbackType` | parameter 'renderObjectFunction': `( object: Object3D, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: GeometryGroup | null, lightsNode: LightsNode, clippingContext: ClippingContext, passId?: string | null | undefined, ) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Renderer` | `method getRenderObjectFunction` | `CallbackType` | return type: `( object: Object3D, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: GeometryGroup | null, lightsNode: LightsNode, clippingContext: ClippingContext, passId?: string | null | undefined, ) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Renderer` | `method compute` | `NodeStackType` | parameter 'computeNodes': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1345,7 +1345,7 @@ the README's coverage table.
 | `ShadowMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `ShadowMaterial` | `property colorNode` | `UnmappedUnion` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `ShadowMaterial` | `property colorNode` | `NodeStackType` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property normalNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property opacityNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property backdropNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1399,7 +1399,7 @@ the README's coverage table.
 | `SpriteMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `SpriteMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `SpriteMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `SpriteMaterial` | `property colorNode` | `UnmappedUnion` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `SpriteMaterial` | `property colorNode` | `NodeStackType` | `Node<"float"> | Node<"vec2"> | Node<"vec3"> | Node<"vec4"> | Node<"color"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `SpriteMaterial` | `property normalNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `SpriteMaterial` | `property opacityNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `SpriteMaterial` | `property backdropNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1475,9 +1475,9 @@ the README's coverage table.
 | `VolumeNodeMaterial` | `property scatteringNode` | `CallbackType` | `(params: { positionRay: Node<"vec3"> }) => Node | null` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGLAttributes` | `method get` | `OptionsInterface` | return type: `WebGLAttribute` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `WebGLBackend` | `property renderer` | `AbstractClass` | `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
-| `WebGLBackend` | `property domElement` | `UnmappedUnion` | `HTMLCanvasElement | OffscreenCanvas | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `WebGLBackend` | `property domElement` | `DomOrLibType` | `HTMLCanvasElement | OffscreenCanvas | null` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGLBackend` | `method init` | `AbstractClass` | parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
-| `WebGLBackend` | `method getDomElement` | `UnmappedUnion` | return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `WebGLBackend` | `method getDomElement` | `DomOrLibType` | return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGLBindingStates` | `method setup` | `UnwrappedClass` | parameter 'program': `WebGLProgram` is not an emitted class: renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table |
 | `WebGLBufferRenderer` | `property setMode` | `CallbackType` | `(value: any) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGLBufferRenderer` | `property render` | `CallbackType` | `(start: any, count: number) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
@@ -1530,7 +1530,7 @@ the README's coverage table.
 | `WebGLRenderer` | `property xr` | `UnwrappedClass` | `WebXRManager` is not an emitted class: renderer internals under `src/renderers/webxr/**`; no consumer instantiates them and emitting them would inflate the coverage table |
 | `WebGLRenderer` | `property compile` | `CallbackType` | `(scene: Object3D, camera: Camera, targetScene?: Scene | null) => Set<Material>` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGLRenderer` | `property compileAsync` | `CallbackType` | `(scene: Object3D, camera: Camera, targetScene?: Scene | null) => Promise<Object3D>` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `WebGLRenderer` | `method getContext` | `UnmappedUnion` | return type: `WebGLRenderingContext | WebGL2RenderingContext` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `WebGLRenderer` | `method getContext` | `DomOrLibType` | return type: `WebGLRenderingContext | WebGL2RenderingContext` unions 2 types, and every one of them is refused for the same reason: `WebGLRenderingContext` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGLRenderer` | `method getContextAttributes` | `DomOrLibType` | return type: `WebGLContextAttributes` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGLRenderer` | `method setEffects` | `OptionsInterface` | parameter 'effects': `Effect[]` is an array whose element type cannot be mapped: `Effect` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `WebGLRenderer` | `method setOpaqueSort` | `CallbackType` | parameter 'method': `(a: any, b: any) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
@@ -1557,9 +1557,9 @@ the README's coverage table.
 | `WebGLState` | `method texImage2D` | `DomOrLibType` | parameter 'target': `GLenum` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGLState` | `method texImage3D` | `DomOrLibType` | parameter 'target': `GLenum` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPUBackend` | `property renderer` | `AbstractClass` | `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
-| `WebGPUBackend` | `property domElement` | `UnmappedUnion` | `HTMLCanvasElement | OffscreenCanvas | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `WebGPUBackend` | `property domElement` | `DomOrLibType` | `HTMLCanvasElement | OffscreenCanvas | null` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPUBackend` | `method init` | `AbstractClass` | parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
-| `WebGPUBackend` | `method getDomElement` | `UnmappedUnion` | return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `WebGPUBackend` | `method getDomElement` | `DomOrLibType` | return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPURenderer` | `property backend` | `AbstractClass` | `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `WebGPURenderer` | `property info` | `NotExported` | `Info` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `WebGPURenderer` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1580,7 +1580,7 @@ the README's coverage table.
 | `WebGPURenderer` | `method getContext` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
 | `WebGPURenderer` | `method setOpaqueSort` | `CallbackType` | parameter 'method': `(a: RenderItem, b: RenderItem) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGPURenderer` | `method setTransparentSort` | `CallbackType` | parameter 'method': `(a: RenderItem, b: RenderItem) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `WebGPURenderer` | `method setCanvasTarget` | `UnmappedUnion` | parameter 'canvasTarget': `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `WebGPURenderer` | `method setCanvasTarget` | `DomOrLibType` | parameter 'canvasTarget': `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPURenderer` | `method setRenderObjectFunction` | `CallbackType` | parameter 'renderObjectFunction': `( object: Object3D, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: GeometryGroup | null, lightsNode: LightsNode, clippingContext: ClippingContext, passId?: string | null | undefined, ) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGPURenderer` | `method getRenderObjectFunction` | `CallbackType` | return type: `( object: Object3D, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: GeometryGroup | null, lightsNode: LightsNode, clippingContext: ClippingContext, passId?: string | null | undefined, ) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGPURenderer` | `method compute` | `NodeStackType` | parameter 'computeNodes': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1624,7 +1624,7 @@ the README's coverage table.
 | `XRManager` | `method getReferenceSpace` | `ExternalType` | return type: `XRReferenceSpace` is declared in another package |
 | `XRManager` | `method setReferenceSpace` | `ExternalType` | parameter 'space': `XRReferenceSpace` is declared in another package |
 | `XRManager` | `method getEnvironmentBlendMode` | `ExternalType` | return type: `XREnvironmentBlendMode` is declared in another package |
-| `XRManager` | `method getBaseLayer` | `UnmappedUnion` | return type: `XRWebGLLayer | XRProjectionLayer` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `XRManager` | `method getBaseLayer` | `ExternalType` | return type: `XRWebGLLayer | XRProjectionLayer` unions 2 types, and every one of them is refused for the same reason: `XRWebGLLayer` is declared in another package |
 | `XRManager` | `method getBinding` | `ExternalType` | return type: `XRWebGLBinding` is declared in another package |
 | `XRManager` | `method getWebGPUBinding` | `OptionsInterface` | return type: `XRGPUBinding` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `XRManager` | `method getFrame` | `ExternalType` | return type: `XRFrame` is declared in another package |

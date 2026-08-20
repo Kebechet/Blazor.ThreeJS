@@ -373,8 +373,8 @@
       "file": "src/renderers/common/CanvasTarget.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion",
+      "reason": "required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "category": "DomOrLibType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -3892,7 +3892,7 @@
   "memberSkipReasons": [
     {
       "category": "NodeStackType",
-      "members": 375
+      "members": 387
     },
     {
       "category": "CallbackType",
@@ -3907,16 +3907,12 @@
       "members": 84
     },
     {
+      "category": "DomOrLibType",
+      "members": 83
+    },
+    {
       "category": "OptionsInterface",
       "members": 73
-    },
-    {
-      "category": "DomOrLibType",
-      "members": 71
-    },
-    {
-      "category": "UnmappedUnion",
-      "members": 62
     },
     {
       "category": "UntypedValue",
@@ -3924,6 +3920,10 @@
     },
     {
       "category": "AbstractClass",
+      "members": 37
+    },
+    {
+      "category": "UnmappedUnion",
       "members": 37
     },
     {
@@ -3940,7 +3940,7 @@
     },
     {
       "category": "ExternalType",
-      "members": 14
+      "members": 15
     },
     {
       "category": "UnwrappedClass",
@@ -5707,8 +5707,8 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`HTMLCanvasElement | OffscreenCanvas | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`HTMLCanvasElement | OffscreenCanvas | null` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "category": "DomOrLibType"
     },
     {
       "class": "Backend",
@@ -5734,8 +5734,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "category": "DomOrLibType"
     },
     {
       "class": "BatchedMesh",
@@ -7699,8 +7699,8 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "category": "DomOrLibType"
     },
     {
       "class": "CanvasTarget",
@@ -8842,8 +8842,8 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`HTMLElement | SVGElement | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`HTMLElement | SVGElement | null` unions 2 types, and every one of them is refused for the same reason: `HTMLElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "category": "DomOrLibType"
     },
     {
       "class": "Controls",
@@ -8859,8 +8859,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'element': `HTMLElement | SVGElement` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "parameter 'element': `HTMLElement | SVGElement` unions 2 types, and every one of them is refused for the same reason: `HTMLElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "category": "DomOrLibType"
     },
     {
       "class": "Controls",
@@ -13273,8 +13273,8 @@
       "kind": "Property",
       "origin": "InterfaceInheritance",
       "bucket": "Skipped",
-      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<\"float\">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
+      "category": "NodeStackType"
     },
     {
       "class": "LineBasicMaterial",
@@ -15676,8 +15676,8 @@
       "kind": "Property",
       "origin": "InterfaceInheritance",
       "bucket": "Skipped",
-      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<\"float\">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
+      "category": "NodeStackType"
     },
     {
       "class": "MeshBasicMaterial",
@@ -16411,8 +16411,8 @@
       "kind": "Property",
       "origin": "InterfaceInheritance",
       "bucket": "Skipped",
-      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<\"float\">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
+      "category": "NodeStackType"
     },
     {
       "class": "MeshLambertMaterial",
@@ -17010,8 +17010,8 @@
       "kind": "Property",
       "origin": "InterfaceInheritance",
       "bucket": "Skipped",
-      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<\"float\">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
+      "category": "NodeStackType"
     },
     {
       "class": "MeshMatcapMaterial",
@@ -17457,8 +17457,8 @@
       "kind": "Property",
       "origin": "InterfaceInheritance",
       "bucket": "Skipped",
-      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<\"float\">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
+      "category": "NodeStackType"
     },
     {
       "class": "MeshNormalMaterial",
@@ -18058,8 +18058,8 @@
       "kind": "Property",
       "origin": "InterfaceInheritance",
       "bucket": "Skipped",
-      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<\"float\">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
+      "category": "NodeStackType"
     },
     {
       "class": "MeshPhongMaterial",
@@ -19793,8 +19793,8 @@
       "kind": "Property",
       "origin": "InterfaceInheritance",
       "bucket": "Skipped",
-      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<\"float\">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
+      "category": "NodeStackType"
     },
     {
       "class": "MeshStandardMaterial",
@@ -20490,8 +20490,8 @@
       "kind": "Property",
       "origin": "InterfaceInheritance",
       "bucket": "Skipped",
-      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<\"float\">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
+      "category": "NodeStackType"
     },
     {
       "class": "MeshToonMaterial",
@@ -21190,8 +21190,8 @@
       "kind": "Property",
       "origin": "InterfaceInheritance",
       "bucket": "Skipped",
-      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<\"float\">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
+      "category": "NodeStackType"
     },
     {
       "class": "NodeMaterial",
@@ -23452,8 +23452,8 @@
       "kind": "Property",
       "origin": "InterfaceInheritance",
       "bucket": "Skipped",
-      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<\"float\">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
+      "category": "NodeStackType"
     },
     {
       "class": "PointsMaterial",
@@ -26282,8 +26282,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'canvasTarget': `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "parameter 'canvasTarget': `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "category": "DomOrLibType"
     },
     {
       "class": "Renderer",
@@ -26761,8 +26761,8 @@
       "kind": "Property",
       "origin": "InterfaceInheritance",
       "bucket": "Skipped",
-      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<\"float\">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
+      "category": "NodeStackType"
     },
     {
       "class": "ShadowMaterial",
@@ -28519,8 +28519,8 @@
       "kind": "Property",
       "origin": "InterfaceInheritance",
       "bucket": "Skipped",
-      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`Node<\"float\"> | Node<\"vec2\"> | Node<\"vec3\"> | Node<\"vec4\"> | Node<\"color\"> | null` unions 5 types, and every one of them is refused for the same reason: `Node<\"float\">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
+      "category": "NodeStackType"
     },
     {
       "class": "SpriteMaterial",
@@ -31765,8 +31765,8 @@
       "kind": "Property",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "`HTMLCanvasElement | OffscreenCanvas | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`HTMLCanvasElement | OffscreenCanvas | null` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "category": "DomOrLibType"
     },
     {
       "class": "WebGLBackend",
@@ -31783,8 +31783,8 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "category": "DomOrLibType"
     },
     {
       "class": "WebGLBindingStates",
@@ -32769,8 +32769,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "return type: `WebGLRenderingContext | WebGL2RenderingContext` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "return type: `WebGLRenderingContext | WebGL2RenderingContext` unions 2 types, and every one of them is refused for the same reason: `WebGLRenderingContext` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "category": "DomOrLibType"
     },
     {
       "class": "WebGLRenderer",
@@ -33560,8 +33560,8 @@
       "kind": "Property",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "`HTMLCanvasElement | OffscreenCanvas | null` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "`HTMLCanvasElement | OffscreenCanvas | null` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "category": "DomOrLibType"
     },
     {
       "class": "WebGPUBackend",
@@ -33578,8 +33578,8 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "category": "DomOrLibType"
     },
     {
       "class": "WebGPURenderer",
@@ -34318,8 +34318,8 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "parameter 'canvasTarget': `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "parameter 'canvasTarget': `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "category": "DomOrLibType"
     },
     {
       "class": "WebGPURenderer",
@@ -35018,8 +35018,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "return type: `XRWebGLLayer | XRProjectionLayer` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "reason": "return type: `XRWebGLLayer | XRProjectionLayer` unions 2 types, and every one of them is refused for the same reason: `XRWebGLLayer` is declared in another package",
+      "category": "ExternalType"
     },
     {
       "class": "XRManager",

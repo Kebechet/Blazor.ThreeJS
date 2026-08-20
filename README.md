@@ -415,13 +415,13 @@ The blocked ones, by what blocks them:
 | three.js's public barrel does not re-export it as a value, so the applier cannot reach it on `THREE` | 15 |
 | its C# base requires constructor arguments the generated class has nothing to supply | 12 |
 | the class is abstract, so it has no constructor to mirror | 10 |
+| a TypeScript lib or DOM type; C# holds no browser object and the wire has no encoding for one | 3 |
 | two classes share a name, and a C# namespace holds one type of a given name | 3 |
 | a structural interface — an options bag or an event map — with no C# type to be | 3 |
-| a TypeScript lib or DOM type; C# holds no browser object and the wire has no encoding for one | 2 |
-| a union of several real alternatives in a position that holds one type — a property or a return type, since a required parameter becomes one overload per arm | 2 |
 | the types re-export it but the shipped three.js bundle has no such runtime value to construct | 1 |
 | declared under `src/nodes/**`, the TSL / WebGPU node stack outside the extracted surface | 1 |
 | a type parameter with neither a default nor a constraint to erase to | 1 |
+| a union of several real alternatives in a position that holds one type — a property or a return type, since a required parameter becomes one overload per arm | 1 |
 | declared `any` / `unknown`, or with no type at all | 1 |
 
 ### Not wrapped, and not counted above
@@ -479,7 +479,7 @@ What remains out of reach is out for reasons a handle does not fix:
 
 - **43 members taking or returning a JavaScript callback** - the wire carries ops in one direction only,
   so there is nothing to call back into C# with.
-- **37 members typed as a DOM or TypeScript lib type** - C# holds no `HTMLCanvasElement` to hand over,
+- **42 members typed as a DOM or TypeScript lib type** - C# holds no `HTMLCanvasElement` to hand over,
   and a handle names a three.js object rather than an arbitrary browser one.
 - **62 members that are not instance API** - 51 of them static, which the mirror has no handle to
   address because a static belongs to the class rather than to any object it holds, and 11

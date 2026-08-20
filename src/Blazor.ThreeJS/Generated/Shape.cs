@@ -30,6 +30,7 @@ public sealed class Shape : Path
 	/// <summary>Creates a <see cref="Shape"/> from the points.</summary>
 	/// <param name="points">Array of <see cref="Vector2">Vector2s</see>.</param>
 	public Shape(Vector2[]? points = null)
+		: base(points: points)
 	{
 		_points = points;
 	}

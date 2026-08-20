@@ -22,6 +22,7 @@ public sealed class DodecahedronGeometry : PolyhedronGeometry
 	/// Setting this to a value greater than 0 adds vertices making it no longer a dodecahedron.
 	/// </param>
 	public DodecahedronGeometry(float radius = 1f, int detail = 0)
+		: base(radius: radius, detail: detail)
 	{
 		_radius = radius;
 		_detail = detail;

@@ -15,6 +15,7 @@ public class WebGLRenderTarget : RenderTarget
 	/// <param name="width">Value forwarded to the <c>width</c> constructor argument.</param>
 	/// <param name="height">Value forwarded to the <c>height</c> constructor argument.</param>
 	public WebGLRenderTarget(float? width = null, float? height = null)
+		: base(width: width, height: height)
 	{
 		_width = width;
 		_height = height;

@@ -17,6 +17,7 @@ public sealed class ImageLoader : Loader
 	/// <summary>Initializes a new <see cref="ImageLoader"/>.</summary>
 	/// <param name="manager">Value forwarded to the <c>manager</c> constructor argument.</param>
 	public ImageLoader(LoadingManager? manager = null)
+		: base(manager: manager)
 	{
 		_manager = manager;
 	}

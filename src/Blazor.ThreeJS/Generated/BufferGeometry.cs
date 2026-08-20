@@ -26,12 +26,14 @@ public class BufferGeometry : EventDispatcher
 	private string _uuid = string.Empty;
 	private string _name = string.Empty;
 	private BufferAttribute? _index = null;
+	private IndirectStorageBufferAttribute? _indirect;
 	private float _indirectOffset;
 	private bool _morphTargetsRelative = false;
 	private bool _isIdWritten;
 	private bool _isUuidWritten;
 	private bool _isNameWritten;
 	private bool _isIndexWritten;
+	private bool _isIndirectWritten;
 	private bool _isIndirectOffsetWritten;
 	private bool _isMorphTargetsRelativeWritten;
 	private bool _isBoundingBoxWritten;
@@ -192,6 +194,31 @@ public class BufferGeometry : EventDispatcher
 	}
 
 	/// <summary>
+	/// The <c>indirect</c> property of the JavaScript-side object. Writing it records a <c>indirect</c>
+	/// property write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public IndirectStorageBufferAttribute? Indirect
+	{
+		get { return _indirect; }
+		set
+		{
+			if (ReferenceEquals(_indirect, value))
+			{
+				return;
+			}
+
+			_indirect = value;
+			_isIndirectWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("indirect", value);
+		}
+	}
+
+	/// <summary>
 	/// The <c>indirectOffset</c> property of the JavaScript-side object. Writing it records a
 	/// <c>indirectOffset</c> property write once this object is attached; writing the value already
 	/// held records nothing.
@@ -258,6 +285,19 @@ public class BufferGeometry : EventDispatcher
 	public void SetIndex(int[]? index)
 	{
 		RecordCall("setIndex", (object?) index);
+	}
+
+	/// <summary>
+	/// Records a call to <c>setIndirect</c> on the JavaScript-side object. This writes the same
+	/// three.js state as <see cref="Indirect"/> and the mirror does not learn from it: afterwards
+	/// <c>Indirect</c> still reports its previous value, and writing that value back records nothing at
+	/// all. Where the property exists, write the property.
+	/// </summary>
+	/// <param name="indirect">Value forwarded to the <c>indirect</c> argument.</param>
+	/// <param name="indirectOffset">Value forwarded to the <c>indirectOffset</c> argument.</param>
+	public void SetIndirect(IndirectStorageBufferAttribute? indirect, float indirectOffset)
+	{
+		RecordCall("setIndirect", indirect, indirectOffset);
 	}
 
 	/// <summary>Adds a group to this geometry.</summary>
@@ -467,19 +507,13 @@ public class BufferGeometry : EventDispatcher
 	}
 
 	/// <summary>
-	/// Reads <c>getIndirect</c> back from the JavaScript-side object. Answers with a three.js object no
-	/// generated class mirrors: records a read op, sends it behind every write already pending, and
-	/// completes with what <c>getIndirect</c> returned, under its own handle, as an untyped
-	/// <see cref="Primitive"/>. The mirror learns nothing from it — its members are reached by their
-	/// three.js names, and nothing here checks them.
+	/// Reads <c>getIndirect</c> back from the JavaScript-side object. Records a read op, sends it
+	/// behind every write already pending, and completes with what <c>getIndirect</c> returned.
 	/// </summary>
-	/// <returns>
-	/// The object <c>getIndirect</c> returned, under its own handle, or <see langword="null"/> when it
-	/// returned none.
-	/// </returns>
-	public Task<Primitive?> GetIndirectAsync()
+	/// <returns>The value <c>getIndirect</c> returned, once the JavaScript side has answered.</returns>
+	public Task<IndirectStorageBufferAttribute?> GetIndirectAsync()
 	{
-		return CallObjectAsync("getIndirect");
+		return RecordReadObject<IndirectStorageBufferAttribute>("getIndirect", (adoptedBatch, adoptedHandle) => new IndirectStorageBufferAttribute(adoptedBatch, adoptedHandle));
 	}
 
 	/// <summary>
@@ -541,6 +575,12 @@ public class BufferGeometry : EventDispatcher
 		{
 			_index?.AttachTo(batch);
 			batch.Set(Handle, "index", ThreeValue.Encode(_index));
+		}
+
+		if (_isIndirectWritten)
+		{
+			_indirect?.AttachTo(batch);
+			batch.Set(Handle, "indirect", ThreeValue.Encode(_indirect));
 		}
 
 		if (_isIndirectOffsetWritten)

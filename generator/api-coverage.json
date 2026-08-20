@@ -3,19 +3,19 @@
   "typesVersion": "0.185.3",
   "totals": {
     "classes": 309,
-    "emittableClasses": 195,
+    "emittableClasses": 198,
     "outOfSurfaceClasses": 60,
-    "blockedClasses": 54,
+    "blockedClasses": 51,
     "reachableClasses": 264,
-    "members": 3807,
-    "mirroredState": 1156,
-    "commands": 759,
-    "asyncQueries": 792,
-    "untypedObjectQueries": 12,
-    "skippedMembers": 1100,
-    "reachableMembers": 2376,
-    "generatedMembers": 1591,
-    "strandedMembers": 1431
+    "members": 3805,
+    "mirroredState": 1158,
+    "commands": 760,
+    "asyncQueries": 791,
+    "untypedObjectQueries": 11,
+    "skippedMembers": 1096,
+    "reachableMembers": 2390,
+    "generatedMembers": 1607,
+    "strandedMembers": 1415
   },
   "classes": [
     {
@@ -1033,7 +1033,7 @@
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
       "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
@@ -1053,7 +1053,7 @@
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
       "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
@@ -1249,9 +1249,12 @@
       "file": "src/lights/webgpu/IESSpotLight.d.ts",
       "status": "emittable",
       "isReachable": true,
-      "constructorParameterCount": 0,
+      "constructorParameterCount": 6,
       "droppedConstructorParameters": [],
-      "middlePositionUnspecifiedParameters": []
+      "middlePositionUnspecifiedParameters": [
+        "color",
+        "angle"
+      ]
     },
     {
       "name": "IcosahedronGeometry",
@@ -1292,10 +1295,8 @@
     {
       "name": "IndirectStorageBufferAttribute",
       "file": "src/renderers/common/IndirectStorageBufferAttribute.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "its C# base `StorageBufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
-      "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1323,10 +1324,8 @@
     {
       "name": "InstancedBufferAttribute",
       "file": "src/core/InstancedBufferAttribute.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
-      "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 4,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
@@ -1347,7 +1346,7 @@
       "file": "src/core/InstancedInterleavedBuffer.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "its C# base `InterleavedBuffer` has a constructor requiring `array`, `stride`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "reason": "its C# base `InterleavedBuffer` requires `stride` as `int`, and this class declares it as `float`, so the value it holds cannot stand in for the base's",
       "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
@@ -1367,7 +1366,7 @@
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
       "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
@@ -1387,7 +1386,7 @@
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
       "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
@@ -1407,7 +1406,7 @@
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
       "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
@@ -2136,7 +2135,7 @@
       "file": "src/loaders/nodes/NodeMaterialLoader.d.ts",
       "status": "emittable",
       "isReachable": true,
-      "constructorParameterCount": 0,
+      "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
     },
@@ -2376,11 +2375,9 @@
     {
       "name": "PositionalAudio",
       "file": "src/audio/PositionalAudio.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "its C# base `Audio` has a constructor requiring `listener`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
-      "category": "UnreachableBaseConstructor",
-      "constructorParameterCount": 0,
+      "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
     },
@@ -2389,8 +2386,8 @@
       "file": "src/renderers/common/PostProcessing.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "its C# base `RenderPipeline` has a constructor requiring `renderer`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
-      "category": "UnreachableBaseConstructor",
+      "reason": "required parameter 'renderer' cannot be mapped: `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
+      "category": "AbstractClass",
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [
         {
@@ -2407,9 +2404,12 @@
       "file": "src/lights/webgpu/ProjectorLight.d.ts",
       "status": "emittable",
       "isReachable": true,
-      "constructorParameterCount": 0,
+      "constructorParameterCount": 6,
       "droppedConstructorParameters": [],
-      "middlePositionUnspecifiedParameters": []
+      "middlePositionUnspecifiedParameters": [
+        "color",
+        "angle"
+      ]
     },
     {
       "name": "PropertyBinding",
@@ -2506,7 +2506,14 @@
       "status": "emittable",
       "isReachable": true,
       "constructorParameterCount": 0,
-      "droppedConstructorParameters": [],
+      "droppedConstructorParameters": [
+        {
+          "name": "parameters",
+          "type": "ShaderMaterialParameters",
+          "reason": "`ShaderMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument",
+          "category": "OptionsInterface"
+        }
+      ],
       "middlePositionUnspecifiedParameters": []
     },
     {
@@ -2956,7 +2963,7 @@
       "file": "src/renderers/common/StorageBufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float`, so the value it holds cannot stand in for the base's",
       "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
@@ -2967,7 +2974,7 @@
       "file": "src/renderers/common/StorageInstancedBufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "reason": "its C# base `InstancedBufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float`, so the value it holds cannot stand in for the base's",
       "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
@@ -3177,7 +3184,7 @@
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
       "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
@@ -3197,7 +3204,7 @@
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
       "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
@@ -3217,7 +3224,7 @@
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
       "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
@@ -3237,7 +3244,7 @@
       "file": "src/core/BufferAttribute.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
+      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
       "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
@@ -3950,10 +3957,6 @@
     {
       "category": "RestParameter",
       "members": 6
-    },
-    {
-      "category": "UnreachableBaseConstructor",
-      "members": 4
     },
     {
       "category": "CollectionType",
@@ -7243,9 +7246,8 @@
       "member": "indirect",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`IndirectStorageBufferAttribute` is not an emitted class: its C# base `StorageBufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
-      "category": "UnreachableBaseConstructor"
+      "bucket": "MirroredState",
+      "type": "IndirectStorageBufferAttribute"
     },
     {
       "class": "BufferGeometry",
@@ -7352,9 +7354,7 @@
       "member": "setIndirect",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'indirect': `IndirectStorageBufferAttribute` is not an emitted class: its C# base `StorageBufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
-      "category": "UnreachableBaseConstructor"
+      "bucket": "Command"
     },
     {
       "class": "BufferGeometry",
@@ -7362,7 +7362,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "AsyncQuery",
-      "isUntypedObject": true
+      "type": "IndirectStorageBufferAttribute"
     },
     {
       "class": "BufferGeometry",
@@ -11690,18 +11690,16 @@
       "member": "instanceMatrix",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`InstancedBufferAttribute` is not an emitted class: its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
-      "category": "UnreachableBaseConstructor"
+      "bucket": "MirroredState",
+      "type": "InstancedBufferAttribute"
     },
     {
       "class": "InstancedMesh",
       "member": "instanceColor",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`InstancedBufferAttribute` is not an emitted class: its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with",
-      "category": "UnreachableBaseConstructor"
+      "bucket": "MirroredState",
+      "type": "InstancedBufferAttribute"
     },
     {
       "class": "InstancedMesh",
@@ -28883,22 +28881,6 @@
       "member": "isStorageInstancedBufferAttribute",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "StorageInstancedBufferAttribute",
-      "member": "meshPerAttribute",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "float"
-    },
-    {
-      "class": "StorageInstancedBufferAttribute",
-      "member": "isInstancedBufferAttribute",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
       "bucket": "AsyncQuery",
       "type": "bool"
     },

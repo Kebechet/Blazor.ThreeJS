@@ -36,6 +36,7 @@ public sealed class ArcCurve : EllipseCurve
 		float aStartAngle = 0f,
 		float? aEndAngle = null,
 		bool aClockwise = false)
+		: base(aX: aX, aY: aY, aStartAngle: aStartAngle, aEndAngle: aEndAngle, aClockwise: aClockwise)
 	{
 		_aX = aX;
 		_aY = aY;

@@ -23,6 +23,7 @@ public sealed class IcosahedronGeometry : PolyhedronGeometry
 	/// When detail is greater than 1, it's effectively a sphere.
 	/// </param>
 	public IcosahedronGeometry(float radius = 1f, int detail = 0)
+		: base(radius: radius, detail: detail)
 	{
 		_radius = radius;
 		_detail = detail;

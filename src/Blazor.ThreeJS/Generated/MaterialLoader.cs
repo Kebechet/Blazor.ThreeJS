@@ -13,6 +13,7 @@ public class MaterialLoader : Loader
 	/// <summary>Initializes a new <see cref="MaterialLoader"/>.</summary>
 	/// <param name="manager">Value forwarded to the <c>manager</c> constructor argument.</param>
 	public MaterialLoader(LoadingManager? manager = null)
+		: base(manager: manager)
 	{
 		_manager = manager;
 	}

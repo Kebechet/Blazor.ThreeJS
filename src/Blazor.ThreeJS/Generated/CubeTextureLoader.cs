@@ -13,6 +13,7 @@ public sealed class CubeTextureLoader : Loader
 	/// <summary>Initializes a new <see cref="CubeTextureLoader"/>.</summary>
 	/// <param name="manager">Value forwarded to the <c>manager</c> constructor argument.</param>
 	public CubeTextureLoader(LoadingManager? manager = null)
+		: base(manager: manager)
 	{
 		_manager = manager;
 	}

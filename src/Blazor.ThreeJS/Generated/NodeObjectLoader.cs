@@ -13,6 +13,7 @@ public sealed class NodeObjectLoader : ObjectLoader
 	/// <summary>Initializes a new <see cref="NodeObjectLoader"/>.</summary>
 	/// <param name="manager">Value forwarded to the <c>manager</c> constructor argument.</param>
 	public NodeObjectLoader(LoadingManager? manager = null)
+		: base(manager: manager)
 	{
 		_manager = manager;
 	}

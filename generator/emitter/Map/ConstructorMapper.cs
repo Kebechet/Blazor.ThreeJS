@@ -11,6 +11,16 @@ namespace Blazor.ThreeJS.Emitter.Map;
 /// </summary>
 internal sealed class ConstructorMapper
 {
+	private readonly IReadOnlyDictionary<string, IrClass> _classesByName;
+
+	/// <summary>Builds a mapper over the class index, which the inherited-constructor walk needs.</summary>
+	/// <param name="ir">The extracted API surface.</param>
+	public ConstructorMapper(IrRoot ir)
+	{
+		_classesByName = ir.Classes
+			.GroupBy(x => x.Name, StringComparer.Ordinal)
+			.ToDictionary(x => x.Key, x => x.First(), StringComparer.Ordinal);
+	}
 
 	/// <summary>Maps the constructor of one class.</summary>
 	/// <param name="irClass">Class whose constructor is being mapped.</param>
@@ -18,16 +28,17 @@ internal sealed class ConstructorMapper
 	/// <returns>The mapped constructor, or a refusal naming what could not be mirrored.</returns>
 	public MappedConstructor Map(IrClass irClass, TypeMapper mapper)
 	{
-		if (irClass.Constructors.Count == 0)
+		var declaring = ResolveDeclaringClass(irClass);
+		if (declaring is null)
 		{
 			return MappedConstructor.Mapped([], [[]], [], []);
 		}
 
-		var selected = SelectSubsumingConstructor(irClass.Constructors);
+		var selected = SelectSubsumingConstructor(declaring.Constructors);
 		if (selected is null)
 		{
 			return MappedConstructor.Refused(
-				$"{irClass.Constructors.Count} constructor overloads, none of which subsumes the others, so one C# constructor cannot stand for them all",
+				$"{declaring.Constructors.Count} constructor overloads, none of which subsumes the others, so one C# constructor cannot stand for them all",
 				SkipCategory.ConstructorOverloads);
 		}
 
@@ -132,6 +143,41 @@ internal sealed class ConstructorMapper
 	}
 
 	/// <summary>
+	/// The class whose constructor <paramref name="irClass"/> actually has. A class that declares none
+	/// inherits its base's, in TypeScript and in JavaScript alike, so <c>PositionalAudio</c> — which
+	/// declares no constructor and extends <c>Audio</c> — takes an <c>AudioListener</c> however little
+	/// its own declaration says so.
+	/// <para>
+	/// Reading an absent constructor as a parameterless one would emit <c>new THREE.PositionalAudio()</c>
+	/// and leave three.js without the listener it needs, which is a silent failure rather than a
+	/// narrowing: the C# call compiles, the op applies, and the object is wrong.
+	/// </para>
+	/// </summary>
+	/// <param name="irClass">Class whose constructor is wanted.</param>
+	/// <returns>
+	/// The nearest class up the chain that declares one, or <see langword="null"/> when nothing on the
+	/// chain does and the class is genuinely parameterless.
+	/// </returns>
+	private IrClass? ResolveDeclaringClass(IrClass irClass)
+	{
+		var current = irClass;
+		while (current is not null)
+		{
+			if (current.Constructors.Count > 0)
+			{
+				return current;
+			}
+
+			var baseName = current.Extends?.Name;
+			current = baseName is not null && _classesByName.TryGetValue(baseName, out var baseClass)
+				? baseClass
+				: null;
+		}
+
+		return null;
+	}
+
+	/// <summary>
 	/// Resolves a parameter's type into the arms it is emitted as: one each for a required parameter
 	/// whose declared type unions several types the mirror can express, and exactly one for everything
 	/// else.
@@ -207,13 +253,13 @@ internal sealed class ConstructorMapper
 	/// declared one. Only the field widens; every constructor a caller sees stays strongly typed.
 	/// </para>
 	/// <para>
-	/// ⚠️ No emitted class reaches the widening branch today. Every class whose constructor has a
-	/// multi-arm parameter — the nine <c>*BufferAttribute</c> subclasses, <c>StorageBufferAttribute</c>,
-	/// <c>StorageInstancedBufferAttribute</c> — maps its arms cleanly and is then blocked by
-	/// <c>EmissionScope.DescribeUnreachableBaseConstructor</c>, because a generated constructor emits no
-	/// <c>: base(…)</c> and their C# base requires arguments. Base-constructor chaining is what will
-	/// unblock them, and this branch is the first thing it will need: the branch is kept rather than
-	/// deleted because it is that feature's prerequisite, not because anything exercises it now.
+	/// ⚠️ No emitted class reaches the widening branch today, and base-constructor chaining is why it
+	/// is still here rather than why it is unused. Every class whose constructor has a multi-arm
+	/// parameter — the nine <c>*BufferAttribute</c> subclasses, <c>StorageBufferAttribute</c>,
+	/// <c>StorageInstancedBufferAttribute</c> — declares its <c>array</c> as something the base's
+	/// <c>TypedArray</c> slot cannot hold, so <c>EmissionScope.DescribeChainToBase</c> blocks them on
+	/// that instead. Give any of them an arm whose type matches the base's and they emit, at which point
+	/// the widened field is what holds whichever arm the caller's overload took.
 	/// </para>
 	/// </summary>
 	/// <param name="arms">The parameter as each of its arms declares it.</param>

@@ -13,6 +13,7 @@ public sealed class ImageBitmapLoader : Loader
 	/// <summary>Initializes a new <see cref="ImageBitmapLoader"/>.</summary>
 	/// <param name="manager">Value forwarded to the <c>manager</c> constructor argument.</param>
 	public ImageBitmapLoader(LoadingManager? manager = null)
+		: base(manager: manager)
 	{
 		_manager = manager;
 	}

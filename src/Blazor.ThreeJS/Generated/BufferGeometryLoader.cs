@@ -13,6 +13,7 @@ public sealed class BufferGeometryLoader : Loader
 	/// <summary>Initializes a new <see cref="BufferGeometryLoader"/>.</summary>
 	/// <param name="manager">Value forwarded to the <c>manager</c> constructor argument.</param>
 	public BufferGeometryLoader(LoadingManager? manager = null)
+		: base(manager: manager)
 	{
 		_manager = manager;
 	}

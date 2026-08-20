@@ -22,6 +22,7 @@ public sealed class TetrahedronGeometry : PolyhedronGeometry
 	/// Setting this to a value greater than 0 adds vertices making it no longer a tetrahedron.
 	/// </param>
 	public TetrahedronGeometry(float radius = 1f, int detail = 0)
+		: base(radius: radius, detail: detail)
 	{
 		_radius = radius;
 		_detail = detail;

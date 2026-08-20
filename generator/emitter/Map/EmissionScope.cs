@@ -105,7 +105,7 @@ internal sealed class EmissionScope
 
 			foreach (var result in _results.Where(x => x.Status == ClassScopeStatus.Emittable))
 			{
-				if (DescribeUnreachableBaseConstructor(result.Class) is not { } reason)
+				if (DescribeUnreachableBaseConstructor(result) is not { } reason)
 				{
 					continue;
 				}
@@ -118,15 +118,26 @@ internal sealed class EmissionScope
 	}
 
 	/// <summary>
-	/// Why a class cannot chain to its C# base's constructor, if it cannot. A generated class only
-	/// carries its own three.js constructor arguments, so it has nothing to pass to a base that
-	/// requires some — and inventing values for them would put a base's fields in a state three.js
-	/// never produced.
+	/// Works out what a class passes to its C# base's constructor, and records it on the result.
+	/// <para>
+	/// three.js writes a subclass's constructor as its base's arguments plus its own — <c>Float32BufferAttribute</c>
+	/// and <c>BufferAttribute</c> both start with <c>array, itemSize</c> — so the arguments to chain are
+	/// the ones the two declarations share by name. Matching on the three.js name rather than on
+	/// position is what lets an argument the base takes and the subclass does not (<c>EllipseCurve</c>'s
+	/// <c>xRadius</c>, which <c>ArcCurve</c> does not declare) be left to its own default instead of
+	/// silently receiving the value of whatever sat in that position.
+	/// </para>
+	/// <para>
+	/// A base argument the subclass does not declare is only skippable when the base made it optional.
+	/// Where it did not, there is nothing honest to pass — inventing a value would put the base's half
+	/// of the mirror in a state three.js never produced — and the class stays blocked.
+	/// </para>
 	/// </summary>
-	/// <param name="irClass">Class to test.</param>
-	/// <returns>The obstacle, or <see langword="null"/> when the base is reachable.</returns>
-	private string? DescribeUnreachableBaseConstructor(IrClass irClass)
+	/// <param name="result">The class being tested, whose chain is set when one exists.</param>
+	/// <returns>The obstacle, or <see langword="null"/> when the base constructor is reachable.</returns>
+	private string? DescribeUnreachableBaseConstructor(ClassScopeResult result)
 	{
+		var irClass = result.Class;
 		var baseName = irClass.Extends?.Name;
 		while (baseName is not null)
 		{
@@ -137,13 +148,7 @@ internal sealed class EmissionScope
 
 			if (_resultsByName.TryGetValue(baseName, out var baseResult) && baseResult.Status == ClassScopeStatus.Emittable)
 			{
-				var required = baseResult.Constructor?.Parameters.Where(x => !x.IsOptional).ToList() ?? [];
-				if (required.Count == 0)
-				{
-					return null;
-				}
-
-				return $"its C# base `{baseName}` has a constructor requiring {string.Join(", ", required.Select(x => $"`{x.ThreeName}`"))}, and a generated class carries only its own constructor arguments — it has nothing to chain with";
+				return DescribeChainToBase(result, baseName, baseResult);
 			}
 
 			baseName = _classesByName.TryGetValue(baseName, out var baseClass)
@@ -152,6 +157,179 @@ internal sealed class EmissionScope
 		}
 
 		return null;
+	}
+
+	/// <summary>
+	/// Matches a class's constructor against its base's, one overload at a time.
+	/// <para>
+	/// Per overload rather than per class, because a parameter whose declared type unions several
+	/// mappable ones is stored widened — as <c>object?</c> — and the widened slot is never what a base
+	/// parameter wants. What has to line up is what each <em>declaration</em> takes, and every one of
+	/// them has to line up: an overload whose <c>: base(…)</c> would not compile is not an overload that
+	/// can be emitted, so one unchainable arm blocks the class rather than quietly disappearing.
+	/// </para>
+	/// </summary>
+	/// <param name="result">The class being tested, whose chain is set when one exists.</param>
+	/// <param name="baseName">Name of the nearest generated base.</param>
+	/// <param name="baseResult">That base's own verdict, carrying its mapped constructor.</param>
+	/// <returns>The obstacle, or <see langword="null"/> when every overload can chain.</returns>
+	private static string? DescribeChainToBase(ClassScopeResult result, string baseName, ClassScopeResult baseResult)
+	{
+		var baseOverloads = baseResult.Constructor?.Overloads ?? [];
+		if (baseOverloads.All(x => x.Count == 0))
+		{
+			result.BaseChain = [];
+			return null;
+		}
+
+		IReadOnlyList<BaseChainArgument>? longest = null;
+		string? obstacle = null;
+		foreach (var overload in result.Constructor?.Overloads ?? [])
+		{
+			IReadOnlyList<BaseChainArgument>? chained = null;
+			foreach (var baseOverload in baseOverloads)
+			{
+				if (TryChainOverload(overload, baseOverload, baseName, out var chain, out var reason))
+				{
+					chained = chain;
+					break;
+				}
+
+				obstacle ??= reason;
+			}
+
+			if (chained is null)
+			{
+				return obstacle;
+			}
+
+			// The emitter picks the arguments each overload actually declares out of this list, so the
+			// longest one covers every overload and no overload is described by a shorter one's chain.
+			if (longest is null || chained.Count > longest.Count)
+			{
+				longest = chained;
+			}
+		}
+
+		result.BaseChain = longest ?? [];
+		return null;
+	}
+
+	/// <summary>
+	/// Matches one declaration against one of the base's, by three.js parameter name.
+	/// <para>
+	/// Matching on the name rather than on position is what lets an argument the base takes and the
+	/// subclass does not — <c>EllipseCurve</c>'s <c>xRadius</c>, which <c>ArcCurve</c> never declares —
+	/// keep its own default instead of silently receiving whatever sat in that position. Types have to be
+	/// identical, not merely convertible: a base slot holds what the mirror believes the JavaScript
+	/// object's own property holds, and a widened or narrowed value would make the inherited property
+	/// report something three.js never assigned.
+	/// </para>
+	/// </summary>
+	/// <param name="overload">The subclass declaration being matched.</param>
+	/// <param name="baseOverload">The base declaration being matched against.</param>
+	/// <param name="baseName">Name of the base, for the obstacle text.</param>
+	/// <param name="chain">The arguments to forward, when they all line up.</param>
+	/// <param name="reason">What stopped the match, when one did.</param>
+	/// <returns>Whether this declaration can chain to that one.</returns>
+	private static bool TryChainOverload(
+		IReadOnlyList<MappedParameter> overload,
+		IReadOnlyList<MappedParameter> baseOverload,
+		string baseName,
+		out IReadOnlyList<BaseChainArgument> chain,
+		out string? reason)
+	{
+		var own = overload.ToDictionary(x => x.ThreeName, StringComparer.Ordinal);
+		var matched = new List<BaseChainArgument>();
+		foreach (var baseParameter in baseOverload)
+		{
+			if (!own.TryGetValue(baseParameter.ThreeName, out var ownParameter))
+			{
+				if (baseParameter.IsOptional)
+				{
+					continue;
+				}
+
+				chain = [];
+				reason = $"its C# base `{baseName}` requires `{baseParameter.ThreeName}`, which this class does not declare, so there is no value to chain that three.js would itself have produced";
+				return false;
+			}
+
+			var expression = ChainExpression(ownParameter, baseParameter);
+			if (expression is null)
+			{
+				if (baseParameter.IsOptional)
+				{
+					continue;
+				}
+
+				chain = [];
+				reason = $"its C# base `{baseName}` requires `{baseParameter.ThreeName}` as `{baseParameter.CSharpTypeName}`, and this class declares it as `{ownParameter.CSharpTypeName}`, so the value it holds cannot stand in for the base's";
+				return false;
+			}
+
+			matched.Add(new BaseChainArgument
+			{
+				ParameterName = baseParameter.DeclarationName,
+				ArgumentName = ownParameter.DeclarationName,
+				Expression = expression
+			});
+		}
+
+		chain = matched;
+		reason = null;
+		return true;
+	}
+
+	/// <summary>
+	/// How one of this class's parameters is written as an argument to the base's, or
+	/// <see langword="null"/> when it cannot stand in for it.
+	/// <para>
+	/// Usually the parameter itself, under an identical type. The one substitution is a parameter this
+	/// class declares as <c>T? x = null</c> — "the caller did not supply this" — against a base that
+	/// declares it as <c>T</c> with a default. Not supplying it means three.js applies its own default,
+	/// and that default is exactly what the base parameter's literal already holds, having come from the
+	/// same documentation. Coalescing to it puts the base's field where three.js will put the JavaScript
+	/// object's, which is the whole point of chaining.
+	/// </para>
+	/// <para>
+	/// ⚠️ Only a <em>documented</em> default qualifies. A parameter with no expressible default is the
+	/// one emitted as <c>T? x = null</c> in the first place, so a base slot in that state has no literal
+	/// to coalesce to and is left alone rather than filled with a C# zero the mirror would then report
+	/// as fact.
+	/// </para>
+	/// </summary>
+	/// <param name="ownParameter">This class's parameter.</param>
+	/// <param name="baseParameter">The base parameter it would be passed to.</param>
+	/// <returns>The C# expression to write, or <see langword="null"/> when there is none.</returns>
+	private static string? ChainExpression(MappedParameter ownParameter, MappedParameter baseParameter)
+	{
+		if (string.Equals(ownParameter.CSharpTypeName, baseParameter.CSharpTypeName, StringComparison.Ordinal))
+		{
+			return ownParameter.DeclarationName;
+		}
+
+		if (ownParameter.IsUnspecifiedNullable
+			&& baseParameter.DefaultLiteral is { } literal
+			&& string.Equals(ownParameter.CSharpTypeName, baseParameter.CSharpTypeName + "?", StringComparison.Ordinal))
+		{
+			return $"{ownParameter.DeclarationName} ?? {literal}";
+		}
+
+		return null;
+	}
+
+	/// <summary>
+	/// What a class passes to its generated base's constructor. Read by the emitter so the declaration
+	/// it writes and the verdict the scope reached come from one computation rather than two.
+	/// </summary>
+	/// <param name="name">Class name.</param>
+	/// <returns>The chained arguments, empty when there are none, and <see langword="null"/> when the class is not emitted.</returns>
+	public IReadOnlyList<BaseChainArgument> BaseChainFor(string name)
+	{
+		return _resultsByName.TryGetValue(name, out var result)
+			? result.BaseChain ?? []
+			: [];
 	}
 
 	/// <summary>Whether a class is emitted, and therefore usable as a C# type in another signature.</summary>
@@ -303,6 +481,34 @@ internal sealed class ClassScopeResult
 
 	/// <summary>The resolved constructor, present once the class is known to be emittable.</summary>
 	public MappedConstructor? Constructor { get; set; }
+
+	/// <summary>
+	/// What this class passes to its generated base's constructor, in the base's parameter order.
+	/// Empty when the base takes no arguments; <see langword="null"/> when the base is hand-written or
+	/// there is no generated base at all, and the emitted constructor therefore chains implicitly.
+	/// </summary>
+	public IReadOnlyList<BaseChainArgument>? BaseChain { get; set; }
+}
+
+/// <summary>
+/// One argument a generated constructor forwards to its base, named on both sides. Written as a C#
+/// named argument, so a base parameter the subclass does not declare keeps its own default rather than
+/// shifting the ones after it along.
+/// </summary>
+internal sealed class BaseChainArgument
+{
+	/// <summary>
+	/// The base constructor's parameter, as the name of a C# named argument. Escaped, because the
+	/// argument name has to be spelled the way the parameter is declared — <c>@object:</c>, not
+	/// <c>object:</c>.
+	/// </summary>
+	public required string ParameterName { get; init; }
+
+	/// <summary>This constructor's own parameter, used to tell which overloads declare it.</summary>
+	public required string ArgumentName { get; init; }
+
+	/// <summary>The C# expression written as the argument, usually the parameter itself.</summary>
+	public required string Expression { get; init; }
 }
 
 /// <summary>Where a class stands relative to emission.</summary>

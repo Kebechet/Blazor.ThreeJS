@@ -13,6 +13,7 @@ public class ObjectLoader : Loader
 	/// <summary>Initializes a new <see cref="ObjectLoader"/>.</summary>
 	/// <param name="manager">Value forwarded to the <c>manager</c> constructor argument.</param>
 	public ObjectLoader(LoadingManager? manager = null)
+		: base(manager: manager)
 	{
 		_manager = manager;
 	}

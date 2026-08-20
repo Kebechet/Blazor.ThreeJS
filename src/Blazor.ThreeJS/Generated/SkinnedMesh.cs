@@ -45,6 +45,7 @@ public sealed class SkinnedMesh : Mesh
 	/// </param>
 	/// <param name="useVertexTexture">Value forwarded to the <c>useVertexTexture</c> constructor argument.</param>
 	public SkinnedMesh(BufferGeometry? geometry = null, Material? material = null, bool? useVertexTexture = null)
+		: base(geometry: geometry, material: material)
 	{
 		_geometry = geometry;
 		_material = material;

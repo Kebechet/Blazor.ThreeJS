@@ -17,6 +17,7 @@ public sealed class TextureLoader : Loader
 	/// <summary>Initializes a new <see cref="TextureLoader"/>.</summary>
 	/// <param name="manager">Value forwarded to the <c>manager</c> constructor argument.</param>
 	public TextureLoader(LoadingManager? manager = null)
+		: base(manager: manager)
 	{
 		_manager = manager;
 	}

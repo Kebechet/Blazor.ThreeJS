@@ -43,6 +43,7 @@ public sealed class ConeGeometry : CylinderGeometry
 		bool openEnded = false,
 		float thetaStart = 0f,
 		float? thetaLength = null)
+		: base(height: height, radialSegments: radialSegments, heightSegments: heightSegments, openEnded: openEnded, thetaStart: thetaStart, thetaLength: thetaLength)
 	{
 		_radius = radius;
 		_height = height;

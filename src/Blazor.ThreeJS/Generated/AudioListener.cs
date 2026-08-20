@@ -8,10 +8,10 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// <summary>
 /// The class represents a virtual listener of the all positional and non-positional audio effects
 /// in the scene. A three.js application usually creates a single listener. It is a mandatory
-/// constructor parameter for audios entities like <see cref="Audio"/> and <c>PositionalAudio</c>.
-/// In most cases, the listener object is a child of the camera. So the 3D transformation of the
-/// camera represents the 3D transformation of the listener. The JavaScript-side
-/// <c>THREE.AudioListener</c>.
+/// constructor parameter for audios entities like <see cref="Audio"/> and
+/// <see cref="PositionalAudio"/>. In most cases, the listener object is a child of the camera. So
+/// the 3D transformation of the camera represents the 3D transformation of the listener. The
+/// JavaScript-side <c>THREE.AudioListener</c>.
 /// </summary>
 public sealed class AudioListener : Object3D
 {

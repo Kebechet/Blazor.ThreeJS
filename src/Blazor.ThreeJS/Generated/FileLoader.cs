@@ -17,6 +17,7 @@ public sealed class FileLoader : Loader
 	/// <summary>Initializes a new <see cref="FileLoader"/>.</summary>
 	/// <param name="manager">Value forwarded to the <c>manager</c> constructor argument.</param>
 	public FileLoader(LoadingManager? manager = null)
+		: base(manager: manager)
 	{
 		_manager = manager;
 	}

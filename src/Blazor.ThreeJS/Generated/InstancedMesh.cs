@@ -27,7 +27,11 @@ public sealed class InstancedMesh : Mesh
 	private readonly BufferGeometry? _geometry;
 	private readonly Material? _material;
 	private readonly int _count;
+	private InstancedBufferAttribute? _instanceMatrix;
+	private InstancedBufferAttribute? _instanceColor = null;
 	private DataTexture? _morphTexture;
+	private bool _isInstanceMatrixWritten;
+	private bool _isInstanceColorWritten;
 	private bool _isMorphTextureWritten;
 	private bool _isBoundingBoxWritten;
 	private bool _isBoundingSphereWritten;
@@ -54,6 +58,7 @@ public sealed class InstancedMesh : Mesh
 	/// </param>
 	/// <param name="count">The **maximum** number of instances of this Mesh.</param>
 	public InstancedMesh(BufferGeometry? geometry, Material? material, int count)
+		: base(geometry: geometry, material: material)
 	{
 		_geometry = geometry;
 		_material = material;
@@ -112,6 +117,60 @@ public sealed class InstancedMesh : Mesh
 	protected override object?[] ConstructorArgs
 	{
 		get { return [_geometry, _material, _count]; }
+	}
+
+	/// <summary>
+	/// Represents the local transformation of all instances. You have to set
+	/// <c>.instanceMatrix.needsUpdate()</c> flag to <c>true</c> if you modify instanced data via
+	/// <c>.setMatrixAt()</c>. Writing it records a <c>instanceMatrix</c> property write once this
+	/// object is attached; writing the value already held records nothing.
+	/// </summary>
+	public InstancedBufferAttribute? InstanceMatrix
+	{
+		get { return _instanceMatrix; }
+		set
+		{
+			if (ReferenceEquals(_instanceMatrix, value))
+			{
+				return;
+			}
+
+			_instanceMatrix = value;
+			_isInstanceMatrixWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("instanceMatrix", value);
+		}
+	}
+
+	/// <summary>
+	/// Represents the colors of all instances. You have to set <c>.instanceColor.needsUpdate()</c> flag
+	/// to <c>true</c> if you modify instanced data via <c>.setColorAt()</c>. Writing it records a
+	/// <c>instanceColor</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public InstancedBufferAttribute? InstanceColor
+	{
+		get { return _instanceColor; }
+		set
+		{
+			if (ReferenceEquals(_instanceColor, value))
+			{
+				return;
+			}
+
+			_instanceColor = value;
+			_isInstanceColorWritten = true;
+			if (Batch is not null && value is not null)
+			{
+				value.AttachTo(Batch);
+			}
+
+			RecordSet("instanceColor", value);
+		}
 	}
 
 	/// <summary>
@@ -274,6 +333,18 @@ public sealed class InstancedMesh : Mesh
 	internal override void EmitState(ThreeBatch batch)
 	{
 		base.EmitState(batch);
+
+		if (_isInstanceMatrixWritten)
+		{
+			_instanceMatrix?.AttachTo(batch);
+			batch.Set(Handle, "instanceMatrix", ThreeValue.Encode(_instanceMatrix));
+		}
+
+		if (_isInstanceColorWritten)
+		{
+			_instanceColor?.AttachTo(batch);
+			batch.Set(Handle, "instanceColor", ThreeValue.Encode(_instanceColor));
+		}
 
 		if (_isMorphTextureWritten)
 		{

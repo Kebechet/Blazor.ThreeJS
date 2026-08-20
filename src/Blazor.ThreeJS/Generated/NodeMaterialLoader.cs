@@ -8,9 +8,14 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// <summary>The JavaScript-side <c>THREE.NodeMaterialLoader</c>.</summary>
 public sealed class NodeMaterialLoader : MaterialLoader
 {
+	private readonly LoadingManager? _manager;
+
 	/// <summary>Initializes a new <see cref="NodeMaterialLoader"/>.</summary>
-	public NodeMaterialLoader()
+	/// <param name="manager">Value forwarded to the <c>manager</c> constructor argument.</param>
+	public NodeMaterialLoader(LoadingManager? manager = null)
+		: base(manager: manager)
 	{
+		_manager = manager;
 	}
 
 	/// <summary>
@@ -29,5 +34,27 @@ public sealed class NodeMaterialLoader : MaterialLoader
 	protected override string ThreeTypeName
 	{
 		get { return "NodeMaterialLoader"; }
+	}
+
+	/// <summary>
+	/// Constructor arguments forwarded to <c>THREE.NodeMaterialLoader</c>: manager. An argument the
+	/// caller left unspecified travels as the wire's not-supplied sentinel, or is trimmed when nothing
+	/// supplied follows it, so three.js applies its own default.
+	/// </summary>
+	protected override object?[] ConstructorArgs
+	{
+		get { return ThreeValue.TrimUnspecifiedTail([ThreeValue.OrUnspecified(_manager)]); }
+	}
+
+	/// <summary>
+	/// Attaches the objects <c>THREE.NodeMaterialLoader</c> is constructed from, so their create ops
+	/// reach the batch before the one that references them by handle, then emits this object's own.
+	/// </summary>
+	/// <param name="batch">Batch to record the ops into.</param>
+	internal override void EmitCreate(ThreeBatch batch)
+	{
+		_manager?.AttachTo(batch);
+
+		base.EmitCreate(batch);
 	}
 }

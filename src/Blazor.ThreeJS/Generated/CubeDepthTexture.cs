@@ -38,6 +38,7 @@ public sealed class CubeDepthTexture : DepthTexture
 		MinificationTextureFilter? minFilter = null,
 		float? anisotropy = null,
 		DepthTexturePixelFormat? format = null)
+		: base(type: type, mapping: mapping, wrapS: wrapS, wrapT: wrapT, magFilter: magFilter, minFilter: minFilter, anisotropy: anisotropy, format: format)
 	{
 		_size = size;
 		_type = type;

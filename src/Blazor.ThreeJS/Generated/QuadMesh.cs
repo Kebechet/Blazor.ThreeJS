@@ -15,6 +15,7 @@ public sealed class QuadMesh : Mesh
 	/// <summary>Initializes a new <see cref="QuadMesh"/>.</summary>
 	/// <param name="material">Value forwarded to the <c>material</c> constructor argument.</param>
 	public QuadMesh(Material? material = null)
+		: base(material: material)
 	{
 		_material = material;
 	}

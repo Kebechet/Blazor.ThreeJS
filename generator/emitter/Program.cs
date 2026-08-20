@@ -30,7 +30,7 @@ var ir = JsonSerializer.Deserialize<IrRoot>(File.ReadAllText(irPath), IrSerializ
 
 var enums = new EnumCatalog(ir);
 var mapper = new TypeMapper(ir, enums);
-var constructorMapper = new ConstructorMapper();
+var constructorMapper = new ConstructorMapper(ir);
 var methodMapper = new MethodMapper();
 var scope = new EmissionScope(ir, mapper, constructorMapper);
 var surfaces = new ClassSurfaceResolver(ir, name => scope.IsEmittable(name) || EmitterConfig.HandWrittenClassNames.Contains(name));

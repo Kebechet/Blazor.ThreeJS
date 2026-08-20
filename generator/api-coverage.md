@@ -127,7 +127,7 @@ Three things are resolved, in this order:
 |---|---|
 | declared on the class itself | 2367 |
 | reached through the interface three.js merges into the class | 878 |
-| folded in from an ancestor with no C# type of its own | 557 |
+| folded in from an ancestor with no C# type of its own | 555 |
 | merged in by a `declare module` block | 5 |
 
 ⚠️ **`Object3D` is a hybrid, and its members are subtracted from every descendant.** The hand-written half
@@ -186,9 +186,9 @@ as a mutable array, so a change to it cannot be observed, and matrix-typed prope
 
 | status | classes |
 |---|---|
-| emittable | 195 |
+| emittable | 198 |
 | deliberately out of the mirrored surface | 60 |
-| blocked | 54 |
+| blocked | 51 |
 | **total** | **309** |
 
 Emittability and **reachability** are different questions. 264 of these classes are names the shipped
@@ -217,9 +217,9 @@ The consumer-facing renderer types are checked against the exclusion rather than
 
 | obstacle | classes | example reason |
 |---|---|---|
-| `UnreachableBaseConstructor` | 16 | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with |
 | `NotExported` | 15 | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
-| `AbstractClass` | 9 | the class is abstract, so it has no constructor to mirror |
+| `UnreachableBaseConstructor` | 12 | its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's |
+| `AbstractClass` | 10 | the class is abstract, so it has no constructor to mirror |
 | `DuplicateClassName` | 3 | another class named `PMREMGenerator` is declared in `src/extras/PMREMGenerator.d.ts`, and a C# namespace holds one type of a given name |
 | `OptionsInterface` | 3 | required parameter 'mipmaps' cannot be mapped: `CompressedTextureMipmap[]` is an array whose element type cannot be mapped: `CompressedTextureMipmap` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `DomOrLibType` | 2 | required parameter 'buffer' cannot be mapped: `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -245,17 +245,15 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `DataTextureLoader` | the class is abstract, so it has no constructor to mirror | `src/loaders/DataTextureLoader.d.ts` |
 | `DirectionalLightShadow` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/lights/DirectionalLightShadow.d.ts` |
 | `Earcut` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/extras/Earcut.d.ts` |
-| `Float16BufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
-| `Float32BufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
+| `Float16BufferAttribute` | its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's | `src/core/BufferAttribute.d.ts` |
+| `Float32BufferAttribute` | its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's | `src/core/BufferAttribute.d.ts` |
 | `GLBufferAttribute` | required parameter 'buffer' cannot be mapped: `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one | `src/core/GLBufferAttribute.d.ts` |
 | `GLSLNodeBuilder` | required parameter 'renderer' cannot be mapped: `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror | `src/renderers/webgl-fallback/nodes/GLSLNodeBuilder.d.ts` |
-| `IndirectStorageBufferAttribute` | its C# base `StorageBufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/renderers/common/IndirectStorageBufferAttribute.d.ts` |
 | `Info` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/renderers/common/Info.d.ts` |
-| `InstancedBufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/InstancedBufferAttribute.d.ts` |
-| `InstancedInterleavedBuffer` | its C# base `InterleavedBuffer` has a constructor requiring `array`, `stride`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/InstancedInterleavedBuffer.d.ts` |
-| `Int16BufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
-| `Int32BufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
-| `Int8BufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
+| `InstancedInterleavedBuffer` | its C# base `InterleavedBuffer` requires `stride` as `int`, and this class declares it as `float`, so the value it holds cannot stand in for the base's | `src/core/InstancedInterleavedBuffer.d.ts` |
+| `Int16BufferAttribute` | its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's | `src/core/BufferAttribute.d.ts` |
+| `Int32BufferAttribute` | its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's | `src/core/BufferAttribute.d.ts` |
+| `Int8BufferAttribute` | its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's | `src/core/BufferAttribute.d.ts` |
 | `KeyframeTrack` | required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/animation/KeyframeTrack.d.ts` |
 | `Light` | the class is abstract, so it has no constructor to mirror | `src/lights/Light.d.ts` |
 | `LightShadow` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/lights/LightShadow.d.ts` |
@@ -264,8 +262,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `PMREMGenerator` | required parameter 'renderer' cannot be mapped: `WebGLRenderer` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/extras/PMREMGenerator.d.ts` |
 | `PMREMGenerator` | another class named `PMREMGenerator` is declared in `src/extras/PMREMGenerator.d.ts`, and a C# namespace holds one type of a given name | `src/renderers/common/extras/PMREMGenerator.d.ts` |
 | `PointLightShadow` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/lights/PointLightShadow.d.ts` |
-| `PositionalAudio` | its C# base `Audio` has a constructor requiring `listener`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/audio/PositionalAudio.d.ts` |
-| `PostProcessing` | its C# base `RenderPipeline` has a constructor requiring `renderer`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/renderers/common/PostProcessing.d.ts` |
+| `PostProcessing` | required parameter 'renderer' cannot be mapped: `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror | `src/renderers/common/PostProcessing.d.ts` |
 | `RenderPipeline` | required parameter 'renderer' cannot be mapped: `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror | `src/renderers/common/RenderPipeline.d.ts` |
 | `Renderer` | required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror | `src/renderers/common/Renderer.d.ts` |
 | `SSSLightingModel` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/materials/nodes/MeshSSSNodeMaterial.d.ts` |
@@ -273,13 +270,13 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `SourceJSON` | the types re-export it but the shipped three.js bundle carries no such runtime value, so constructing it would throw `Unknown three.js type` | `src/textures/Source.d.ts` |
 | `SpotLightShadow` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/lights/SpotLightShadow.d.ts` |
 | `Storage3DTexture` | another class named `Storage3DTexture` is declared in `src/renderers/common/Storage3DTexture.d.ts`, and a C# namespace holds one type of a given name | `src/renderers/common/StorageArrayTexture.d.ts` |
-| `StorageBufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/renderers/common/StorageBufferAttribute.d.ts` |
-| `StorageInstancedBufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/renderers/common/StorageInstancedBufferAttribute.d.ts` |
+| `StorageBufferAttribute` | its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float`, so the value it holds cannot stand in for the base's | `src/renderers/common/StorageBufferAttribute.d.ts` |
+| `StorageInstancedBufferAttribute` | its C# base `InstancedBufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float`, so the value it holds cannot stand in for the base's | `src/renderers/common/StorageInstancedBufferAttribute.d.ts` |
 | `TimestampQueryPool` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/renderers/common/TimestampQueryPool.d.ts` |
-| `Uint16BufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
-| `Uint32BufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
-| `Uint8BufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
-| `Uint8ClampedBufferAttribute` | its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with | `src/core/BufferAttribute.d.ts` |
+| `Uint16BufferAttribute` | its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's | `src/core/BufferAttribute.d.ts` |
+| `Uint32BufferAttribute` | its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's | `src/core/BufferAttribute.d.ts` |
+| `Uint8BufferAttribute` | its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's | `src/core/BufferAttribute.d.ts` |
+| `Uint8ClampedBufferAttribute` | its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's | `src/core/BufferAttribute.d.ts` |
 | `Uniform` | required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express | `src/core/Uniform.d.ts` |
 | `VideoTexture` | required parameter 'video' cannot be mapped: `HTMLVideoElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one | `src/textures/VideoTexture.d.ts` |
 | `WGSLNodeBuilder` | required parameter 'renderer' cannot be mapped: `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror | `src/renderers/webgpu/nodes/WGSLNodeBuilder.d.ts` |
@@ -364,12 +361,14 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `HTMLTexture` | 0 | `image`, `mapping`, `wrapS`, `wrapT`, `magFilter`, `minFilter`, `format`, `type`, `anisotropy` | `src/textures/HTMLTexture.d.ts` |
 | `HemisphereLight` | 3 | — | `src/lights/HemisphereLight.d.ts` |
 | `HemisphereLightHelper` | 3 | — | `src/helpers/HemisphereLightHelper.d.ts` |
-| `IESSpotLight` | 0 | — | `src/lights/webgpu/IESSpotLight.d.ts` |
+| `IESSpotLight` | 6 | — | `src/lights/webgpu/IESSpotLight.d.ts` |
 | `IcosahedronGeometry` | 2 | — | `src/geometries/IcosahedronGeometry.d.ts` |
 | `ImageBitmapLoader` | 1 | — | `src/loaders/ImageBitmapLoader.d.ts` |
 | `ImageLoader` | 1 | — | `src/loaders/ImageLoader.d.ts` |
 | `ImageUtils` | 0 | — | `src/extras/ImageUtils.d.ts` |
+| `IndirectStorageBufferAttribute` | 2 | — | `src/renderers/common/IndirectStorageBufferAttribute.d.ts` |
 | `InspectorBase` | 0 | — | `src/renderers/common/InspectorBase.d.ts` |
+| `InstancedBufferAttribute` | 4 | — | `src/core/InstancedBufferAttribute.d.ts` |
 | `InstancedBufferGeometry` | 0 | — | `src/core/InstancedBufferGeometry.d.ts` |
 | `InstancedMesh` | 3 | — | `src/objects/InstancedMesh.d.ts` |
 | `InterleavedBuffer` | 2 | — | `src/core/InterleavedBuffer.d.ts` |
@@ -416,7 +415,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `MeshToonNodeMaterial` | 0 | `parameters` | `src/materials/nodes/MeshToonNodeMaterial.d.ts` |
 | `NodeLoader` | 1 | — | `src/loaders/nodes/NodeLoader.d.ts` |
 | `NodeMaterial` | 0 | — | `src/materials/nodes/NodeMaterial.d.ts` |
-| `NodeMaterialLoader` | 0 | — | `src/loaders/nodes/NodeMaterialLoader.d.ts` |
+| `NodeMaterialLoader` | 1 | — | `src/loaders/nodes/NodeMaterialLoader.d.ts` |
 | `NodeObjectLoader` | 1 | — | `src/loaders/nodes/NodeObjectLoader.d.ts` |
 | `NumberKeyframeTrack` | 4 | — | `src/animation/tracks/NumberKeyframeTrack.d.ts` |
 | `ObjectLoader` | 1 | — | `src/loaders/ObjectLoader.d.ts` |
@@ -433,14 +432,15 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `PointsNodeMaterial` | 0 | `parameters` | `src/materials/nodes/PointsNodeMaterial.d.ts` |
 | `PolarGridHelper` | 6 | — | `src/helpers/PolarGridHelper.d.ts` |
 | `PolyhedronGeometry` | 4 | — | `src/geometries/PolyhedronGeometry.d.ts` |
-| `ProjectorLight` | 0 | — | `src/lights/webgpu/ProjectorLight.d.ts` |
+| `PositionalAudio` | 1 | — | `src/audio/PositionalAudio.d.ts` |
+| `ProjectorLight` | 6 | — | `src/lights/webgpu/ProjectorLight.d.ts` |
 | `PropertyBinding` | 2 | `parsedPath` | `src/animation/PropertyBinding.d.ts` |
 | `PropertyMixer` | 3 | — | `src/animation/PropertyMixer.d.ts` |
 | `QuadMesh` | 1 | — | `src/renderers/common/QuadMesh.d.ts` |
 | `QuadraticBezierCurve` | 3 | — | `src/extras/curves/QuadraticBezierCurve.d.ts` |
 | `QuadraticBezierCurve3` | 3 | — | `src/extras/curves/QuadraticBezierCurve3.d.ts` |
 | `QuaternionKeyframeTrack` | 4 | — | `src/animation/tracks/QuaternionKeyframeTrack.d.ts` |
-| `RawShaderMaterial` | 0 | — | `src/materials/RawShaderMaterial.d.ts` |
+| `RawShaderMaterial` | 0 | `parameters` | `src/materials/RawShaderMaterial.d.ts` |
 | `Raycaster` | 4 | — | `src/core/Raycaster.d.ts` |
 | `ReadbackBuffer` | 1 | — | `src/renderers/common/ReadbackBuffer.d.ts` |
 | `RectAreaLight` | 4 | — | `src/lights/RectAreaLight.d.ts` |
@@ -500,14 +500,14 @@ three.js is reachable at all" and "how much of what we mirror is state".
 
 | bucket | what it means | all classes | emittable classes |
 |---|---|---|---|
-| MirroredState | state C# holds and writes through on change | 1156 | 895 |
-| Command | a method recorded as a call op, returning nothing or `this` | 759 | 289 |
-| AsyncQuery | a method whose result the caller needs back | 792 | 407 |
-| Skipped | not mirrored; see the skip list below | 1100 | 785 |
-| **total** | | **3807** | **2376** |
+| MirroredState | state C# holds and writes through on change | 1158 | 899 |
+| Command | a method recorded as a call op, returning nothing or `this` | 760 | 295 |
+| AsyncQuery | a method whose result the caller needs back | 791 | 413 |
+| Skipped | not mirrored; see the skip list below | 1096 | 783 |
+| **total** | | **3805** | **2390** |
 
 Two op kinds answer: **read**, which invokes a method, and **get**, which reads a property.
-407 of the async queries above sit on an emitted class and are generated as `…Async` methods, 162 of
+413 of the async queries above sit on an emitted class and are generated as `…Async` methods, 165 of
 them over the get op rather than the read op. Both kinds answer with a value where one can travel, and
 with a handle to an object where it cannot.
 
@@ -554,11 +554,10 @@ the README's coverage table.
 | `UnmappedTypeSyntax` | 11 | a TypeScript type form with no C# equivalent |
 | `UnerasableTypeParameter` | 8 | a type parameter with neither a default nor a constraint to erase to |
 | `RestParameter` | 6 | a rest parameter, including the rest-union-tuple pseudo-overload form |
-| `UnreachableBaseConstructor` | 4 | its C# base requires constructor arguments the generated class has nothing to supply |
 | `CollectionType` | 3 | a tuple, which has no wire encoding, or an array whose elements have none — `ThreeValue.Encode` does walk a sequence element by element, so an array is exactly as encodable as what is in it |
 | `NoHandleForResult` | 1 | its result is neither a value the read op carries nor one object a handle could name — an array of objects needs a handle per element, not one for the result |
 
-<details><summary>Every skipped member (1100)</summary>
+<details><summary>Every skipped member (1096)</summary>
 
 | class | member | obstacle | why |
 |---|---|---|---|
@@ -652,13 +651,11 @@ the README's coverage table.
 | `BufferAttribute` | `property onUploadCallback` | `CallbackType` | `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BufferAttribute` | `method onUpload` | `CallbackType` | parameter 'callback': `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BufferAttribute` | `method toJSON` | `OptionsInterface` | return type: `BufferAttributeJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `BufferGeometry` | `property indirect` | `UnreachableBaseConstructor` | `IndirectStorageBufferAttribute` is not an emitted class: its C# base `StorageBufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with |
 | `BufferGeometry` | `property attributes` | `DomOrLibType` | `Record<string, BufferAttribute | InterleavedBufferAttribute>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `BufferGeometry` | `property morphAttributes` | `AnonymousObjectType` | `{ position?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; normal?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; color?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; }` is an anonymous object literal type with no named C# equivalent |
 | `BufferGeometry` | `property groups` | `OptionsInterface` | `GeometryGroup[]` is an array whose element type cannot be mapped: `GeometryGroup` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `BufferGeometry` | `property drawRange` | `AnonymousObjectType` | `{ start: number; count: number }` is an anonymous object literal type with no named C# equivalent |
 | `BufferGeometry` | `property userData` | `DomOrLibType` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `BufferGeometry` | `method setIndirect` | `UnreachableBaseConstructor` | parameter 'indirect': `IndirectStorageBufferAttribute` is not an emitted class: its C# base `StorageBufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with |
 | `BufferGeometry` | `method setAttribute` | `UnerasableTypeParameter` | parameter 'name': type parameter `K` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `BufferGeometry` | `method getAttribute` | `UnerasableTypeParameter` | parameter 'name': type parameter `K` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `BufferGeometry` | `method deleteAttribute` | `UnmappedTypeSyntax` | parameter 'name': `keyof Attributes` is a TypeScript `typeOperator` type, which has no C# equivalent |
@@ -790,8 +787,6 @@ the README's coverage table.
 | `InspectorBase` | `method inspect` | `NodeStackType` | parameter 'node': `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `InspectorBase` | `method computeAsync` | `NodeStackType` | parameter 'computeNode': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `InspectorBase` | `method beginCompute` | `NodeStackType` | parameter 'computeNode': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `InstancedMesh` | `property instanceMatrix` | `UnreachableBaseConstructor` | `InstancedBufferAttribute` is not an emitted class: its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with |
-| `InstancedMesh` | `property instanceColor` | `UnreachableBaseConstructor` | `InstancedBufferAttribute` is not an emitted class: its C# base `BufferAttribute` has a constructor requiring `array`, `itemSize`, and a generated class carries only its own constructor arguments — it has nothing to chain with |
 | `InterleavedBuffer` | `property updateRanges` | `AnonymousObjectType` | `Array<{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }>` is an array whose element type cannot be mapped: `{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }` is an anonymous object literal type with no named C# equivalent |
 | `InterleavedBuffer` | `property onUploadCallback` | `CallbackType` | `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `InterleavedBuffer` | `method onUpload` | `CallbackType` | parameter 'callback': `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
@@ -1820,7 +1815,7 @@ cannot be trimmed and must not be sent as null either — it travels as the `$un
 (`ThreeWireFormat.UndefinedKey`), which `three-interop.js` decodes to a real `undefined`. The
 round trip is pinned end to end by `tests/wire-format.test.mjs` against the vendored three.js.
 
-46 emittable classes carry 92 such parameters. They are the measure of how much
+49 emittable classes carry 97 such parameters. They are the measure of how much
 of the emitted surface that one wire feature holds up.
 
 <details><summary>Every affected class</summary>
@@ -1846,6 +1841,8 @@ of the emitted surface that one wire feature holds up.
 | `EllipseCurve` | `aEndAngle` |
 | `GridHelper` | `color1` |
 | `HemisphereLight` | `skyColor`, `groundColor` |
+| `IESSpotLight` | `color`, `angle` |
+| `InstancedBufferAttribute` | `normalized` |
 | `LatheGeometry` | `points` |
 | `LightProbe` | `sh` |
 | `Line` | `geometry` |
@@ -1858,6 +1855,7 @@ of the emitted surface that one wire feature holds up.
 | `Points` | `geometry` |
 | `PolarGridHelper` | `color1` |
 | `PolyhedronGeometry` | `vertices`, `indices` |
+| `ProjectorLight` | `color`, `angle` |
 | `QuadraticBezierCurve` | `v0`, `v1` |
 | `QuadraticBezierCurve3` | `v0`, `v1` |
 | `Raycaster` | `origin`, `direction` |

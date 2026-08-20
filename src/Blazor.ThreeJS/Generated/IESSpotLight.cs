@@ -2,6 +2,7 @@
 // Re-run `npm run emit` after changing the emitter or generator/three-api.json.
 
 using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Math;
 
 namespace Kebechet.Blazor.ThreeJS.Objects;
 
@@ -11,12 +12,41 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// </summary>
 public sealed class IESSpotLight : SpotLight
 {
+	private readonly Color? _color;
+	private readonly float _intensity;
+	private readonly float _distance;
+	private readonly float? _angle;
+	private readonly float _penumbra;
+	private readonly float _decay;
 	private Texture? _iesMap = null;
 	private bool _isIesMapWritten;
 
 	/// <summary>Initializes a new <see cref="IESSpotLight"/>.</summary>
-	public IESSpotLight()
+	/// <param name="color">The light's color.</param>
+	/// <param name="intensity">The light's strength/intensity measured in candela (cd).</param>
+	/// <param name="distance">Maximum range of the light. <c>0</c> means no limit.</param>
+	/// <param name="angle">
+	/// Maximum angle of light dispersion from its direction whose upper bound is <c>Math.PI/2</c>.
+	/// </param>
+	/// <param name="penumbra">
+	/// Percent of the spotlight cone that is attenuated due to penumbra. Value range is <c>[0,1]</c>.
+	/// </param>
+	/// <param name="decay">The amount the light dims along the distance of the light.</param>
+	public IESSpotLight(
+		Color? color = null,
+		float intensity = 1f,
+		float distance = 0f,
+		float? angle = null,
+		float penumbra = 0f,
+		float decay = 2f)
+		: base(color: color, intensity: intensity, distance: distance, angle: angle, penumbra: penumbra, decay: decay)
 	{
+		_color = color;
+		_intensity = intensity;
+		_distance = distance;
+		_angle = angle;
+		_penumbra = penumbra;
+		_decay = decay;
 	}
 
 	/// <summary>
@@ -28,6 +58,11 @@ public sealed class IESSpotLight : SpotLight
 	internal IESSpotLight(ThreeBatch batch, int handle)
 		: base(batch, handle)
 	{
+		_intensity = default!;
+		_distance = default!;
+		_penumbra = default!;
+		_decay = default!;
+
 		Batch = batch;
 	}
 
@@ -35,6 +70,27 @@ public sealed class IESSpotLight : SpotLight
 	protected override string ThreeTypeName
 	{
 		get { return "IESSpotLight"; }
+	}
+
+	/// <summary>
+	/// Constructor arguments forwarded to <c>THREE.IESSpotLight</c>: color, intensity, distance, angle,
+	/// penumbra, decay. An argument the caller left unspecified travels as the wire's not-supplied
+	/// sentinel, or is trimmed when nothing supplied follows it, so three.js applies its own default.
+	/// </summary>
+	protected override object?[] ConstructorArgs
+	{
+		get
+		{
+			return ThreeValue.TrimUnspecifiedTail(
+			[
+				ThreeValue.OrUnspecified(_color),
+				_intensity,
+				_distance,
+				ThreeValue.OrUnspecified(_angle),
+				_penumbra,
+				_decay
+			]);
+		}
 	}
 
 	/// <summary>

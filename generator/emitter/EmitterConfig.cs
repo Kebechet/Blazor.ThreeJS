@@ -348,8 +348,6 @@ internal static class EmitterConfig
 		["Uint8ClampedBufferAttribute"] = "`new BufferAttribute(new Uint8ClampedArray(values), itemSize)` — the subclass only wraps the array",
 		["Uint16BufferAttribute"] = "`new BufferAttribute(new Uint16Array(values), itemSize)` — the subclass only wraps the array",
 		["Uint32BufferAttribute"] = "`new BufferAttribute(new Uint32Array(values), itemSize)` — the subclass only wraps the array",
-		["PositionalAudio"] = "`new PrimitiveObject3D(\"PositionalAudio\", audioListener)` — its C# base needs constructor arguments a generated subclass cannot supply",
-		["InstancedBufferAttribute"] = "`new Primitive(\"InstancedBufferAttribute\", array, itemSize)` — same base-constructor limitation",
 		["InstancedInterleavedBuffer"] = "`new Primitive(\"InstancedInterleavedBuffer\", array, stride)` — same base-constructor limitation",
 		["VideoTexture"] = "`new Primitive(\"VideoTexture\", videoElement)` — it takes an `HTMLVideoElement`, which C# never holds",
 		["GLBufferAttribute"] = "`new Primitive(\"GLBufferAttribute\", buffer, type, itemSize, elementSize, count)` — it takes a raw WebGL buffer",

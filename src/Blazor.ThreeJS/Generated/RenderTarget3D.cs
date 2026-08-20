@@ -17,6 +17,7 @@ public sealed class RenderTarget3D : RenderTarget
 	/// <param name="height">Value forwarded to the <c>height</c> constructor argument.</param>
 	/// <param name="depth">Value forwarded to the <c>depth</c> constructor argument.</param>
 	public RenderTarget3D(float? width = null, float? height = null, float? depth = null)
+		: base(width: width, height: height)
 	{
 		_width = width;
 		_height = height;

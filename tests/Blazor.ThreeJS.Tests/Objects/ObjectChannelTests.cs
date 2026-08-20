@@ -201,7 +201,7 @@ public class ObjectChannelTests
 	}
 
 	[Fact]
-	public async Task BufferGeometry_GetIndirectRead_AnswersWithAPrimitiveCarryingThreeJsOwnTypeName()
+	public async Task BufferGeometry_GetIndirectRead_AnswersWithTheGeneratedTypeUnderTheAnsweredHandle()
 	{
 		// Arrange
 		var module = AnswerEveryQueryWith(AnsweredHandle, "IndirectStorageBufferAttribute");
@@ -215,7 +215,25 @@ public class ObjectChannelTests
 		// Assert
 		indirect.ShouldNotBeNull();
 		indirect.Handle.ShouldBe(AnsweredHandle);
-		indirect.ThreeType.ShouldBe("IndirectStorageBufferAttribute");
+	}
+
+	[Fact]
+	public async Task InspectorBase_GetRendererRead_AnswersWithAPrimitiveCarryingThreeJsOwnTypeName()
+	{
+		// Arrange: a read whose declared type no generated class mirrors still answers, as the untyped
+		// wrapper the escape hatch hands out, tagged with the name three.js registered it under.
+		var module = AnswerEveryQueryWith(AnsweredHandle, "WebGPURenderer");
+		var context = new ThreeContext(module, contextId: 1);
+		var inspector = new InspectorBase();
+		context.Attach(inspector);
+
+		// Act
+		var renderer = await inspector.GetRendererAsync();
+
+		// Assert
+		renderer.ShouldNotBeNull();
+		renderer.Handle.ShouldBe(AnsweredHandle);
+		renderer.ThreeType.ShouldBe("WebGPURenderer");
 	}
 
 	[Fact]

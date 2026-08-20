@@ -13,6 +13,7 @@ public sealed class CompressedTextureLoader : Loader
 	/// <summary>Initializes a new <see cref="CompressedTextureLoader"/>.</summary>
 	/// <param name="manager">Value forwarded to the <c>manager</c> constructor argument.</param>
 	public CompressedTextureLoader(LoadingManager? manager = null)
+		: base(manager: manager)
 	{
 		_manager = manager;
 	}

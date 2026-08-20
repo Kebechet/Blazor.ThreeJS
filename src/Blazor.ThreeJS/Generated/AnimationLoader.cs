@@ -13,6 +13,7 @@ public sealed class AnimationLoader : Loader
 	/// <summary>Initializes a new <see cref="AnimationLoader"/>.</summary>
 	/// <param name="manager">Value forwarded to the <c>manager</c> constructor argument.</param>
 	public AnimationLoader(LoadingManager? manager = null)
+		: base(manager: manager)
 	{
 		_manager = manager;
 	}

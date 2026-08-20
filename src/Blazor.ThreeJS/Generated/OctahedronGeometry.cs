@@ -22,6 +22,7 @@ public sealed class OctahedronGeometry : PolyhedronGeometry
 	/// Setting this to a value greater than zero add vertices making it no longer an octahedron.
 	/// </param>
 	public OctahedronGeometry(float radius = 1f, int detail = 0)
+		: base(radius: radius, detail: detail)
 	{
 		_radius = radius;
 		_detail = detail;

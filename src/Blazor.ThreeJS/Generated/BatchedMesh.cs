@@ -50,6 +50,7 @@ public sealed class BatchedMesh : Mesh
 	/// an instance of <see cref="Material"/>. Default is a new <see cref="MeshBasicMaterial"/>.
 	/// </param>
 	public BatchedMesh(int maxInstanceCount, int maxVertexCount, int? maxIndexCount = null, Material? material = null)
+		: base(material: material)
 	{
 		_maxInstanceCount = maxInstanceCount;
 		_maxVertexCount = maxVertexCount;

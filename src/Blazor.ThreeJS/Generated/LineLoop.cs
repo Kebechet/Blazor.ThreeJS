@@ -27,6 +27,7 @@ public sealed class LineLoop : Line
 	/// </param>
 	/// <param name="material">Material for the line. Default <c><c>new THREE.LineBasicMaterial()</c></c>.</param>
 	public LineLoop(BufferGeometry? geometry = null, Material? material = null)
+		: base(geometry: geometry, material: material)
 	{
 		_geometry = geometry;
 		_material = material;

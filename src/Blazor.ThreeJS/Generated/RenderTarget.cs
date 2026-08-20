@@ -221,6 +221,8 @@ public class RenderTarget : EventDispatcher
 
 			_textures = value;
 			_isTexturesWritten = true;
+			AttachEach(Batch, value);
+
 			RecordSet("textures", value);
 		}
 	}
@@ -509,6 +511,7 @@ public class RenderTarget : EventDispatcher
 
 		if (_isTexturesWritten)
 		{
+			AttachEach(batch, _textures);
 			batch.Set(Handle, "textures", ThreeValue.Encode(_textures));
 		}
 

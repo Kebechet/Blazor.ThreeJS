@@ -95,6 +95,8 @@ public sealed class SkeletonHelper : LineSegments
 
 			_bones = value;
 			_isBonesWritten = true;
+			AttachEach(Batch, value);
+
 			RecordSet("bones", value);
 		}
 	}
@@ -159,6 +161,7 @@ public sealed class SkeletonHelper : LineSegments
 
 		if (_isBonesWritten)
 		{
+			AttachEach(batch, _bones);
 			batch.Set(Handle, "bones", ThreeValue.Encode(_bones));
 		}
 	}

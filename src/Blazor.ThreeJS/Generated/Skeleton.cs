@@ -108,6 +108,8 @@ public sealed class Skeleton : ThreeObject
 
 			_bones = value;
 			_isBonesWritten = true;
+			AttachEach(Batch, value);
+
 			RecordSet("bones", value);
 		}
 	}
@@ -264,13 +266,16 @@ public sealed class Skeleton : ThreeObject
 	}
 
 	/// <summary>
-	/// Emits the create op for <c>THREE.Skeleton</c>, then replays every property written before this
-	/// object was attached. A replayed value that is itself a mirrored object is attached first, so its
-	/// create op reaches the batch before the write that references it by handle.
+	/// Attaches the objects <c>THREE.Skeleton</c> is constructed from, so their create ops reach the
+	/// batch before the one that references them by handle, then emits this object's own. A replayed
+	/// value that is itself a mirrored object is attached first, so its create op reaches the batch
+	/// before the write that references it by handle.
 	/// </summary>
 	/// <param name="batch">Batch to record the ops into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
 	{
+		AttachEach(batch, _bones);
+
 		base.EmitCreate(batch);
 
 		if (_isUuidWritten)
@@ -280,6 +285,7 @@ public sealed class Skeleton : ThreeObject
 
 		if (_isBonesWritten)
 		{
+			AttachEach(batch, _bones);
 			batch.Set(Handle, "bones", ThreeValue.Encode(_bones));
 		}
 

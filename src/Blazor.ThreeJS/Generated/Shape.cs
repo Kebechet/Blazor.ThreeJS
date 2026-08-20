@@ -100,6 +100,8 @@ public sealed class Shape : Path
 
 			_holes = value;
 			_isHolesWritten = true;
+			AttachEach(Batch, value);
+
 			RecordSet("holes", value);
 		}
 	}
@@ -118,7 +120,8 @@ public sealed class Shape : Path
 
 	/// <summary>
 	/// Emits the create op for <c>THREE.Shape</c>, then replays every property written before this
-	/// object was attached.
+	/// object was attached. A replayed value that is itself a mirrored object is attached first, so its
+	/// create op reaches the batch before the write that references it by handle.
 	/// </summary>
 	/// <param name="batch">Batch to record the ops into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
@@ -132,6 +135,7 @@ public sealed class Shape : Path
 
 		if (_isHolesWritten)
 		{
+			AttachEach(batch, _holes);
 			batch.Set(Handle, "holes", ThreeValue.Encode(_holes));
 		}
 	}

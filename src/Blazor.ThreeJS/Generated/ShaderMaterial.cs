@@ -22,6 +22,7 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// </summary>
 public class ShaderMaterial : Material
 {
+	private UniformsGroup?[] _uniformsGroups = [];
 	private string _vertexShader = string.Empty;
 	private string _fragmentShader = string.Empty;
 	private float _linewidth = 1f;
@@ -33,6 +34,7 @@ public class ShaderMaterial : Material
 	private string? _index0AttributeName;
 	private bool _uniformsNeedUpdate = false;
 	private GLSLVersion? _glslVersion = null;
+	private bool _isUniformsGroupsWritten;
 	private bool _isVertexShaderWritten;
 	private bool _isFragmentShaderWritten;
 	private bool _isLinewidthWritten;
@@ -66,6 +68,29 @@ public class ShaderMaterial : Material
 	protected override string ThreeTypeName
 	{
 		get { return "ShaderMaterial"; }
+	}
+
+	/// <summary>
+	/// An array holding uniforms groups for configuring UBOs. Writing it records a
+	/// <c>uniformsGroups</c> property write once this object is attached; writing the value already
+	/// held records nothing.
+	/// </summary>
+	public UniformsGroup?[] UniformsGroups
+	{
+		get { return _uniformsGroups; }
+		set
+		{
+			if (_uniformsGroups == value)
+			{
+				return;
+			}
+
+			_uniformsGroups = value;
+			_isUniformsGroupsWritten = true;
+			AttachEach(Batch, value);
+
+			RecordSet("uniformsGroups", value);
+		}
 	}
 
 	/// <summary>
@@ -314,12 +339,19 @@ public class ShaderMaterial : Material
 
 	/// <summary>
 	/// Emits the create op for <c>THREE.ShaderMaterial</c>, then replays every property written before
-	/// this object was attached.
+	/// this object was attached. A replayed value that is itself a mirrored object is attached first,
+	/// so its create op reaches the batch before the write that references it by handle.
 	/// </summary>
 	/// <param name="batch">Batch to record the ops into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
 	{
 		base.EmitCreate(batch);
+
+		if (_isUniformsGroupsWritten)
+		{
+			AttachEach(batch, _uniformsGroups);
+			batch.Set(Handle, "uniformsGroups", ThreeValue.Encode(_uniformsGroups));
+		}
 
 		if (_isVertexShaderWritten)
 		{

@@ -8,13 +8,13 @@
     "blockedClasses": 54,
     "reachableClasses": 264,
     "members": 3807,
-    "mirroredState": 1153,
-    "commands": 757,
+    "mirroredState": 1156,
+    "commands": 759,
     "asyncQueries": 792,
     "untypedObjectQueries": 12,
-    "skippedMembers": 1105,
+    "skippedMembers": 1100,
     "reachableMembers": 2376,
-    "generatedMembers": 1587,
+    "generatedMembers": 1591,
     "strandedMembers": 1431
   },
   "classes": [
@@ -50,8 +50,8 @@
         {
           "name": "tracks",
           "type": "Array<KeyframeTrack>",
-          "reason": "`Array<KeyframeTrack>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-          "category": "DomOrLibType"
+          "reason": "`Array<KeyframeTrack>` is an array whose element type cannot be mapped: `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
+          "category": "UnmappedUnion"
         },
         {
           "name": "blendMode",
@@ -3888,12 +3888,12 @@
       "members": 375
     },
     {
-      "category": "DomOrLibType",
-      "members": 113
-    },
-    {
       "category": "CallbackType",
       "members": 103
+    },
+    {
+      "category": "DomOrLibType",
+      "members": 97
     },
     {
       "category": "NotInstanceApi",
@@ -3901,23 +3901,23 @@
     },
     {
       "category": "AnonymousObjectType",
-      "members": 80
+      "members": 84
     },
     {
       "category": "OptionsInterface",
-      "members": 71
+      "members": 73
     },
     {
       "category": "UnmappedUnion",
-      "members": 61
+      "members": 62
     },
     {
       "category": "UntypedValue",
-      "members": 54
+      "members": 55
     },
     {
       "category": "AbstractClass",
-      "members": 35
+      "members": 37
     },
     {
       "category": "MathValueType",
@@ -3958,6 +3958,10 @@
     {
       "category": "CollectionType",
       "members": 3
+    },
+    {
+      "category": "NoHandleForResult",
+      "members": 1
     }
   ],
   "generatedEnums": [
@@ -4688,8 +4692,8 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`Array<KeyframeTrack>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "reason": "`Array<KeyframeTrack>` is an array whose element type cannot be mapped: `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
+      "category": "UnmappedUnion"
     },
     {
       "class": "AnimationClip",
@@ -6586,9 +6590,7 @@
       "member": "setFromPoints",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'points': `Array<Vector3Like>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "Command"
     },
     {
       "class": "Box3",
@@ -6929,8 +6931,8 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`Array<{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "reason": "`Array<{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }>` is an array whose element type cannot be mapped: `{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }` is an anonymous object literal type with no named C# equivalent",
+      "category": "AnonymousObjectType"
     },
     {
       "class": "BufferAttribute",
@@ -9599,8 +9601,8 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`Array<Curve<TVector>>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "reason": "`Array<Curve<TVector>>` is an array whose element type cannot be mapped: `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror",
+      "category": "AbstractClass"
     },
     {
       "class": "CurvePath",
@@ -11828,8 +11830,8 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`Array<{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "reason": "`Array<{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }>` is an array whose element type cannot be mapped: `{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }` is an anonymous object literal type with no named C# equivalent",
+      "category": "AnonymousObjectType"
     },
     {
       "class": "InterleavedBuffer",
@@ -12424,8 +12426,8 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`Array<{ /** The Object3D to display at this level. */ object: Object3D; /** The distance at which to display this level of detail. Expects a `Float`. */ distance: number; /** Threshold used to avoid flickering at LOD boundaries, as a fraction of distance. Expects a `Float`. */ hysteresis: number; }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "reason": "`Array<{ /** The Object3D to display at this level. */ object: Object3D; /** The distance at which to display this level of detail. Expects a `Float`. */ distance: number; /** Threshold used to avoid flickering at LOD boundaries, as a fraction of distance. Expects a `Float`. */ hysteresis: number; }>` is an array whose element type cannot be mapped: `{ /** The Object3D to display at this level. */ object: Object3D; /** The distance at which to display this level of detail. Expects a `Float`. */ distance: number; /** Threshold used to avoid flickering at LOD boundaries, as a fraction of distance. Expects a `Float`. */ hysteresis: number; }` is an anonymous object literal type with no named C# equivalent",
+      "category": "AnonymousObjectType"
     },
     {
       "class": "LOD",
@@ -12837,7 +12839,7 @@
       "origin": "Declared",
       "bucket": "Skipped",
       "reason": "every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take",
-      "category": "DomOrLibType"
+      "category": "AbstractClass"
     },
     {
       "class": "Lighting",
@@ -14725,9 +14727,8 @@
       "member": "clippingPlanes",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`Array<Plane>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "MirroredState",
+      "type": "Plane[]"
     },
     {
       "class": "Material",
@@ -25206,8 +25207,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "return type: `Array<Intersection<TIntersected>>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "reason": "return type: `Array<Intersection<TIntersected>>` is an array whose element type cannot be mapped: `Intersection<TIntersected>` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
+      "category": "OptionsInterface"
     },
     {
       "class": "Raycaster",
@@ -25215,8 +25216,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "return type: `Array<Intersection<TIntersected>>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "reason": "return type: `Array<Intersection<TIntersected>>` is an array whose element type cannot be mapped: `Intersection<TIntersected>` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
+      "category": "OptionsInterface"
     },
     {
       "class": "ReadbackBuffer",
@@ -26611,9 +26612,8 @@
       "member": "uniformsGroups",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`Array<UniformsGroup>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "MirroredState",
+      "type": "UniformsGroup?[]"
     },
     {
       "class": "ShaderMaterial",
@@ -27048,9 +27048,8 @@
       "member": "subPaths",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`Array<Path>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "MirroredState",
+      "type": "Path?[]"
     },
     {
       "class": "ShapePath",
@@ -27102,9 +27101,7 @@
       "member": "splineThru",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'pts': `Array<Vector2>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "Command"
     },
     {
       "class": "ShapePath",
@@ -27112,8 +27109,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "return type: `Array<Shape>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "reason": "returns `Shape?[]`, which is neither a value the read op carries nor a three.js object a handle could name",
+      "category": "NoHandleForResult"
     },
     {
       "class": "ShapeUtils",
@@ -29367,8 +29364,8 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`Array<{ start: number; count: number }>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "reason": "`Array<{ start: number; count: number }>` is an array whose element type cannot be mapped: `{ start: number; count: number }` is an anonymous object literal type with no named C# equivalent",
+      "category": "AnonymousObjectType"
     },
     {
       "class": "Texture",
@@ -30000,8 +29997,8 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`Array<Uniform | Uniform[]>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "reason": "`Array<Uniform | Uniform[]>` is an array whose element type cannot be mapped: `Uniform` is not an emitted class: required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express",
+      "category": "UntypedValue"
     },
     {
       "class": "UniformsGroup",

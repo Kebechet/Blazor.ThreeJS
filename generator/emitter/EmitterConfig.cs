@@ -362,17 +362,25 @@ internal static class EmitterConfig
 	};
 
 	/// <summary>
-	/// TypeScript's structural array interfaces. A plain JavaScript array satisfies all of them, and a
-	/// plain JavaScript array is what the sequence encoder produces, so a parameter declared with one
-	/// takes a C# array exactly rather than approximately.
+	/// TypeScript's structural array interfaces, plus <c>Array</c> itself. A plain JavaScript array
+	/// satisfies all of them, and a plain JavaScript array is what the sequence encoder produces, so a
+	/// parameter declared with one takes a C# array exactly rather than approximately.
 	/// <para>
 	/// They resolve ahead of the lib-type refusal because they are shapes rather than browser objects:
 	/// <c>ArrayLike&lt;number&gt;</c> is how every <c>KeyframeTrack</c> declares its times and values,
 	/// and refusing it blocked the entire animation stack over something the wire already carries.
 	/// </para>
+	/// <para>
+	/// <c>Array&lt;T&gt;</c> is here because it is <c>T[]</c> written the other way round, and the two
+	/// spellings appear interchangeably upstream — <c>Material.clippingPlanes</c> is
+	/// <c>Array&lt;Plane&gt;</c> while <c>CatmullRomCurve3.points</c> is <c>Vector3[]</c>. Without it the
+	/// generic spelling fell through to the lib-type arm, which both dropped members the wire could
+	/// carry and reported the rest as browser objects, which they are not.
+	/// </para>
 	/// </summary>
 	public static readonly IReadOnlySet<string> StructuralSequenceTypeNames = new HashSet<string>(StringComparer.Ordinal)
 	{
+		"Array",
 		"ArrayLike",
 		"Iterable",
 		"ReadonlyArray"

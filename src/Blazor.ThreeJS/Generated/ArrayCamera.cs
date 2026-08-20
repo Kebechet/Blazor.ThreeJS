@@ -69,6 +69,8 @@ public sealed class ArrayCamera : PerspectiveCamera
 
 			_cameras = value;
 			_isCamerasWritten = true;
+			AttachEach(Batch, value);
+
 			RecordSet("cameras", value);
 		}
 	}
@@ -96,9 +98,23 @@ public sealed class ArrayCamera : PerspectiveCamera
 	}
 
 	/// <summary>
+	/// Attaches the objects <c>THREE.ArrayCamera</c> is constructed from, so their create ops reach the
+	/// batch before the one that references them by handle, then emits this object's own.
+	/// </summary>
+	/// <param name="batch">Batch to record the ops into.</param>
+	internal override void EmitCreate(ThreeBatch batch)
+	{
+		AttachEach(batch, _array);
+
+		base.EmitCreate(batch);
+	}
+
+	/// <summary>
 	/// Replays every property written before this object was attached, so construction order never
 	/// matters to the caller. A property the caller never wrote is left alone: three.js's own default
-	/// is the truth for it, and the mirror has never read anything back to improve on that.
+	/// is the truth for it, and the mirror has never read anything back to improve on that. A replayed
+	/// value that is itself a mirrored object is attached first, so its create op reaches the batch
+	/// before the write that references it by handle.
 	/// </summary>
 	/// <param name="batch">Batch to record the property writes into.</param>
 	internal override void EmitState(ThreeBatch batch)
@@ -107,6 +123,7 @@ public sealed class ArrayCamera : PerspectiveCamera
 
 		if (_isCamerasWritten)
 		{
+			AttachEach(batch, _cameras);
 			batch.Set(Handle, "cameras", ThreeValue.Encode(_cameras));
 		}
 	}

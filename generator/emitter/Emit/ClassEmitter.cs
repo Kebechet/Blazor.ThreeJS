@@ -409,6 +409,25 @@ internal sealed class ClassEmitter
 	}
 
 	/// <summary>
+	/// Whether a mapping is an array whose elements are themselves mirrored objects. Such an array
+	/// encodes to one handle reference per element, so every element needs attaching before the op that
+	/// carries it — the same obligation a single-valued reference has, spread over the elements.
+	/// <para>
+	/// Kept apart from the single-valued test because the two attach differently: one is
+	/// <c>_field?.AttachTo(batch)</c>, the other <c>AttachEach(batch, _field)</c>, and reading the
+	/// array's own kind alone would answer <see cref="TypeMappingKind.Sequence"/> for an array of
+	/// numbers just as readily.
+	/// </para>
+	/// </summary>
+	/// <param name="mapping">The resolved type.</param>
+	/// <returns><see langword="true"/> when this is an array of generated wrapper classes.</returns>
+	private static bool IsSequenceOfMirroredObjects(TypeMapping mapping)
+	{
+		return mapping.Kind == TypeMappingKind.Sequence
+			&& mapping.ElementMapping?.Kind == TypeMappingKind.GeneratedWrapperClass;
+	}
+
+	/// <summary>
 	/// Whether the emitted class descends from the hand-written scene-graph root. Those replay their
 	/// state from <c>EmitState</c>, which <c>Object3D.AttachTo</c> calls after the create op and after
 	/// the transform has been replayed; everything else has no such hook and replays from
@@ -1331,6 +1350,13 @@ internal sealed class ClassEmitter
 			writer.WriteLine("}");
 			writer.WriteLine();
 		}
+		else if (IsSequenceOfMirroredObjects(property.Mapping))
+		{
+			// AttachEach tolerates both nulls, so the guard the single-valued arm needs is inside it
+			// rather than around the call.
+			writer.WriteLine("AttachEach(Batch, value);");
+			writer.WriteLine();
+		}
 
 		writer.WriteLine($"RecordSet(\"{property.ThreeName}\", value);");
 		writer.Outdent();
@@ -1551,12 +1577,16 @@ internal sealed class ClassEmitter
 		IReadOnlyList<EmittedProperty> properties)
 	{
 		var dependencies = constructorParameters
-			.Where(x => x.Alternatives.Any(alternative => alternative.Kind == TypeMappingKind.GeneratedWrapperClass))
+			.Where(x => x.Alternatives.Any(alternative =>
+				alternative.Kind == TypeMappingKind.GeneratedWrapperClass
+				|| IsSequenceOfMirroredObjects(alternative)))
 			.ToList();
 
 		var isSceneGraphType = IsSceneGraphType(irClass);
 		var hasReplay = properties.Count > 0;
-		var hasReplayedReference = properties.Any(x => x.Mapping.Kind == TypeMappingKind.GeneratedWrapperClass);
+		var hasReplayedReference = properties.Any(x =>
+			x.Mapping.Kind == TypeMappingKind.GeneratedWrapperClass
+			|| IsSequenceOfMirroredObjects(x.Mapping));
 
 		if (dependencies.Count > 0 || (hasReplay && !isSceneGraphType))
 		{
@@ -1583,6 +1613,12 @@ internal sealed class ClassEmitter
 				if (dependency.HasSeveralAlternatives)
 				{
 					writer.WriteLine($"({dependency.FieldName} as {EmitterConfig.RootBaseTypeName})?.AttachTo(batch);");
+					continue;
+				}
+
+				if (IsSequenceOfMirroredObjects(dependency.Mapping))
+				{
+					writer.WriteLine($"AttachEach(batch, {dependency.FieldName});");
 					continue;
 				}
 
@@ -1650,6 +1686,10 @@ internal sealed class ClassEmitter
 				writer.WriteLine(property.CSharpTypeName.EndsWith('?')
 					? $"{value}?.AttachTo(batch);"
 					: $"{value}.AttachTo(batch);");
+			}
+			else if (IsSequenceOfMirroredObjects(property.Mapping))
+			{
+				writer.WriteLine($"AttachEach(batch, {value});");
 			}
 
 			writer.WriteLine($"batch.Set(Handle, \"{property.ThreeName}\", ThreeValue.Encode({value}));");

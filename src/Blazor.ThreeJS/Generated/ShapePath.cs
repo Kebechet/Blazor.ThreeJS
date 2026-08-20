@@ -13,9 +13,11 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 public sealed class ShapePath : ThreeObject
 {
 	private string _type = string.Empty;
+	private Path?[] _subPaths = [];
 	private Path? _currentPath = null;
 	private bool _isTypeWritten;
 	private bool _isColorWritten;
+	private bool _isSubPathsWritten;
 	private bool _isCurrentPathWritten;
 
 	/// <summary>
@@ -77,6 +79,28 @@ public sealed class ShapePath : ThreeObject
 			_type = value;
 			_isTypeWritten = true;
 			RecordSet("type", value);
+		}
+	}
+
+	/// <summary>
+	/// The paths that have been generated for this shape. Writing it records a <c>subPaths</c> property
+	/// write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public Path?[] SubPaths
+	{
+		get { return _subPaths; }
+		set
+		{
+			if (_subPaths == value)
+			{
+				return;
+			}
+
+			_subPaths = value;
+			_isSubPathsWritten = true;
+			AttachEach(Batch, value);
+
+			RecordSet("subPaths", value);
 		}
 	}
 
@@ -153,6 +177,16 @@ public sealed class ShapePath : ThreeObject
 	}
 
 	/// <summary>
+	/// Adds an instance of <see cref="SplineCurve"/> to the path by connecting the current point with
+	/// the given list of points.
+	/// </summary>
+	/// <param name="pts">An array of points in 2D space.</param>
+	public void SplineThru(Vector2[] pts)
+	{
+		RecordCall("splineThru", (object?) pts);
+	}
+
+	/// <summary>
 	/// Emits the create op for <c>THREE.ShapePath</c>, then replays every property written before this
 	/// object was attached. A replayed value that is itself a mirrored object is attached first, so its
 	/// create op reaches the batch before the write that references it by handle.
@@ -170,6 +204,12 @@ public sealed class ShapePath : ThreeObject
 		if (_isColorWritten)
 		{
 			batch.Set(Handle, "color", ThreeValue.Encode(Color));
+		}
+
+		if (_isSubPathsWritten)
+		{
+			AttachEach(batch, _subPaths);
+			batch.Set(Handle, "subPaths", ThreeValue.Encode(_subPaths));
 		}
 
 		if (_isCurrentPathWritten)

@@ -189,6 +189,41 @@ public abstract class ThreeObject
 	}
 
 	/// <summary>
+	/// Attaches every mirrored object in a sequence, so each element's create op reaches the batch
+	/// before the op that references it by handle. The array counterpart of a bare
+	/// <see cref="AttachTo"/> on a single-valued member: an array of mirrored objects encodes to one
+	/// handle reference per element, and each of those handles has to name something the applier has
+	/// already created.
+	/// <para>
+	/// A <see langword="null"/> batch means the owner is not attached yet, and a null element means the
+	/// caller put a hole in the array on purpose. Both are left alone rather than treated as errors —
+	/// the owner replays the whole property on attach, and a hole encodes to a JSON null the applier
+	/// assigns as-is.
+	/// </para>
+	/// <para>
+	/// <see cref="AttachMirroredValue"/> does the same walk for a method argument. The two are separate
+	/// because they know different amounts: an argument arrives as <see langword="object"/> through
+	/// <c>params</c> and has to be type-tested at runtime, whereas a generated property's element type
+	/// is settled when the class is emitted, so this one states it and lets the compiler hold the
+	/// emitter to it.
+	/// </para>
+	/// </summary>
+	/// <param name="batch">Batch to attach into, or <see langword="null"/> when the owner has none yet.</param>
+	/// <param name="elements">The sequence whose elements are mirrored objects.</param>
+	private protected static void AttachEach(ThreeBatch? batch, IEnumerable<ThreeObject?>? elements)
+	{
+		if (batch is null || elements is null)
+		{
+			return;
+		}
+
+		foreach (var element in elements)
+		{
+			element?.AttachTo(batch);
+		}
+	}
+
+	/// <summary>
 	/// Rejects an attempt to attach this object to a second batch. An object records its writes into
 	/// exactly one batch, so sharing it between two contexts would emit a handle reference into a
 	/// context that never created the object — an unknown-handle failure in the browser with no

@@ -37,6 +37,7 @@ public class Material : EventDispatcher
 	private StencilOp _stencilZFail = StencilOp.KeepStencilOp;
 	private StencilOp _stencilZPass = StencilOp.KeepStencilOp;
 	private bool _stencilWrite = false;
+	private Plane[]? _clippingPlanes = null;
 	private bool _clipIntersection = false;
 	private bool _clipShadows = false;
 	private Side? _shadowSide = null;
@@ -78,6 +79,7 @@ public class Material : EventDispatcher
 	private bool _isStencilZFailWritten;
 	private bool _isStencilZPassWritten;
 	private bool _isStencilWriteWritten;
+	private bool _isClippingPlanesWritten;
 	private bool _isClipIntersectionWritten;
 	private bool _isClipShadowsWritten;
 	private bool _isShadowSideWritten;
@@ -670,6 +672,29 @@ public class Material : EventDispatcher
 	}
 
 	/// <summary>
+	/// User-defined clipping planes specified as THREE.Plane objects in world space. These planes apply
+	/// to the objects this material is attached to. Points in space whose signed distance to the plane
+	/// is negative are clipped (not rendered). This requires <c>WebGLRenderer#localClippingEnabled</c>
+	/// to be <c>true</c>. Writing it records a <c>clippingPlanes</c> property write once this object is
+	/// attached; writing the value already held records nothing.
+	/// </summary>
+	public Plane[]? ClippingPlanes
+	{
+		get { return _clippingPlanes; }
+		set
+		{
+			if (_clippingPlanes == value)
+			{
+				return;
+			}
+
+			_clippingPlanes = value;
+			_isClippingPlanesWritten = true;
+			RecordSet("clippingPlanes", value);
+		}
+	}
+
+	/// <summary>
 	/// Changes the behavior of clipping planes so that only their intersection is clipped, rather than
 	/// their union. Writing it records a <c>clipIntersection</c> property write once this object is
 	/// attached; writing the value already held records nothing.
@@ -1208,6 +1233,11 @@ public class Material : EventDispatcher
 		if (_isStencilWriteWritten)
 		{
 			batch.Set(Handle, "stencilWrite", ThreeValue.Encode(_stencilWrite));
+		}
+
+		if (_isClippingPlanesWritten)
+		{
+			batch.Set(Handle, "clippingPlanes", ThreeValue.Encode(_clippingPlanes));
 		}
 
 		if (_isClipIntersectionWritten)

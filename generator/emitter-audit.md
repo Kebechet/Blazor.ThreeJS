@@ -290,9 +290,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `AnimationMixer` | `property _nActiveControlInterpolants` | declared `protected`, so it is not part of the public API |
 | `AnimationMixer` | `property _root` | declared `protected`, so it is not part of the public API |
 | `AnimationObjectGroup` | `constructor parameter args` | a rest parameter; three.js applies its own behaviour when it receives none |
-| `AnimationObjectGroup` | `method add` | parameter 'args' is a rest parameter (`Object3D[]`) |
-| `AnimationObjectGroup` | `method remove` | parameter 'args' is a rest parameter (`Object3D[]`) |
-| `AnimationObjectGroup` | `method uncache` | parameter 'args' is a rest parameter (`Object3D[]`) |
 | `AnimationUtils` | `method convertArray` | parameter 'type': `TypedArrayConstructor` aliases `| Int8ArrayConstructor | Uint8ArrayConstructor | Uint8ClampedArrayConstructor | Int16ArrayConstructor | Uint16ArrayConstructor | Int32ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `ArrowHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `Audio` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
@@ -348,7 +345,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `BufferGeometry` | `method hasAttribute` | parameter 'name': `keyof Attributes` is a TypeScript `typeOperator` type, which has no C# equivalent |
 | `BufferGeometry` | `method setAttribute` | parameter 'name': type parameter `K` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `BufferGeometry` | `method toJSON` | return type: `BufferGeometryJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `BufferGeometry` | `property attributes` | `Record<string, BufferAttribute | InterleavedBufferAttribute>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `BufferGeometry` | `property morphAttributes` | `{ position?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; normal?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; color?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; }` is an anonymous object literal type with no named C# equivalent |
 | `BufferGeometry` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Camera` | `property matrixWorldInverse` | `Matrix4` hands its components out as a mutable array, so a change to it cannot be observed and there is nothing to record a property write from |
@@ -730,7 +726,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshPhysicalMaterial` | `property iridescenceIORNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhysicalMaterial` | `property iridescenceNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhysicalMaterial` | `property iridescenceThicknessNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshPhysicalMaterial` | `property iridescenceThicknessRange` | `[number, number]` is a tuple, which has no wire encoding |
 | `MeshPhysicalMaterial` | `property sheenNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhysicalMaterial` | `property sheenRoughnessNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhysicalMaterial` | `property specularColorNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -750,7 +745,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `MeshPhysicalNodeMaterial` | `property iridescenceIORNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhysicalNodeMaterial` | `property iridescenceNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhysicalNodeMaterial` | `property iridescenceThicknessNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshPhysicalNodeMaterial` | `property iridescenceThicknessRange` | `[number, number]` is a tuple, which has no wire encoding |
 | `MeshPhysicalNodeMaterial` | `property sheenNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhysicalNodeMaterial` | `property sheenRoughnessNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhysicalNodeMaterial` | `property specularColorNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1002,7 +996,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `ShaderMaterial` | `constructor parameter parameters` | `ShaderMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `ShaderMaterial` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `ShaderMaterial` | `fenced code in the property fog summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
-| `ShaderMaterial` | `property defaultAttributeValues` | `{ color: [number, number, number]; uv: [number, number]; uv1: [number, number]; }` is an anonymous object literal type with no named C# equivalent |
 | `ShaderMaterial` | `property uniforms` | `{ [uniform: string]: IUniform }` is a dictionary whose values cannot be mapped: `IUniform` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `ShadowMaterial` | `constructor parameter parameters` | `ShadowMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `ShadowMaterial` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |

@@ -716,6 +716,12 @@ internal sealed record MappedParameter
 	public required bool IsOptional { get; init; }
 
 	/// <summary>
+	/// Whether three.js declares it a rest parameter, so it is written <c>params T[]</c> and reaches the
+	/// wire as one argument per element rather than as one array argument.
+	/// </summary>
+	public bool IsRest { get; init; }
+
+	/// <summary>
 	/// Whether the parameter is emitted as <c>T? x = null</c> meaning "not supplied", so its argument
 	/// has to be trimmed rather than sent as JSON null.
 	/// </summary>

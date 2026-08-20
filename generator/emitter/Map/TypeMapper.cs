@@ -72,7 +72,7 @@ internal sealed class TypeMapper
 				return MapArray(type, context);
 			case "tuple":
 			case "namedTupleMember":
-				return TypeMapping.Skipped(SkipCategory.CollectionType, $"`{type.Text}` is a tuple, which has no wire encoding");
+				return MapTuple(type, context);
 			case "function":
 			case "constructorType":
 				return TypeMapping.Skipped(
@@ -246,6 +246,22 @@ internal sealed class TypeMapper
 			return TypeMapping.Mapped(name, TypeMappingKind.HandWrittenTypedArray);
 		}
 
+		// `Record<string, T>` is TypeScript's own spelling of an index signature, and three.js uses both.
+		// Same wire form either way: a plain object keyed by string.
+		if (string.Equals(name, "Record", StringComparison.Ordinal)
+			&& type.TypeArguments is [{ Kind: "primitive", Name: "string" }, { } recordValue])
+		{
+			var valueMapping = Map(recordValue, context);
+			if (valueMapping.IsMapped && (IsWireValue(valueMapping) || StructureCatalog.IsMirroredObject(valueMapping)))
+			{
+				return TypeMapping.Mapped(
+					$"Dictionary<string, {valueMapping.CSharpTypeName}>",
+					TypeMappingKind.Dictionary,
+					valueMapping.RequiredGeneratedTypeName,
+					elementMapping: valueMapping);
+			}
+		}
+
 		// Structural array interfaces, which a plain JavaScript array satisfies — and a plain JavaScript
 		// array is exactly what the sequence encoder produces. `ArrayLike<number>` is what every
 		// keyframe track declares its times and values as, so refusing it as a lib type blocked the
@@ -343,6 +359,46 @@ internal sealed class TypeMapper
 	/// <param name="type">The object node.</param>
 	/// <param name="context">Declaring member and class.</param>
 	/// <returns>The mapping, or a refusal naming what stopped it.</returns>
+	/// <summary>
+	/// Maps a tuple whose elements are all one type to an array of it, and refuses the rest.
+	/// <para>
+	/// A JavaScript tuple <em>is</em> an array - <c>iridescenceThicknessRange</c> is <c>[100, 400]</c>
+	/// and three.js reads it by index - so the wire form is identical and only the arity is not carried.
+	/// ⚠️ That is a narrowing: C# will accept an array of the wrong length where TypeScript would not,
+	/// and three.js is what rejects it. A member that does not exist is the worse of the two answers.
+	/// </para>
+	/// <para>
+	/// A mixed tuple stays refused. There is no element type to name, and an array of the widest common
+	/// type would say less about the members than the declaration does.
+	/// </para>
+	/// </summary>
+	/// <param name="type">The tuple node.</param>
+	/// <param name="context">Declaring member and class.</param>
+	/// <returns>The mapping, or a refusal.</returns>
+	private TypeMapping MapTuple(IrType type, TypeMappingContext context)
+	{
+		if (type.Elements.Count == 0)
+		{
+			return TypeMapping.Skipped(SkipCategory.CollectionType, $"`{type.Text}` is an empty tuple, which carries nothing");
+		}
+
+		var elementMappings = type.Elements.Select(x => Map(x, context)).ToList();
+		if (elementMappings.Any(x => !x.IsMapped)
+			|| elementMappings.Select(x => x.CSharpTypeName).Distinct(StringComparer.Ordinal).Count() != 1)
+		{
+			return TypeMapping.Skipped(
+				SkipCategory.CollectionType,
+				$"`{type.Text}` is a tuple whose elements are not all one type, so there is no element type to name it by");
+		}
+
+		var element = elementMappings[0];
+		return TypeMapping.Mapped(
+			element.CSharpTypeName + "[]",
+			TypeMappingKind.Sequence,
+			element.RequiredGeneratedTypeName,
+			elementMapping: element);
+	}
+
 	private TypeMapping MapObjectLiteral(IrType type, TypeMappingContext context)
 	{
 		// `{ [key: string]: number }` is a dictionary and nothing else: no named members, one index

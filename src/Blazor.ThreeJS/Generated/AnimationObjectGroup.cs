@@ -41,6 +41,27 @@ public sealed class AnimationObjectGroup : ThreeObject
 		get { return "AnimationObjectGroup"; }
 	}
 
+	/// <summary>Adds an arbitrary number of objects to this animation group.</summary>
+	/// <param name="args">The 3D objects to add.</param>
+	public void Add(params Object3D?[] args)
+	{
+		RecordCall("add", args);
+	}
+
+	/// <summary>Removes an arbitrary number of objects to this animation group.</summary>
+	/// <param name="args">The 3D objects to remove.</param>
+	public void Remove(params Object3D?[] args)
+	{
+		RecordCall("remove", args);
+	}
+
+	/// <summary>Deallocates all memory resources for the passed 3D objects of this animation group.</summary>
+	/// <param name="args">The 3D objects to uncache.</param>
+	public void Uncache(params Object3D?[] args)
+	{
+		RecordCall("uncache", args);
+	}
+
 	/// <summary>
 	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
 	/// than mirrored: records a get op, sends it behind every write already pending, and completes with

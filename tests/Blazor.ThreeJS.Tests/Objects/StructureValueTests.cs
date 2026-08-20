@@ -234,4 +234,47 @@ public class StructureValueTests
 
 		thrown.Message.ShouldContain("object");
 	}
+
+	[Fact]
+	public void AnimationObjectGroup_Add_SendsOneArgumentPerObjectRatherThanOneArray()
+	{
+		// ⚠️ The one place array covariance is the wanted behaviour rather than the hazard the escape
+		// hatch warns about. `RecordCall` takes `params object?[]`, so an `Object3D[]` binds *as* the
+		// argument list - which is exactly what a JavaScript rest parameter means. A `(object?)` cast
+		// here would send one array where three.js expects three objects.
+		var batch = new ThreeBatch();
+		var group = new AnimationObjectGroup();
+		group.AttachTo(batch);
+		batch.Drain();
+
+		var first = new Group();
+		var second = new Group();
+
+		// Act
+		group.Add(first, second);
+
+		// Assert
+		var op = batch.Drain().Single(x => x.Kind == ThreeOpKind.Call && x.Member == "add");
+		op.Args.ShouldNotBeNull();
+		op.Args!.Length.ShouldBe(2);
+		op.Args[0].ShouldBeOfType<ThreeValue.HandleReference>().Handle.ShouldBe(first.Handle);
+		op.Args[1].ShouldBeOfType<ThreeValue.HandleReference>().Handle.ShouldBe(second.Handle);
+	}
+
+	[Fact]
+	public void MeshPhysicalMaterial_IridescenceThicknessRange_IsATupleCarriedAsAnArray()
+	{
+		// A JavaScript tuple is an array, so the wire form is identical and only the arity is not
+		// carried - three.js is what rejects a wrong-length one, which is better than the member not
+		// existing at all.
+		var batch = new ThreeBatch();
+		var material = new MeshPhysicalMaterial();
+		material.AttachTo(batch);
+		batch.Drain();
+
+		material.IridescenceThicknessRange = [100f, 400f];
+
+		var op = batch.Drain().Single(x => x.Kind == ThreeOpKind.Set && x.Member == "iridescenceThicknessRange");
+		op.Value.ShouldBeOfType<object?[]>().Length.ShouldBe(2);
+	}
 }

@@ -32,6 +32,7 @@ public class ShaderMaterial : Material
 	private bool _lights = false;
 	private bool _clipping = false;
 	private ShaderMaterialExtensions _extensions;
+	private ShaderMaterialDefaultAttributeValues _defaultAttributeValues;
 	private string? _index0AttributeName;
 	private bool _uniformsNeedUpdate = false;
 	private GLSLVersion? _glslVersion = null;
@@ -45,6 +46,7 @@ public class ShaderMaterial : Material
 	private bool _isLightsWritten;
 	private bool _isClippingWritten;
 	private bool _isExtensionsWritten;
+	private bool _isDefaultAttributeValuesWritten;
 	private bool _isIndex0AttributeNameWritten;
 	private bool _isUniformsNeedUpdateWritten;
 	private bool _isGlslVersionWritten;
@@ -287,6 +289,28 @@ public class ShaderMaterial : Material
 	}
 
 	/// <summary>
+	/// When the rendered geometry doesn't include these attributes but the material does, these default
+	/// values will be passed to the shaders. This avoids errors when buffer data is missing. - color: [
+	/// 1, 1, 1 ] - uv: [ 0, 0 ] - uv1: [ 0, 0 ]. Writing it records a <c>defaultAttributeValues</c>
+	/// property write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public ShaderMaterialDefaultAttributeValues DefaultAttributeValues
+	{
+		get { return _defaultAttributeValues; }
+		set
+		{
+			if (_defaultAttributeValues == value)
+			{
+				return;
+			}
+
+			_defaultAttributeValues = value;
+			_isDefaultAttributeValuesWritten = true;
+			RecordSet("defaultAttributeValues", value);
+		}
+	}
+
+	/// <summary>
 	/// If set, this calls
 	/// [gl.bindAttribLocation](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindAttribLocation)
 	/// to bind a generic vertex index to an attribute variable. Writing it records a
@@ -420,6 +444,11 @@ public class ShaderMaterial : Material
 		if (_isExtensionsWritten)
 		{
 			batch.Set(Handle, "extensions", ThreeValue.Encode(_extensions));
+		}
+
+		if (_isDefaultAttributeValuesWritten)
+		{
+			batch.Set(Handle, "defaultAttributeValues", ThreeValue.Encode(_defaultAttributeValues));
 		}
 
 		if (_isIndex0AttributeNameWritten)

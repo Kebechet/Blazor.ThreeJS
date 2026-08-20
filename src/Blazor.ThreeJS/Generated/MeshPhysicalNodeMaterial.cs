@@ -22,6 +22,7 @@ public class MeshPhysicalNodeMaterial : MeshStandardNodeMaterial
 	private float _reflectivity = 0.5f;
 	private Texture? _iridescenceMap = null;
 	private float _iridescenceIOR = 1.3f;
+	private float[] _iridescenceThicknessRange = [];
 	private Texture? _iridescenceThicknessMap = null;
 	private Texture? _sheenColorMap = null;
 	private float _sheenRoughness = 1f;
@@ -50,6 +51,7 @@ public class MeshPhysicalNodeMaterial : MeshStandardNodeMaterial
 	private bool _isReflectivityWritten;
 	private bool _isIridescenceMapWritten;
 	private bool _isIridescenceIORWritten;
+	private bool _isIridescenceThicknessRangeWritten;
 	private bool _isIridescenceThicknessMapWritten;
 	private bool _isSheenColorWritten;
 	private bool _isSheenColorMapWritten;
@@ -421,6 +423,28 @@ public class MeshPhysicalNodeMaterial : MeshStandardNodeMaterial
 			_iridescenceIOR = value;
 			_isIridescenceIORWritten = true;
 			RecordSet("iridescenceIOR", value);
+		}
+	}
+
+	/// <summary>
+	/// Array of exactly 2 elements, specifying minimum and maximum thickness of the iridescence layer.
+	/// Thickness of iridescence layer has an equivalent effect of the one <c>thickness</c> has on
+	/// <c>ior</c>. Writing it records a <c>iridescenceThicknessRange</c> property write once this
+	/// object is attached; writing the value already held records nothing.
+	/// </summary>
+	public float[] IridescenceThicknessRange
+	{
+		get { return _iridescenceThicknessRange; }
+		set
+		{
+			if (_iridescenceThicknessRange == value)
+			{
+				return;
+			}
+
+			_iridescenceThicknessRange = value;
+			_isIridescenceThicknessRangeWritten = true;
+			RecordSet("iridescenceThicknessRange", value);
 		}
 	}
 
@@ -981,6 +1005,11 @@ public class MeshPhysicalNodeMaterial : MeshStandardNodeMaterial
 		if (_isIridescenceIORWritten)
 		{
 			batch.Set(Handle, "iridescenceIOR", ThreeValue.Encode(_iridescenceIOR));
+		}
+
+		if (_isIridescenceThicknessRangeWritten)
+		{
+			batch.Set(Handle, "iridescenceThicknessRange", ThreeValue.Encode(_iridescenceThicknessRange));
 		}
 
 		if (_isIridescenceThicknessMapWritten)

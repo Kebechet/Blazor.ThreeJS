@@ -140,8 +140,8 @@ commands and queries, which are surface rather than behaviour. Subtracting the p
 the ~100 descendants is right, because re-declaring them everywhere would be worse — but it means a member
 **neither** half carries is on **no C# type at all**, without any skip rule below having fired.
 
-Of the 66 `Object3D` members that could be mirrored, the hand-written half implements 20
-(19 properties and 1 method) and the generated half emits 36
+Of the 68 `Object3D` members that could be mirrored, the hand-written half implements 22
+(19 properties and 3 methods) and the generated half emits 36
 (21 commands and 15 queries), leaving 10.
 
 ⚠️ The generated half emits **no mirrored state**, which is why what remains is almost all of that bucket.
@@ -508,10 +508,10 @@ three.js is reachable at all" and "how much of what we mirror is state".
 
 | bucket | what it means | all classes | emittable classes |
 |---|---|---|---|
-| MirroredState | state C# holds and writes through on change | 1153 | 936 |
-| Command | a method recorded as a call op, returning nothing or `this` | 775 | 327 |
-| AsyncQuery | a method whose result the caller needs back | 879 | 541 |
-| Skipped | not mirrored; see the skip list below | 841 | 635 |
+| MirroredState | state C# holds and writes through on change | 1157 | 940 |
+| Command | a method recorded as a call op, returning nothing or `this` | 780 | 330 |
+| AsyncQuery | a method whose result the caller needs back | 880 | 541 |
+| Skipped | not mirrored; see the skip list below | 831 | 628 |
 | **total** | | **3648** | **2439** |
 
 Two op kinds answer: **read**, which invokes a method, and **get**, which reads a property.
@@ -547,11 +547,11 @@ the README's coverage table.
 |---|---|---|
 | `NodeStackType` | 384 | declared under `src/nodes/**`, the TSL / WebGPU node stack outside the extracted surface |
 | `CallbackType` | 95 | a JavaScript callback; the wire format carries ops in one direction only |
-| `DomOrLibType` | 79 | a TypeScript lib or DOM type; C# holds no browser object and the wire has no encoding for one |
+| `DomOrLibType` | 78 | a TypeScript lib or DOM type; C# holds no browser object and the wire has no encoding for one |
 | `UnmappedUnion` | 42 | a union of several real alternatives in a position that holds one type — a property or a return type, since a required parameter becomes one overload per arm |
 | `NotInstanceApi` | 38 | static, non-public or `@internal` — not part of the mirrored instance API |
-| `AnonymousObjectType` | 33 | an anonymous object literal type with no name to give a C# type |
 | `OptionsInterface` | 33 | a structural interface — an options bag or an event map — with no C# type to be |
+| `AnonymousObjectType` | 32 | an anonymous object literal type with no name to give a C# type |
 | `UntypedValue` | 30 | declared `any` / `unknown`, or with no type at all |
 | `NotExported` | 19 | three.js's public barrel does not re-export it as a value, so the applier cannot reach it on `THREE` |
 | `UnmappedTypeAlias` | 18 | a type alias that is neither a constant group nor a rename of a mapped type |
@@ -561,10 +561,9 @@ the README's coverage table.
 | `UnerasableTypeParameter` | 8 | a type parameter with neither a default nor a constraint to erase to |
 | `UnmappedTypeSyntax` | 7 | a TypeScript type form with no C# equivalent |
 | `NoHandleForResult` | 6 | its result is neither a value the read op carries nor one object a handle could name — an array of objects needs a handle per element, not one for the result |
-| `RestParameter` | 6 | a rest parameter, including the rest-union-tuple pseudo-overload form |
-| `CollectionType` | 3 | a tuple, which has no wire encoding, or an array whose elements have none — `ThreeValue.Encode` does walk a sequence element by element, so an array is exactly as encodable as what is in it |
+| `RestParameter` | 1 | a rest parameter, including the rest-union-tuple pseudo-overload form |
 
-<details><summary>Every skipped member (841)</summary>
+<details><summary>Every skipped member (831)</summary>
 
 | class | member | obstacle | why |
 |---|---|---|---|
@@ -582,9 +581,6 @@ the README's coverage table.
 | `AnimationMixer` | `property _bindingsByRootAndName` | `NotInstanceApi` | declared `protected`, so it is not part of the public API |
 | `AnimationMixer` | `property _actionsByClip` | `NotInstanceApi` | declared `protected`, so it is not part of the public API |
 | `AnimationMixer` | `property _accuIndex` | `NotInstanceApi` | declared `protected`, so it is not part of the public API |
-| `AnimationObjectGroup` | `method add` | `RestParameter` | parameter 'args' is a rest parameter (`Object3D[]`) |
-| `AnimationObjectGroup` | `method remove` | `RestParameter` | parameter 'args' is a rest parameter (`Object3D[]`) |
-| `AnimationObjectGroup` | `method uncache` | `RestParameter` | parameter 'args' is a rest parameter (`Object3D[]`) |
 | `AnimationUtils` | `method convertArray` | `UnmappedTypeAlias` | parameter 'type': `TypedArrayConstructor` aliases `| Int8ArrayConstructor | Uint8ArrayConstructor | Uint8ClampedArrayConstructor | Int16ArrayConstructor | Uint16ArrayConstructor | Int32ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Audio` | `property context` | `DomOrLibType` | `AudioContext` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `property gain` | `DomOrLibType` | `GainNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -624,7 +620,6 @@ the README's coverage table.
 | `BoxGeometry` | `method fromJSON` | `NotInstanceApi` | marked `@internal` upstream, so it is not public API |
 | `BufferAttribute` | `property onUploadCallback` | `CallbackType` | `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BufferAttribute` | `method onUpload` | `CallbackType` | parameter 'callback': `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `BufferGeometry` | `property attributes` | `DomOrLibType` | `Record<string, BufferAttribute | InterleavedBufferAttribute>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `BufferGeometry` | `property morphAttributes` | `AnonymousObjectType` | `{ position?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; normal?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; color?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; }` is an anonymous object literal type with no named C# equivalent |
 | `BufferGeometry` | `property userData` | `DomOrLibType` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `BufferGeometry` | `method setAttribute` | `UnerasableTypeParameter` | parameter 'name': type parameter `K` has neither a default nor a constraint, so erasing it leaves nothing to map to |
@@ -922,7 +917,6 @@ the README's coverage table.
 | `MeshPhongMaterial` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongNodeMaterial` | `property shininessNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhongNodeMaterial` | `property specularNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshPhysicalMaterial` | `property iridescenceThicknessRange` | `CollectionType` | `[number, number]` is a tuple, which has no wire encoding |
 | `MeshPhysicalMaterial` | `property clearcoatNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhysicalMaterial` | `property clearcoatRoughnessNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhysicalMaterial` | `property clearcoatNormalNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -958,7 +952,6 @@ the README's coverage table.
 | `MeshPhysicalNodeMaterial` | `property attenuationColorNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhysicalNodeMaterial` | `property dispersionNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshPhysicalNodeMaterial` | `property anisotropyNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `MeshPhysicalNodeMaterial` | `property iridescenceThicknessRange` | `CollectionType` | `[number, number]` is a tuple, which has no wire encoding |
 | `MeshSSSNodeMaterial` | `property thicknessColorNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshSSSNodeMaterial` | `property thicknessDistortionNode` | `NodeStackType` | `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshSSSNodeMaterial` | `property thicknessAmbientNode` | `NodeStackType` | `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1085,8 +1078,6 @@ the README's coverage table.
 | `Object3D` | `method onAfterShadow` | `NotExported` | parameter 'renderer': `WebGLRenderer` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `Object3D` | `method onBeforeRender` | `NotExported` | parameter 'renderer': `WebGLRenderer` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `Object3D` | `method onAfterRender` | `NotExported` | parameter 'renderer': `WebGLRenderer` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
-| `Object3D` | `method add` | `RestParameter` | parameter 'object' is a rest parameter (`Object3D[]`) |
-| `Object3D` | `method remove` | `RestParameter` | parameter 'object' is a rest parameter (`Object3D[]`) |
 | `Object3D` | `method getObjectsByProperty` | `NoHandleForResult` | returns `Object3D?[]`, which is neither a value the read op carries nor a three.js object a handle could name |
 | `Object3D` | `method traverse` | `CallbackType` | parameter 'callback': `(object: Object3D) => any` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Object3D` | `method traverseVisible` | `CallbackType` | parameter 'callback': `(object: Object3D) => any` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
@@ -1141,7 +1132,6 @@ the README's coverage table.
 | `QuadraticBezierCurve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `QuadraticBezierCurve3` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `Quaternion` | `property _onChangeCallback` | `CallbackType` | `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `Quaternion` | `method toJSON` | `CollectionType` | return type: `[number, number, number, number]` is a tuple, which has no wire encoding |
 | `Quaternion` | `method _onChange` | `CallbackType` | parameter 'callback': `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Quaternion` | `method [Symbol.iterator]` | `NotInstanceApi` | the member name is not a usable C# identifier |
 | `QuaternionKeyframeTrack` | `property TimeBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -1189,7 +1179,6 @@ the README's coverage table.
 | `Scene` | `property backgroundNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Scene` | `property fogNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShaderMaterial` | `property uniforms` | `AnonymousObjectType` | `{ [uniform: string]: IUniform }` is a dictionary whose values cannot be mapped: `IUniform` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `ShaderMaterial` | `property defaultAttributeValues` | `AnonymousObjectType` | `{ color: [number, number, number]; uv: [number, number]; uv1: [number, number]; }` is an anonymous object literal type with no named C# equivalent |
 | `ShadowMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |

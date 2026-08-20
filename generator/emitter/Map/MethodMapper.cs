@@ -46,12 +46,56 @@ internal sealed class MethodMapper
 
 			if (irParameter.IsRest)
 			{
-				var isPseudoOverload = irParameter.Type is { Kind: "union" } union && union.Types.All(x => x.Kind == "tuple");
-				return MappedMethod.Refused(
-					isPseudoOverload
-						? $"parameter '{irParameter.Name}' is a rest-union-tuple pseudo-overload (`{irParameter.Type!.Text}`), which is one TypeScript signature standing for several C# overloads"
-						: $"parameter '{irParameter.Name}' is a rest parameter (`{irParameter.Type?.Text ?? "?"}`)",
-					SkipCategory.RestParameter);
+				// A rest-union-tuple is one TypeScript signature standing for several C# overloads, and
+				// there is no single parameter list to write for it.
+				if (irParameter.Type is { Kind: "union" } union && union.Types.All(x => x.Kind == "tuple"))
+				{
+					return MappedMethod.Refused(
+						$"parameter '{irParameter.Name}' is a rest-union-tuple pseudo-overload (`{irParameter.Type!.Text}`), which is one TypeScript signature standing for several C# overloads",
+						SkipCategory.RestParameter);
+				}
+
+				// An ordinary rest parameter is a C# `params` array, and the two mean the same thing:
+				// `group.Add(a, b, c)` reaches three.js as three arguments.
+				//
+				// ⚠️ It relies on the array covariance the escape hatch warns about, and here that is the
+				// wanted behaviour rather than the hazard. `RecordCall` takes `params object?[]`, so
+				// handing it an `Object3D[]` binds the array *as* the argument list - which is precisely
+				// what a rest parameter is. The `(object?)` cast the sequence path adds would defeat it.
+				var restMapping = mapper.Map(irParameter.Type, new TypeMappingContext
+				{
+					MemberName = irParameter.Name,
+					NumericKind = irParameter.NumericKind,
+					TypeParameters = typeParameters
+				});
+
+				if (!restMapping.IsMapped || restMapping.Kind != TypeMappingKind.Sequence)
+				{
+					return MappedMethod.Refused(
+						$"parameter '{irParameter.Name}' is a rest parameter (`{irParameter.Type?.Text ?? "?"}`)",
+						SkipCategory.RestParameter);
+				}
+
+				var restName = ConstructorMapper.ToCamelCase(irParameter.Name);
+				armsPerPosition.Add([
+					new MappedParameter
+					{
+						Name = restName,
+						DeclarationName = CSharpIdentifier.Escape(restName),
+						FieldName = "_" + restName,
+						ThreeName = irParameter.Name,
+						Mapping = restMapping,
+						Alternatives = [restMapping],
+						DeclaredTypeText = irParameter.Type?.Text,
+						CSharpTypeName = restMapping.CSharpTypeName!,
+						IsOptional = false,
+						IsUnspecifiedNullable = false,
+						IsRest = true,
+						Documentation = irParameter.Doc
+					}
+				]);
+
+				continue;
 			}
 
 			var alternatives = ConstructorMapper.ResolveAlternatives(mapper, irParameter, new TypeMappingContext

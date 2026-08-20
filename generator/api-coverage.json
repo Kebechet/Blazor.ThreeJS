@@ -8,13 +8,13 @@
     "blockedClasses": 30,
     "reachableClasses": 264,
     "members": 3648,
-    "mirroredState": 1153,
-    "commands": 775,
-    "asyncQueries": 879,
+    "mirroredState": 1157,
+    "commands": 780,
+    "asyncQueries": 880,
     "untypedObjectQueries": 11,
-    "skippedMembers": 841,
+    "skippedMembers": 831,
     "reachableMembers": 2439,
-    "generatedMembers": 1804,
+    "generatedMembers": 1811,
     "strandedMembers": 1209
   },
   "classes": [
@@ -3928,7 +3928,7 @@
     },
     {
       "category": "DomOrLibType",
-      "members": 79
+      "members": 78
     },
     {
       "category": "UnmappedUnion",
@@ -3939,12 +3939,12 @@
       "members": 38
     },
     {
-      "category": "AnonymousObjectType",
+      "category": "OptionsInterface",
       "members": 33
     },
     {
-      "category": "OptionsInterface",
-      "members": 33
+      "category": "AnonymousObjectType",
+      "members": 32
     },
     {
       "category": "UntypedValue",
@@ -3984,11 +3984,7 @@
     },
     {
       "category": "RestParameter",
-      "members": 6
-    },
-    {
-      "category": "CollectionType",
-      "members": 3
+      "members": 1
     }
   ],
   "generatedEnums": [
@@ -5035,27 +5031,21 @@
       "member": "add",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'args' is a rest parameter (`Object3D[]`)",
-      "category": "RestParameter"
+      "bucket": "Command"
     },
     {
       "class": "AnimationObjectGroup",
       "member": "remove",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'args' is a rest parameter (`Object3D[]`)",
-      "category": "RestParameter"
+      "bucket": "Command"
     },
     {
       "class": "AnimationObjectGroup",
       "member": "uncache",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'args' is a rest parameter (`Object3D[]`)",
-      "category": "RestParameter"
+      "bucket": "Command"
     },
     {
       "class": "AnimationUtils",
@@ -7232,9 +7222,8 @@
       "member": "attributes",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`Record<string, BufferAttribute | InterleavedBufferAttribute>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "MirroredState",
+      "type": "Dictionary<string, ThreeObject>"
     },
     {
       "class": "BufferGeometry",
@@ -18378,9 +18367,8 @@
       "member": "iridescenceThicknessRange",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`[number, number]` is a tuple, which has no wire encoding",
-      "category": "CollectionType"
+      "bucket": "MirroredState",
+      "type": "float[]"
     },
     {
       "class": "MeshPhysicalMaterial",
@@ -19006,9 +18994,8 @@
       "member": "iridescenceThicknessRange",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`[number, number]` is a tuple, which has no wire encoding",
-      "category": "CollectionType"
+      "bucket": "MirroredState",
+      "type": "float[]"
     },
     {
       "class": "MeshPhysicalNodeMaterial",
@@ -21860,18 +21847,14 @@
       "member": "add",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'object' is a rest parameter (`Object3D[]`)",
-      "category": "RestParameter"
+      "bucket": "Command"
     },
     {
       "class": "Object3D",
       "member": "remove",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'object' is a rest parameter (`Object3D[]`)",
-      "category": "RestParameter"
+      "bucket": "Command"
     },
     {
       "class": "Object3D",
@@ -24236,9 +24219,8 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `[number, number, number, number]` is a tuple, which has no wire encoding",
-      "category": "CollectionType"
+      "bucket": "AsyncQuery",
+      "type": "float[]"
     },
     {
       "class": "Quaternion",
@@ -26256,9 +26238,8 @@
       "member": "defaultAttributeValues",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`{ color: [number, number, number]; uv: [number, number]; uv1: [number, number]; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "ShaderMaterialDefaultAttributeValues"
     },
     {
       "class": "ShaderMaterial",

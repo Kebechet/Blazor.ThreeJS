@@ -28,6 +28,7 @@ public class BufferGeometry : EventDispatcher
 	private BufferAttribute? _index = null;
 	private IndirectStorageBufferAttribute? _indirect;
 	private float _indirectOffset;
+	private Dictionary<string, ThreeObject> _attributes;
 	private bool _morphTargetsRelative = false;
 	private GeometryGroup[] _groups = [];
 	private BufferAttributeUpdateRanges _drawRange;
@@ -37,6 +38,7 @@ public class BufferGeometry : EventDispatcher
 	private bool _isIndexWritten;
 	private bool _isIndirectWritten;
 	private bool _isIndirectOffsetWritten;
+	private bool _isAttributesWritten;
 	private bool _isMorphTargetsRelativeWritten;
 	private bool _isGroupsWritten;
 	private bool _isBoundingBoxWritten;
@@ -240,6 +242,29 @@ public class BufferGeometry : EventDispatcher
 			_indirectOffset = value;
 			_isIndirectOffsetWritten = true;
 			RecordSet("indirectOffset", value);
+		}
+	}
+
+	/// <summary>
+	/// This hashmap has as id the name of the attribute to be set and as value the <c>buffer</c> to set
+	/// it to. Rather than accessing this property directly, use <c>.setAttribute</c> and
+	/// <c>.getAttribute</c> to access attributes of this geometry. Writing it records a
+	/// <c>attributes</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public Dictionary<string, ThreeObject> Attributes
+	{
+		get { return _attributes; }
+		set
+		{
+			if (_attributes == value)
+			{
+				return;
+			}
+
+			_attributes = value;
+			_isAttributesWritten = true;
+			RecordSet("attributes", value);
 		}
 	}
 
@@ -638,6 +663,11 @@ public class BufferGeometry : EventDispatcher
 		if (_isIndirectOffsetWritten)
 		{
 			batch.Set(Handle, "indirectOffset", ThreeValue.Encode(_indirectOffset));
+		}
+
+		if (_isAttributesWritten)
+		{
+			batch.Set(Handle, "attributes", ThreeValue.Encode(_attributes));
 		}
 
 		if (_isMorphTargetsRelativeWritten)

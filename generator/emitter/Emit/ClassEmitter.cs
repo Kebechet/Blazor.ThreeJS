@@ -1199,9 +1199,12 @@ internal sealed class ClassEmitter
 	private static void WriteDeclaration(CSharpWriter writer, string header, IReadOnlyList<MappedParameter> parameters)
 	{
 		var declaredParameters = parameters
-			.Select(x => x.DefaultLiteral is null
-				? $"{x.CSharpTypeName} {x.DeclarationName}"
-				: $"{x.CSharpTypeName} {x.DeclarationName} = {x.DefaultLiteral}")
+			.Select(x => x switch
+			{
+				{ IsRest: true } => $"params {x.CSharpTypeName} {x.DeclarationName}",
+				{ DefaultLiteral: null } => $"{x.CSharpTypeName} {x.DeclarationName}",
+				_ => $"{x.CSharpTypeName} {x.DeclarationName} = {x.DefaultLiteral}"
+			})
 			.ToList();
 
 		var singleLine = $"{header}({string.Join(", ", declaredParameters)})";
@@ -1241,6 +1244,15 @@ internal sealed class ClassEmitter
 		if (parameters.Count == 0)
 		{
 			return string.Empty;
+		}
+
+		// ⚠️ A rest parameter is the one place the covariance below is the wanted behaviour rather than
+		// the hazard. `RecordCall` takes `params object?[]`, so handing it an `Object3D[]` binds the array
+		// *as* the argument list - which is exactly what `group.Add(a, b, c)` means. The cast would defeat
+		// it and send one array argument where three.js expects three.
+		if (parameters is [{ IsRest: true } rest])
+		{
+			return $", {rest.DeclarationName}";
 		}
 
 		if (parameters is [{ Mapping.Kind: TypeMappingKind.Sequence } sole])

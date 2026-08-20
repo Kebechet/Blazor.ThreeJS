@@ -186,9 +186,9 @@ as a mutable array, so a change to it cannot be observed, and matrix-typed prope
 
 | status | classes |
 |---|---|
-| emittable | 215 |
+| emittable | 216 |
 | deliberately out of the mirrored surface | 53 |
-| blocked | 41 |
+| blocked | 40 |
 | **total** | **309** |
 
 Emittability and **reachability** are different questions. 264 of these classes are names the shipped
@@ -226,7 +226,6 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `NodeStackType` | 1 | required parameter 'builder' cannot be mapped: `NodeBuilder` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `UnerasableTypeParameter` | 1 | required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `UnmappedUnion` | 1 | required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `UnreachableBaseConstructor` | 1 | its C# base `InterleavedBuffer` requires `stride` as `int`, and this class declares it as `float`, so the value it holds cannot stand in for the base's |
 | `UntypedValue` | 1 | required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express |
 
 <details><summary>Every blocked class</summary>
@@ -248,7 +247,6 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `GLBufferAttribute` | required parameter 'buffer' cannot be mapped: `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one | `src/core/GLBufferAttribute.d.ts` |
 | `GLSLNodeBuilder` | required parameter 'renderer' cannot be mapped: `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror | `src/renderers/webgl-fallback/nodes/GLSLNodeBuilder.d.ts` |
 | `Info` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/renderers/common/Info.d.ts` |
-| `InstancedInterleavedBuffer` | its C# base `InterleavedBuffer` requires `stride` as `int`, and this class declares it as `float`, so the value it holds cannot stand in for the base's | `src/core/InstancedInterleavedBuffer.d.ts` |
 | `Interpolant` | the class is abstract, so it has no constructor to mirror | `src/math/Interpolant.d.ts` |
 | `KeyframeTrack` | required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/animation/KeyframeTrack.d.ts` |
 | `Light` | the class is abstract, so it has no constructor to mirror | `src/lights/Light.d.ts` |
@@ -366,6 +364,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `InspectorBase` | 0 | — | `src/renderers/common/InspectorBase.d.ts` |
 | `InstancedBufferAttribute` | 4 | — | `src/core/InstancedBufferAttribute.d.ts` |
 | `InstancedBufferGeometry` | 0 | — | `src/core/InstancedBufferGeometry.d.ts` |
+| `InstancedInterleavedBuffer` | 3 | — | `src/core/InstancedInterleavedBuffer.d.ts` |
 | `InstancedMesh` | 3 | — | `src/objects/InstancedMesh.d.ts` |
 | `Int16BufferAttribute` | 3 | — | `src/core/BufferAttribute.d.ts` |
 | `Int32BufferAttribute` | 3 | — | `src/core/BufferAttribute.d.ts` |
@@ -507,11 +506,11 @@ three.js is reachable at all" and "how much of what we mirror is state".
 
 | bucket | what it means | all classes | emittable classes |
 |---|---|---|---|
-| MirroredState | state C# holds and writes through on change | 1158 | 920 |
+| MirroredState | state C# holds and writes through on change | 1158 | 921 |
 | Command | a method recorded as a call op, returning nothing or `this` | 761 | 302 |
 | AsyncQuery | a method whose result the caller needs back | 853 | 480 |
 | Skipped | not mirrored; see the skip list below | 1032 | 753 |
-| **total** | | **3804** | **2455** |
+| **total** | | **3804** | **2456** |
 
 Two op kinds answer: **read**, which invokes a method, and **get**, which reads a property.
 480 of the async queries above sit on an emitted class and are generated as `…Async` methods, 176 of

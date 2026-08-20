@@ -3,9 +3,9 @@
   "typesVersion": "0.185.3",
   "totals": {
     "classes": 309,
-    "emittableClasses": 215,
+    "emittableClasses": 216,
     "outOfSurfaceClasses": 53,
-    "blockedClasses": 41,
+    "blockedClasses": 40,
     "reachableClasses": 264,
     "members": 3804,
     "mirroredState": 1158,
@@ -13,9 +13,9 @@
     "asyncQueries": 853,
     "untypedObjectQueries": 11,
     "skippedMembers": 1032,
-    "reachableMembers": 2455,
-    "generatedMembers": 1702,
-    "strandedMembers": 1349
+    "reachableMembers": 2456,
+    "generatedMembers": 1703,
+    "strandedMembers": 1348
   },
   "classes": [
     {
@@ -1332,10 +1332,8 @@
     {
       "name": "InstancedInterleavedBuffer",
       "file": "src/core/InstancedInterleavedBuffer.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "its C# base `InterleavedBuffer` requires `stride` as `int`, and this class declares it as `float`, so the value it holds cannot stand in for the base's",
-      "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []

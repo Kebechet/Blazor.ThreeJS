@@ -84,7 +84,7 @@ internal sealed class ConstructorMapper
 			var context = new TypeMappingContext
 			{
 				MemberName = irParameter.Name,
-				NumericKind = irParameter.NumericKind,
+				NumericKind = irParameter.NumericKind ?? InheritedNumericKind(declaring, irParameter.Name),
 				TypeParameters = irClass.TypeParameters
 			};
 
@@ -140,6 +140,44 @@ internal sealed class ConstructorMapper
 			.ToList();
 
 		return MappedConstructor.Mapped(parameters, ExpandOverloads(armsPerPosition), dropped, middlePositionHazards);
+	}
+
+	/// <summary>
+	/// What an ancestor's constructor says a same-named argument is, when this class's declaration does
+	/// not say.
+	/// <para>
+	/// A constructor argument threaded through a subclass is the same quantity: `InterleavedBuffer`
+	/// documents `stride` as an integer and `InstancedInterleavedBuffer` re-declares it as a bare
+	/// `number`, and they are one stride. Reading the base's answer is reading a declaration, not
+	/// inferring from a name - and without it the two map to `int` and `float`, which is both wrong
+	/// about the subclass and enough to stop it chaining to its own base.
+	/// </para>
+	/// <para>
+	/// Only fills a gap; a subclass that documents its own kind keeps it, including where the two
+	/// disagree, because then upstream has said something specific about this class.
+	/// </para>
+	/// </summary>
+	/// <param name="declaring">The class whose constructor is being mapped.</param>
+	/// <param name="parameterName">three.js's name for the argument.</param>
+	/// <returns>The inherited numeric kind, or <see langword="null"/> when no ancestor documents one.</returns>
+	private string? InheritedNumericKind(IrClass declaring, string parameterName)
+	{
+		var baseName = declaring.Extends?.Name;
+		while (baseName is not null && _classesByName.TryGetValue(baseName, out var baseClass))
+		{
+			var inherited = baseClass.Constructors
+				.SelectMany(x => x.Parameters)
+				.FirstOrDefault(x => string.Equals(x.Name, parameterName, StringComparison.Ordinal));
+
+			if (inherited?.NumericKind is { } numericKind)
+			{
+				return numericKind;
+			}
+
+			baseName = baseClass.Extends?.Name;
+		}
+
+		return null;
 	}
 
 	/// <summary>

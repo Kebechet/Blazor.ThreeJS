@@ -4,7 +4,7 @@
 // Server support - that a frame costs one interop call however many properties it changed, that the
 // batch survives a round trip over SignalR, that pointer picking calls back into C# across the
 // circuit - is a claim about a place no other test in this repository runs. The stories are the same
-// files, referenced from `Blazor.ThreeJS.Stories`, so nothing here is written twice and nothing here
+// files, referenced from `Blazor.ThreeJS.Demo.Stories`, so nothing here is written twice and nothing here
 // can drift from what the deployed storybook shows.
 using Blazor.ThreeJS.Demo.Server;
 

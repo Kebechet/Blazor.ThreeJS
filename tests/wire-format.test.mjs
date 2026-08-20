@@ -762,10 +762,10 @@ assert.deepEqual(unreachableCanvas.registrations, [], 'a context with no .NET re
 // proved to be a file that loads.
 // ---------------------------------------------------------------------------------------------
 
-const modelPath = fileURLToPath(new URL('../demo/Blazor.ThreeJS.Stories/wwwroot/models/figure.gltf', import.meta.url));
+const modelPath = fileURLToPath(new URL('../demo/Blazor.ThreeJS.Demo.Stories/wwwroot/models/figure.gltf', import.meta.url));
 const animatedFixturePath = fileURLToPath(new URL('./animated-fixture.gltf', import.meta.url));
-const dracoFixturePath = fileURLToPath(new URL('../demo/Blazor.ThreeJS.Stories/wwwroot/models/box-draco.gltf', import.meta.url));
-const dracoFixtureBinPath = fileURLToPath(new URL('../demo/Blazor.ThreeJS.Stories/wwwroot/models/box-draco.bin', import.meta.url));
+const dracoFixturePath = fileURLToPath(new URL('../demo/Blazor.ThreeJS.Demo.Stories/wwwroot/models/box-draco.gltf', import.meta.url));
+const dracoFixtureBinPath = fileURLToPath(new URL('../demo/Blazor.ThreeJS.Demo.Stories/wwwroot/models/box-draco.bin', import.meta.url));
 const fixturesByRoute = new Map([
     ['/figure.gltf', modelPath],
     ['/animated-fixture.gltf', animatedFixturePath],

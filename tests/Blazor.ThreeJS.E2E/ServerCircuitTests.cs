@@ -12,7 +12,7 @@ namespace Blazor.ThreeJS.E2E;
 /// WebAssembly host, where a "round trip" is a function call.
 /// </para>
 /// <para>
-/// The stories are the same files - both hosts reference <c>Blazor.ThreeJS.Stories</c> - so a story
+/// The stories are the same files - both hosts reference <c>Blazor.ThreeJS.Demo.Stories</c> - so a story
 /// that works in one and not the other is a hosting-model difference and nothing else.
 /// </para>
 /// </summary>

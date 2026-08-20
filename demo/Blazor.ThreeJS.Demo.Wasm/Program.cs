@@ -1,4 +1,4 @@
-using Blazor.ThreeJS.Demo;
+using Blazor.ThreeJS.Demo.Wasm;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 

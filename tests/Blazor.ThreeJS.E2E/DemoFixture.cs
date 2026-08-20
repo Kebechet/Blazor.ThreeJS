@@ -194,7 +194,7 @@ public class DemoFixture : IAsyncLifetime
 
 /// <summary>
 /// The demo storybook served from a Blazor Server host: the same stories, from the same
-/// <c>Blazor.ThreeJS.Stories</c> library, rendered by a circuit over SignalR rather than by a runtime
+/// <c>Blazor.ThreeJS.Demo.Stories</c> library, rendered by a circuit over SignalR rather than by a runtime
 /// in the browser.
 /// <para>
 /// It exists because Server is the harder of the two hosts to be right on and the one nothing else

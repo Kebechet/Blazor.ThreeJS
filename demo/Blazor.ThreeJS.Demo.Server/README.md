@@ -1,6 +1,6 @@
 # The storybook, over a Blazor Server circuit
 
-The same stories as the deployed storybook, from the same `Blazor.ThreeJS.Stories` library, rendered
+The same stories as the deployed storybook, from the same `Blazor.ThreeJS.Demo.Stories` library, rendered
 by a Blazor Server circuit instead of a WebAssembly runtime.
 
 ```

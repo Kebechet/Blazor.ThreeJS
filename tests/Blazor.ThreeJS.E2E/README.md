@@ -12,7 +12,7 @@ demo process and browser:
 | `DemoCollectionDefinition` | `demo/Blazor.ThreeJS.Demo.Wasm` (WebAssembly) | the deployed storybook, including the shell page and its sub-path assets |
 | `ServerDemoCollectionDefinition` | `demo/Blazor.ThreeJS.Demo.Server` (Blazor Server) | every op as a SignalR message, every pointer callback as a round trip |
 
-Both reference `demo/Blazor.ThreeJS.Stories`, so the stories are the same files and a story that behaves
+Both reference `demo/Blazor.ThreeJS.Demo.Stories`, so the stories are the same files and a story that behaves
 differently in one of them is a hosting-model difference and nothing else. See
 `demo/Blazor.ThreeJS.Demo.Server/README.md` for what the Server host does differently, and for the one
 upstream BlazingStory bug that affects its shell page but not its stories.

@@ -9,14 +9,18 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 public sealed class BlendMode : ThreeObject
 {
 	private Blending _blending;
+	private BlendingSrcFactor _blendSrc;
 	private BlendingDstFactor _blendDst;
 	private BlendingEquation _blendEquation;
+	private BlendingSrcFactor? _blendSrcAlpha;
 	private BlendingDstFactor? _blendDstAlpha;
 	private BlendingEquation? _blendEquationAlpha;
 	private bool _premultiplyAlpha;
 	private bool _isBlendingWritten;
+	private bool _isBlendSrcWritten;
 	private bool _isBlendDstWritten;
 	private bool _isBlendEquationWritten;
+	private bool _isBlendSrcAlphaWritten;
 	private bool _isBlendDstAlphaWritten;
 	private bool _isBlendEquationAlphaWritten;
 	private bool _isPremultiplyAlphaWritten;
@@ -75,6 +79,26 @@ public sealed class BlendMode : ThreeObject
 	}
 
 	/// <summary>
+	/// The <c>blendSrc</c> property of the JavaScript-side object. Writing it records a <c>blendSrc</c>
+	/// property write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public BlendingSrcFactor BlendSrc
+	{
+		get { return _blendSrc; }
+		set
+		{
+			if (_blendSrc == value)
+			{
+				return;
+			}
+
+			_blendSrc = value;
+			_isBlendSrcWritten = true;
+			RecordSet("blendSrc", value);
+		}
+	}
+
+	/// <summary>
 	/// The <c>blendDst</c> property of the JavaScript-side object. Writing it records a <c>blendDst</c>
 	/// property write once this object is attached; writing the value already held records nothing.
 	/// </summary>
@@ -112,6 +136,27 @@ public sealed class BlendMode : ThreeObject
 			_blendEquation = value;
 			_isBlendEquationWritten = true;
 			RecordSet("blendEquation", value);
+		}
+	}
+
+	/// <summary>
+	/// The <c>blendSrcAlpha</c> property of the JavaScript-side object. Writing it records a
+	/// <c>blendSrcAlpha</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public BlendingSrcFactor? BlendSrcAlpha
+	{
+		get { return _blendSrcAlpha; }
+		set
+		{
+			if (_blendSrcAlpha == value)
+			{
+				return;
+			}
+
+			_blendSrcAlpha = value;
+			_isBlendSrcAlphaWritten = true;
+			RecordSet("blendSrcAlpha", value);
 		}
 	}
 
@@ -209,6 +254,11 @@ public sealed class BlendMode : ThreeObject
 			batch.Set(Handle, "blending", ThreeValue.Encode(_blending));
 		}
 
+		if (_isBlendSrcWritten)
+		{
+			batch.Set(Handle, "blendSrc", ThreeValue.Encode(_blendSrc));
+		}
+
 		if (_isBlendDstWritten)
 		{
 			batch.Set(Handle, "blendDst", ThreeValue.Encode(_blendDst));
@@ -217,6 +267,11 @@ public sealed class BlendMode : ThreeObject
 		if (_isBlendEquationWritten)
 		{
 			batch.Set(Handle, "blendEquation", ThreeValue.Encode(_blendEquation));
+		}
+
+		if (_isBlendSrcAlphaWritten)
+		{
+			batch.Set(Handle, "blendSrcAlpha", ThreeValue.Encode(_blendSrcAlpha));
 		}
 
 		if (_isBlendDstAlphaWritten)

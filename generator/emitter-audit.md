@@ -325,8 +325,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `BezierInterpolant` | `method getSettings_` | return type: `unknown` carries no type information a C# signature could express |
 | `BezierInterpolant` | `property DefaultSettings_` | `{}` is an anonymous object literal type with no named C# equivalent |
 | `BezierInterpolant` | `property settings` | `{}` is an anonymous object literal type with no named C# equivalent |
-| `BlendMode` | `property blendSrc` | `BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `BlendMode` | `property blendSrcAlpha` | `BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Bone` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `BooleanKeyframeTrack` | `method toJSON` | parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BooleanKeyframeTrack` | `property TimeBufferType` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -577,8 +575,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Material` | `method onBeforeRender` | parameter 'renderer': `WebGLRenderer` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `Material` | `method setValues` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
 | `Material` | `method toJSON` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
-| `Material` | `property blendSrc` | `BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `Material` | `property blendSrcAlpha` | `BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Material` | `property defines` | `Record<string, unknown>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Material` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `MaterialLoader` | `method registerMaterial` | parameter 'materialClass': `new() => Material` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
@@ -1090,14 +1086,12 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Texture` | `constructor parameter type` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `Texture` | `constructor parameter wrapS` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `Texture` | `constructor parameter wrapT` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
-| `Texture` | `method setValues` | parameter 'values': `TextureParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `Texture` | `method toJSON` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
 | `Texture` | `property DEFAULT_ANISOTROPY` | a static property; the mirror models instances, and a static write has no handle to address |
 | `Texture` | `property DEFAULT_IMAGE` | a static property; the mirror models instances, and a static write has no handle to address |
 | `Texture` | `property DEFAULT_MAPPING` | a static property; the mirror models instances, and a static write has no handle to address |
-| `Texture` | `property format` | `AnyPixelFormat` aliases `PixelFormat | DepthTexturePixelFormat | CompressedPixelFormat`, which is neither a group of numeric constants nor a type the mirror expresses |
+| `Texture` | `property format` | `AnyPixelFormat` cannot become a C# enum: constant `RGB_BPTC_SIGNED_Format` has no literal value in the IR (declared type `<none>`) |
 | `Texture` | `property image` | `unknown` carries no type information a C# signature could express |
-| `Texture` | `property mapping` | `AnyMapping` aliases `Mapping | CubeTextureMapping`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Texture` | `property matrix` | `Matrix3` hands its components out as a mutable array, so a change to it cannot be observed and there is nothing to record a property write from |
 | `Texture` | `property mipmaps` | `CompressedTextureMipmap[] | CubeTexture[] | HTMLCanvasElement[]` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Texture` | `property onUpdate` | `(texture: Texture) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |

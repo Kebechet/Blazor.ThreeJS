@@ -23,6 +23,7 @@ public class Texture : EventDispatcher
 {
 	private string _uuid = string.Empty;
 	private string _name = string.Empty;
+	private AnyMapping _mapping;
 	private float _channel;
 	private Wrapping _wrapS;
 	private Wrapping _wrapT;
@@ -49,6 +50,7 @@ public class Texture : EventDispatcher
 	private RenderTarget? _renderTarget;
 	private bool _isUuidWritten;
 	private bool _isNameWritten;
+	private bool _isMappingWritten;
 	private bool _isChannelWritten;
 	private bool _isWrapSWritten;
 	private bool _isWrapTWritten;
@@ -198,6 +200,26 @@ public class Texture : EventDispatcher
 			_name = value;
 			_isNameWritten = true;
 			RecordSet("name", value);
+		}
+	}
+
+	/// <summary>
+	/// How the image is applied to the object. Writing it records a <c>mapping</c> property write once
+	/// this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public AnyMapping Mapping
+	{
+		get { return _mapping; }
+		set
+		{
+			if (_mapping == value)
+			{
+				return;
+			}
+
+			_mapping = value;
+			_isMappingWritten = true;
+			RecordSet("mapping", value);
 		}
 	}
 
@@ -741,6 +763,13 @@ public class Texture : EventDispatcher
 		RecordCall("copy", source);
 	}
 
+	/// <summary>Sets this texture's properties based on <c>values</c>.</summary>
+	/// <param name="values">A container with texture parameters.</param>
+	public void SetValues(TextureParameters values)
+	{
+		RecordCall("setValues", values);
+	}
+
 	/// <summary>Frees the GPU-related resources allocated by this instance.</summary>
 	public void Dispose()
 	{
@@ -843,6 +872,11 @@ public class Texture : EventDispatcher
 		if (_isNameWritten)
 		{
 			batch.Set(Handle, "name", ThreeValue.Encode(_name));
+		}
+
+		if (_isMappingWritten)
+		{
+			batch.Set(Handle, "mapping", ThreeValue.Encode(_mapping));
 		}
 
 		if (_isChannelWritten)

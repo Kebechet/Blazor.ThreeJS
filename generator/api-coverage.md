@@ -508,10 +508,10 @@ three.js is reachable at all" and "how much of what we mirror is state".
 
 | bucket | what it means | all classes | emittable classes |
 |---|---|---|---|
-| MirroredState | state C# holds and writes through on change | 1157 | 940 |
-| Command | a method recorded as a call op, returning nothing or `this` | 780 | 330 |
+| MirroredState | state C# holds and writes through on change | 1162 | 945 |
+| Command | a method recorded as a call op, returning nothing or `this` | 781 | 331 |
 | AsyncQuery | a method whose result the caller needs back | 880 | 541 |
-| Skipped | not mirrored; see the skip list below | 831 | 628 |
+| Skipped | not mirrored; see the skip list below | 825 | 622 |
 | **total** | | **3648** | **2439** |
 
 Two op kinds answer: **read**, which invokes a method, and **get**, which reads a property.
@@ -550,20 +550,20 @@ the README's coverage table.
 | `DomOrLibType` | 78 | a TypeScript lib or DOM type; C# holds no browser object and the wire has no encoding for one |
 | `UnmappedUnion` | 42 | a union of several real alternatives in a position that holds one type — a property or a return type, since a required parameter becomes one overload per arm |
 | `NotInstanceApi` | 38 | static, non-public or `@internal` — not part of the mirrored instance API |
-| `OptionsInterface` | 33 | a structural interface — an options bag or an event map — with no C# type to be |
 | `AnonymousObjectType` | 32 | an anonymous object literal type with no name to give a C# type |
+| `OptionsInterface` | 32 | a structural interface — an options bag or an event map — with no C# type to be |
 | `UntypedValue` | 30 | declared `any` / `unknown`, or with no type at all |
 | `NotExported` | 19 | three.js's public barrel does not re-export it as a value, so the applier cannot reach it on `THREE` |
-| `UnmappedTypeAlias` | 18 | a type alias that is neither a constant group nor a rename of a mapped type |
 | `ExternalType` | 15 | declared outside the scanned `src/` surface |
 | `AbstractClass` | 13 | the class is abstract, so it has no constructor to mirror |
+| `UnmappedTypeAlias` | 13 | a type alias that is neither a constant group nor a rename of a mapped type |
 | `UnwrappedClass` | 12 | an in-scope class that is itself not emitted |
 | `UnerasableTypeParameter` | 8 | a type parameter with neither a default nor a constraint to erase to |
 | `UnmappedTypeSyntax` | 7 | a TypeScript type form with no C# equivalent |
 | `NoHandleForResult` | 6 | its result is neither a value the read op carries nor one object a handle could name — an array of objects needs a handle per element, not one for the result |
 | `RestParameter` | 1 | a rest parameter, including the rest-union-tuple pseudo-overload form |
 
-<details><summary>Every skipped member (831)</summary>
+<details><summary>Every skipped member (825)</summary>
 
 | class | member | obstacle | why |
 |---|---|---|---|
@@ -610,8 +610,6 @@ the README's coverage table.
 | `BezierInterpolant` | `property settings` | `AnonymousObjectType` | `{}` is an anonymous object literal type with no named C# equivalent |
 | `BezierInterpolant` | `property DefaultSettings_` | `AnonymousObjectType` | `{}` is an anonymous object literal type with no named C# equivalent |
 | `BezierInterpolant` | `method getSettings_` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
-| `BlendMode` | `property blendSrc` | `UnmappedTypeAlias` | `BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `BlendMode` | `property blendSrcAlpha` | `UnmappedTypeAlias` | `BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `BooleanKeyframeTrack` | `property TimeBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BooleanKeyframeTrack` | `property ValueBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BooleanKeyframeTrack` | `method toJSON` | `UnmappedUnion` | parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -789,8 +787,6 @@ the README's coverage table.
 | `Material` | `method setValues` | `OptionsInterface` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
 | `Material` | `method toJSON` | `OptionsInterface` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
 | `Material` | `method fromJSON` | `OptionsInterface` | parameter 'json': `MaterialJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `Material` | `property blendSrc` | `UnmappedTypeAlias` | `BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `Material` | `property blendSrcAlpha` | `UnmappedTypeAlias` | `BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Material` | `property userData` | `DomOrLibType` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `MaterialLoader` | `method registerMaterial` | `CallbackType` | parameter 'materialClass': `new() => Material` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Matrix2` | `property elements` | `UnmappedTypeAlias` | `Matrix2Tuple` aliases `[ n11: number, n12: number, n21: number, n22: number, ]`, which is neither a group of numeric constants nor a type the mirror expresses |
@@ -1252,14 +1248,12 @@ the README's coverage table.
 | `Texture` | `property source` | `UnerasableTypeParameter` | `Source<TImage>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `Texture` | `property image` | `UntypedValue` | `unknown` carries no type information a C# signature could express |
 | `Texture` | `property mipmaps` | `UnmappedUnion` | `CompressedTextureMipmap[] | CubeTexture[] | HTMLCanvasElement[]` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `Texture` | `property mapping` | `UnmappedTypeAlias` | `AnyMapping` aliases `Mapping | CubeTextureMapping`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `Texture` | `property format` | `UnmappedTypeAlias` | `AnyPixelFormat` aliases `PixelFormat | DepthTexturePixelFormat | CompressedPixelFormat`, which is neither a group of numeric constants nor a type the mirror expresses |
+| `Texture` | `property format` | `UnmappedTypeAlias` | `AnyPixelFormat` cannot become a C# enum: constant `RGB_BPTC_SIGNED_Format` has no literal value in the IR (declared type `<none>`) |
 | `Texture` | `property userData` | `DomOrLibType` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Texture` | `property DEFAULT_ANISOTROPY` | `NotInstanceApi` | a static property; the mirror models instances, and a static write has no handle to address |
 | `Texture` | `property DEFAULT_IMAGE` | `NotInstanceApi` | a static property; the mirror models instances, and a static write has no handle to address |
 | `Texture` | `property DEFAULT_MAPPING` | `NotInstanceApi` | a static property; the mirror models instances, and a static write has no handle to address |
 | `Texture` | `property onUpdate` | `CallbackType` | `(texture: Texture) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `Texture` | `method setValues` | `OptionsInterface` | parameter 'values': `TextureParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `Texture` | `method toJSON` | `UnmappedUnion` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
 | `Timer` | `method connect` | `DomOrLibType` | parameter 'document': `Document` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `TimestampQueryPool` | `property queryOffsets` | `DomOrLibType` | `Map<string, number>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -1416,20 +1410,22 @@ as its numeric backing value — a string-valued group would arrive as a number 
 the string. The backing type is the narrowest that holds every value, so three.js's small flag sets stay
 `byte` and its WebGL constants land on `ushort`.
 
-**44 generated**: 42 inferred from a constant group, 2 from a real TypeScript `enum`.
-33 are referenced by a mapped member today; the rest are emitted anyway, because an enum is a
+**47 generated**: 45 inferred from a constant group, 2 from a real TypeScript `enum`.
+35 are referenced by a mapped member today; the rest are emitted anyway, because an enum is a
 leaf type whose availability should not move with the class surface.
 
 | enum | source | members | aliases | backing type | referenced |
 |---|---|---|---|---|---|
 | `AnimationActionLoopStyles` | constant group | 3 | 0 | `ushort` | yes |
 | `AnimationBlendMode` | constant group | 2 | 0 | `ushort` | yes |
+| `AnyMapping` | constant group | 6 | 0 | `ushort` | yes |
 | `AttributeGPUType` | constant group | 2 | 0 | `ushort` | yes |
 | `AudioSourceType` | constant group | 5 | 0 | `byte` | no |
 | `BindMode` | constant group | 2 | 0 | `byte` | yes |
 | `Blending` | constant group | 7 | 0 | `byte` | yes |
 | `BlendingDstFactor` | constant group | 14 | 0 | `byte` | yes |
 | `BlendingEquation` | constant group | 5 | 0 | `byte` | yes |
+| `BlendingSrcFactor` | constant group | 15 | 0 | `byte` | yes |
 | `ColorSpace` | constant group | 3 | 0 | `byte` | yes |
 | `ColorSpaceTransfer` | constant group | 2 | 0 | `byte` | no |
 | `Combine` | constant group | 3 | 0 | `byte` | yes |
@@ -1462,6 +1458,7 @@ leaf type whose availability should not move with the class surface.
 | `TOUCH` | TypeScript `enum` | 4 | 0 | `byte` | no |
 | `TextureComparisonFunction` | constant group | 8 | 0 | `ushort` | yes |
 | `TextureDataType` | constant group | 13 | 0 | `ushort` | yes |
+| `TextureFilter` | constant group | 10 | 4 | `ushort` | no |
 | `ToneMapping` | constant group | 8 | 0 | `byte` | yes |
 | `TrianglesDrawModes` | constant group | 3 | 0 | `byte` | no |
 | `Usage` | constant group | 9 | 0 | `ushort` | yes |
@@ -1475,17 +1472,18 @@ two members declared with the same literal, so the second names the first instea
 
 - `MOUSE`: `ROTATE` = `LEFT`, `DOLLY` = `MIDDLE`, `PAN` = `RIGHT`
 - `MinificationTextureFilter`: `NearestMipMapNearestFilter` = `NearestMipmapNearestFilter`, `NearestMipMapLinearFilter` = `NearestMipmapLinearFilter`, `LinearMipMapNearestFilter` = `LinearMipmapNearestFilter`, `LinearMipMapLinearFilter` = `LinearMipmapLinearFilter`
+- `TextureFilter`: `NearestMipMapNearestFilter` = `NearestMipmapNearestFilter`, `NearestMipMapLinearFilter` = `NearestMipmapLinearFilter`, `LinearMipMapNearestFilter` = `LinearMipmapNearestFilter`, `LinearMipMapLinearFilter` = `LinearMipmapLinearFilter`
 
 ### Constants left ungrouped
 
-23 of the 226 exported constants belong to no alias, so no enum claims them. Grouping them
+22 of the 226 exported constants belong to no alias, so no enum claims them. Grouping them
 would mean inventing a set three.js never declared, and an enum is a promise that its values are
 exhaustive and mutually exclusive — a promise only the upstream alias is in a position to make.
 
-Most are not value sets at all: only 4 of the 23 are a literal. The rest are namespace objects
+Most are not value sets at all: only 3 of the 22 are a literal. The rest are namespace objects
 (`MathUtils`, `ShaderChunk`, `UniformsLib`, `Cache`), which no grouping rule would have reached.
 
-<details><summary>Every ungrouped constant (23)</summary>
+<details><summary>Every ungrouped constant (22)</summary>
 
 | constant | value | file |
 |---|---|---|
@@ -1506,7 +1504,6 @@ Most are not value sets at all: only 4 of the 23 are a literal. The rest are nam
 | `ReversedDepthFuncs` | not a literal — a `mapped` type | `src/utils.d.ts` |
 | `ShaderChunk` | not a literal — a `object` type | `src/renderers/shaders/ShaderChunk.d.ts` |
 | `ShaderLib` | not a literal — a `object` type | `src/renderers/shaders/ShaderLib.d.ts` |
-| `SrcAlphaSaturateFactor` | `210` | `src/constants.d.ts` |
 | `TextureUtils` | not a literal — a `object` type | `src/extras/TextureUtils.d.ts` |
 | `TimestampQuery` | not a literal — a `object` type | `src/constants.d.ts` |
 | `UniformsLib` | not a literal — a `object` type | `src/renderers/shaders/UniformsLib.d.ts` |
@@ -1519,6 +1516,7 @@ Most are not value sets at all: only 4 of the 23 are a literal. The rest are nam
 
 | name | why |
 |---|---|
+| `AnyPixelFormat` | constant `RGB_BPTC_SIGNED_Format` has no literal value in the IR (declared type `<none>`) |
 | `CompressedPixelFormat` | constant `RGB_BPTC_SIGNED_Format` has no literal value in the IR (declared type `<none>`) |
 | `EulerOrder` | already hand-written as `Kebechet.Blazor.ThreeJS.Math.EulerOrder`, because `Euler` is a hand-written math value rather than a generated class. Its rotation order crosses inside the tagged Euler value as an index the applier maps through `EULER_ORDERS`, so a second enum here would be a duplicate name carrying a different wire form |
 | `GPUAddressMode` | part of the renderer's internal WebGPU descriptor vocabulary; no member of the emitted surface is typed by it, so generating it would add public enum members nothing can be passed to |

@@ -8,13 +8,13 @@
     "blockedClasses": 30,
     "reachableClasses": 264,
     "members": 3648,
-    "mirroredState": 1157,
-    "commands": 780,
+    "mirroredState": 1162,
+    "commands": 781,
     "asyncQueries": 880,
     "untypedObjectQueries": 11,
-    "skippedMembers": 831,
+    "skippedMembers": 825,
     "reachableMembers": 2439,
-    "generatedMembers": 1811,
+    "generatedMembers": 1817,
     "strandedMembers": 1209
   },
   "classes": [
@@ -3939,11 +3939,11 @@
       "members": 38
     },
     {
-      "category": "OptionsInterface",
-      "members": 33
+      "category": "AnonymousObjectType",
+      "members": 32
     },
     {
-      "category": "AnonymousObjectType",
+      "category": "OptionsInterface",
       "members": 32
     },
     {
@@ -3955,15 +3955,15 @@
       "members": 19
     },
     {
-      "category": "UnmappedTypeAlias",
-      "members": 18
-    },
-    {
       "category": "ExternalType",
       "members": 15
     },
     {
       "category": "AbstractClass",
+      "members": 13
+    },
+    {
+      "category": "UnmappedTypeAlias",
       "members": 13
     },
     {
@@ -3999,6 +3999,13 @@
       "name": "AnimationBlendMode",
       "source": "ConstantGroup",
       "members": 2,
+      "backingType": "ushort",
+      "isReferenced": true
+    },
+    {
+      "name": "AnyMapping",
+      "source": "ConstantGroup",
+      "members": 6,
       "backingType": "ushort",
       "isReferenced": true
     },
@@ -4041,6 +4048,13 @@
       "name": "BlendingEquation",
       "source": "ConstantGroup",
       "members": 5,
+      "backingType": "byte",
+      "isReferenced": true
+    },
+    {
+      "name": "BlendingSrcFactor",
+      "source": "ConstantGroup",
+      "members": 15,
       "backingType": "byte",
       "isReferenced": true
     },
@@ -4269,6 +4283,13 @@
       "isReferenced": true
     },
     {
+      "name": "TextureFilter",
+      "source": "ConstantGroup",
+      "members": 10,
+      "backingType": "ushort",
+      "isReferenced": false
+    },
+    {
       "name": "ToneMapping",
       "source": "ConstantGroup",
       "members": 8,
@@ -4298,6 +4319,10 @@
     }
   ],
   "refusedEnums": [
+    {
+      "name": "AnyPixelFormat",
+      "reason": "constant `RGB_BPTC_SIGNED_Format` has no literal value in the IR (declared type `<none>`)"
+    },
     {
       "name": "CompressedPixelFormat",
       "reason": "constant `RGB_BPTC_SIGNED_Format` has no literal value in the IR (declared type `<none>`)"
@@ -6066,9 +6091,8 @@
       "member": "blendSrc",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses",
-      "category": "UnmappedTypeAlias"
+      "bucket": "MirroredState",
+      "type": "BlendingSrcFactor"
     },
     {
       "class": "BlendMode",
@@ -6091,9 +6115,8 @@
       "member": "blendSrcAlpha",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses",
-      "category": "UnmappedTypeAlias"
+      "bucket": "MirroredState",
+      "type": "BlendingSrcFactor"
     },
     {
       "class": "BlendMode",
@@ -14329,9 +14352,8 @@
       "member": "blendSrc",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses",
-      "category": "UnmappedTypeAlias"
+      "bucket": "MirroredState",
+      "type": "BlendingSrcFactor"
     },
     {
       "class": "Material",
@@ -14354,9 +14376,8 @@
       "member": "blendSrcAlpha",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses",
-      "category": "UnmappedTypeAlias"
+      "bucket": "MirroredState",
+      "type": "BlendingSrcFactor"
     },
     {
       "class": "Material",
@@ -28645,9 +28666,8 @@
       "member": "mapping",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`AnyMapping` aliases `Mapping | CubeTextureMapping`, which is neither a group of numeric constants nor a type the mirror expresses",
-      "category": "UnmappedTypeAlias"
+      "bucket": "MirroredState",
+      "type": "AnyMapping"
     },
     {
       "class": "Texture",
@@ -28703,7 +28723,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`AnyPixelFormat` aliases `PixelFormat | DepthTexturePixelFormat | CompressedPixelFormat`, which is neither a group of numeric constants nor a type the mirror expresses",
+      "reason": "`AnyPixelFormat` cannot become a C# enum: constant `RGB_BPTC_SIGNED_Format` has no literal value in the IR (declared type `<none>`)",
       "category": "UnmappedTypeAlias"
     },
     {
@@ -28976,9 +28996,7 @@
       "member": "setValues",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'values': `TextureParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "Texture",

@@ -21,8 +21,10 @@ public class Material : EventDispatcher
 	private float _opacity = 1f;
 	private bool _transparent = false;
 	private bool _alphaHash = false;
+	private BlendingSrcFactor _blendSrc = BlendingSrcFactor.SrcAlphaFactor;
 	private BlendingDstFactor _blendDst = BlendingDstFactor.OneMinusSrcAlphaFactor;
 	private BlendingEquation _blendEquation = BlendingEquation.AddEquation;
+	private BlendingSrcFactor? _blendSrcAlpha = null;
 	private BlendingDstFactor? _blendDstAlpha = null;
 	private BlendingEquation? _blendEquationAlpha = null;
 	private float _blendAlpha = 0f;
@@ -63,8 +65,10 @@ public class Material : EventDispatcher
 	private bool _isOpacityWritten;
 	private bool _isTransparentWritten;
 	private bool _isAlphaHashWritten;
+	private bool _isBlendSrcWritten;
 	private bool _isBlendDstWritten;
 	private bool _isBlendEquationWritten;
+	private bool _isBlendSrcAlphaWritten;
 	private bool _isBlendDstAlphaWritten;
 	private bool _isBlendEquationAlphaWritten;
 	private bool _isBlendColorWritten;
@@ -339,6 +343,26 @@ public class Material : EventDispatcher
 	}
 
 	/// <summary>
+	/// Defines the blending source factor. Writing it records a <c>blendSrc</c> property write once
+	/// this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public BlendingSrcFactor BlendSrc
+	{
+		get { return _blendSrc; }
+		set
+		{
+			if (_blendSrc == value)
+			{
+				return;
+			}
+
+			_blendSrc = value;
+			_isBlendSrcWritten = true;
+			RecordSet("blendSrc", value);
+		}
+	}
+
+	/// <summary>
 	/// Defines the blending destination factor. Writing it records a <c>blendDst</c> property write
 	/// once this object is attached; writing the value already held records nothing.
 	/// </summary>
@@ -375,6 +399,26 @@ public class Material : EventDispatcher
 			_blendEquation = value;
 			_isBlendEquationWritten = true;
 			RecordSet("blendEquation", value);
+		}
+	}
+
+	/// <summary>
+	/// Defines the blending source alpha factor. Writing it records a <c>blendSrcAlpha</c> property
+	/// write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public BlendingSrcFactor? BlendSrcAlpha
+	{
+		get { return _blendSrcAlpha; }
+		set
+		{
+			if (_blendSrcAlpha == value)
+			{
+				return;
+			}
+
+			_blendSrcAlpha = value;
+			_isBlendSrcAlphaWritten = true;
+			RecordSet("blendSrcAlpha", value);
 		}
 	}
 
@@ -1173,6 +1217,11 @@ public class Material : EventDispatcher
 			batch.Set(Handle, "alphaHash", ThreeValue.Encode(_alphaHash));
 		}
 
+		if (_isBlendSrcWritten)
+		{
+			batch.Set(Handle, "blendSrc", ThreeValue.Encode(_blendSrc));
+		}
+
 		if (_isBlendDstWritten)
 		{
 			batch.Set(Handle, "blendDst", ThreeValue.Encode(_blendDst));
@@ -1181,6 +1230,11 @@ public class Material : EventDispatcher
 		if (_isBlendEquationWritten)
 		{
 			batch.Set(Handle, "blendEquation", ThreeValue.Encode(_blendEquation));
+		}
+
+		if (_isBlendSrcAlphaWritten)
+		{
+			batch.Set(Handle, "blendSrcAlpha", ThreeValue.Encode(_blendSrcAlpha));
 		}
 
 		if (_isBlendDstAlphaWritten)

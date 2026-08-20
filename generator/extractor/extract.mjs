@@ -782,10 +782,6 @@ async function main() {
 				const ir = { name: statement.name.text, file, isExported: isPublicType(statement.name.text) };
 				assignIfDefined(ir, "typeParameters", typeParametersToIr(statement.typeParameters));
 				ir.type = typeToIr(statement.type);
-				const group = constantGroupOf(ir.type);
-				if (group !== undefined) {
-					ir.constantGroup = group;
-				}
 				assignIfDefined(ir, "doc", getDoc(statement));
 				typeAliases.push(ir);
 				continue;
@@ -895,7 +891,15 @@ async function main() {
 	}
 
 	/** `type Side = typeof FrontSide | typeof BackSide` - the grouping signal for loose constants. */
-	function constantGroupOf(type) {
+	/**
+	 * The constants a type alias unions, or undefined when it unions anything else.
+	 *
+	 * A member may be another alias that is itself a constant group, whose constants are spliced in:
+	 * `BlendingSrcFactor` is `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, and reading it as
+	 * "not a constant group" refused every member typed by it. `visiting` stops an alias that referred
+	 * to itself, directly or through a cycle, from recursing forever.
+	 */
+	function constantGroupOf(type, aliasTypesByName, visiting) {
 		if (type === undefined) {
 			return undefined;
 		}
@@ -905,12 +909,45 @@ async function main() {
 		}
 		const names = [];
 		for (const member of members) {
-			if (member.kind !== "typeQuery" || member.target?.origin !== "in-scope" || member.target.refKind !== "constant") {
-				return undefined;
+			if (member.kind === "typeQuery" && member.target?.origin === "in-scope" && member.target.refKind === "constant") {
+				names.push(member.name);
+				continue;
 			}
-			names.push(member.name);
+
+			if (
+				member.kind === "reference" &&
+				member.target?.refKind === "typeAlias" &&
+				!visiting.has(member.name) &&
+				aliasTypesByName.has(member.name)
+			) {
+				visiting.add(member.name);
+				const nested = constantGroupOf(aliasTypesByName.get(member.name), aliasTypesByName, visiting);
+				visiting.delete(member.name);
+				if (nested === undefined) {
+					return undefined;
+				}
+
+				names.push(...nested);
+				continue;
+			}
+
+			return undefined;
 		}
-		return names;
+
+		// Order-preserving dedupe: a constant reachable through two arms is one member of the set.
+		return [...new Set(names)];
+	}
+
+	// Constant groups are resolved after every alias is collected, because one may be written in terms
+	// of another: `BlendingSrcFactor` is `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is
+	// the whole of one group plus one more constant. Reading that needs the other alias to be known,
+	// which it is not while the file is still being walked.
+	const aliasTypesByName = new Map(typeAliases.map((alias) => [alias.name, alias.type]));
+	for (const alias of typeAliases) {
+		const group = constantGroupOf(alias.type, aliasTypesByName, new Set([alias.name]));
+		if (group !== undefined) {
+			alias.constantGroup = group;
+		}
 	}
 
 	const sortByNameThenFile = (a, b) => byText(a.name, b.name) || byText(a.file, b.file);

@@ -126,6 +126,27 @@ public sealed class AnimationClip : ThreeObject
 		}
 	}
 
+	/// <summary>Factory method for creating an animation clip from the given JSON.</summary>
+	/// <param name="json">The serialized animation clip.</param>
+	public void Parse(AnimationClipJSON json)
+	{
+		RecordCall("parse", json);
+	}
+
+	/// <summary>
+	/// Returns a new animation clip from the passed morph targets array of a geometry, taking a name
+	/// and the number of frames per second. Note: The fps parameter is required, but the animation
+	/// speed can be overridden via <c>AnimationAction#setDuration</c>.
+	/// </summary>
+	/// <param name="name">The name of the animation clip.</param>
+	/// <param name="morphTargetSequence">A sequence of morph targets.</param>
+	/// <param name="fps">The Frames-Per-Second value.</param>
+	/// <param name="noLoop">Whether the clip should be no loop or not.</param>
+	public void CreateFromMorphTargetSequence(string name, MorphTarget[] morphTargetSequence, float fps, bool noLoop)
+	{
+		RecordCall("CreateFromMorphTargetSequence", name, morphTargetSequence, fps, noLoop);
+	}
+
 	/// <summary>
 	/// The UUID of the animation clip. Read-only in three.js, so it is read on demand rather than
 	/// mirrored: records a get op, sends it behind every write already pending, and completes with the
@@ -135,6 +156,50 @@ public sealed class AnimationClip : ThreeObject
 	public Task<string> UuidAsync()
 	{
 		return GetAsync<string>("uuid");
+	}
+
+	/// <summary>
+	/// Serializes the given animation clip into JSON. Records a read op, sends it behind every write
+	/// already pending, and completes with what <c>toJSON</c> returned.
+	/// </summary>
+	/// <param name="clip">The animation clip to serialize.</param>
+	/// <returns>The value <c>toJSON</c> returned, once the JavaScript side has answered.</returns>
+	public static Task<AnimationClipJSON> ToJSONAsync(ThreeContext context, AnimationClip clip)
+	{
+		return context.CallStaticAsync<AnimationClipJSON>("AnimationClip", "toJSON", clip);
+	}
+
+	/// <summary>
+	/// Searches for an animation clip by name, taking as its first parameter either an array of clips,
+	/// or a mesh or geometry that contains an array named "animations" property. Records a read op,
+	/// sends it behind every write already pending, and completes with what <c>findByName</c> returned.
+	/// This overload takes <c>objectOrClipArray</c> as <c>AnimationClip?[]</c> out of three.js's
+	/// <c>Array&lt;AnimationClip&gt; | Object3D</c>.
+	/// </summary>
+	/// <param name="objectOrClipArray">The array or object to search through.</param>
+	/// <param name="name">The name to search for.</param>
+	/// <returns>The value <c>findByName</c> returned, once the JavaScript side has answered.</returns>
+	public static Task<AnimationClip?> FindByNameAsync(
+		ThreeContext context,
+		AnimationClip?[] objectOrClipArray,
+		string name)
+	{
+		return context.CallStaticAsync<AnimationClip>("AnimationClip", "findByName", objectOrClipArray, name);
+	}
+
+	/// <summary>
+	/// Searches for an animation clip by name, taking as its first parameter either an array of clips,
+	/// or a mesh or geometry that contains an array named "animations" property. Records a read op,
+	/// sends it behind every write already pending, and completes with what <c>findByName</c> returned.
+	/// This overload takes <c>objectOrClipArray</c> as <c>Object3D</c> out of three.js's
+	/// <c>Array&lt;AnimationClip&gt; | Object3D</c>.
+	/// </summary>
+	/// <param name="objectOrClipArray">The array or object to search through.</param>
+	/// <param name="name">The name to search for.</param>
+	/// <returns>The value <c>findByName</c> returned, once the JavaScript side has answered.</returns>
+	public static Task<AnimationClip?> FindByNameAsync(ThreeContext context, Object3D objectOrClipArray, string name)
+	{
+		return context.CallStaticAsync<AnimationClip>("AnimationClip", "findByName", objectOrClipArray, name);
 	}
 
 	/// <summary>

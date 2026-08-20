@@ -30,4 +30,27 @@ public sealed class LoaderUtils : ThreeObject
 	{
 		get { return "LoaderUtils"; }
 	}
+
+	/// <summary>
+	/// Reads <c>extractUrlBase</c> back from the JavaScript-side object. Records a read op, sends it
+	/// behind every write already pending, and completes with what <c>extractUrlBase</c> returned.
+	/// </summary>
+	/// <param name="url">Value forwarded to the <c>url</c> argument.</param>
+	/// <returns>The value <c>extractUrlBase</c> returned, once the JavaScript side has answered.</returns>
+	public static Task<string> ExtractUrlBaseAsync(ThreeContext context, string url)
+	{
+		return context.CallStaticAsync<string>("LoaderUtils", "extractUrlBase", url);
+	}
+
+	/// <summary>
+	/// Reads <c>resolveURL</c> back from the JavaScript-side object. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>resolveURL</c> returned.
+	/// </summary>
+	/// <param name="url">Value forwarded to the <c>url</c> argument.</param>
+	/// <param name="path">Value forwarded to the <c>path</c> argument.</param>
+	/// <returns>The value <c>resolveURL</c> returned, once the JavaScript side has answered.</returns>
+	public static Task<string> ResolveURLAsync(ThreeContext context, string url, string path)
+	{
+		return context.CallStaticAsync<string>("LoaderUtils", "resolveURL", url, path);
+	}
 }

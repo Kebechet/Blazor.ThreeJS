@@ -91,6 +91,13 @@ public sealed class TorusGeometry : BufferGeometry
 		}
 	}
 
+	/// <summary>Records a call to <c>fromJSON</c> on the JavaScript-side object.</summary>
+	/// <param name="data">Value forwarded to the <c>data</c> argument.</param>
+	public void FromJSON(TorusGeometryJSON data)
+	{
+		RecordCall("fromJSON", data);
+	}
+
 	/// <summary>
 	/// An object with a property for each of the constructor parameters. Read-only in three.js, so it
 	/// is read on demand rather than mirrored: records a get op, sends it behind every write already

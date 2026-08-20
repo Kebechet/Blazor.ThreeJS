@@ -251,6 +251,39 @@ public sealed class ThreeContext : IAsyncDisposable
 	/// <exception cref="InvalidOperationException">
 	/// Thrown when the applier rejected the read, or answered the batch without a row for it.
 	/// </exception>
+	/// <summary>
+	/// Invokes a static method of a three.js class and hands its value back.
+	/// <para>
+	/// A static has no handle to address it by, so this is the one query that names a class rather than
+	/// an object. It still travels in the batch, behind every write already pending, so a static that
+	/// reads global three.js state sees the same state a member read would.
+	/// </para>
+	/// </summary>
+	/// <typeparam name="TValue">C# type the query declares it returns.</typeparam>
+	/// <param name="typeName">three.js name of the class.</param>
+	/// <param name="member">Name of the static method.</param>
+	/// <param name="args">Positional arguments, encoded here rather than by the caller.</param>
+	/// <returns>The decoded return value.</returns>
+	public Task<TValue> CallStaticAsync<TValue>(string typeName, string member, params object?[] args)
+	{
+		var encodedArgs = args.Select(ThreeValue.Encode).ToArray();
+		ThreeObject.AttachMirroredArguments(Batch, args);
+		return AwaitValueAsync<TValue>(Batch.ReadStatic(typeName, member, encodedArgs), 0, $"{typeName}.{member}");
+	}
+
+	/// <summary>
+	/// Invokes a static method of a three.js class whose result the caller does not need, recording it
+	/// as a call op rather than a read so it costs no round trip.
+	/// </summary>
+	/// <param name="typeName">three.js name of the class.</param>
+	/// <param name="member">Name of the static method.</param>
+	/// <param name="args">Positional arguments, encoded here rather than by the caller.</param>
+	public void CallStatic(string typeName, string member, params object?[] args)
+	{
+		ThreeObject.AttachMirroredArguments(Batch, args);
+		Batch.CallStatic(typeName, member, args.Select(ThreeValue.Encode).ToArray());
+	}
+
 	internal Task<TValue> ReadAsync<TValue>(int handle, string member, object?[] encodedArgs, bool mintsHandle = false)
 	{
 		return AwaitValueAsync<TValue>(Batch.Read(handle, member, encodedArgs, mintsHandle), handle, member);

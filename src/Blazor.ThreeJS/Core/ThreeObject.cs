@@ -827,7 +827,7 @@ public abstract class ThreeObject
 	/// </summary>
 	/// <param name="batch">Batch to attach the arguments to.</param>
 	/// <param name="args">The op's positional arguments, or its single value, unencoded.</param>
-	private protected static void AttachMirroredArguments(ThreeBatch batch, object?[] args)
+	internal static void AttachMirroredArguments(ThreeBatch batch, object?[] args)
 	{
 		foreach (var arg in args)
 		{

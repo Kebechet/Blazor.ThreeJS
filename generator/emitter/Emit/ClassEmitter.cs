@@ -141,13 +141,13 @@ internal sealed class ClassEmitter
 		foreach (var command in surface.Commands)
 		{
 			writer.WriteLine();
-			WriteCommand(writer, command, surface.Properties);
+			WriteCommand(writer, threeTypeName, command, surface.Properties);
 		}
 
 		foreach (var query in surface.Queries)
 		{
 			writer.WriteLine();
-			WriteQuery(writer, query);
+			WriteQuery(writer, threeTypeName, query);
 		}
 
 		WriteAttachmentAndReplay(writer, irClass, threeTypeName, constructorParameters, surface.Properties, _scope.NeedsUninformedConstructor(irClass.Name));
@@ -227,7 +227,7 @@ internal sealed class ClassEmitter
 				writer.WriteLine();
 			}
 
-			WriteCommand(writer, command, surface.Properties);
+			WriteCommand(writer, threeTypeName, command, surface.Properties);
 			hasWrittenMember = true;
 		}
 
@@ -238,7 +238,7 @@ internal sealed class ClassEmitter
 				writer.WriteLine();
 			}
 
-			WriteQuery(writer, query);
+			WriteQuery(writer, threeTypeName, query);
 			hasWrittenMember = true;
 		}
 
@@ -718,6 +718,7 @@ internal sealed class ClassEmitter
 				IsAdoptedResult = member.IsAdoptedResult,
 				IsUntypedObjectResult = member.IsUntypedObjectResult,
 				IsAwaitedVoidResult = member.IsAwaitedVoidResult,
+				IsStatic = member.IsStatic,
 				Documentation = member.Property?.Doc
 			};
 		}
@@ -732,6 +733,7 @@ internal sealed class ClassEmitter
 			IsAdoptedResult = member.IsAdoptedResult,
 			IsUntypedObjectResult = member.IsUntypedObjectResult,
 			IsAwaitedVoidResult = member.IsAwaitedVoidResult,
+			IsStatic = member.IsStatic,
 			Documentation = member.Method.Signature?.Doc
 		};
 	}
@@ -1093,6 +1095,24 @@ internal sealed class ClassEmitter
 
 		return resolved;
 	}
+
+	/// <summary>
+	/// The context argument a static member takes. A static belongs to the class rather than to any
+	/// object, so it has no <c>Batch</c> of its own and the caller has to say which context the call
+	/// belongs to. First in the list, the way an extension method's receiver would be.
+	/// </summary>
+	private static readonly MappedParameter ContextParameter = new()
+	{
+		Name = "context",
+		DeclarationName = "context",
+		FieldName = "_context",
+		ThreeName = "context",
+		Mapping = TypeMapping.Mapped("ThreeContext", TypeMappingKind.Primitive),
+		CSharpTypeName = "ThreeContext",
+		IsOptional = false,
+		IsUnspecifiedNullable = false,
+		Documentation = "Context the call belongs to; a static has no object of its own to record through."
+	};
 
 	/// <summary>
 	/// Writes the no-argument constructor a subclass chains to when it has nothing to give this one.
@@ -1520,7 +1540,7 @@ internal sealed class ClassEmitter
 		DocCommentEmitter.WriteSummary(writer, summary);
 	}
 
-	private static void WriteCommand(CSharpWriter writer, EmittedCommand command, IReadOnlyList<EmittedProperty> properties)
+	private static void WriteCommand(CSharpWriter writer, string threeTypeName, EmittedCommand command, IReadOnlyList<EmittedProperty> properties)
 	{
 		var summary = command.Documentation?.Summary is { Length: > 0 } rawSummary
 			? DocCommentEmitter.EnsureSentenceEnd(DocCommentEmitter.RenderInline(rawSummary))
@@ -1550,7 +1570,18 @@ internal sealed class ClassEmitter
 				DocCommentEmitter.WriteParam(writer, parameter.Name, text);
 			}
 
-			WriteDeclaration(writer, $"public void {command.CSharpName}", parameters);
+			// A static has no `Batch` of its own to record into, so it takes the context explicitly. Named
+			// `context` rather than `this`-like, because it is an argument the caller supplies.
+			var staticParameters = command.IsStatic
+				? (IReadOnlyList<MappedParameter>) [ContextParameter, .. parameters]
+				: parameters;
+
+			WriteDeclaration(
+				writer,
+				command.IsStatic
+					? $"public static void {command.CSharpName}"
+					: $"public void {command.CSharpName}",
+				staticParameters);
 
 			writer.WriteLine("{");
 			writer.Indent();
@@ -1560,7 +1591,9 @@ internal sealed class ClassEmitter
 			// would only cover the case where this object already has a batch: a command invoked before
 			// the attach is held and replayed later, and nothing at this call site can attach anything
 			// then. One owner for the invariant is what keeps the two paths from drifting.
-			writer.WriteLine($"RecordCall(\"{command.ThreeName}\"{RenderRecordedArguments(parameters)});");
+			writer.WriteLine(command.IsStatic
+				? $"context.CallStatic(\"{threeTypeName}\", \"{command.ThreeName}\"{RenderRecordedArguments(parameters)});"
+				: $"RecordCall(\"{command.ThreeName}\"{RenderRecordedArguments(parameters)});");
 			writer.Outdent();
 			writer.WriteLine("}");
 		}
@@ -1598,7 +1631,7 @@ internal sealed class ClassEmitter
 	/// </summary>
 	/// <param name="writer">Destination.</param>
 	/// <param name="query">The query being emitted.</param>
-	private static void WriteQuery(CSharpWriter writer, EmittedQuery query)
+	private static void WriteQuery(CSharpWriter writer, string threeTypeName, EmittedQuery query)
 	{
 		var summary = query.Documentation?.Summary is { Length: > 0 } rawSummary
 			? DocCommentEmitter.EnsureSentenceEnd(DocCommentEmitter.RenderInline(rawSummary))
@@ -1668,13 +1701,29 @@ internal sealed class ClassEmitter
 					: $"The value <c>{query.ThreeName}</c> returned, once the JavaScript side has answered.");
 			}
 
-			WriteDeclaration(writer, $"public {returnTypeName} {query.CSharpName}", parameters);
+			var declaredParameters = query.IsStatic
+				? (IReadOnlyList<MappedParameter>) [ContextParameter, .. parameters]
+				: parameters;
+
+			WriteDeclaration(
+				writer,
+				query.IsStatic
+					? $"public static {returnTypeName} {query.CSharpName}"
+					: $"public {returnTypeName} {query.CSharpName}",
+				declaredParameters);
 
 			writer.WriteLine("{");
 			writer.Indent();
 
 			var arguments = RenderRecordedArguments(parameters);
-			if (query.IsUntypedObjectResult)
+
+			// A static reads through the context, naming the class rather than a handle. Every other
+			// query shape below records against this object's own batch.
+			if (query.IsStatic)
+			{
+				writer.WriteLine($"return context.CallStaticAsync<{query.ReturnTypeName}>(\"{threeTypeName}\", \"{query.ThreeName}\"{arguments});");
+			}
+			else if (query.IsUntypedObjectResult)
 			{
 				// No adopter lambda, because there is no type to adopt into: the escape hatch's own helpers
 				// answer with the wrapper that names three.js's runtime type instead of asserting a C# one.
@@ -1976,6 +2025,12 @@ internal sealed class EmittedCommand
 
 	/// <summary>Upstream JSDoc for the signature.</summary>
 	public IrDoc? Documentation { get; init; }
+
+	/// <summary>
+	/// Whether three.js declares this a static, so it belongs to the class rather than to any object and
+	/// is emitted as a C# static taking the context explicitly.
+	/// </summary>
+	public bool IsStatic { get; init; }
 }
 
 /// <summary>One query — a method whose return value is read back — resolved into C# terms.</summary>
@@ -2013,6 +2068,13 @@ internal sealed class EmittedQuery
 
 	/// <summary>Whether the query answers nothing and is emitted as a bare <c>Task</c>.</summary>
 	public bool IsAwaitedVoidResult { get; init; }
+
+	/// <summary>
+	/// Whether three.js declares this a static, so it belongs to the class rather than to any object.
+	/// Emitted as a C# static taking the context explicitly, because a static has no <c>Batch</c> of its
+	/// own to record into.
+	/// </summary>
+	public bool IsStatic { get; init; }
 
 	/// <summary>Upstream JSDoc for the signature.</summary>
 	public IrDoc? Documentation { get; init; }

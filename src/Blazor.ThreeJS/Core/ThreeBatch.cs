@@ -145,6 +145,53 @@ internal sealed class ThreeBatch
 	/// <param name="args">Positional arguments to pass to the method.</param>
 	/// <param name="mintsHandle">Whether the applier should answer with a handle instead of a value.</param>
 	/// <returns>The request id identifying this read in the applier's response.</returns>
+	/// <summary>
+	/// Records a read of a static method of a three.js class, and allocates the request id the applier
+	/// will echo on the result row.
+	/// <para>
+	/// A static belongs to the class rather than to any object, so there is no handle to address it by:
+	/// the op carries the three.js type name instead, under the same field the create op uses.
+	/// </para>
+	/// </summary>
+	/// <param name="typeName">three.js name of the class, resolved on <c>THREE</c> by the applier.</param>
+	/// <param name="member">Name of the static method to invoke.</param>
+	/// <param name="args">Positional arguments, already in wire form.</param>
+	/// <returns>The request id the result row will carry.</returns>
+	public int ReadStatic(string typeName, string member, object?[] args)
+	{
+		// No handle, so nothing to invalidate: a static belongs to the class rather than to any object,
+		// and no pending write to any object can be observed by it.
+		_nextRequestId++;
+		_ops.Add(new ThreeOp
+		{
+			Kind = ThreeOpKind.Read,
+			Type = typeName,
+			Member = member,
+			Args = args,
+			RequestId = _nextRequestId
+		});
+
+		return _nextRequestId;
+	}
+
+	/// <summary>
+	/// Records a call to a static method of a three.js class, which belongs to the class rather than to
+	/// any object this context holds.
+	/// </summary>
+	/// <param name="typeName">three.js name of the class, resolved on <c>THREE</c> by the applier.</param>
+	/// <param name="member">Name of the static method to invoke.</param>
+	/// <param name="args">Positional arguments, already in wire form.</param>
+	public void CallStatic(string typeName, string member, object?[] args)
+	{
+		_ops.Add(new ThreeOp
+		{
+			Kind = ThreeOpKind.Call,
+			Type = typeName,
+			Member = member,
+			Args = args
+		});
+	}
+
 	public int Read(int handle, string member, object?[] args, bool mintsHandle = false)
 	{
 		InvalidateSetCoalescing(handle);

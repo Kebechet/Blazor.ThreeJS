@@ -1125,6 +1125,35 @@ disposeDecoders(retryContext);
 modelServer.close();
 
 // ---------------------------------------------------------------------------------------------
+// A static. three.js's utility classes - AnimationUtils, ShapeUtils, DataUtils - hang their work off
+// the class rather than off any object, so there is no handle to address them by. The op carries the
+// three.js type name instead, under the same `t` the create op already uses.
+// ---------------------------------------------------------------------------------------------
+
+const staticContext = createContextAround({ isStaticStandIn: true });
+
+const halfFloat = runOps(staticContext, [
+    { k: OP_READ, t: 'DataUtils', m: 'toHalfFloat', a: [1], i: 70 }
+]);
+
+assert.equal(halfFloat.r.length, 1, 'a static read should produce one result row');
+assert.equal(
+    halfFloat.r[0].v,
+    THREE.DataUtils.toHalfFloat(1),
+    'the static should run on the class three.js exports, and answer what three.js answers');
+
+// The whole point of naming the class: no handle is involved, and none is invented.
+assert.equal(staticContext.objects.size, 1, 'a static read must not register anything - only the renderer is held');
+
+// A type the bundle does not carry fails by name rather than resolving to undefined and throwing
+// something opaque from inside three.js.
+const unknownStatic = runOps(staticContext, [
+    { k: OP_READ, t: 'NotAThreeJsClass', m: 'whatever', a: [], i: 71 }
+]);
+
+assert.match(unknownStatic.r[0].e ?? '', /Unknown three.js type/, 'an unknown class should be named in the failure');
+
+// ---------------------------------------------------------------------------------------------
 // A structural value. three.js describes some of what it hands back with an interface rather than a
 // class - `BufferGeometry.groups` is `{ start, count, materialIndex }[]` - and those have no identity,
 // so they travel as their own members rather than behind a handle.
@@ -1378,6 +1407,7 @@ console.log('Picking OK - one callback per hit, none for a miss, and no pointer-
 console.log(`GLTFLoader OK - the demo's own model fetched, parsed and mirrored as ${loadedNodes.length} nodes on browser-minted handles, then released.`);
 console.log('DRACO decoding OK - the same compressed file rejects with no options, decodes with {draco:true}, reuses its cached decoder on a second load and on a racing first pair, and releases it on dispose.');
 console.log('KTX2 opt-in OK - {ktx2:true} still loads a file with no KTX2 texture, reuses its cached decoder on a second load, releases it on dispose, and clears a failed build so a retry gets a real second attempt.');
+console.log('Statics OK - a utility class runs by name, answers what three.js answers, registers no handle, and an unknown class is named in the failure.');
 console.log('Structures OK - a plain object round-trips as its own members, a nested math value decodes, a three.js instance is still refused.');
 console.log('Promise answers OK - a batch with none stays synchronous, one with them waits for each, a rejection faults only its own row.');
 console.log('OrbitControls OK - attached to the real canvas, 120 frames of camera movement, zero interop, every listener removed on detach.');

@@ -110,6 +110,34 @@ public sealed class PropertyBinding : ThreeObject
 	}
 
 	/// <summary>
+	/// Replaces spaces with underscores and removes unsupported characters from node names, to ensure
+	/// compatibility with parseTrackName(). Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>sanitizeNodeName</c> returned.
+	/// </summary>
+	/// <param name="name">Node name to be sanitized.</param>
+	/// <returns>The value <c>sanitizeNodeName</c> returned, once the JavaScript side has answered.</returns>
+	public static Task<string> SanitizeNodeNameAsync(ThreeContext context, string name)
+	{
+		return context.CallStaticAsync<string>("PropertyBinding", "sanitizeNodeName", name);
+	}
+
+	/// <summary>
+	/// Parses the given track name (an object path to an animated property) and returns an object with
+	/// information about the path. Matches strings in the following forms: - nodeName.property -
+	/// nodeName.property[accessor] - nodeName.material.property[accessor] - uuid.property[accessor] -
+	/// uuid.objectName[objectIndex].propertyName[propertyIndex] - parentName/nodeName.property -
+	/// parentName/parentName/nodeName.property[index] - .bone[Armature.DEF_cog].position -
+	/// scene:helium_balloon_model:helium_balloon_model.position. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>parseTrackName</c> returned.
+	/// </summary>
+	/// <param name="trackName">The track name to parse.</param>
+	/// <returns>The value <c>parseTrackName</c> returned, once the JavaScript side has answered.</returns>
+	public static Task<ParseTrackNameResults> ParseTrackNameAsync(ThreeContext context, string trackName)
+	{
+		return context.CallStaticAsync<ParseTrackNameResults>("PropertyBinding", "parseTrackName", trackName);
+	}
+
+	/// <summary>
 	/// Attaches the objects <c>THREE.PropertyBinding</c> is constructed from, so their create ops reach
 	/// the batch before the one that references them by handle, then emits this object's own. A
 	/// replayed value that is itself a mirrored object is attached first, so its create op reaches the

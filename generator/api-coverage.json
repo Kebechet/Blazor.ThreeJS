@@ -9,12 +9,12 @@
     "reachableClasses": 264,
     "members": 3648,
     "mirroredState": 1149,
-    "commands": 758,
-    "asyncQueries": 849,
+    "commands": 765,
+    "asyncQueries": 866,
     "untypedObjectQueries": 11,
-    "skippedMembers": 892,
+    "skippedMembers": 868,
     "reachableMembers": 2439,
-    "generatedMembers": 1760,
+    "generatedMembers": 1779,
     "strandedMembers": 1209
   },
   "classes": [
@@ -3924,27 +3924,27 @@
     },
     {
       "category": "CallbackType",
-      "members": 94
-    },
-    {
-      "category": "NotInstanceApi",
-      "members": 79
+      "members": 95
     },
     {
       "category": "DomOrLibType",
-      "members": 77
+      "members": 79
     },
     {
       "category": "UntypedValue",
-      "members": 45
+      "members": 48
+    },
+    {
+      "category": "UnmappedUnion",
+      "members": 42
     },
     {
       "category": "AnonymousObjectType",
       "members": 40
     },
     {
-      "category": "UnmappedUnion",
-      "members": 35
+      "category": "NotInstanceApi",
+      "members": 38
     },
     {
       "category": "OptionsInterface",
@@ -3956,7 +3956,7 @@
     },
     {
       "category": "UnmappedTypeAlias",
-      "members": 17
+      "members": 18
     },
     {
       "category": "ExternalType",
@@ -3967,12 +3967,12 @@
       "members": 13
     },
     {
-      "category": "UnwrappedClass",
-      "members": 12
+      "category": "UnmappedTypeSyntax",
+      "members": 13
     },
     {
-      "category": "UnmappedTypeSyntax",
-      "members": 11
+      "category": "UnwrappedClass",
+      "members": 12
     },
     {
       "category": "UnerasableTypeParameter",
@@ -3988,7 +3988,7 @@
     },
     {
       "category": "NoHandleForResult",
-      "members": 1
+      "members": 2
     }
   ],
   "generatedEnums": [
@@ -4750,36 +4750,30 @@
       "member": "parse",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "Command"
     },
     {
       "class": "AnimationClip",
       "member": "toJSON",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "AnimationClipJSON"
     },
     {
       "class": "AnimationClip",
       "member": "CreateFromMorphTargetSequence",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "Command"
     },
     {
       "class": "AnimationClip",
       "member": "findByName",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "AnimationClip"
     },
     {
       "class": "AnimationClip",
@@ -4787,8 +4781,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "returns `AnimationClip?[]`, which is neither a value the read op carries nor a three.js object a handle could name",
+      "category": "NoHandleForResult"
     },
     {
       "class": "AnimationClip",
@@ -5069,8 +5063,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'type': `TypedArrayConstructor` aliases `| Int8ArrayConstructor | Uint8ArrayConstructor | Uint8ClampedArrayConstructor | Int16ArrayConstructor | Uint16ArrayConstructor | Int32ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor`, which is neither a group of numeric constants nor a type the mirror expresses",
+      "category": "UnmappedTypeAlias"
     },
     {
       "class": "AnimationUtils",
@@ -5078,53 +5072,47 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'object': `unknown` carries no type information a C# signature could express",
+      "category": "UntypedValue"
     },
     {
       "class": "AnimationUtils",
       "member": "getKeyframeOrder",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "float[]"
     },
     {
       "class": "AnimationUtils",
       "member": "sortedArray",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "float[]"
     },
     {
       "class": "AnimationUtils",
       "member": "flattenJSON",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "Command"
     },
     {
       "class": "AnimationUtils",
       "member": "subclip",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "AnimationClip"
     },
     {
       "class": "AnimationUtils",
       "member": "makeClipAdditive",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "AnimationClip"
     },
     {
       "class": "ArcCurve",
@@ -5591,18 +5579,15 @@
       "member": "getContext",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "AudioContext"
     },
     {
       "class": "AudioContext",
       "member": "setContext",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "Command"
     },
     {
       "class": "AudioListener",
@@ -6242,8 +6227,8 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
+      "category": "UnmappedUnion"
     },
     {
       "class": "BooleanKeyframeTrack",
@@ -6846,7 +6831,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "marked `@internal` upstream, so it is not public API",
       "category": "NotInstanceApi"
     },
     {
@@ -7830,7 +7815,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "marked `@internal` upstream, so it is not public API",
       "category": "NotInstanceApi"
     },
     {
@@ -8022,7 +8007,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "marked `@internal` upstream, so it is not public API",
       "category": "NotInstanceApi"
     },
     {
@@ -8292,7 +8277,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "a static property; the mirror models instances, and a static write has no handle to address",
       "category": "NotInstanceApi"
     },
     {
@@ -8626,8 +8611,8 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
+      "category": "UnmappedUnion"
     },
     {
       "class": "ColorKeyframeTrack",
@@ -9731,7 +9716,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "marked `@internal` upstream, so it is not public API",
       "category": "NotInstanceApi"
     },
     {
@@ -9880,18 +9865,16 @@
       "member": "toHalfFloat",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "float"
     },
     {
       "class": "DataUtils",
       "member": "fromHalfFloat",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "float"
     },
     {
       "class": "DepthTexture",
@@ -10268,9 +10251,8 @@
       "member": "triangulate",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "float[]"
     },
     {
       "class": "EdgesGeometry",
@@ -10544,7 +10526,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "a static property; the mirror models instances, and a static write has no handle to address",
       "category": "NotInstanceApi"
     },
     {
@@ -11225,8 +11207,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'image': `HTMLImageElement | HTMLCanvasElement | CanvasImageSource | ImageBitmap | ImageData` unions 5 types, and every one of them is refused for the same reason: `HTMLImageElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "category": "DomOrLibType"
     },
     {
       "class": "ImageUtils",
@@ -11234,8 +11216,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'image': `HTMLImageElement | HTMLCanvasElement | ImageBitmap` unions 3 types, and every one of them is refused for the same reason: `HTMLImageElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "category": "DomOrLibType"
     },
     {
       "class": "IndirectStorageBufferAttribute",
@@ -12157,8 +12139,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
+      "category": "UnmappedUnion"
     },
     {
       "class": "KeyframeTrack",
@@ -12337,7 +12319,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "marked `@internal` upstream, so it is not public API",
       "category": "NotInstanceApi"
     },
     {
@@ -13980,7 +13962,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "a static property; the mirror models instances, and a static write has no handle to address",
       "category": "NotInstanceApi"
     },
     {
@@ -14049,18 +14031,16 @@
       "member": "extractUrlBase",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "string"
     },
     {
       "class": "LoaderUtils",
       "member": "resolveURL",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "string"
     },
     {
       "class": "LoadingManager",
@@ -14708,8 +14688,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'materialClass': `new() => Material` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
+      "category": "CallbackType"
     },
     {
       "class": "Matrix2",
@@ -21358,8 +21338,8 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
+      "category": "UnmappedUnion"
     },
     {
       "class": "NumberKeyframeTrack",
@@ -21716,7 +21696,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "a static property; the mirror models instances, and a static write has no handle to address",
       "category": "NotInstanceApi"
     },
     {
@@ -21725,7 +21705,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "a static property; the mirror models instances, and a static write has no handle to address",
       "category": "NotInstanceApi"
     },
     {
@@ -21734,7 +21714,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "a static property; the mirror models instances, and a static write has no handle to address",
       "category": "NotInstanceApi"
     },
     {
@@ -22749,7 +22729,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "marked `@internal` upstream, so it is not public API",
       "category": "NotInstanceApi"
     },
     {
@@ -23430,7 +23410,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "marked `@internal` upstream, so it is not public API",
       "category": "NotInstanceApi"
     },
     {
@@ -23557,26 +23537,24 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'root': `object` carries no type information a C# signature could express",
+      "category": "UntypedValue"
     },
     {
       "class": "PropertyBinding",
       "member": "sanitizeNodeName",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "string"
     },
     {
       "class": "PropertyBinding",
       "member": "parseTrackName",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "ParseTrackNameResults"
     },
     {
       "class": "PropertyBinding",
@@ -23584,8 +23562,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'root': `object` carries no type information a C# signature could express",
+      "category": "UntypedValue"
     },
     {
       "class": "PropertyBinding",
@@ -24315,18 +24293,15 @@
       "member": "slerpFlat",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "Command"
     },
     {
       "class": "Quaternion",
       "member": "multiplyQuaternionsFlat",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "float[]"
     },
     {
       "class": "Quaternion",
@@ -24409,8 +24384,8 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
+      "category": "UnmappedUnion"
     },
     {
       "class": "QuaternionKeyframeTrack",
@@ -26085,7 +26060,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "marked `@internal` upstream, so it is not public API",
       "category": "NotInstanceApi"
     },
     {
@@ -26645,7 +26620,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "marked `@internal` upstream, so it is not public API",
       "category": "NotInstanceApi"
     },
     {
@@ -26739,8 +26714,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'contour': `readonly Vector2Like[]` is a TypeScript `typeOperator` type, which has no C# equivalent",
+      "category": "UnmappedTypeSyntax"
     },
     {
       "class": "ShapeUtils",
@@ -26748,17 +26723,16 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'pts': `readonly Vector2Like[]` is a TypeScript `typeOperator` type, which has no C# equivalent",
+      "category": "UnmappedTypeSyntax"
     },
     {
       "class": "ShapeUtils",
       "member": "triangulateShape",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "float[][]"
     },
     {
       "class": "Skeleton",
@@ -27312,7 +27286,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "marked `@internal` upstream, so it is not public API",
       "category": "NotInstanceApi"
     },
     {
@@ -27501,9 +27475,7 @@
       "member": "getBasisAt",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "Command"
     },
     {
       "class": "SplineCurve",
@@ -28536,8 +28508,8 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
+      "category": "UnmappedUnion"
     },
     {
       "class": "StringKeyframeTrack",
@@ -28971,7 +28943,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "a static property; the mirror models instances, and a static write has no handle to address",
       "category": "NotInstanceApi"
     },
     {
@@ -28980,7 +28952,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "a static property; the mirror models instances, and a static write has no handle to address",
       "category": "NotInstanceApi"
     },
     {
@@ -28989,7 +28961,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "a static property; the mirror models instances, and a static write has no handle to address",
       "category": "NotInstanceApi"
     },
     {
@@ -29283,9 +29255,7 @@
       "member": "fromJSON",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "Command"
     },
     {
       "class": "TorusKnotGeometry",
@@ -29301,7 +29271,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "marked `@internal` upstream, so it is not public API",
       "category": "NotInstanceApi"
     },
     {
@@ -29457,9 +29427,8 @@
       "member": "getInterpolatedAttribute",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "Vector2"
     },
     {
       "class": "TubeGeometry",
@@ -29500,7 +29469,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
+      "reason": "marked `@internal` upstream, so it is not public API",
       "category": "NotInstanceApi"
     },
     {
@@ -31072,8 +31041,8 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "static; the mirror models instances, and a static write has no handle to address",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
+      "category": "UnmappedUnion"
     },
     {
       "class": "VectorKeyframeTrack",

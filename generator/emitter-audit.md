@@ -275,11 +275,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `AmbientLight` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `AnimationClip` | `constructor parameter blendMode` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `AnimationClip` | `constructor parameter tracks` | `Array<KeyframeTrack>` is an array whose element type cannot be mapped: `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `AnimationClip` | `method CreateClipsFromMorphTargetSequences` | static; the mirror models instances, and a static write has no handle to address |
-| `AnimationClip` | `method CreateFromMorphTargetSequence` | static; the mirror models instances, and a static write has no handle to address |
-| `AnimationClip` | `method findByName` | static; the mirror models instances, and a static write has no handle to address |
-| `AnimationClip` | `method parse` | static; the mirror models instances, and a static write has no handle to address |
-| `AnimationClip` | `method toJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `AnimationClip` | `method CreateClipsFromMorphTargetSequences` | returns `AnimationClip?[]`, which is neither a value the read op carries nor a three.js object a handle could name |
 | `AnimationClip` | `property tracks` | `Array<KeyframeTrack>` is an array whose element type cannot be mapped: `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `AnimationClip` | `property userData` | `Record<string, unknown>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `AnimationLoader` | `method parse` | parameter 'json': `readonly unknown[]` is a TypeScript `typeOperator` type, which has no C# equivalent |
@@ -297,13 +293,8 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `AnimationObjectGroup` | `method add` | parameter 'args' is a rest parameter (`Object3D[]`) |
 | `AnimationObjectGroup` | `method remove` | parameter 'args' is a rest parameter (`Object3D[]`) |
 | `AnimationObjectGroup` | `method uncache` | parameter 'args' is a rest parameter (`Object3D[]`) |
-| `AnimationUtils` | `method convertArray` | static; the mirror models instances, and a static write has no handle to address |
-| `AnimationUtils` | `method flattenJSON` | static; the mirror models instances, and a static write has no handle to address |
-| `AnimationUtils` | `method getKeyframeOrder` | static; the mirror models instances, and a static write has no handle to address |
-| `AnimationUtils` | `method isTypedArray` | static; the mirror models instances, and a static write has no handle to address |
-| `AnimationUtils` | `method makeClipAdditive` | static; the mirror models instances, and a static write has no handle to address |
-| `AnimationUtils` | `method sortedArray` | static; the mirror models instances, and a static write has no handle to address |
-| `AnimationUtils` | `method subclip` | static; the mirror models instances, and a static write has no handle to address |
+| `AnimationUtils` | `method convertArray` | parameter 'type': `TypedArrayConstructor` aliases `| Int8ArrayConstructor | Uint8ArrayConstructor | Uint8ClampedArrayConstructor | Int16ArrayConstructor | Uint16ArrayConstructor | Int32ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor`, which is neither a group of numeric constants nor a type the mirror expresses |
+| `AnimationUtils` | `method isTypedArray` | parameter 'object': `unknown` carries no type information a C# signature could express |
 | `ArrowHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `Audio` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `Audio` | `method disconnect` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
@@ -328,8 +319,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Audio` | `property source` | `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `AudioAnalyser` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `AudioAnalyser` | `property analyser` | `AnalyserNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `AudioContext` | `method getContext` | static; the mirror models instances, and a static write has no handle to address |
-| `AudioContext` | `method setContext` | static; the mirror models instances, and a static write has no handle to address |
 | `AudioListener` | `method getFilter` | return type: `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `AudioListener` | `method getInput` | return type: `GainNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `AudioListener` | `method setFilter` | parameter 'value': `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -349,13 +338,13 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `BlendMode` | `property blendSrc` | `BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `BlendMode` | `property blendSrcAlpha` | `BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Bone` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `BooleanKeyframeTrack` | `method toJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `BooleanKeyframeTrack` | `method toJSON` | parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BooleanKeyframeTrack` | `property TimeBufferType` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BooleanKeyframeTrack` | `property ValueBufferType` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Box3Helper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `Box3Helper` | `property box` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `BoxGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `BoxGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `BoxGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `BoxHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `BufferAttribute` | `method onUpload` | parameter 'callback': `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BufferAttribute` | `method set parameter value, arm ArrayBufferView` | one arm of `ArrayLike<number> | ArrayBufferView` that no emitted overload takes: `ArrayBufferView` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -384,12 +373,12 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CanvasTexture` | `constructor parameter wrapS` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `CanvasTexture` | `constructor parameter wrapT` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `CapsuleGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `CapsuleGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `CapsuleGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `CatmullRomCurve3` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `CatmullRomCurve3` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `CircleGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `CircleGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
-| `ColorKeyframeTrack` | `method toJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `CircleGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
+| `ColorKeyframeTrack` | `method toJSON` | parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `ColorKeyframeTrack` | `property TimeBufferType` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `ColorKeyframeTrack` | `property ValueBufferType` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CompressedCubeTexture` | `constructor parameter format` | `CompressedPixelFormat` cannot become a C# enum: constant `RGB_BPTC_SIGNED_Format` has no literal value in the IR (declared type `<none>`) |
@@ -447,15 +436,13 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CurvePath` | `method toJSON` | return type: `CurvePathJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CurvePath` | `property curves` | `Array<Curve<TVector>>` is an array whose element type cannot be mapped: `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `CylinderGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `CylinderGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `CylinderGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `Data3DTexture` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `DataArrayTexture` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `DataArrayTexture` | `property layerUpdates` | `Set<number>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `DataTexture` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `DataTextureLoader` | `method createDataTexture` | parameter 'buffer': `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `DataTextureLoader` | `method parse` | parameter 'buffer': `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `DataUtils` | `method fromHalfFloat` | static; the mirror models instances, and a static write has no handle to address |
-| `DataUtils` | `method toHalfFloat` | static; the mirror models instances, and a static write has no handle to address |
 | `DirectionalLight` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `DirectionalLight` | `property shadow` | `DirectionalLightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `DirectionalLightHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
@@ -501,8 +488,8 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `HemisphereLightHelper` | `property color` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `ImageBitmapLoader` | `method setOptions` | parameter 'options': `ImageBitmapOptions` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `ImageBitmapLoader` | `property options` | `ImageBitmapOptions` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `ImageUtils` | `method getDataURL` | static; the mirror models instances, and a static write has no handle to address |
-| `ImageUtils` | `method sRGBToLinear` | static; the mirror models instances, and a static write has no handle to address |
+| `ImageUtils` | `method getDataURL` | parameter 'image': `HTMLImageElement | HTMLCanvasElement | CanvasImageSource | ImageBitmap | ImageData` unions 5 types, and every one of them is refused for the same reason: `HTMLImageElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
+| `ImageUtils` | `method sRGBToLinear` | parameter 'image': `HTMLImageElement | HTMLCanvasElement | ImageBitmap` unions 3 types, and every one of them is refused for the same reason: `HTMLImageElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `InspectorBase` | `method beginCompute` | parameter 'computeNode': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `InspectorBase` | `method computeAsync` | parameter 'computeNode': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `InspectorBase` | `method inspect` | parameter 'node': `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -520,7 +507,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `LOD` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `LOD` | `property levels` | `Array<{ /** The Object3D to display at this level. */ object: Object3D; /** The distance at which to display this level of detail. Expects a `Float`. */ distance: number; /** Threshold used to avoid flickering at LOD boundaries, as a fraction of distance. Expects a `Float`. */ hysteresis: number; }>` is an array whose element type cannot be mapped: `{ /** The Object3D to display at this level. */ object: Object3D; /** The distance at which to display this level of detail. Expects a `Float`. */ distance: number; /** Threshold used to avoid flickering at LOD boundaries, as a fraction of distance. Expects a `Float`. */ hysteresis: number; }` is an anonymous object literal type with no named C# equivalent |
 | `LatheGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `LatheGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `LatheGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `Light` | `property color` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `LightProbe` | `property sh` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `Lighting` | `method createNode` | return type: `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -580,9 +567,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `LinearInterpolant` | `property settings` | `{}` is an anonymous object literal type with no named C# equivalent |
 | `Loader` | `method load` | parameter 'onLoad': `(data: TData) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Loader` | `method loadAsync` | return type: `unknown` carries no type information a C# signature could express |
-| `Loader` | `property DEFAULT_MATERIAL_NAME` | static; the mirror models instances, and a static write has no handle to address |
-| `LoaderUtils` | `method extractUrlBase` | static; the mirror models instances, and a static write has no handle to address |
-| `LoaderUtils` | `method resolveURL` | static; the mirror models instances, and a static write has no handle to address |
+| `Loader` | `property DEFAULT_MATERIAL_NAME` | a static property; the mirror models instances, and a static write has no handle to address |
 | `LoadingManager` | `constructor parameter onError` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `LoadingManager` | `constructor parameter onLoad` | `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `LoadingManager` | `constructor parameter onProgress` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
@@ -610,7 +595,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Material` | `property defines` | `Record<string, unknown>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Material` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `MaterialLoader` | `method parse` | parameter 'json': `unknown` carries no type information a C# signature could express |
-| `MaterialLoader` | `method registerMaterial` | static; the mirror models instances, and a static write has no handle to address |
+| `MaterialLoader` | `method registerMaterial` | parameter 'materialClass': `new() => Material` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `MaterialLoader` | `method setTextures` | parameter 'textures': `{ [key: string]: Texture }` is a dictionary whose values cannot be mapped: they are not values the wire carries |
 | `MaterialLoader` | `property textures` | `{ [key: string]: Texture }` is a dictionary whose values cannot be mapped: they are not values the wire carries |
 | `Mesh` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
@@ -909,7 +894,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `NodeObjectLoader` | `method setNodes` | parameter 'value': `{ [type: string]: Node }` is a dictionary whose values cannot be mapped: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeObjectLoader` | `property nodeMaterials` | `{ [type: string]: NodeMaterial }` is a dictionary whose values cannot be mapped: they are not values the wire carries |
 | `NodeObjectLoader` | `property nodes` | `{ [type: string]: Node }` is a dictionary whose values cannot be mapped: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `NumberKeyframeTrack` | `method toJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `NumberKeyframeTrack` | `method toJSON` | parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `NumberKeyframeTrack` | `property TimeBufferType` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `NumberKeyframeTrack` | `property ValueBufferType` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `ObjectLoader` | `method parse` | parameter 'json': `unknown` carries no type information a C# signature could express |
@@ -926,7 +911,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `PerspectiveCamera` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `PerspectiveCamera` | `fenced code in the method setViewOffset summary` | 2 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `PlaneGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `PlaneGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `PlaneGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `PlaneHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `PlaneHelper` | `property plane` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `PointLight` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
@@ -966,14 +951,12 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `PointsNodeMaterial` | `property sizeNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PolarGridHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `PolyhedronGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `PolyhedronGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `PolyhedronGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `PositionalAudio` | `property panner` | `PannerNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `PostProcessing` | `constructor parameter outputNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PropertyBinding` | `constructor parameter parsedPath` | `object` carries no type information a C# signature could express |
-| `PropertyBinding` | `method create` | static; the mirror models instances, and a static write has no handle to address |
-| `PropertyBinding` | `method findNode` | static; the mirror models instances, and a static write has no handle to address |
-| `PropertyBinding` | `method parseTrackName` | static; the mirror models instances, and a static write has no handle to address |
-| `PropertyBinding` | `method sanitizeNodeName` | static; the mirror models instances, and a static write has no handle to address |
+| `PropertyBinding` | `method create` | parameter 'root': `object` carries no type information a C# signature could express |
+| `PropertyBinding` | `method findNode` | parameter 'root': `object` carries no type information a C# signature could express |
 | `PropertyBinding` | `property node` | `object` carries no type information a C# signature could express |
 | `PropertyBinding` | `property parsedPath` | `object` carries no type information a C# signature could express |
 | `PropertyMixer` | `property buffer` | `Float64Array | unknown[]` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -987,7 +970,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `QuadraticBezierCurve3` | `property v0` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `QuadraticBezierCurve3` | `property v1` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `QuadraticBezierCurve3` | `property v2` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
-| `QuaternionKeyframeTrack` | `method toJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `QuaternionKeyframeTrack` | `method toJSON` | parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `QuaternionKeyframeTrack` | `property TimeBufferType` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `QuaternionKeyframeTrack` | `property ValueBufferType` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `QuaternionLinearInterpolant` | `method getSettings_` | return type: `unknown` carries no type information a C# signature could express |
@@ -1034,7 +1017,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Renderer` | `property onError` | `(errorMessage: string) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Renderer` | `property xr` | `XRManager` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `RingGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `RingGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `RingGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `Scene` | `property background` | `Color | Texture` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Scene` | `property backgroundNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Scene` | `property environmentNode` | `Node<"vec3">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1072,13 +1055,12 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `ShadowNodeMaterial` | `constructor parameter parameters` | `ShadowNodeMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `Shape` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `ShapeGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `ShapeGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `ShapeGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `ShapeGeometry` | `property parameters` | `{ readonly shapes: Shape | Shape[]; readonly curveSegments: number; }` is an anonymous object literal type with no named C# equivalent |
 | `ShapePath` | `method toShapes` | returns `Shape?[]`, which is neither a value the read op carries nor a three.js object a handle could name |
 | `ShapePath` | `property userData` | `Record<string, unknown>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `ShapeUtils` | `method area` | static; the mirror models instances, and a static write has no handle to address |
-| `ShapeUtils` | `method isClockWise` | static; the mirror models instances, and a static write has no handle to address |
-| `ShapeUtils` | `method triangulateShape` | static; the mirror models instances, and a static write has no handle to address |
+| `ShapeUtils` | `method area` | parameter 'contour': `readonly Vector2Like[]` is a TypeScript `typeOperator` type, which has no C# equivalent |
+| `ShapeUtils` | `method isClockWise` | parameter 'pts': `readonly Vector2Like[]` is a TypeScript `typeOperator` type, which has no C# equivalent |
 | `Skeleton` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `Skeleton` | `method fromJSON` | parameter 'json': `SkeletonJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Skeleton` | `method toJSON` | return type: `SkeletonJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
@@ -1087,7 +1069,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `SkinnedMesh` | `property bindMatrix` | `Matrix4` hands its components out as a mutable array, so a change to it cannot be observed and there is nothing to record a property write from |
 | `SkinnedMesh` | `property bindMatrixInverse` | `Matrix4` hands its components out as a mutable array, so a change to it cannot be observed and there is nothing to record a property write from |
 | `SphereGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `SphereGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `SphereGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `SplineCurve` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `SplineCurve` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `SpotLight` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
@@ -1125,7 +1107,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `SpriteNodeMaterial` | `constructor parameter parameters` | `SpriteNodeMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `SpriteNodeMaterial` | `property rotationNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `SpriteNodeMaterial` | `property scaleNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `StringKeyframeTrack` | `method toJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `StringKeyframeTrack` | `method toJSON` | parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `StringKeyframeTrack` | `property TimeBufferType` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `StringKeyframeTrack` | `property ValueBufferType` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Texture` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
@@ -1141,9 +1123,9 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Texture` | `constructor parameter wrapT` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `Texture` | `method setValues` | parameter 'values': `TextureParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `Texture` | `method toJSON` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
-| `Texture` | `property DEFAULT_ANISOTROPY` | static; the mirror models instances, and a static write has no handle to address |
-| `Texture` | `property DEFAULT_IMAGE` | static; the mirror models instances, and a static write has no handle to address |
-| `Texture` | `property DEFAULT_MAPPING` | static; the mirror models instances, and a static write has no handle to address |
+| `Texture` | `property DEFAULT_ANISOTROPY` | a static property; the mirror models instances, and a static write has no handle to address |
+| `Texture` | `property DEFAULT_IMAGE` | a static property; the mirror models instances, and a static write has no handle to address |
+| `Texture` | `property DEFAULT_MAPPING` | a static property; the mirror models instances, and a static write has no handle to address |
 | `Texture` | `property format` | `AnyPixelFormat` aliases `PixelFormat | DepthTexturePixelFormat | CompressedPixelFormat`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Texture` | `property image` | `unknown` carries no type information a C# signature could express |
 | `Texture` | `property mapping` | `AnyMapping` aliases `Mapping | CubeTextureMapping`, which is neither a group of numeric constants nor a type the mirror expresses |
@@ -1155,16 +1137,15 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Timer` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `Timer` | `method connect` | parameter 'document': `Document` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `TorusGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `TorusGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
 | `TorusKnotGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `TorusKnotGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `TorusKnotGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `TubeGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `TubeGeometry` | `constructor parameter closed` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `TubeGeometry` | `constructor parameter path` | `Curve<Vector3>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `TubeGeometry` | `constructor parameter radialSegments` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `TubeGeometry` | `constructor parameter radius` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `TubeGeometry` | `constructor parameter tubularSegments` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
-| `TubeGeometry` | `method fromJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `TubeGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `TubeGeometry` | `property parameters` | `{ readonly path: Curve<Vector3>; readonly tubularSegments: number; readonly radius: number; readonly radialSegments: number; readonly closed: boolean; }` is an anonymous object literal type with no named C# equivalent |
 | `Uint16BufferAttribute` | `constructor parameter array, arm Iterable<number> | ArrayLike<number> | ArrayBuffer | number` | one arm of `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` that no emitted overload takes: three.js converts this argument to a `Uint16Array` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose |
 | `Uint32BufferAttribute` | `constructor parameter array, arm Iterable<number> | ArrayLike<number> | ArrayBuffer | number` | one arm of `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` that no emitted overload takes: three.js converts this argument to a `Uint32Array` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose |
@@ -1173,7 +1154,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `UniformsGroup` | `method add` | parameter 'uniform': `Uniform` is not an emitted class: required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express |
 | `UniformsGroup` | `method remove` | parameter 'uniform': `Uniform` is not an emitted class: required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express |
 | `UniformsGroup` | `property uniforms` | `Array<Uniform | Uniform[]>` is an array whose element type cannot be mapped: `Uniform` is not an emitted class: required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express |
-| `VectorKeyframeTrack` | `method toJSON` | static; the mirror models instances, and a static write has no handle to address |
+| `VectorKeyframeTrack` | `method toJSON` | parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `VectorKeyframeTrack` | `property TimeBufferType` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `VectorKeyframeTrack` | `property ValueBufferType` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `VideoFrameTexture` | `method setFrame` | parameter 'frame': `unknown` carries no type information a C# signature could express |

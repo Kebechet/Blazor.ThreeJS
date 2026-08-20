@@ -65,7 +65,7 @@ internal sealed class MemberClassifier
 			Bucket = MemberBucket.Skipped
 		};
 
-		if (NotInstanceApiReason(property.Name, property.IsStatic, property.Visibility, property.IsAbstract, property.Doc) is { } notApiReason)
+		if (NotInstanceApiReason(property.Name, property.IsStatic, isMethod: false, property.Visibility, property.IsAbstract, property.Doc) is { } notApiReason)
 		{
 			return Skip(row, notApiReason, SkipCategory.NotInstanceApi);
 		}
@@ -164,7 +164,7 @@ internal sealed class MemberClassifier
 			Bucket = MemberBucket.Skipped
 		};
 
-		if (NotInstanceApiReason(method.Name, method.IsStatic, method.Visibility, method.IsAbstract, method.Overloads.FirstOrDefault()?.Doc) is { } notApiReason)
+		if (NotInstanceApiReason(method.Name, method.IsStatic, isMethod: true, method.Visibility, method.IsAbstract, method.Overloads.FirstOrDefault()?.Doc) is { } notApiReason)
 		{
 			return Skip(row, notApiReason, SkipCategory.NotInstanceApi);
 		}
@@ -478,11 +478,16 @@ internal sealed class MemberClassifier
 				string.Equals(returnType.Name, declaringName, StringComparison.Ordinal));
 	}
 
-	private static string? NotInstanceApiReason(string name, bool isStatic, string? visibility, bool isAbstract, IrDoc? doc)
+	private static string? NotInstanceApiReason(string name, bool isStatic, bool isMethod, string? visibility, bool isAbstract, IrDoc? doc)
 	{
-		if (isStatic)
+		// A static *method* is reachable: the op names the class instead of a handle, which is what
+		// `ThreeContext.CallStaticAsync` sends and what `resolveReceiver` resolves on the applier side.
+		// A static *property* is not, and for the original reason - there is nothing to write through,
+		// and three.js's own static fields (`Texture.DEFAULT_ANISOTROPY`) are global settings rather than
+		// state any one mirror owns.
+		if (isStatic && !isMethod)
 		{
-			return "static; the mirror models instances, and a static write has no handle to address";
+			return "a static property; the mirror models instances, and a static write has no handle to address";
 		}
 
 		if (visibility is not null)

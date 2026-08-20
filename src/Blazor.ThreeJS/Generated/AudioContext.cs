@@ -32,4 +32,21 @@ public sealed class AudioContext : ThreeObject
 	{
 		get { return "AudioContext"; }
 	}
+
+	/// <summary>Allows to set the global native audio context from outside.</summary>
+	/// <param name="value">The native context to set.</param>
+	public void SetContext(AudioContext value)
+	{
+		RecordCall("setContext", value);
+	}
+
+	/// <summary>
+	/// Returns the global native audio context. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getContext</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getContext</c> returned, once the JavaScript side has answered.</returns>
+	public static Task<AudioContext?> GetContextAsync(ThreeContext context)
+	{
+		return context.CallStaticAsync<AudioContext>("AudioContext", "getContext");
+	}
 }

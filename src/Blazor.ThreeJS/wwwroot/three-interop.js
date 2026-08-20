@@ -384,7 +384,7 @@ export function applyOp(context, op) {
             break;
         }
         case OP_CALL: {
-            const target = resolveHandle(context, op.h);
+            const target = resolveReceiver(context, op);
             const args = (op.a ?? []).map(value => decode(context, value).value);
             target[op.m](...args);
             break;
@@ -421,7 +421,7 @@ export function applyOp(context, op) {
             break;
         }
         case OP_READ: {
-            const target = resolveHandle(context, op.h);
+            const target = resolveReceiver(context, op);
             if (typeof target[op.m] !== 'function') {
                 throw new Error(`'${op.m}' is not a method on the object at handle '${op.h}'`);
             }
@@ -430,7 +430,7 @@ export function applyOp(context, op) {
             return encodeAnswer(context, op, target[op.m](...args));
         }
         case OP_GET: {
-            const target = resolveHandle(context, op.h);
+            const target = resolveReceiver(context, op);
 
             // `in` rather than an undefined check, and it walks the prototype chain, which is where a
             // three.js class declares its accessors. A property the object has not got would otherwise
@@ -512,6 +512,24 @@ function isEncodableValue(value) {
         ArrayBuffer.isView(value) ||
         Array.isArray(value) ||
         MATH_VALUES.some(mathValue => mathValue.is(value));
+}
+
+// What a read, get or call runs against: an object this context holds, or a three.js class itself.
+//
+// `AnimationUtils.convertArray` and the rest of three.js's utility statics belong to the class rather
+// than to any object, so there is no handle to address them by - the op carries the type name instead,
+// under the same `t` the create op already uses for "the three.js name of a thing".
+function resolveReceiver(context, op) {
+    if (op.t === undefined || op.t === null) {
+        return resolveHandle(context, op.h);
+    }
+
+    const type = THREE[op.t];
+    if (type === undefined) {
+        throw new Error(`Unknown three.js type '${op.t}'`);
+    }
+
+    return type;
 }
 
 function resolveHandle(context, handle) {

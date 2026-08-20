@@ -2,6 +2,7 @@
 // Re-run `npm run emit` after changing the emitter or generator/three-api.json.
 
 using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Math;
 
 namespace Kebechet.Blazor.ThreeJS.Objects;
 
@@ -35,5 +36,18 @@ public sealed class ShapeUtils : ThreeObject
 	protected override string ThreeTypeName
 	{
 		get { return "ShapeUtils"; }
+	}
+
+	/// <summary>
+	/// Used internally by <c>ExtrudeGeometry</c> and <c>ShapeGeometry</c> to calculate faces in shapes
+	/// with holes. Records a read op, sends it behind every write already pending, and completes with
+	/// what <c>triangulateShape</c> returned.
+	/// </summary>
+	/// <param name="contour">Value forwarded to the <c>contour</c> argument.</param>
+	/// <param name="holes">Value forwarded to the <c>holes</c> argument.</param>
+	/// <returns>The value <c>triangulateShape</c> returned, once the JavaScript side has answered.</returns>
+	public static Task<float[][]> TriangulateShapeAsync(ThreeContext context, Vector2[] contour, Vector2[][] holes)
+	{
+		return context.CallStaticAsync<float[][]>("ShapeUtils", "triangulateShape", contour, holes);
 	}
 }

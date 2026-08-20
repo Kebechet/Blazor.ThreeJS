@@ -509,13 +509,13 @@ three.js is reachable at all" and "how much of what we mirror is state".
 | bucket | what it means | all classes | emittable classes |
 |---|---|---|---|
 | MirroredState | state C# holds and writes through on change | 1153 | 936 |
-| Command | a method recorded as a call op, returning nothing or `this` | 771 | 323 |
-| AsyncQuery | a method whose result the caller needs back | 877 | 539 |
-| Skipped | not mirrored; see the skip list below | 847 | 641 |
+| Command | a method recorded as a call op, returning nothing or `this` | 775 | 327 |
+| AsyncQuery | a method whose result the caller needs back | 879 | 541 |
+| Skipped | not mirrored; see the skip list below | 841 | 635 |
 | **total** | | **3648** | **2439** |
 
 Two op kinds answer: **read**, which invokes a method, and **get**, which reads a property.
-539 of the async queries above sit on an emitted class and are generated as `…Async` methods, 186 of
+541 of the async queries above sit on an emitted class and are generated as `…Async` methods, 186 of
 them over the get op rather than the read op. Both kinds answer with a value where one can travel, and
 with a handle to an object where it cannot.
 
@@ -557,14 +557,14 @@ the README's coverage table.
 | `UnmappedTypeAlias` | 18 | a type alias that is neither a constant group nor a rename of a mapped type |
 | `ExternalType` | 15 | declared outside the scanned `src/` surface |
 | `AbstractClass` | 13 | the class is abstract, so it has no constructor to mirror |
-| `UnmappedTypeSyntax` | 13 | a TypeScript type form with no C# equivalent |
 | `UnwrappedClass` | 12 | an in-scope class that is itself not emitted |
 | `UnerasableTypeParameter` | 8 | a type parameter with neither a default nor a constraint to erase to |
+| `UnmappedTypeSyntax` | 7 | a TypeScript type form with no C# equivalent |
 | `NoHandleForResult` | 6 | its result is neither a value the read op carries nor one object a handle could name — an array of objects needs a handle per element, not one for the result |
 | `RestParameter` | 6 | a rest parameter, including the rest-union-tuple pseudo-overload form |
 | `CollectionType` | 3 | a tuple, which has no wire encoding, or an array whose elements have none — `ThreeValue.Encode` does walk a sequence element by element, so an array is exactly as encodable as what is in it |
 
-<details><summary>Every skipped member (847)</summary>
+<details><summary>Every skipped member (841)</summary>
 
 | class | member | obstacle | why |
 |---|---|---|---|
@@ -596,16 +596,10 @@ the README's coverage table.
 | `Audio` | `method setMediaElementSource` | `DomOrLibType` | parameter 'mediaElement': `HTMLMediaElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `method setMediaStreamSource` | `DomOrLibType` | parameter 'mediaStream': `MediaStream` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `method setBuffer` | `DomOrLibType` | parameter 'audioBuffer': `AudioBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Audio` | `method play` | `UnmappedTypeSyntax` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
-| `Audio` | `method pause` | `UnmappedTypeSyntax` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
-| `Audio` | `method stop` | `UnmappedTypeSyntax` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
-| `Audio` | `method disconnect` | `UnmappedTypeSyntax` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
 | `Audio` | `method getFilters` | `DomOrLibType` | return type: `AudioNode[]` is an array whose element type cannot be mapped: `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `method setFilters` | `DomOrLibType` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
 | `Audio` | `method getFilter` | `DomOrLibType` | return type: `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `method setFilter` | `DomOrLibType` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
-| `Audio` | `method setPlaybackRate` | `UnmappedTypeSyntax` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
-| `Audio` | `method setLoop` | `UnmappedTypeSyntax` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
 | `AudioAnalyser` | `property analyser` | `DomOrLibType` | `AnalyserNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `AudioListener` | `property context` | `DomOrLibType` | `AudioContext` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `AudioListener` | `property gain` | `DomOrLibType` | `GainNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |

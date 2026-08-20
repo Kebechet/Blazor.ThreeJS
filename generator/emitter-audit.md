@@ -296,21 +296,15 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `AnimationUtils` | `method convertArray` | parameter 'type': `TypedArrayConstructor` aliases `| Int8ArrayConstructor | Uint8ArrayConstructor | Uint8ClampedArrayConstructor | Int16ArrayConstructor | Uint16ArrayConstructor | Int32ArrayConstructor | Uint32ArrayConstructor | Float32ArrayConstructor | Float64ArrayConstructor`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `ArrowHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `Audio` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
-| `Audio` | `method disconnect` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
 | `Audio` | `method getFilter` | return type: `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `method getFilters` | return type: `AudioNode[]` is an array whose element type cannot be mapped: `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `method getOutput` | return type: `GainNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Audio` | `method pause` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
-| `Audio` | `method play` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
 | `Audio` | `method setBuffer` | parameter 'audioBuffer': `AudioBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `method setFilter` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
 | `Audio` | `method setFilters` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
-| `Audio` | `method setLoop` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
 | `Audio` | `method setMediaElementSource` | parameter 'mediaElement': `HTMLMediaElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `method setMediaStreamSource` | parameter 'mediaStream': `MediaStream` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `method setNodeSource` | parameter 'audioNode': `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Audio` | `method setPlaybackRate` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
-| `Audio` | `method stop` | return type: `this` is only meaningful as a fluent return type, which the caller handles separately |
 | `Audio` | `property buffer` | `AudioBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `property context` | `AudioContext` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `property filters` | `AudioNode[]` is an array whose element type cannot be mapped: `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |

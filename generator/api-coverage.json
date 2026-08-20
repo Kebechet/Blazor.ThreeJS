@@ -9,12 +9,12 @@
     "reachableClasses": 264,
     "members": 3648,
     "mirroredState": 1153,
-    "commands": 771,
-    "asyncQueries": 877,
+    "commands": 775,
+    "asyncQueries": 879,
     "untypedObjectQueries": 11,
-    "skippedMembers": 847,
+    "skippedMembers": 841,
     "reachableMembers": 2439,
-    "generatedMembers": 1798,
+    "generatedMembers": 1804,
     "strandedMembers": 1209
   },
   "classes": [
@@ -3967,16 +3967,16 @@
       "members": 13
     },
     {
-      "category": "UnmappedTypeSyntax",
-      "members": 13
-    },
-    {
       "category": "UnwrappedClass",
       "members": 12
     },
     {
       "category": "UnerasableTypeParameter",
       "members": 8
+    },
+    {
+      "category": "UnmappedTypeSyntax",
+      "members": 7
     },
     {
       "category": "NoHandleForResult",
@@ -5380,27 +5380,22 @@
       "member": "play",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `this` is only meaningful as a fluent return type, which the caller handles separately",
-      "category": "UnmappedTypeSyntax"
+      "bucket": "Command"
     },
     {
       "class": "Audio",
       "member": "pause",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `this` is only meaningful as a fluent return type, which the caller handles separately",
-      "category": "UnmappedTypeSyntax"
+      "bucket": "AsyncQuery",
+      "type": "Audio"
     },
     {
       "class": "Audio",
       "member": "stop",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `this` is only meaningful as a fluent return type, which the caller handles separately",
-      "category": "UnmappedTypeSyntax"
+      "bucket": "Command"
     },
     {
       "class": "Audio",
@@ -5415,9 +5410,8 @@
       "member": "disconnect",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `this` is only meaningful as a fluent return type, which the caller handles separately",
-      "category": "UnmappedTypeSyntax"
+      "bucket": "AsyncQuery",
+      "type": "Audio"
     },
     {
       "class": "Audio",
@@ -5475,9 +5469,7 @@
       "member": "setPlaybackRate",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `this` is only meaningful as a fluent return type, which the caller handles separately",
-      "category": "UnmappedTypeSyntax"
+      "bucket": "Command"
     },
     {
       "class": "Audio",
@@ -5507,9 +5499,7 @@
       "member": "setLoop",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `this` is only meaningful as a fluent return type, which the caller handles separately",
-      "category": "UnmappedTypeSyntax"
+      "bucket": "Command"
     },
     {
       "class": "Audio",

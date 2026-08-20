@@ -160,6 +160,26 @@ public class Audio : Object3D
 		}
 	}
 
+	/// <summary>
+	/// Starts the playback of the audio. Can only be used with compatible audio sources that allow
+	/// playback control.
+	/// </summary>
+	/// <param name="delay">The delay, in seconds, at which the audio should start playing.</param>
+	public void Play(float delay = 0f)
+	{
+		RecordCall("play", delay);
+	}
+
+	/// <summary>
+	/// Stops the playback of the audio. Can only be used with compatible audio sources that allow
+	/// playback control.
+	/// </summary>
+	/// <param name="delay">The delay, in seconds, at which the audio should stop playing.</param>
+	public void Stop(float delay = 0f)
+	{
+		RecordCall("stop", delay);
+	}
+
 	/// <summary>Defines the detuning of oscillation in cents.</summary>
 	/// <param name="value">The detuning of oscillation in cents.</param>
 	public void SetDetune(float value)
@@ -167,10 +187,29 @@ public class Audio : Object3D
 		RecordCall("setDetune", value);
 	}
 
+	/// <summary>
+	/// Sets the playback rate. Can only be used with compatible audio sources that allow playback
+	/// control.
+	/// </summary>
+	/// <param name="value">The playback rate to set.</param>
+	public void SetPlaybackRate(float value)
+	{
+		RecordCall("setPlaybackRate", value);
+	}
+
 	/// <summary>Automatically called when playback finished.</summary>
 	public void OnEnded()
 	{
 		RecordCall("onEnded");
+	}
+
+	/// <summary>
+	/// Sets the loop flag. Can only be used with compatible audio sources that allow playback control.
+	/// </summary>
+	/// <param name="value">Whether the audio should loop or not.</param>
+	public void SetLoop(bool value)
+	{
+		RecordCall("setLoop", value);
 	}
 
 	/// <summary>
@@ -285,6 +324,17 @@ public class Audio : Object3D
 	}
 
 	/// <summary>
+	/// Pauses the playback of the audio. Can only be used with compatible audio sources that allow
+	/// playback control. Records a read op, sends it behind every write already pending, and completes
+	/// with what <c>pause</c> returned.
+	/// </summary>
+	/// <returns>The value <c>pause</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Audio?> PauseAsync()
+	{
+		return RecordReadObject<Audio>("pause", (adoptedBatch, adoptedHandle) => new Audio(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
 	/// Connects to the audio source. This is used internally on initialisation and when setting /
 	/// removing filters. Records a read op, sends it behind every write already pending, and completes
 	/// with what <c>connect</c> returned.
@@ -293,6 +343,17 @@ public class Audio : Object3D
 	public Task<Audio?> ConnectAsync()
 	{
 		return RecordReadObject<Audio>("connect", (adoptedBatch, adoptedHandle) => new Audio(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
+	/// Disconnects to the audio source. This is used internally on initialisation and when setting /
+	/// removing filters. Records a read op, sends it behind every write already pending, and completes
+	/// with what <c>disconnect</c> returned.
+	/// </summary>
+	/// <returns>The value <c>disconnect</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Audio?> DisconnectAsync()
+	{
+		return RecordReadObject<Audio>("disconnect", (adoptedBatch, adoptedHandle) => new Audio(adoptedBatch, adoptedHandle));
 	}
 
 	/// <summary>

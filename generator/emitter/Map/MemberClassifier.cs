@@ -427,6 +427,26 @@ internal sealed class MemberClassifier
 		return returnType;
 	}
 
+	/// <summary>
+	/// A union with its <c>null</c> and <c>undefined</c> arms removed, when exactly one arm is left.
+	/// Anything else is handed back unchanged, including a union that genuinely offers a choice.
+	/// </summary>
+	/// <param name="type">The declared type.</param>
+	/// <returns>The sole remaining arm, or the type as declared.</returns>
+	private static IrType? WithoutNullishArms(IrType? type)
+	{
+		if (type is not { Kind: "union" })
+		{
+			return type;
+		}
+
+		var arms = type.Types
+			.Where(x => x is not { Kind: "primitive", Name: "null" or "undefined" })
+			.ToList();
+
+		return arms.Count == 1 ? arms[0] : type;
+	}
+
 	/// <summary>Whether a return type means no value comes back at all.</summary>
 	/// <param name="returnType">Declared return type, absent on a signature with none.</param>
 	/// <returns><see langword="true"/> for <c>void</c> and <c>undefined</c>.</returns>
@@ -468,7 +488,18 @@ internal sealed class MemberClassifier
 	/// <returns><see langword="true"/> when the method returns its own type.</returns>
 	private static bool IsSelfReturn(IrClass irClass, string declaringName, IrType? returnType)
 	{
-		if (returnType is { Kind: "primitive", Name: "this" })
+		// `this | undefined` is what three.js's Audio methods say: fluent, but nothing comes back if the
+		// sound is not ready. Still a self-return - the nullish arm says the answer may be absent, not
+		// that the answer is a different kind of thing - and reading it as a union instead refused six
+		// members over the word `undefined`.
+		//
+		// ⚠️ Only the `this` form is unwrapped. `Object3D | undefined` is what `getObjectById` returns,
+		// and that is a *reference* to the base rather than to the receiver: taking it as a self-return
+		// would type it as whichever subclass declared it - `AmbientLight.GetObjectByIdAsync` answering
+		// an `AmbientLight` - and it answers any descendant. Doing this to both forms cost 145 members
+		// across 49 classes, which is how the distinction was found.
+		if (returnType is { Kind: "primitive", Name: "this" }
+			|| WithoutNullishArms(returnType) is { Kind: "primitive", Name: "this" })
 		{
 			return true;
 		}

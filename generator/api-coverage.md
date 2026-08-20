@@ -186,9 +186,9 @@ as a mutable array, so a change to it cannot be observed, and matrix-typed prope
 
 | status | classes |
 |---|---|
-| emittable | 209 |
-| deliberately out of the mirrored surface | 60 |
-| blocked | 40 |
+| emittable | 215 |
+| deliberately out of the mirrored surface | 53 |
+| blocked | 41 |
 | **total** | **309** |
 
 Emittability and **reachability** are different questions. 264 of these classes are names the shipped
@@ -201,7 +201,7 @@ they are never folded into a coverage claim.
 | obstacle | classes | example reason |
 |---|---|---|
 | `UnwrappedClass` | 32 | renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table |
-| `MathValueType` | 27 | a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
+| `MathValueType` | 20 | a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `HandWritten` | 1 | hand-written by the runtime. It carries scene-graph behaviour — attachment, the transform, pre-attach state replay — rather than surface, so the generated classes derive from it instead of replacing it. A generated `partial` beside it does carry its command and query surface, which is why this is an exclusion from *emitting the type* rather than from the mirror |
 
 The consumer-facing renderer types are checked against the exclusion rather than special-cased:
@@ -218,7 +218,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | obstacle | classes | example reason |
 |---|---|---|
 | `NotExported` | 15 | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
-| `AbstractClass` | 10 | the class is abstract, so it has no constructor to mirror |
+| `AbstractClass` | 11 | the class is abstract, so it has no constructor to mirror |
 | `DomOrLibType` | 3 | required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `DuplicateClassName` | 3 | another class named `PMREMGenerator` is declared in `src/extras/PMREMGenerator.d.ts`, and a C# namespace holds one type of a given name |
 | `OptionsInterface` | 3 | required parameter 'mipmaps' cannot be mapped: `CompressedTextureMipmap[]` is an array whose element type cannot be mapped: `CompressedTextureMipmap` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
@@ -249,6 +249,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `GLSLNodeBuilder` | required parameter 'renderer' cannot be mapped: `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror | `src/renderers/webgl-fallback/nodes/GLSLNodeBuilder.d.ts` |
 | `Info` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/renderers/common/Info.d.ts` |
 | `InstancedInterleavedBuffer` | its C# base `InterleavedBuffer` requires `stride` as `int`, and this class declares it as `float`, so the value it holds cannot stand in for the base's | `src/core/InstancedInterleavedBuffer.d.ts` |
+| `Interpolant` | the class is abstract, so it has no constructor to mirror | `src/math/Interpolant.d.ts` |
 | `KeyframeTrack` | required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently | `src/animation/KeyframeTrack.d.ts` |
 | `Light` | the class is abstract, so it has no constructor to mirror | `src/lights/Light.d.ts` |
 | `LightShadow` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/lights/LightShadow.d.ts` |
@@ -298,6 +299,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `AxesHelper` | 1 | — | `src/helpers/AxesHelper.d.ts` |
 | `BasicNodeLibrary` | 0 | — | `src/renderers/webgpu/nodes/BasicNodeLibrary.d.ts` |
 | `BatchedMesh` | 4 | — | `src/objects/BatchedMesh.d.ts` |
+| `BezierInterpolant` | 4 | — | `src/math/interpolants/BezierInterpolant.d.ts` |
 | `BlendMode` | 1 | — | `src/renderers/common/BlendMode.d.ts` |
 | `Bone` | 0 | — | `src/objects/Bone.d.ts` |
 | `BooleanKeyframeTrack` | 3 | — | `src/animation/tracks/BooleanKeyframeTrack.d.ts` |
@@ -326,6 +328,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `CubeTextureLoader` | 1 | — | `src/loaders/CubeTextureLoader.d.ts` |
 | `CubicBezierCurve` | 4 | — | `src/extras/curves/CubicBezierCurve.d.ts` |
 | `CubicBezierCurve3` | 4 | — | `src/extras/curves/CubicBezierCurve3.d.ts` |
+| `CubicInterpolant` | 4 | — | `src/math/interpolants/CubicInterpolant.d.ts` |
 | `CurvePath` | 0 | — | `src/extras/core/CurvePath.d.ts` |
 | `CylinderGeometry` | 8 | — | `src/geometries/CylinderGeometry.d.ts` |
 | `Data3DTexture` | 4 | — | `src/textures/Data3DTexture.d.ts` |
@@ -335,6 +338,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `DepthTexture` | 11 | — | `src/textures/DepthTexture.d.ts` |
 | `DirectionalLight` | 2 | — | `src/lights/DirectionalLight.d.ts` |
 | `DirectionalLightHelper` | 3 | — | `src/helpers/DirectionalLightHelper.d.ts` |
+| `DiscreteInterpolant` | 4 | — | `src/math/interpolants/DiscreteInterpolant.d.ts` |
 | `DodecahedronGeometry` | 2 | — | `src/geometries/DodecahedronGeometry.d.ts` |
 | `EdgesGeometry` | 2 | — | `src/geometries/EdgesGeometry.d.ts` |
 | `EllipseCurve` | 8 | — | `src/extras/curves/EllipseCurve.d.ts` |
@@ -347,6 +351,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `Fog` | 3 | — | `src/scenes/Fog.d.ts` |
 | `FogExp2` | 2 | — | `src/scenes/FogExp2.d.ts` |
 | `FramebufferTexture` | 2 | — | `src/textures/FramebufferTexture.d.ts` |
+| `FrustumArray` | 0 | — | `src/math/FrustumArray.d.ts` |
 | `GridHelper` | 4 | — | `src/helpers/GridHelper.d.ts` |
 | `Group` | 0 | — | `src/objects/Group.d.ts` |
 | `HTMLTexture` | 0 | `image`, `mapping`, `wrapS`, `wrapT`, `magFilter`, `minFilter`, `format`, `type`, `anisotropy` | `src/textures/HTMLTexture.d.ts` |
@@ -382,6 +387,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `LineDashedNodeMaterial` | 0 | `parameters` | `src/materials/nodes/LineDashedNodeMaterial.d.ts` |
 | `LineLoop` | 2 | — | `src/objects/LineLoop.d.ts` |
 | `LineSegments` | 2 | — | `src/objects/LineSegments.d.ts` |
+| `LinearInterpolant` | 4 | — | `src/math/interpolants/LinearInterpolant.d.ts` |
 | `Loader` | 1 | — | `src/loaders/Loader.d.ts` |
 | `LoaderUtils` | 0 | — | `src/loaders/LoaderUtils.d.ts` |
 | `LoadingManager` | 0 | `onLoad`, `onProgress`, `onError` | `src/loaders/LoadingManager.d.ts` |
@@ -434,6 +440,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `QuadraticBezierCurve` | 3 | — | `src/extras/curves/QuadraticBezierCurve.d.ts` |
 | `QuadraticBezierCurve3` | 3 | — | `src/extras/curves/QuadraticBezierCurve3.d.ts` |
 | `QuaternionKeyframeTrack` | 4 | — | `src/animation/tracks/QuaternionKeyframeTrack.d.ts` |
+| `QuaternionLinearInterpolant` | 4 | — | `src/math/interpolants/QuaternionLinearInterpolant.d.ts` |
 | `RawShaderMaterial` | 0 | `parameters` | `src/materials/RawShaderMaterial.d.ts` |
 | `Raycaster` | 4 | — | `src/core/Raycaster.d.ts` |
 | `ReadbackBuffer` | 1 | — | `src/renderers/common/ReadbackBuffer.d.ts` |
@@ -500,14 +507,14 @@ three.js is reachable at all" and "how much of what we mirror is state".
 
 | bucket | what it means | all classes | emittable classes |
 |---|---|---|---|
-| MirroredState | state C# holds and writes through on change | 1158 | 899 |
-| Command | a method recorded as a call op, returning nothing or `this` | 760 | 295 |
-| AsyncQuery | a method whose result the caller needs back | 825 | 435 |
-| Skipped | not mirrored; see the skip list below | 1061 | 762 |
-| **total** | | **3804** | **2391** |
+| MirroredState | state C# holds and writes through on change | 1158 | 920 |
+| Command | a method recorded as a call op, returning nothing or `this` | 761 | 302 |
+| AsyncQuery | a method whose result the caller needs back | 853 | 480 |
+| Skipped | not mirrored; see the skip list below | 1032 | 753 |
+| **total** | | **3804** | **2455** |
 
 Two op kinds answer: **read**, which invokes a method, and **get**, which reads a property.
-435 of the async queries above sit on an emitted class and are generated as `…Async` methods, 176 of
+480 of the async queries above sit on an emitted class and are generated as `…Async` methods, 176 of
 them over the get op rather than the read op. Both kinds answer with a value where one can travel, and
 with a handle to an object where it cannot.
 
@@ -546,7 +553,6 @@ the README's coverage table.
 | `UntypedValue` | 46 | declared `any` / `unknown`, or with no type at all |
 | `AbstractClass` | 37 | the class is abstract, so it has no constructor to mirror |
 | `UnmappedUnion` | 37 | a union of several real alternatives in a position that holds one type — a property or a return type, since a required parameter becomes one overload per arm |
-| `MathValueType` | 29 | a `src/math/**` value type that is not one of the hand-written ones |
 | `NotExported` | 22 | three.js's public barrel does not re-export it as a value, so the applier cannot reach it on `THREE` |
 | `UnmappedTypeAlias` | 18 | a type alias that is neither a constant group nor a rename of a mapped type |
 | `ExternalType` | 15 | declared outside the scanned `src/` surface |
@@ -557,7 +563,7 @@ the README's coverage table.
 | `CollectionType` | 3 | a tuple, which has no wire encoding, or an array whose elements have none — `ThreeValue.Encode` does walk a sequence element by element, so an array is exactly as encodable as what is in it |
 | `NoHandleForResult` | 1 | its result is neither a value the read op carries nor one object a handle could name — an array of objects needs a handle per element, not one for the result |
 
-<details><summary>Every skipped member (1061)</summary>
+<details><summary>Every skipped member (1032)</summary>
 
 | class | member | obstacle | why |
 |---|---|---|---|
@@ -636,10 +642,6 @@ the README's coverage table.
 | `BooleanKeyframeTrack` | `property TimeBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BooleanKeyframeTrack` | `property ValueBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `BooleanKeyframeTrack` | `method toJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
-| `BooleanKeyframeTrack` | `method InterpolantFactoryMethodDiscrete` | `MathValueType` | return type: `DiscreteInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `BooleanKeyframeTrack` | `method InterpolantFactoryMethodLinear` | `MathValueType` | return type: `LinearInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `BooleanKeyframeTrack` | `method InterpolantFactoryMethodSmooth` | `MathValueType` | return type: `CubicInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `BooleanKeyframeTrack` | `method InterpolantFactoryMethodBezier` | `MathValueType` | return type: `BezierInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `Box2` | `method empty` | `UntypedValue` | return type: `any` carries no type information a C# signature could express |
 | `Box2` | `method isIntersectionBox` | `UntypedValue` | parameter 'b': `any` carries no type information a C# signature could express |
 | `Box3` | `method toJSON` | `OptionsInterface` | return type: `Box3JSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
@@ -681,10 +683,6 @@ the README's coverage table.
 | `ColorKeyframeTrack` | `property TimeBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `ColorKeyframeTrack` | `property ValueBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `ColorKeyframeTrack` | `method toJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
-| `ColorKeyframeTrack` | `method InterpolantFactoryMethodDiscrete` | `MathValueType` | return type: `DiscreteInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `ColorKeyframeTrack` | `method InterpolantFactoryMethodLinear` | `MathValueType` | return type: `LinearInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `ColorKeyframeTrack` | `method InterpolantFactoryMethodSmooth` | `MathValueType` | return type: `CubicInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `ColorKeyframeTrack` | `method InterpolantFactoryMethodBezier` | `MathValueType` | return type: `BezierInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `CompressedArrayTexture` | `property layerUpdates` | `DomOrLibType` | `Set<number>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Controls` | `property domElement` | `DomOrLibType` | `HTMLElement | SVGElement | null` unions 2 types, and every one of them is refused for the same reason: `HTMLElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Controls` | `method connect` | `DomOrLibType` | parameter 'element': `HTMLElement | SVGElement` unions 2 types, and every one of them is refused for the same reason: `HTMLElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -764,7 +762,6 @@ the README's coverage table.
 | `ExtrudeGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly shapes: Shape | Shape[]; readonly options: ExtrudeGeometryOptions; }` is an anonymous object literal type with no named C# equivalent |
 | `Fog` | `method toJSON` | `OptionsInterface` | return type: `FogJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `FogExp2` | `method toJSON` | `OptionsInterface` | return type: `FogExp2JSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `FrustumArray` | `method copy` | `MathValueType` | parameter 'source': `FrustumArray` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `GLBufferAttribute` | `property buffer` | `DomOrLibType` | `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `GLBufferAttribute` | `property type` | `DomOrLibType` | `GLenum` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `GLBufferAttribute` | `method setBuffer` | `DomOrLibType` | parameter 'buffer': `WebGLBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -796,10 +793,6 @@ the README's coverage table.
 | `KeyframeTrack` | `property TimeBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `KeyframeTrack` | `property ValueBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `KeyframeTrack` | `method toJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
-| `KeyframeTrack` | `method InterpolantFactoryMethodDiscrete` | `MathValueType` | return type: `DiscreteInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `KeyframeTrack` | `method InterpolantFactoryMethodLinear` | `MathValueType` | return type: `LinearInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `KeyframeTrack` | `method InterpolantFactoryMethodSmooth` | `MathValueType` | return type: `CubicInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `KeyframeTrack` | `method InterpolantFactoryMethodBezier` | `MathValueType` | return type: `BezierInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `LOD` | `property levels` | `AnonymousObjectType` | `Array<{ /** The Object3D to display at this level. */ object: Object3D; /** The distance at which to display this level of detail. Expects a `Float`. */ distance: number; /** Threshold used to avoid flickering at LOD boundaries, as a fraction of distance. Expects a `Float`. */ hysteresis: number; }>` is an array whose element type cannot be mapped: `{ /** The Object3D to display at this level. */ object: Object3D; /** The distance at which to display this level of detail. Expects a `Float`. */ distance: number; /** Threshold used to avoid flickering at LOD boundaries, as a fraction of distance. Expects a `Float`. */ hysteresis: number; }` is an anonymous object literal type with no named C# equivalent |
 | `LatheGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly points: Vector2[]; readonly segments: number; readonly phiStart: number; readonly phiLength: number; }` is an anonymous object literal type with no named C# equivalent |
 | `LatheGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
@@ -1179,10 +1172,6 @@ the README's coverage table.
 | `NumberKeyframeTrack` | `property TimeBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `NumberKeyframeTrack` | `property ValueBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `NumberKeyframeTrack` | `method toJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
-| `NumberKeyframeTrack` | `method InterpolantFactoryMethodDiscrete` | `MathValueType` | return type: `DiscreteInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `NumberKeyframeTrack` | `method InterpolantFactoryMethodLinear` | `MathValueType` | return type: `LinearInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `NumberKeyframeTrack` | `method InterpolantFactoryMethodSmooth` | `MathValueType` | return type: `CubicInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `NumberKeyframeTrack` | `method InterpolantFactoryMethodBezier` | `MathValueType` | return type: `BezierInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `Object3D` | `property userData` | `DomOrLibType` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Object3D` | `property DEFAULT_UP` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `Object3D` | `property DEFAULT_MATRIX_AUTO_UPDATE` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
@@ -1279,10 +1268,6 @@ the README's coverage table.
 | `QuaternionKeyframeTrack` | `property TimeBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `QuaternionKeyframeTrack` | `property ValueBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `QuaternionKeyframeTrack` | `method toJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
-| `QuaternionKeyframeTrack` | `method InterpolantFactoryMethodDiscrete` | `MathValueType` | return type: `DiscreteInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `QuaternionKeyframeTrack` | `method InterpolantFactoryMethodLinear` | `MathValueType` | return type: `LinearInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `QuaternionKeyframeTrack` | `method InterpolantFactoryMethodSmooth` | `MathValueType` | return type: `CubicInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `QuaternionKeyframeTrack` | `method InterpolantFactoryMethodBezier` | `MathValueType` | return type: `BezierInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `QuaternionLinearInterpolant` | `property settings` | `AnonymousObjectType` | `{}` is an anonymous object literal type with no named C# equivalent |
 | `QuaternionLinearInterpolant` | `property DefaultSettings_` | `AnonymousObjectType` | `{}` is an anonymous object literal type with no named C# equivalent |
 | `QuaternionLinearInterpolant` | `method getSettings_` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
@@ -1414,10 +1399,6 @@ the README's coverage table.
 | `StringKeyframeTrack` | `property TimeBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `StringKeyframeTrack` | `property ValueBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `StringKeyframeTrack` | `method toJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
-| `StringKeyframeTrack` | `method InterpolantFactoryMethodDiscrete` | `MathValueType` | return type: `DiscreteInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `StringKeyframeTrack` | `method InterpolantFactoryMethodLinear` | `MathValueType` | return type: `LinearInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `StringKeyframeTrack` | `method InterpolantFactoryMethodSmooth` | `MathValueType` | return type: `CubicInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `StringKeyframeTrack` | `method InterpolantFactoryMethodBezier` | `MathValueType` | return type: `BezierInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `Texture` | `property source` | `UnerasableTypeParameter` | `Source<TImage>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `Texture` | `property image` | `UntypedValue` | `unknown` carries no type information a C# signature could express |
 | `Texture` | `property mipmaps` | `UnmappedUnion` | `CompressedTextureMipmap[] | CubeTexture[] | HTMLCanvasElement[]` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -1456,10 +1437,6 @@ the README's coverage table.
 | `VectorKeyframeTrack` | `property TimeBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `VectorKeyframeTrack` | `property ValueBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `VectorKeyframeTrack` | `method toJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
-| `VectorKeyframeTrack` | `method InterpolantFactoryMethodDiscrete` | `MathValueType` | return type: `DiscreteInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `VectorKeyframeTrack` | `method InterpolantFactoryMethodLinear` | `MathValueType` | return type: `LinearInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `VectorKeyframeTrack` | `method InterpolantFactoryMethodSmooth` | `MathValueType` | return type: `CubicInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
-| `VectorKeyframeTrack` | `method InterpolantFactoryMethodBezier` | `MathValueType` | return type: `BezierInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `VideoFrameTexture` | `method setFrame` | `UntypedValue` | parameter 'frame': `unknown` carries no type information a C# signature could express |
 | `VolumeNodeMaterial` | `property offsetNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `VolumeNodeMaterial` | `property scatteringNode` | `CallbackType` | `(params: { positionRay: Node<"vec3"> }) => Node | null` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |

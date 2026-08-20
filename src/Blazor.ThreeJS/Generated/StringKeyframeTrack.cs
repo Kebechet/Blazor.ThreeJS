@@ -199,6 +199,63 @@ public sealed class StringKeyframeTrack : ThreeObject
 	}
 
 	/// <summary>
+	/// Factory method for creating a new discrete interpolant. Records a read op, sends it behind every
+	/// write already pending, and completes with what <c>InterpolantFactoryMethodDiscrete</c> returned.
+	/// </summary>
+	/// <param name="result">The result buffer.</param>
+	/// <returns>
+	/// The value <c>InterpolantFactoryMethodDiscrete</c> returned, once the JavaScript side has
+	/// answered.
+	/// </returns>
+	public Task<DiscreteInterpolant?> InterpolantFactoryMethodDiscreteAsync(TypedArray result)
+	{
+		return RecordReadObject<DiscreteInterpolant>("InterpolantFactoryMethodDiscrete", (adoptedBatch, adoptedHandle) => new DiscreteInterpolant(adoptedBatch, adoptedHandle), result);
+	}
+
+	/// <summary>
+	/// Factory method for creating a new linear interpolant. Records a read op, sends it behind every
+	/// write already pending, and completes with what <c>InterpolantFactoryMethodLinear</c> returned.
+	/// </summary>
+	/// <param name="result">The result buffer.</param>
+	/// <returns>
+	/// The value <c>InterpolantFactoryMethodLinear</c> returned, once the JavaScript side has answered.
+	/// </returns>
+	public Task<LinearInterpolant?> InterpolantFactoryMethodLinearAsync(TypedArray result)
+	{
+		return RecordReadObject<LinearInterpolant>("InterpolantFactoryMethodLinear", (adoptedBatch, adoptedHandle) => new LinearInterpolant(adoptedBatch, adoptedHandle), result);
+	}
+
+	/// <summary>
+	/// Factory method for creating a new smooth interpolant. Records a read op, sends it behind every
+	/// write already pending, and completes with what <c>InterpolantFactoryMethodSmooth</c> returned.
+	/// </summary>
+	/// <param name="result">The result buffer.</param>
+	/// <returns>
+	/// The value <c>InterpolantFactoryMethodSmooth</c> returned, once the JavaScript side has answered.
+	/// </returns>
+	public Task<CubicInterpolant?> InterpolantFactoryMethodSmoothAsync(TypedArray result)
+	{
+		return RecordReadObject<CubicInterpolant>("InterpolantFactoryMethodSmooth", (adoptedBatch, adoptedHandle) => new CubicInterpolant(adoptedBatch, adoptedHandle), result);
+	}
+
+	/// <summary>
+	/// Factory method for creating a new Bezier interpolant. The Bezier interpolant requires tangent
+	/// data to be set via the <c>settings</c> property on the track before creating the interpolant.
+	/// The settings should contain: - <c>inTangents</c>: Float32Array with [time, value] pairs per
+	/// keyframe per component - <c>outTangents</c>: Float32Array with [time, value] pairs per keyframe
+	/// per component. Records a read op, sends it behind every write already pending, and completes
+	/// with what <c>InterpolantFactoryMethodBezier</c> returned.
+	/// </summary>
+	/// <param name="result">The result buffer.</param>
+	/// <returns>
+	/// The value <c>InterpolantFactoryMethodBezier</c> returned, once the JavaScript side has answered.
+	/// </returns>
+	public Task<BezierInterpolant?> InterpolantFactoryMethodBezierAsync(TypedArray result)
+	{
+		return RecordReadObject<BezierInterpolant>("InterpolantFactoryMethodBezier", (adoptedBatch, adoptedHandle) => new BezierInterpolant(adoptedBatch, adoptedHandle), result);
+	}
+
+	/// <summary>
 	/// Returns the current interpolation type. Records a read op, sends it behind every write already
 	/// pending, and completes with what <c>getInterpolation</c> returned.
 	/// </summary>

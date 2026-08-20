@@ -201,12 +201,43 @@ internal static class EmitterConfig
 	];
 
 	/// <summary>
-	/// Source prefix of three.js's math types. Everything under it is a by-value type, encoded inline
-	/// on the wire rather than referenced by handle, so it is out of the generated surface entirely:
-	/// the hand-written ones (<see cref="MathTypeNames"/>) ship, and giving the rest a C# representation
-	/// is a public-API decision rather than a mapping one.
+	/// Source prefix of three.js's math types. Almost everything under it is a by-value type, encoded
+	/// inline on the wire rather than referenced by handle, so it is out of the generated surface
+	/// entirely: the hand-written ones (<see cref="MathTypeNames"/>) ship, and giving the rest a C#
+	/// representation is a public-API decision rather than a mapping one.
+	/// <para>
+	/// The exceptions are named in <see cref="HandleBackedMathClassNames"/> rather than guessed at, so a
+	/// math type three.js adds later is excluded by default - which is the safe direction, since
+	/// emitting a value as a handle-backed object would be wrong in a way nothing else would catch.
+	/// </para>
 	/// </summary>
 	public const string MathSourcePrefix = "src/math/";
+
+	/// <summary>
+	/// Classes under <see cref="MathSourcePrefix"/> that are not values, and are therefore emitted like
+	/// any other class rather than excluded with the value types.
+	/// <para>
+	/// A value is arithmetic the mirror can hold: <c>Vector3</c> is three numbers, and sending it inline
+	/// loses nothing. These are not. <c>Interpolant</c> owns <c>TypedArray</c> buffers it evaluates into
+	/// and mutates in place, and <c>FrustumArray</c> takes an <c>ArrayCamera</c> and hit-tests
+	/// <c>Object3D</c>s - both hold JavaScript-side state that only a handle can name, and encoding
+	/// either one inline would send a copy that stops tracking the object it came from.
+	/// </para>
+	/// <para>
+	/// <c>Interpolant</c> itself is here for its subclasses' sake and is still blocked, being abstract.
+	/// Listing it is what stops it being reported as a value type it is not.
+	/// </para>
+	/// </summary>
+	public static readonly IReadOnlySet<string> HandleBackedMathClassNames = new HashSet<string>(StringComparer.Ordinal)
+	{
+		"BezierInterpolant",
+		"CubicInterpolant",
+		"DiscreteInterpolant",
+		"FrustumArray",
+		"Interpolant",
+		"LinearInterpolant",
+		"QuaternionLinearInterpolant"
+	};
 
 	/// <summary>
 	/// The alias three.js uses wherever a colour may be given as a <c>Color</c>, a CSS string or a hex

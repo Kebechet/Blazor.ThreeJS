@@ -3,19 +3,19 @@
   "typesVersion": "0.185.3",
   "totals": {
     "classes": 309,
-    "emittableClasses": 209,
-    "outOfSurfaceClasses": 60,
-    "blockedClasses": 40,
+    "emittableClasses": 215,
+    "outOfSurfaceClasses": 53,
+    "blockedClasses": 41,
     "reachableClasses": 264,
     "members": 3804,
     "mirroredState": 1158,
-    "commands": 760,
-    "asyncQueries": 825,
+    "commands": 761,
+    "asyncQueries": 853,
     "untypedObjectQueries": 11,
-    "skippedMembers": 1061,
-    "reachableMembers": 2391,
-    "generatedMembers": 1629,
-    "strandedMembers": 1413
+    "skippedMembers": 1032,
+    "reachableMembers": 2455,
+    "generatedMembers": 1702,
+    "strandedMembers": 1349
   },
   "classes": [
     {
@@ -230,11 +230,9 @@
     {
       "name": "BezierInterpolant",
       "file": "src/math/interpolants/BezierInterpolant.d.ts",
-      "status": "outOfSurface",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType",
-      "constructorParameterCount": 0,
+      "constructorParameterCount": 4,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
     },
@@ -754,11 +752,9 @@
     {
       "name": "CubicInterpolant",
       "file": "src/math/interpolants/CubicInterpolant.d.ts",
-      "status": "outOfSurface",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType",
-      "constructorParameterCount": 0,
+      "constructorParameterCount": 4,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
     },
@@ -917,11 +913,9 @@
     {
       "name": "DiscreteInterpolant",
       "file": "src/math/interpolants/DiscreteInterpolant.d.ts",
-      "status": "outOfSurface",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType",
-      "constructorParameterCount": 0,
+      "constructorParameterCount": 4,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
     },
@@ -1105,10 +1099,8 @@
     {
       "name": "FrustumArray",
       "file": "src/math/FrustumArray.d.ts",
-      "status": "outOfSurface",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1432,10 +1424,10 @@
     {
       "name": "Interpolant",
       "file": "src/math/Interpolant.d.ts",
-      "status": "outOfSurface",
+      "status": "blocked",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType",
+      "reason": "the class is abstract, so it has no constructor to mirror",
+      "category": "AbstractClass",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1671,11 +1663,9 @@
     {
       "name": "LinearInterpolant",
       "file": "src/math/interpolants/LinearInterpolant.d.ts",
-      "status": "outOfSurface",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType",
-      "constructorParameterCount": 0,
+      "constructorParameterCount": 4,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
     },
@@ -2482,11 +2472,9 @@
     {
       "name": "QuaternionLinearInterpolant",
       "file": "src/math/interpolants/QuaternionLinearInterpolant.d.ts",
-      "status": "outOfSurface",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType",
-      "constructorParameterCount": 0,
+      "constructorParameterCount": 4,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
     },
@@ -3903,10 +3891,6 @@
     {
       "category": "UnmappedUnion",
       "members": 37
-    },
-    {
-      "category": "MathValueType",
-      "members": 29
     },
     {
       "category": "NotExported",
@@ -6221,36 +6205,32 @@
       "member": "InterpolantFactoryMethodDiscrete",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `DiscreteInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "DiscreteInterpolant"
     },
     {
       "class": "BooleanKeyframeTrack",
       "member": "InterpolantFactoryMethodLinear",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `LinearInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "LinearInterpolant"
     },
     {
       "class": "BooleanKeyframeTrack",
       "member": "InterpolantFactoryMethodSmooth",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CubicInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "CubicInterpolant"
     },
     {
       "class": "BooleanKeyframeTrack",
       "member": "InterpolantFactoryMethodBezier",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `BezierInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "BezierInterpolant"
     },
     {
       "class": "BooleanKeyframeTrack",
@@ -8626,36 +8606,32 @@
       "member": "InterpolantFactoryMethodDiscrete",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `DiscreteInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "DiscreteInterpolant"
     },
     {
       "class": "ColorKeyframeTrack",
       "member": "InterpolantFactoryMethodLinear",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `LinearInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "LinearInterpolant"
     },
     {
       "class": "ColorKeyframeTrack",
       "member": "InterpolantFactoryMethodSmooth",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CubicInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "CubicInterpolant"
     },
     {
       "class": "ColorKeyframeTrack",
       "member": "InterpolantFactoryMethodBezier",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `BezierInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "BezierInterpolant"
     },
     {
       "class": "ColorKeyframeTrack",
@@ -11055,9 +11031,7 @@
       "member": "copy",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'source': `FrustumArray` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "Command"
     },
     {
       "class": "FrustumArray",
@@ -12276,36 +12250,32 @@
       "member": "InterpolantFactoryMethodDiscrete",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `DiscreteInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "DiscreteInterpolant"
     },
     {
       "class": "KeyframeTrack",
       "member": "InterpolantFactoryMethodLinear",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `LinearInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "LinearInterpolant"
     },
     {
       "class": "KeyframeTrack",
       "member": "InterpolantFactoryMethodSmooth",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `CubicInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "CubicInterpolant"
     },
     {
       "class": "KeyframeTrack",
       "member": "InterpolantFactoryMethodBezier",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `BezierInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "BezierInterpolant"
     },
     {
       "class": "KeyframeTrack",
@@ -21530,36 +21500,32 @@
       "member": "InterpolantFactoryMethodDiscrete",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `DiscreteInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "DiscreteInterpolant"
     },
     {
       "class": "NumberKeyframeTrack",
       "member": "InterpolantFactoryMethodLinear",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `LinearInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "LinearInterpolant"
     },
     {
       "class": "NumberKeyframeTrack",
       "member": "InterpolantFactoryMethodSmooth",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CubicInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "CubicInterpolant"
     },
     {
       "class": "NumberKeyframeTrack",
       "member": "InterpolantFactoryMethodBezier",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `BezierInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "BezierInterpolant"
     },
     {
       "class": "NumberKeyframeTrack",
@@ -24691,36 +24657,32 @@
       "member": "InterpolantFactoryMethodDiscrete",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `DiscreteInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "DiscreteInterpolant"
     },
     {
       "class": "QuaternionKeyframeTrack",
       "member": "InterpolantFactoryMethodLinear",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `LinearInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "LinearInterpolant"
     },
     {
       "class": "QuaternionKeyframeTrack",
       "member": "InterpolantFactoryMethodSmooth",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CubicInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "CubicInterpolant"
     },
     {
       "class": "QuaternionKeyframeTrack",
       "member": "InterpolantFactoryMethodBezier",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `BezierInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "BezierInterpolant"
     },
     {
       "class": "QuaternionKeyframeTrack",
@@ -28900,36 +28862,32 @@
       "member": "InterpolantFactoryMethodDiscrete",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `DiscreteInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "DiscreteInterpolant"
     },
     {
       "class": "StringKeyframeTrack",
       "member": "InterpolantFactoryMethodLinear",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `LinearInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "LinearInterpolant"
     },
     {
       "class": "StringKeyframeTrack",
       "member": "InterpolantFactoryMethodSmooth",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CubicInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "CubicInterpolant"
     },
     {
       "class": "StringKeyframeTrack",
       "member": "InterpolantFactoryMethodBezier",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `BezierInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "BezierInterpolant"
     },
     {
       "class": "StringKeyframeTrack",
@@ -31448,36 +31406,32 @@
       "member": "InterpolantFactoryMethodDiscrete",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `DiscreteInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "DiscreteInterpolant"
     },
     {
       "class": "VectorKeyframeTrack",
       "member": "InterpolantFactoryMethodLinear",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `LinearInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "LinearInterpolant"
     },
     {
       "class": "VectorKeyframeTrack",
       "member": "InterpolantFactoryMethodSmooth",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CubicInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "CubicInterpolant"
     },
     {
       "class": "VectorKeyframeTrack",
       "member": "InterpolantFactoryMethodBezier",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `BezierInterpolant` is not an emitted class: a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
-      "category": "MathValueType"
+      "bucket": "AsyncQuery",
+      "type": "BezierInterpolant"
     },
     {
       "class": "VectorKeyframeTrack",

@@ -451,7 +451,8 @@ internal sealed class EmissionScope
 			return;
 		}
 
-		if (irClass.File.StartsWith(EmitterConfig.MathSourcePrefix, StringComparison.Ordinal))
+		if (irClass.File.StartsWith(EmitterConfig.MathSourcePrefix, StringComparison.Ordinal)
+			&& !EmitterConfig.HandleBackedMathClassNames.Contains(irClass.Name))
 		{
 			Exclude(
 				result,

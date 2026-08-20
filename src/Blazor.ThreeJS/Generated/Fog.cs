@@ -144,6 +144,16 @@ public sealed class Fog : ThreeObject
 	}
 
 	/// <summary>
+	/// Serializes the fog into JSON. Records a read op, sends it behind every write already pending,
+	/// and completes with what <c>toJSON</c> returned.
+	/// </summary>
+	/// <returns>The value <c>toJSON</c> returned, once the JavaScript side has answered.</returns>
+	public Task<FogJSON> ToJSONAsync()
+	{
+		return RecordRead<FogJSON>("toJSON");
+	}
+
+	/// <summary>
 	/// Emits the create op for <c>THREE.Fog</c>, then replays every property written before this object
 	/// was attached.
 	/// </summary>

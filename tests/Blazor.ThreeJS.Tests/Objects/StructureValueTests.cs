@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Blazor.ThreeJS.Tests.Core;
 using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Math;
 using Kebechet.Blazor.ThreeJS.Objects;
 using Shouldly;
 
@@ -88,5 +89,39 @@ public class StructureValueTests
 		var second = new GeometryGroup { Start = 0, Count = 3, MaterialIndex = 1 };
 
 		first.ShouldBe(second);
+	}
+
+	[Fact]
+	public async Task Fog_ToJson_ReadsAStructureBackThroughTheQueryChannel()
+	{
+		// Arrange: reading is the direction that matters most for these - a geometry group or a
+		// serialised fog is an answer three.js produces, not a value a caller sends.
+		var module = new RecordingJsObjectReference
+		{
+			RespondToBatch = ops => new ThreeBatchResponse
+			{
+				Results = ops
+					.Where(x => x.Kind is ThreeOpKind.Read or ThreeOpKind.Get)
+					.Select(x => new ThreeReadResult
+					{
+						RequestId = x.RequestId,
+						Value = JsonDocument.Parse("""{"$o":{"type":"Fog","name":"","color":255,"near":1,"far":1000}}""").RootElement
+					})
+					.ToList()
+			}
+		};
+
+		var context = new ThreeContext(module, contextId: 1);
+		var fog = new Fog(new Color(1f, 1f, 1f));
+		context.Attach(fog);
+
+		// Act
+		var json = await fog.ToJSONAsync();
+
+		// Assert
+		json.ShouldNotBeNull();
+		json.Type.ShouldBe("Fog");
+		json.Near.ShouldBe(1f);
+		json.Far.ShouldBe(1000f);
 	}
 }

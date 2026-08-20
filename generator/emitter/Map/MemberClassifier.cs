@@ -332,7 +332,12 @@ internal sealed class MemberClassifier
 			TypeMappingKind.Primitive or
 			TypeMappingKind.GeneratedEnum or
 			TypeMappingKind.HandWrittenMathType or
-			TypeMappingKind.HandWrittenTypedArray;
+			TypeMappingKind.HandWrittenTypedArray or
+			// A structure travels as its own members under the `$o` tag, which the applier writes for a
+			// read result exactly as it decodes for a write. Reading one back is the direction that
+			// matters most for these: `BufferGeometry.groups` and `BatchedMesh.getGeometryRangeAt` are
+			// answers three.js produces, not values a caller sends.
+			TypeMappingKind.GeneratedStructure;
 	}
 
 	/// <summary>

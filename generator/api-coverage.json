@@ -10,11 +10,11 @@
     "members": 3648,
     "mirroredState": 1132,
     "commands": 747,
-    "asyncQueries": 802,
+    "asyncQueries": 811,
     "untypedObjectQueries": 11,
-    "skippedMembers": 967,
+    "skippedMembers": 958,
     "reachableMembers": 2439,
-    "generatedMembers": 1698,
+    "generatedMembers": 1702,
     "strandedMembers": 1209
   },
   "classes": [
@@ -3975,10 +3975,6 @@
       "members": 11
     },
     {
-      "category": "NoHandleForResult",
-      "members": 10
-    },
-    {
       "category": "UnerasableTypeParameter",
       "members": 8
     },
@@ -3989,6 +3985,10 @@
     {
       "category": "CollectionType",
       "members": 3
+    },
+    {
+      "category": "NoHandleForResult",
+      "members": 1
     }
   ],
   "generatedEnums": [
@@ -5865,9 +5865,8 @@
       "member": "getGeometryRangeAt",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "returns `BatchedMeshGeometryRange`, which is neither a value the read op carries nor a three.js object a handle could name",
-      "category": "NoHandleForResult"
+      "bucket": "AsyncQuery",
+      "type": "BatchedMeshGeometryRange"
     },
     {
       "class": "BatchedMesh",
@@ -6789,9 +6788,8 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "returns `Box3JSON`, which is neither a value the read op carries nor a three.js object a handle could name",
-      "category": "NoHandleForResult"
+      "bucket": "AsyncQuery",
+      "type": "Box3JSON"
     },
     {
       "class": "Box3",
@@ -7172,9 +7170,8 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "returns `BufferAttributeJSON`, which is neither a value the read op carries nor a three.js object a handle could name",
-      "category": "NoHandleForResult"
+      "bucket": "AsyncQuery",
+      "type": "BufferAttributeJSON"
     },
     {
       "class": "BufferAttribute",
@@ -8413,18 +8410,16 @@
       "member": "getHSL",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "returns `HSL`, which is neither a value the read op carries nor a three.js object a handle could name",
-      "category": "NoHandleForResult"
+      "bucket": "AsyncQuery",
+      "type": "HSL"
     },
     {
       "class": "Color",
       "member": "getRGB",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "returns `RGB`, which is neither a value the read op carries nor a three.js object a handle could name",
-      "category": "NoHandleForResult"
+      "bucket": "AsyncQuery",
+      "type": "RGB"
     },
     {
       "class": "Color",
@@ -10802,9 +10797,8 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "returns `FogJSON`, which is neither a value the read op carries nor a three.js object a handle could name",
-      "category": "NoHandleForResult"
+      "bucket": "AsyncQuery",
+      "type": "FogJSON"
     },
     {
       "class": "FogExp2",
@@ -10851,9 +10845,8 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "returns `FogExp2JSON`, which is neither a value the read op carries nor a three.js object a handle could name",
-      "category": "NoHandleForResult"
+      "bucket": "AsyncQuery",
+      "type": "FogExp2JSON"
     },
     {
       "class": "FramebufferTexture",
@@ -27341,9 +27334,8 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "returns `SphereJSON`, which is neither a value the read op carries nor a three.js object a handle could name",
-      "category": "NoHandleForResult"
+      "bucket": "AsyncQuery",
+      "type": "SphereJSON"
     },
     {
       "class": "Sphere",
@@ -33554,10 +33546,8 @@
       "member": "inputState",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "type": "XRHandInputState",
-      "reason": "read-only in three.js and typed `XRHandInputState`, which is neither a value the get op carries nor a three.js object a handle could name",
-      "category": "NoHandleForResult"
+      "bucket": "AsyncQuery",
+      "type": "XRHandInputState"
     },
     {
       "class": "XRJointSpace",

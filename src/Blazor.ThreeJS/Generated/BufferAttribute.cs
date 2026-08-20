@@ -553,6 +553,18 @@ public class BufferAttribute : EventDispatcher
 	}
 
 	/// <summary>
+	/// Convert this object to three.js to the <c>data.attributes</c> part of
+	/// <see href="https://github.com/mrdoob/three.js/wiki/JSON-Geometry-format-4">JSON Geometry format
+	/// v4</see>,. Records a read op, sends it behind every write already pending, and completes with
+	/// what <c>toJSON</c> returned.
+	/// </summary>
+	/// <returns>The value <c>toJSON</c> returned, once the JavaScript side has answered.</returns>
+	public Task<BufferAttributeJSON> ToJSONAsync()
+	{
+		return RecordRead<BufferAttributeJSON>("toJSON");
+	}
+
+	/// <summary>
 	/// Emits the create op for <c>THREE.BufferAttribute</c>, then replays every property written before
 	/// this object was attached.
 	/// </summary>

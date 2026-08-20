@@ -343,7 +343,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Backend` | `method getDomElement` | return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Backend` | `property domElement` | `HTMLCanvasElement | OffscreenCanvas | null` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `BatchedMesh` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `BatchedMesh` | `method getGeometryRangeAt` | returns `BatchedMeshGeometryRange`, which is neither a value the read op carries nor a three.js object a handle could name |
 | `BatchedMesh` | `method setCustomSort` | parameter 'sortFunction': `(this: this, list: Array<{ start: number; count: number; z: number }>, camera: Camera) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BatchedMesh` | `property customSort` | `(this: this, list: Array<{ start: number; count: number; z: number }>, camera: Camera) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BezierInterpolant` | `method getSettings_` | return type: `unknown` carries no type information a C# signature could express |
@@ -363,7 +362,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `BoxHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `BufferAttribute` | `method onUpload` | parameter 'callback': `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BufferAttribute` | `method set parameter value, arm ArrayBufferView` | one arm of `ArrayLike<number> | ArrayBufferView` that no emitted overload takes: `ArrayBufferView` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `BufferAttribute` | `method toJSON` | returns `BufferAttributeJSON`, which is neither a value the read op carries nor a three.js object a handle could name |
 | `BufferAttribute` | `property onUploadCallback` | `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BufferAttribute` | `property updateRanges` | `Array<{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }>` is an array whose element type cannot be mapped: `{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }` is an anonymous object literal type with no named C# equivalent |
 | `BufferGeometry` | `@example` | 2 TypeScript example block(s), which would be misleading in C# documentation |
@@ -504,10 +502,8 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Float16BufferAttribute` | `constructor parameter array, arm Iterable<number> | ArrayLike<number> | ArrayBuffer | number` | one arm of `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` that no emitted overload takes: three.js converts this argument to a `Uint16Array` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose |
 | `Float32BufferAttribute` | `constructor parameter array, arm Iterable<number> | ArrayLike<number> | ArrayBuffer | number` | one arm of `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` that no emitted overload takes: three.js converts this argument to a `Float32Array` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose |
 | `Fog` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
-| `Fog` | `method toJSON` | returns `FogJSON`, which is neither a value the read op carries nor a three.js object a handle could name |
 | `Fog` | `property color` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `FogExp2` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
-| `FogExp2` | `method toJSON` | returns `FogExp2JSON`, which is neither a value the read op carries nor a three.js object a handle could name |
 | `FogExp2` | `property color` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `FramebufferTexture` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `GridHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |

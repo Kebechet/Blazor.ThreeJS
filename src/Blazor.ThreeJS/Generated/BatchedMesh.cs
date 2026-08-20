@@ -390,6 +390,20 @@ public sealed class BatchedMesh : Mesh
 	}
 
 	/// <summary>
+	/// Get the range representing the subset of triangles related to the attached geometry, indicating
+	/// the starting offset and count, or <c>null</c> if invalid. Return an object of the form: { start:
+	/// Integer, count: Integer }. Records a read op, sends it behind every write already pending, and
+	/// completes with what <c>getGeometryRangeAt</c> returned.
+	/// </summary>
+	/// <param name="geometryId">The id of the geometry to get the range of.</param>
+	/// <param name="target">Optional target object to copy the range in to.</param>
+	/// <returns>The value <c>getGeometryRangeAt</c> returned, once the JavaScript side has answered.</returns>
+	public Task<BatchedMeshGeometryRange> GetGeometryRangeAtAsync(float geometryId, BatchedMeshGeometryRange target)
+	{
+		return RecordRead<BatchedMeshGeometryRange>("getGeometryRangeAt", geometryId, target);
+	}
+
+	/// <summary>
 	/// Get the geometryIndex of the defined instance. Records a read op, sends it behind every write
 	/// already pending, and completes with what <c>getGeometryIdAt</c> returned.
 	/// </summary>

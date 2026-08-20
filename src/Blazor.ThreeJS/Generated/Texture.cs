@@ -21,16 +21,19 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// <seealso href="https://github.com/mrdoob/three.js/blob/master/src/Textures/Texture.js">Source</seealso>
 public class Texture : EventDispatcher
 {
+	private readonly object? _image;
+	private Mapping? _mapping;
+	private Wrapping? _wrapS;
+	private Wrapping? _wrapT;
+	private MagnificationTextureFilter? _magFilter;
+	private MinificationTextureFilter? _minFilter;
+	private readonly PixelFormat? _format;
+	private TextureDataType? _type;
+	private float? _anisotropy;
+	private ColorSpace? _colorSpace;
 	private string _uuid = string.Empty;
 	private string _name = string.Empty;
-	private AnyMapping _mapping;
 	private float _channel;
-	private Wrapping _wrapS;
-	private Wrapping _wrapT;
-	private MagnificationTextureFilter _magFilter;
-	private MinificationTextureFilter _minFilter;
-	private float _anisotropy;
-	private TextureDataType _type;
 	private PixelFormatGPU? _internalFormat;
 	private bool _matrixAutoUpdate = true;
 	private float _rotation = 0f;
@@ -38,7 +41,6 @@ public class Texture : EventDispatcher
 	private bool _premultiplyAlpha = false;
 	private bool _flipY = true;
 	private float _unpackAlignment = 4f;
-	private string _colorSpace = string.Empty;
 	private bool _isRenderTargetTexture = false;
 	private bool _isArrayTexture = false;
 	private BufferAttributeUpdateRanges[] _updateRanges = [];
@@ -99,8 +101,39 @@ public class Texture : EventDispatcher
 	public Vector2 Center { get; }
 
 	/// <summary>This creates a new <c>Texture</c> object.</summary>
-	public Texture()
+	/// <param name="image">See <c>.image</c>. Default <c>THREE.Texture.DEFAULT_IMAGE</c>.</param>
+	/// <param name="mapping">See <c>.mapping</c>. Default <c>THREE.Texture.DEFAULT_MAPPING</c>.</param>
+	/// <param name="wrapS">See <c>.wrapS</c>. Default <c>THREE.ClampToEdgeWrapping</c>.</param>
+	/// <param name="wrapT">See <c>.wrapT</c>. Default <c>THREE.ClampToEdgeWrapping</c>.</param>
+	/// <param name="magFilter">See <c>.magFilter</c>. Default <c>THREE.LinearFilter</c>.</param>
+	/// <param name="minFilter">See <c>.minFilter</c>. Default <c>THREE.LinearMipmapLinearFilter</c>.</param>
+	/// <param name="format">See <c>.format</c>. Default <c>THREE.RGBAFormat</c>.</param>
+	/// <param name="type">See <c>.type</c>. Default <c>THREE.UnsignedByteType</c>.</param>
+	/// <param name="anisotropy">See <c>.anisotropy</c>. Default <c>THREE.Texture.DEFAULT_ANISOTROPY</c>.</param>
+	/// <param name="colorSpace">See <c>.colorSpace</c>. Default <c>THREE.NoColorSpace</c>.</param>
+	public Texture(
+		object? image = null,
+		Mapping? mapping = null,
+		Wrapping? wrapS = null,
+		Wrapping? wrapT = null,
+		MagnificationTextureFilter? magFilter = null,
+		MinificationTextureFilter? minFilter = null,
+		PixelFormat? format = null,
+		TextureDataType? type = null,
+		float? anisotropy = null,
+		ColorSpace? colorSpace = null)
 	{
+		_image = image;
+		_mapping = mapping;
+		_wrapS = wrapS;
+		_wrapT = wrapT;
+		_magFilter = magFilter;
+		_minFilter = minFilter;
+		_format = format;
+		_type = type;
+		_anisotropy = anisotropy;
+		_colorSpace = colorSpace;
+
 		Offset = new Vector2();
 		Offset.OnChange = () =>
 		{
@@ -163,6 +196,32 @@ public class Texture : EventDispatcher
 	}
 
 	/// <summary>
+	/// Constructor arguments forwarded to <c>THREE.Texture</c>: image, mapping, wrapS, wrapT,
+	/// magFilter, minFilter, format, type, anisotropy, colorSpace. An argument the caller left
+	/// unspecified travels as the wire's not-supplied sentinel, or is trimmed when nothing supplied
+	/// follows it, so three.js applies its own default.
+	/// </summary>
+	protected override object?[] ConstructorArgs
+	{
+		get
+		{
+			return ThreeValue.TrimUnspecifiedTail(
+			[
+				ThreeValue.OrUnspecified(_image),
+				ThreeValue.OrUnspecified(_mapping),
+				ThreeValue.OrUnspecified(_wrapS),
+				ThreeValue.OrUnspecified(_wrapT),
+				ThreeValue.OrUnspecified(_magFilter),
+				ThreeValue.OrUnspecified(_minFilter),
+				ThreeValue.OrUnspecified(_format),
+				ThreeValue.OrUnspecified(_type),
+				ThreeValue.OrUnspecified(_anisotropy),
+				ThreeValue.OrUnspecified(_colorSpace)
+			]);
+		}
+	}
+
+	/// <summary>
 	/// <see href="http://en.wikipedia.org/wiki/Universally_unique_identifier">UUID</see> of this object
 	/// instance. Writing it records a <c>uuid</c> property write once this object is attached; writing
 	/// the value already held records nothing.
@@ -207,7 +266,7 @@ public class Texture : EventDispatcher
 	/// How the image is applied to the object. Writing it records a <c>mapping</c> property write once
 	/// this object is attached; writing the value already held records nothing.
 	/// </summary>
-	public AnyMapping Mapping
+	public Mapping? Mapping
 	{
 		get { return _mapping; }
 		set
@@ -250,7 +309,7 @@ public class Texture : EventDispatcher
 	/// UV mapping. Writing it records a <c>wrapS</c> property write once this object is attached;
 	/// writing the value already held records nothing.
 	/// </summary>
-	public Wrapping WrapS
+	public Wrapping? WrapS
 	{
 		get { return _wrapS; }
 		set
@@ -271,7 +330,7 @@ public class Texture : EventDispatcher
 	/// UV mapping. Writing it records a <c>wrapT</c> property write once this object is attached;
 	/// writing the value already held records nothing.
 	/// </summary>
-	public Wrapping WrapT
+	public Wrapping? WrapT
 	{
 		get { return _wrapT; }
 		set
@@ -292,7 +351,7 @@ public class Texture : EventDispatcher
 	/// records a <c>magFilter</c> property write once this object is attached; writing the value
 	/// already held records nothing.
 	/// </summary>
-	public MagnificationTextureFilter MagFilter
+	public MagnificationTextureFilter? MagFilter
 	{
 		get { return _magFilter; }
 		set
@@ -313,7 +372,7 @@ public class Texture : EventDispatcher
 	/// records a <c>minFilter</c> property write once this object is attached; writing the value
 	/// already held records nothing.
 	/// </summary>
-	public MinificationTextureFilter MinFilter
+	public MinificationTextureFilter? MinFilter
 	{
 		get { return _minFilter; }
 		set
@@ -334,7 +393,7 @@ public class Texture : EventDispatcher
 	/// texels. Writing it records a <c>anisotropy</c> property write once this object is attached;
 	/// writing the value already held records nothing.
 	/// </summary>
-	public float Anisotropy
+	public float? Anisotropy
 	{
 		get { return _anisotropy; }
 		set
@@ -354,7 +413,7 @@ public class Texture : EventDispatcher
 	/// This must correspond to the <c>.format</c>. Writing it records a <c>type</c> property write once
 	/// this object is attached; writing the value already held records nothing.
 	/// </summary>
-	public TextureDataType Type
+	public TextureDataType? Type
 	{
 		get { return _type; }
 		set
@@ -522,7 +581,7 @@ public class Texture : EventDispatcher
 	/// a <c>colorSpace</c> property write once this object is attached; writing the value already held
 	/// records nothing.
 	/// </summary>
-	public string ColorSpace
+	public ColorSpace? ColorSpace
 	{
 		get { return _colorSpace; }
 		set

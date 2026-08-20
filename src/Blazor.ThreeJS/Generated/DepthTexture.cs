@@ -54,6 +54,7 @@ public class DepthTexture : Texture
 		float? anisotropy = null,
 		DepthTexturePixelFormat? format = null,
 		float depth = 1f)
+		: base(mapping: mapping, wrapS: wrapS, wrapT: wrapT, magFilter: magFilter, minFilter: minFilter, type: type, anisotropy: anisotropy)
 	{
 		_width = width;
 		_height = height;

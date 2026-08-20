@@ -251,20 +251,12 @@ internal sealed class ConstructorMapper
 			};
 		}
 
-		// `any` and `unknown` in an argument position take `object?`, which is exactly what the escape
-		// hatch's own `Call` and `Set` take - three.js genuinely accepts anything there, and the encoder
-		// still refuses at the call site, by name, whatever it has no wire form for. Refusing the whole
-		// member instead loses a call that would have worked for every value anyone actually passes.
-		//
-		// ⚠️ Arguments only. A `unknown` *return* would decode to nothing a caller could use, so that
+		// ⚠️ `any` and `unknown` resolve to `object?` here and nowhere else. This is the one position where
+		// that is honest: it is exactly what the escape hatch's own `Call` and `Set` take, three.js
+		// genuinely accepts anything, and the encoder still refuses at the call site - by name, with the
+		// type it could not carry. A `unknown` *return* would decode to nothing a caller could use, so it
 		// stays refused rather than answering with a null the browser never sent.
-		if (irParameter.Type is { Kind: "primitive", Name: "any" or "unknown" })
-		{
-			return new TypeAlternatives
-			{
-				Arms = [TypeMapping.Mapped(EmitterConfig.UnionStorageTypeName, TypeMappingKind.Primitive)]
-			};
-		}
+		context = context with { IsArgumentPosition = true };
 
 		return irParameter.IsOptional
 			? new TypeAlternatives { Arms = [mapper.Map(irParameter.Type, context)] }

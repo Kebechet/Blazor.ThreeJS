@@ -3,19 +3,19 @@
   "typesVersion": "0.185.3",
   "totals": {
     "classes": 309,
-    "emittableClasses": 226,
+    "emittableClasses": 227,
     "outOfSurfaceClasses": 53,
-    "blockedClasses": 30,
+    "blockedClasses": 29,
     "reachableClasses": 264,
     "members": 3648,
-    "mirroredState": 1163,
-    "commands": 796,
-    "asyncQueries": 889,
+    "mirroredState": 1164,
+    "commands": 798,
+    "asyncQueries": 891,
     "untypedObjectQueries": 11,
-    "skippedMembers": 800,
-    "reachableMembers": 2439,
-    "generatedMembers": 1837,
-    "strandedMembers": 1209
+    "skippedMembers": 795,
+    "reachableMembers": 2441,
+    "generatedMembers": 1842,
+    "strandedMembers": 1207
   },
   "classes": [
     {
@@ -718,70 +718,19 @@
       "file": "src/textures/CubeTexture.d.ts",
       "status": "emittable",
       "isReachable": true,
-      "constructorParameterCount": 0,
-      "droppedConstructorParameters": [
-        {
-          "name": "images",
-          "type": "TImage[]",
-          "reason": "`TImage[]` is an array whose element type cannot be mapped: `unknown` carries no type information a C# signature could express",
-          "category": "UntypedValue"
-        },
-        {
-          "name": "mapping",
-          "type": "CubeTextureMapping",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "wrapS",
-          "type": "Wrapping",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "wrapT",
-          "type": "Wrapping",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "magFilter",
-          "type": "MagnificationTextureFilter",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "minFilter",
-          "type": "MinificationTextureFilter",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "format",
-          "type": "PixelFormat",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "type",
-          "type": "TextureDataType",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "anisotropy",
-          "type": "number",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "colorSpace",
-          "type": "string",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        }
-      ],
-      "middlePositionUnspecifiedParameters": []
+      "constructorParameterCount": 10,
+      "droppedConstructorParameters": [],
+      "middlePositionUnspecifiedParameters": [
+        "images",
+        "mapping",
+        "wrapS",
+        "wrapT",
+        "magFilter",
+        "minFilter",
+        "format",
+        "type",
+        "anisotropy"
+      ]
     },
     {
       "name": "CubeTextureLoader",
@@ -3052,70 +3001,19 @@
       "file": "src/textures/Texture.d.ts",
       "status": "emittable",
       "isReachable": true,
-      "constructorParameterCount": 0,
-      "droppedConstructorParameters": [
-        {
-          "name": "image",
-          "type": "TImage",
-          "reason": "`unknown` carries no type information a C# signature could express",
-          "category": "UntypedValue"
-        },
-        {
-          "name": "mapping",
-          "type": "Mapping",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "wrapS",
-          "type": "Wrapping",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "wrapT",
-          "type": "Wrapping",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "magFilter",
-          "type": "MagnificationTextureFilter",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "minFilter",
-          "type": "MinificationTextureFilter",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "format",
-          "type": "PixelFormat",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "type",
-          "type": "TextureDataType",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "anisotropy",
-          "type": "number",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "colorSpace",
-          "type": "ColorSpace",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        }
-      ],
-      "middlePositionUnspecifiedParameters": []
+      "constructorParameterCount": 10,
+      "droppedConstructorParameters": [],
+      "middlePositionUnspecifiedParameters": [
+        "image",
+        "mapping",
+        "wrapS",
+        "wrapT",
+        "magFilter",
+        "minFilter",
+        "format",
+        "type",
+        "anisotropy"
+      ]
     },
     {
       "name": "TextureLoader",
@@ -3263,11 +3161,9 @@
     {
       "name": "Uniform",
       "file": "src/core/Uniform.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express",
-      "category": "UntypedValue",
-      "constructorParameterCount": 0,
+      "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
     },
@@ -3919,7 +3815,7 @@
     },
     {
       "category": "UntypedValue",
-      "members": 31
+      "members": 26
     },
     {
       "category": "NotExported",
@@ -4054,7 +3950,7 @@
       "source": "ConstantGroup",
       "members": 3,
       "backingType": "ushort",
-      "isReferenced": false
+      "isReferenced": true
     },
     {
       "name": "CullFace",
@@ -4812,9 +4708,8 @@
       "member": "parse",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `unknown[]` is an array whose element type cannot be mapped: `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "AnimationClip?[]"
     },
     {
       "class": "AnimationMixer",
@@ -29405,27 +29300,22 @@
       "member": "uniforms",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`Array<Uniform | Uniform[]>` is an array whose element type cannot be mapped: `Uniform` is not an emitted class: required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "bucket": "MirroredState",
+      "type": "Uniform?[]"
     },
     {
       "class": "UniformsGroup",
       "member": "add",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'uniform': `Uniform` is not an emitted class: required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "bucket": "Command"
     },
     {
       "class": "UniformsGroup",
       "member": "remove",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'uniform': `Uniform` is not an emitted class: required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "bucket": "Command"
     },
     {
       "class": "UniformsGroup",
@@ -31355,9 +31245,8 @@
       "member": "init",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'planes': `any[]` is an array whose element type cannot be mapped: `any` carries no type information a C# signature could express",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "WebGLClipping",

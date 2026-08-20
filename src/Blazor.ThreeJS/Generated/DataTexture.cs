@@ -55,6 +55,7 @@ public sealed class DataTexture : Texture
 		MinificationTextureFilter? minFilter = null,
 		float? anisotropy = null,
 		ColorSpace? colorSpace = null)
+		: base(mapping: mapping, wrapS: wrapS, wrapT: wrapT, magFilter: magFilter, minFilter: minFilter, format: format, type: type, anisotropy: anisotropy, colorSpace: colorSpace)
 	{
 		_data = data;
 		_width = width;

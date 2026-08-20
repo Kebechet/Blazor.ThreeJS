@@ -35,6 +35,7 @@ public sealed class VideoFrameTexture : Texture
 		PixelFormat? format = null,
 		TextureDataType? type = null,
 		float? anisotropy = null)
+		: base(mapping: mapping, wrapS: wrapS, wrapT: wrapT, magFilter: magFilter, minFilter: minFilter, format: format, type: type, anisotropy: anisotropy)
 	{
 		_mapping = mapping;
 		_wrapS = wrapS;

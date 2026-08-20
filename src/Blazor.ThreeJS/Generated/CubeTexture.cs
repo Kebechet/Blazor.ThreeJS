@@ -16,9 +16,51 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// <seealso href="https://github.com/mrdoob/three.js/blob/master/src/textures/CubeTexture.js">Source</seealso>
 public sealed class CubeTexture : Texture
 {
+	private readonly object?[]? _images;
+	private readonly CubeTextureMapping? _mapping;
+	private readonly Wrapping? _wrapS;
+	private readonly Wrapping? _wrapT;
+	private readonly MagnificationTextureFilter? _magFilter;
+	private readonly MinificationTextureFilter? _minFilter;
+	private readonly PixelFormat? _format;
+	private readonly TextureDataType? _type;
+	private readonly float? _anisotropy;
+	private readonly string? _colorSpace;
+
 	/// <summary>This creates a new <c>CubeTexture</c> object.</summary>
-	public CubeTexture()
+	/// <param name="images">Value forwarded to the <c>images</c> constructor argument.</param>
+	/// <param name="mapping">See <c>.mapping</c>. Default <c>THREE.CubeReflectionMapping</c>.</param>
+	/// <param name="wrapS">See <c>.wrapS</c>. Default <c>THREE.ClampToEdgeWrapping</c>.</param>
+	/// <param name="wrapT">See <c>.wrapT</c>. Default <c>THREE.ClampToEdgeWrapping</c>.</param>
+	/// <param name="magFilter">See <c>.magFilter</c>. Default <c>THREE.LinearFilter</c>.</param>
+	/// <param name="minFilter">See <c>.minFilter</c>. Default <c>THREE.LinearMipmapLinearFilter</c>.</param>
+	/// <param name="format">See <c>.format</c>. Default <c>THREE.RGBAFormat</c>.</param>
+	/// <param name="type">See <c>.type</c>. Default <c>THREE.UnsignedByteType</c>.</param>
+	/// <param name="anisotropy">See <c>.anisotropy</c>. Default <c>THREE.Texture.DEFAULT_ANISOTROPY</c>.</param>
+	/// <param name="colorSpace">See <c>.colorSpace</c>. Default <c>NoColorSpace</c>.</param>
+	public CubeTexture(
+		object?[]? images = null,
+		CubeTextureMapping? mapping = null,
+		Wrapping? wrapS = null,
+		Wrapping? wrapT = null,
+		MagnificationTextureFilter? magFilter = null,
+		MinificationTextureFilter? minFilter = null,
+		PixelFormat? format = null,
+		TextureDataType? type = null,
+		float? anisotropy = null,
+		string? colorSpace = null)
+		: base(wrapS: wrapS, wrapT: wrapT, magFilter: magFilter, minFilter: minFilter, format: format, type: type, anisotropy: anisotropy)
 	{
+		_images = images;
+		_mapping = mapping;
+		_wrapS = wrapS;
+		_wrapT = wrapT;
+		_magFilter = magFilter;
+		_minFilter = minFilter;
+		_format = format;
+		_type = type;
+		_anisotropy = anisotropy;
+		_colorSpace = colorSpace;
 	}
 
 	/// <summary>
@@ -37,6 +79,32 @@ public sealed class CubeTexture : Texture
 	protected override string ThreeTypeName
 	{
 		get { return "CubeTexture"; }
+	}
+
+	/// <summary>
+	/// Constructor arguments forwarded to <c>THREE.CubeTexture</c>: images, mapping, wrapS, wrapT,
+	/// magFilter, minFilter, format, type, anisotropy, colorSpace. An argument the caller left
+	/// unspecified travels as the wire's not-supplied sentinel, or is trimmed when nothing supplied
+	/// follows it, so three.js applies its own default.
+	/// </summary>
+	protected override object?[] ConstructorArgs
+	{
+		get
+		{
+			return ThreeValue.TrimUnspecifiedTail(
+			[
+				ThreeValue.OrUnspecified(_images),
+				ThreeValue.OrUnspecified(_mapping),
+				ThreeValue.OrUnspecified(_wrapS),
+				ThreeValue.OrUnspecified(_wrapT),
+				ThreeValue.OrUnspecified(_magFilter),
+				ThreeValue.OrUnspecified(_minFilter),
+				ThreeValue.OrUnspecified(_format),
+				ThreeValue.OrUnspecified(_type),
+				ThreeValue.OrUnspecified(_anisotropy),
+				ThreeValue.OrUnspecified(_colorSpace)
+			]);
+		}
 	}
 
 	/// <summary>

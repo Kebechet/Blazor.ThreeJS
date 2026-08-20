@@ -12,8 +12,10 @@ public sealed class UniformsGroup : EventDispatcher
 {
 	private float _id;
 	private Usage _usage;
+	private Uniform?[] _uniforms = [];
 	private bool _isIdWritten;
 	private bool _isUsageWritten;
+	private bool _isUniformsWritten;
 
 	/// <summary>Initializes a new <see cref="UniformsGroup"/>.</summary>
 	public UniformsGroup()
@@ -78,6 +80,42 @@ public sealed class UniformsGroup : EventDispatcher
 		}
 	}
 
+	/// <summary>
+	/// The <c>uniforms</c> property of the JavaScript-side object. Writing it records a <c>uniforms</c>
+	/// property write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public Uniform?[] Uniforms
+	{
+		get { return _uniforms; }
+		set
+		{
+			if (_uniforms == value)
+			{
+				return;
+			}
+
+			_uniforms = value;
+			_isUniformsWritten = true;
+			AttachEach(Batch, value);
+
+			RecordSet("uniforms", value);
+		}
+	}
+
+	/// <summary>Records a call to <c>add</c> on the JavaScript-side object.</summary>
+	/// <param name="uniform">Value forwarded to the <c>uniform</c> argument.</param>
+	public void Add(Uniform uniform)
+	{
+		RecordCall("add", uniform);
+	}
+
+	/// <summary>Records a call to <c>remove</c> on the JavaScript-side object.</summary>
+	/// <param name="uniform">Value forwarded to the <c>uniform</c> argument.</param>
+	public void Remove(Uniform uniform)
+	{
+		RecordCall("remove", uniform);
+	}
+
 	/// <summary>Records a call to <c>setName</c> on the JavaScript-side object.</summary>
 	/// <param name="name">Value forwarded to the <c>name</c> argument.</param>
 	public void SetName(string name)
@@ -133,7 +171,8 @@ public sealed class UniformsGroup : EventDispatcher
 
 	/// <summary>
 	/// Emits the create op for <c>THREE.UniformsGroup</c>, then replays every property written before
-	/// this object was attached.
+	/// this object was attached. A replayed value that is itself a mirrored object is attached first,
+	/// so its create op reaches the batch before the write that references it by handle.
 	/// </summary>
 	/// <param name="batch">Batch to record the ops into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
@@ -148,6 +187,12 @@ public sealed class UniformsGroup : EventDispatcher
 		if (_isUsageWritten)
 		{
 			batch.Set(Handle, "usage", ThreeValue.Encode(_usage));
+		}
+
+		if (_isUniformsWritten)
+		{
+			AttachEach(batch, _uniforms);
+			batch.Set(Handle, "uniforms", ThreeValue.Encode(_uniforms));
 		}
 	}
 }

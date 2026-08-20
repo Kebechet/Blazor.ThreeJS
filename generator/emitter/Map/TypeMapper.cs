@@ -201,6 +201,16 @@ internal sealed class TypeMapper
 				return TypeMapping.Mapped("void", TypeMappingKind.Primitive);
 			case "this":
 				return TypeMapping.Skipped(SkipCategory.UnmappedTypeSyntax, "`this` is only meaningful as a fluent return type, which the caller handles separately");
+			case "any":
+			case "unknown":
+				// See ConstructorMapper.ResolveAlternatives for why this is honest in an argument
+				// position and dishonest anywhere else.
+				// `object` plus the nullable flag, not the literal `object?`: the annotation is applied by
+				// whoever writes the signature, and handing it a name that already carries one produced
+				// `object??`.
+				return context.IsArgumentPosition
+					? TypeMapping.Mapped("object", TypeMappingKind.Primitive, isExplicitlyNullable: true)
+					: TypeMapping.Skipped(SkipCategory.UntypedValue, $"`{type.Name}` carries no type information a C# signature could express");
 			default:
 				return TypeMapping.Skipped(SkipCategory.UntypedValue, $"`{type.Name}` carries no type information a C# signature could express");
 		}
@@ -856,7 +866,7 @@ internal sealed class TypeMapper
 /// What the mapper needs to know about where a type reference appears: the member's name and
 /// documented numeric kind, and the type parameters in scope for erasure.
 /// </summary>
-internal sealed class TypeMappingContext
+internal sealed record TypeMappingContext
 {
 	private readonly IReadOnlySet<string> _erasedTypeParameterNames;
 
@@ -865,6 +875,12 @@ internal sealed class TypeMappingContext
 
 	/// <summary><c>float</c> / <c>integer</c> from the JSDoc, or <see langword="null"/> when unspecified.</summary>
 	public string? NumericKind { get; init; }
+
+	/// <summary>
+	/// Whether the type is being resolved for something the caller passes in. Only <c>any</c> and
+	/// <c>unknown</c> read it: they become <c>object?</c> here and stay refused everywhere else.
+	/// </summary>
+	public bool IsArgumentPosition { get; init; }
 
 	/// <summary>
 	/// Name of the class the member belongs to, when there is one. Only the anonymous-structure naming
@@ -908,6 +924,11 @@ internal sealed class TypeMappingContext
 			MemberName = MemberName,
 			NumericKind = NumericKind,
 			TypeParameters = TypeParameters,
+			DeclaringClassName = DeclaringClassName,
+
+			// Carried across the erasure, or a type parameter defaulting to `any` would be refused in a
+			// position where a written-out `any` is accepted. `Uniform<T = any>` is exactly that.
+			IsArgumentPosition = IsArgumentPosition,
 			MayUseHandWrittenClasses = MayUseHandWrittenClasses
 		};
 	}

@@ -191,9 +191,9 @@ as a mutable array, so a change to it cannot be observed, and matrix-typed prope
 
 | status | classes |
 |---|---|
-| emittable | 226 |
+| emittable | 227 |
 | deliberately out of the mirrored surface | 53 |
-| blocked | 30 |
+| blocked | 29 |
 | **total** | **309** |
 
 Emittability and **reachability** are different questions. 264 of these classes are names the shipped
@@ -231,7 +231,6 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `UnerasableTypeParameter` | 1 | required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `UnmappedTypeAlias` | 1 | required parameter 'format' cannot be mapped: `CompressedPixelFormat` cannot become a C# enum: constant `RGB_BPTC_SIGNED_Format` has no literal value in the IR (declared type `<none>`) |
 | `UnmappedUnion` | 1 | required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `UntypedValue` | 1 | required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express |
 
 <details><summary>Every blocked class</summary>
 
@@ -261,7 +260,6 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `SpotLightShadow` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/lights/SpotLightShadow.d.ts` |
 | `Storage3DTexture` | another class named `Storage3DTexture` is declared in `src/renderers/common/Storage3DTexture.d.ts`, and a C# namespace holds one type of a given name | `src/renderers/common/StorageArrayTexture.d.ts` |
 | `TimestampQueryPool` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/renderers/common/TimestampQueryPool.d.ts` |
-| `Uniform` | required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express | `src/core/Uniform.d.ts` |
 | `VideoTexture` | required parameter 'video' cannot be mapped: `HTMLVideoElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one | `src/textures/VideoTexture.d.ts` |
 | `WebGLCubeRenderTarget` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/renderers/WebGLCubeRenderTarget.d.ts` |
 | `WebGLRenderer` | three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on | `src/renderers/WebGLRenderer.d.ts` |
@@ -320,7 +318,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `CubeCamera` | 3 | — | `src/cameras/CubeCamera.d.ts` |
 | `CubeDepthTexture` | 9 | — | `src/textures/CubeDepthTexture.d.ts` |
 | `CubeRenderTarget` | 1 | `options` | `src/renderers/common/CubeRenderTarget.d.ts` |
-| `CubeTexture` | 0 | `images`, `mapping`, `wrapS`, `wrapT`, `magFilter`, `minFilter`, `format`, `type`, `anisotropy`, `colorSpace` | `src/textures/CubeTexture.d.ts` |
+| `CubeTexture` | 10 | — | `src/textures/CubeTexture.d.ts` |
 | `CubeTextureLoader` | 1 | — | `src/loaders/CubeTextureLoader.d.ts` |
 | `CubicBezierCurve` | 4 | — | `src/extras/curves/CubicBezierCurve.d.ts` |
 | `CubicBezierCurve3` | 4 | — | `src/extras/curves/CubicBezierCurve3.d.ts` |
@@ -477,7 +475,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `StorageTexture` | 2 | — | `src/renderers/common/StorageTexture.d.ts` |
 | `StringKeyframeTrack` | 3 | — | `src/animation/tracks/StringKeyframeTrack.d.ts` |
 | `TetrahedronGeometry` | 2 | — | `src/geometries/TetrahedronGeometry.d.ts` |
-| `Texture` | 0 | `image`, `mapping`, `wrapS`, `wrapT`, `magFilter`, `minFilter`, `format`, `type`, `anisotropy`, `colorSpace` | `src/textures/Texture.d.ts` |
+| `Texture` | 10 | — | `src/textures/Texture.d.ts` |
 | `TextureLoader` | 1 | — | `src/loaders/TextureLoader.d.ts` |
 | `Timer` | 0 | — | `src/core/Timer.d.ts` |
 | `TorusGeometry` | 7 | — | `src/geometries/TorusGeometry.d.ts` |
@@ -487,6 +485,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `Uint32BufferAttribute` | 3 | — | `src/core/BufferAttribute.d.ts` |
 | `Uint8BufferAttribute` | 3 | — | `src/core/BufferAttribute.d.ts` |
 | `Uint8ClampedBufferAttribute` | 3 | — | `src/core/BufferAttribute.d.ts` |
+| `Uniform` | 1 | — | `src/core/Uniform.d.ts` |
 | `UniformsGroup` | 0 | — | `src/core/UniformsGroup.d.ts` |
 | `VectorKeyframeTrack` | 4 | — | `src/animation/tracks/VectorKeyframeTrack.d.ts` |
 | `VideoFrameTexture` | 8 | — | `src/textures/VideoFrameTexture.d.ts` |
@@ -511,14 +510,14 @@ three.js is reachable at all" and "how much of what we mirror is state".
 
 | bucket | what it means | all classes | emittable classes |
 |---|---|---|---|
-| MirroredState | state C# holds and writes through on change | 1163 | 946 |
-| Command | a method recorded as a call op, returning nothing or `this` | 796 | 342 |
-| AsyncQuery | a method whose result the caller needs back | 889 | 549 |
-| Skipped | not mirrored; see the skip list below | 800 | 602 |
-| **total** | | **3648** | **2439** |
+| MirroredState | state C# holds and writes through on change | 1164 | 947 |
+| Command | a method recorded as a call op, returning nothing or `this` | 798 | 344 |
+| AsyncQuery | a method whose result the caller needs back | 891 | 551 |
+| Skipped | not mirrored; see the skip list below | 795 | 599 |
+| **total** | | **3648** | **2441** |
 
 Two op kinds answer: **read**, which invokes a method, and **get**, which reads a property.
-549 of the async queries above sit on an emitted class and are generated as `…Async` methods, 187 of
+551 of the async queries above sit on an emitted class and are generated as `…Async` methods, 187 of
 them over the get op rather than the read op. Both kinds answer with a value where one can travel, and
 with a handle to an object where it cannot.
 
@@ -555,7 +554,7 @@ the README's coverage table.
 | `NotInstanceApi` | 38 | static, non-public or `@internal` — not part of the mirrored instance API |
 | `OptionsInterface` | 32 | a structural interface — an options bag or an event map — with no C# type to be |
 | `AnonymousObjectType` | 31 | an anonymous object literal type with no name to give a C# type |
-| `UntypedValue` | 31 | declared `any` / `unknown`, or with no type at all |
+| `UntypedValue` | 26 | declared `any` / `unknown`, or with no type at all |
 | `NotExported` | 16 | three.js's public barrel does not re-export it as a value, so the applier cannot reach it on `THREE` |
 | `ExternalType` | 15 | declared outside the scanned `src/` surface |
 | `UnmappedTypeAlias` | 13 | a type alias that is neither a constant group nor a rename of a mapped type |
@@ -564,13 +563,12 @@ the README's coverage table.
 | `UnmappedTypeSyntax` | 4 | a TypeScript type form with no C# equivalent |
 | `RestParameter` | 1 | a rest parameter, including the rest-union-tuple pseudo-overload form |
 
-<details><summary>Every skipped member (800)</summary>
+<details><summary>Every skipped member (795)</summary>
 
 | class | member | obstacle | why |
 |---|---|---|---|
 | `AnimationClip` | `property tracks` | `UnmappedUnion` | `Array<KeyframeTrack>` is an array whose element type cannot be mapped: `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `AnimationClip` | `property userData` | `DomOrLibType` | `Record<string, unknown>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `AnimationLoader` | `method parse` | `UntypedValue` | parameter 'json': `unknown[]` is an array whose element type cannot be mapped: `unknown` carries no type information a C# signature could express |
 | `AnimationMixer` | `property _root` | `NotInstanceApi` | declared `protected`, so it is not part of the public API |
 | `AnimationMixer` | `property _actions` | `NotInstanceApi` | declared `protected`, so it is not part of the public API |
 | `AnimationMixer` | `property _nActiveActions` | `NotInstanceApi` | declared `protected`, so it is not part of the public API |
@@ -1240,9 +1238,6 @@ the README's coverage table.
 | `TorusKnotGeometry` | `method fromJSON` | `NotInstanceApi` | marked `@internal` upstream, so it is not public API |
 | `TubeGeometry` | `method fromJSON` | `NotInstanceApi` | marked `@internal` upstream, so it is not public API |
 | `Uniform` | `property value` | `UntypedValue` | `any` carries no type information a C# signature could express |
-| `UniformsGroup` | `property uniforms` | `UntypedValue` | `Array<Uniform | Uniform[]>` is an array whose element type cannot be mapped: `Uniform` is not an emitted class: required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express |
-| `UniformsGroup` | `method add` | `UntypedValue` | parameter 'uniform': `Uniform` is not an emitted class: required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express |
-| `UniformsGroup` | `method remove` | `UntypedValue` | parameter 'uniform': `Uniform` is not an emitted class: required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express |
 | `Vector2` | `method [Symbol.iterator]` | `NotInstanceApi` | the member name is not a usable C# identifier |
 | `Vector3` | `method [Symbol.iterator]` | `NotInstanceApi` | the member name is not a usable C# identifier |
 | `Vector4` | `method [Symbol.iterator]` | `NotInstanceApi` | the member name is not a usable C# identifier |
@@ -1258,7 +1253,6 @@ the README's coverage table.
 | `WebGLBufferRenderer` | `property renderInstances` | `CallbackType` | `(start: any, count: number, primcount: number) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGLBufferRenderer` | `property renderMultiDraw` | `CallbackType` | `(starts: Int32Array, counts: Int32Array, drawCount: number) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGLClipping` | `property uniform` | `AnonymousObjectType` | `{ value: any; needsUpdate: boolean }` is an anonymous object literal type with no named C# equivalent |
-| `WebGLClipping` | `method init` | `UntypedValue` | parameter 'planes': `any[]` is an array whose element type cannot be mapped: `any` carries no type information a C# signature could express |
 | `WebGLCubeRenderTarget` | `method fromEquirectangularTexture` | `NotExported` | parameter 'renderer': `WebGLRenderer` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `WebGLCubeRenderTarget` | `method clear` | `NotExported` | parameter 'renderer': `WebGLRenderer` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `WebGLExtensions` | `method get` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
@@ -1387,7 +1381,7 @@ the string. The backing type is the narrowest that holds every value, so three.j
 `byte` and its WebGL constants land on `ushort`.
 
 **47 generated**: 45 inferred from a constant group, 2 from a real TypeScript `enum`.
-35 are referenced by a mapped member today; the rest are emitted anyway, because an enum is a
+36 are referenced by a mapped member today; the rest are emitted anyway, because an enum is a
 leaf type whose availability should not move with the class surface.
 
 | enum | source | members | aliases | backing type | referenced |
@@ -1406,7 +1400,7 @@ leaf type whose availability should not move with the class surface.
 | `ColorSpaceTransfer` | constant group | 2 | 0 | `byte` | no |
 | `Combine` | constant group | 3 | 0 | `byte` | yes |
 | `CoordinateSystem` | constant group | 2 | 0 | `ushort` | yes |
-| `CubeTextureMapping` | constant group | 3 | 0 | `ushort` | no |
+| `CubeTextureMapping` | constant group | 3 | 0 | `ushort` | yes |
 | `CullFace` | constant group | 4 | 0 | `byte` | yes |
 | `CurveType` | constant group | 3 | 0 | `byte` | yes |
 | `DepthModes` | constant group | 8 | 0 | `byte` | yes |
@@ -1533,7 +1527,7 @@ cannot be trimmed and must not be sent as null either — it travels as the `$un
 (`ThreeWireFormat.UndefinedKey`), which `three-interop.js` decodes to a real `undefined`. The
 round trip is pinned end to end by `tests/wire-format.test.mjs` against the vendored three.js.
 
-51 emittable classes carry 99 such parameters. They are the measure of how much
+53 emittable classes carry 117 such parameters. They are the measure of how much
 of the emitted surface that one wire feature holds up.
 
 <details><summary>Every affected class</summary>
@@ -1548,6 +1542,7 @@ of the emitted surface that one wire feature holds up.
 | `BatchedMesh` | `maxIndexCount` |
 | `CatmullRomCurve3` | `points`, `curveType` |
 | `CubeDepthTexture` | `type`, `mapping`, `wrapS`, `wrapT`, `magFilter`, `minFilter`, `anisotropy` |
+| `CubeTexture` | `images`, `mapping`, `wrapS`, `wrapT`, `magFilter`, `minFilter`, `format`, `type`, `anisotropy` |
 | `CubicBezierCurve` | `v0`, `v1`, `v2` |
 | `CubicBezierCurve3` | `v0`, `v1`, `v2` |
 | `Data3DTexture` | `data` |
@@ -1587,6 +1582,7 @@ of the emitted surface that one wire feature holds up.
 | `SphereGeometry` | `phiLength` |
 | `SpotLight` | `color`, `angle` |
 | `StorageTexture` | `width` |
+| `Texture` | `image`, `mapping`, `wrapS`, `wrapT`, `magFilter`, `minFilter`, `format`, `type`, `anisotropy` |
 | `TorusGeometry` | `arc` |
 | `TubeGeometry` | `path` |
 | `VideoFrameTexture` | `mapping`, `wrapS`, `wrapT`, `magFilter`, `minFilter`, `format`, `type` |

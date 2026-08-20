@@ -82,6 +82,11 @@ internal sealed class TypeMapper
 				return MapObjectLiteral(type, context);
 			case "literal":
 				return MapLiteral(type, context);
+			case "typeOperator" when type is { Operator: "readonly", OperandType: { } readOnlyOf }:
+				// `readonly` is a TypeScript modifier with no runtime meaning: `readonly Vector2Like[]`
+				// and `Vector2Like[]` are the same array to three.js, and the wire carries the same thing
+				// either way. C# has no equivalent to drop, so it is simply not carried.
+				return Map(readOnlyOf, context);
 			default:
 				return TypeMapping.Skipped(SkipCategory.UnmappedTypeSyntax, $"`{type.Text}` is a TypeScript `{type.Kind}` type, which has no C# equivalent");
 		}

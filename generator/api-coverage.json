@@ -10,11 +10,11 @@
     "members": 3648,
     "mirroredState": 1162,
     "commands": 781,
-    "asyncQueries": 880,
+    "asyncQueries": 888,
     "untypedObjectQueries": 11,
-    "skippedMembers": 825,
+    "skippedMembers": 817,
     "reachableMembers": 2439,
-    "generatedMembers": 1817,
+    "generatedMembers": 1824,
     "strandedMembers": 1209
   },
   "classes": [
@@ -3948,7 +3948,7 @@
     },
     {
       "category": "UntypedValue",
-      "members": 30
+      "members": 31
     },
     {
       "category": "NotExported",
@@ -3976,11 +3976,7 @@
     },
     {
       "category": "UnmappedTypeSyntax",
-      "members": 7
-    },
-    {
-      "category": "NoHandleForResult",
-      "members": 6
+      "members": 4
     },
     {
       "category": "RestParameter",
@@ -4801,9 +4797,8 @@
       "member": "CreateClipsFromMorphTargetSequences",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "returns `AnimationClip?[]`, which is neither a value the read op carries nor a three.js object a handle could name",
-      "category": "NoHandleForResult"
+      "bucket": "AsyncQuery",
+      "type": "AnimationClip?[]"
     },
     {
       "class": "AnimationClip",
@@ -4851,8 +4846,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'json': `readonly unknown[]` is a TypeScript `typeOperator` type, which has no C# equivalent",
-      "category": "UnmappedTypeSyntax"
+      "reason": "parameter 'json': `unknown[]` is an array whose element type cannot be mapped: `unknown` carries no type information a C# signature could express",
+      "category": "UntypedValue"
     },
     {
       "class": "AnimationMixer",
@@ -21929,9 +21924,8 @@
       "member": "getObjectsByProperty",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "returns `Object3D?[]`, which is neither a value the read op carries nor a three.js object a handle could name",
-      "category": "NoHandleForResult"
+      "bucket": "AsyncQuery",
+      "type": "Object3D?[]"
     },
     {
       "class": "Object3D",
@@ -22081,27 +22075,24 @@
       "member": "parseGeometries",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "returns `Dictionary<string, ThreeObject>`, which is neither a value the read op carries nor a three.js object a handle could name",
-      "category": "NoHandleForResult"
+      "bucket": "AsyncQuery",
+      "type": "Dictionary<string, ThreeObject>"
     },
     {
       "class": "ObjectLoader",
       "member": "parseMaterials",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "returns `Dictionary<string, Material>`, which is neither a value the read op carries nor a three.js object a handle could name",
-      "category": "NoHandleForResult"
+      "bucket": "AsyncQuery",
+      "type": "Dictionary<string, Material>"
     },
     {
       "class": "ObjectLoader",
       "member": "parseAnimations",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "returns `Dictionary<string, AnimationClip>`, which is neither a value the read op carries nor a three.js object a handle could name",
-      "category": "NoHandleForResult"
+      "bucket": "AsyncQuery",
+      "type": "Dictionary<string, AnimationClip>"
     },
     {
       "class": "ObjectLoader",
@@ -26671,27 +26662,24 @@
       "member": "toShapes",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "returns `Shape?[]`, which is neither a value the read op carries nor a three.js object a handle could name",
-      "category": "NoHandleForResult"
+      "bucket": "AsyncQuery",
+      "type": "Shape?[]"
     },
     {
       "class": "ShapeUtils",
       "member": "area",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'contour': `readonly Vector2Like[]` is a TypeScript `typeOperator` type, which has no C# equivalent",
-      "category": "UnmappedTypeSyntax"
+      "bucket": "AsyncQuery",
+      "type": "float"
     },
     {
       "class": "ShapeUtils",
       "member": "isClockWise",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'pts': `readonly Vector2Like[]` is a TypeScript `typeOperator` type, which has no C# equivalent",
-      "category": "UnmappedTypeSyntax"
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "ShapeUtils",

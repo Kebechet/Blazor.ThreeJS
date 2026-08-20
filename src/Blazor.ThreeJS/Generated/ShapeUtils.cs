@@ -39,6 +39,29 @@ public sealed class ShapeUtils : ThreeObject
 	}
 
 	/// <summary>
+	/// Calculate area of a ( 2D ) contour polygon. Records a read op, sends it behind every write
+	/// already pending, and completes with what <c>area</c> returned.
+	/// </summary>
+	/// <param name="contour">Value forwarded to the <c>contour</c> argument.</param>
+	/// <returns>The value <c>area</c> returned, once the JavaScript side has answered.</returns>
+	public static Task<float> AreaAsync(ThreeContext context, Vector2[] contour)
+	{
+		return context.CallStaticAsync<float>("ShapeUtils", "area", (object?) contour);
+	}
+
+	/// <summary>
+	/// Note that this is a linear function so it is necessary to calculate separately for x, y
+	/// components of a polygon. Records a read op, sends it behind every write already pending, and
+	/// completes with what <c>isClockWise</c> returned.
+	/// </summary>
+	/// <param name="pts">Value forwarded to the <c>pts</c> argument.</param>
+	/// <returns>The value <c>isClockWise</c> returned, once the JavaScript side has answered.</returns>
+	public static Task<bool> IsClockWiseAsync(ThreeContext context, Vector2[] pts)
+	{
+		return context.CallStaticAsync<bool>("ShapeUtils", "isClockWise", (object?) pts);
+	}
+
+	/// <summary>
 	/// Used internally by <c>ExtrudeGeometry</c> and <c>ShapeGeometry</c> to calculate faces in shapes
 	/// with holes. Records a read op, sends it behind every write already pending, and completes with
 	/// what <c>triangulateShape</c> returned.

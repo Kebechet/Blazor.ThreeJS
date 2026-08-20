@@ -298,6 +298,8 @@ internal sealed class MemberClassifier
 
 		row.CSharpTypeName = returnMapping.CSharpTypeName;
 		row.ReturnMapping = returnMapping;
+		row.AnswersWithHandles = returnMapping.Kind is TypeMappingKind.Sequence or TypeMappingKind.Dictionary
+			&& returnMapping.ElementMapping?.Kind == TypeMappingKind.GeneratedWrapperClass;
 		row.Bucket = MemberBucket.AsyncQuery;
 		return row;
 	}
@@ -325,9 +327,13 @@ internal sealed class MemberClassifier
 	/// <returns><see langword="true"/> when a value of that type can be read back.</returns>
 	private static bool IsReadable(TypeMapping returnMapping)
 	{
-		if (returnMapping.Kind == TypeMappingKind.Sequence)
+		// A collection of handles is readable: the applier mints one per element while encoding the
+		// result, and the decoder resolves each back to the mirror this context already holds.
+		// `ObjectLoader.parseMaterials` answers a table of materials, and a clip list answers an array.
+		if (returnMapping.Kind is TypeMappingKind.Sequence or TypeMappingKind.Dictionary)
 		{
-			return returnMapping.ElementMapping is { } element && IsReadable(element);
+			return returnMapping.ElementMapping is { } element
+				&& (IsReadable(element) || element.Kind == TypeMappingKind.GeneratedWrapperClass);
 		}
 
 		return returnMapping.Kind is
@@ -631,6 +637,12 @@ internal sealed class ClassifiedMember
 	/// GPU is done, and that instant is the whole value of calling them.
 	/// </summary>
 	public bool IsAwaitedVoidResult { get; set; }
+
+	/// <summary>
+	/// Whether the answer is a collection of mirrored objects, so the read asks the applier for a handle
+	/// per element rather than for values it has no encoding for.
+	/// </summary>
+	public bool AnswersWithHandles { get; set; }
 
 	/// <summary>Number of overloads, on a method.</summary>
 	public int OverloadCount { get; init; }

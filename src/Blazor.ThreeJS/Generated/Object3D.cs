@@ -316,6 +316,23 @@ public abstract partial class Object3D
 	}
 
 	/// <summary>
+	/// Searches through an object and its children, starting with the object itself, and returns the
+	/// first with a property that matches the value given. Records a read op, sends it behind every
+	/// write already pending, and completes with what <c>getObjectsByProperty</c> returned.
+	/// </summary>
+	/// <param name="name">The property name to search for.</param>
+	/// <param name="value">Value of the given property.</param>
+	/// <param name="optionalTarget">
+	/// target to set the result. Otherwise a new Array is instantiated. If set, you must clear this
+	/// array prior to each call (i.e., array.length = 0;).
+	/// </param>
+	/// <returns>The value <c>getObjectsByProperty</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Object3D?[]> GetObjectsByPropertyAsync(string name, object? value, Object3D?[] optionalTarget)
+	{
+		return RecordReadHandles<Object3D?[]>("getObjectsByProperty", name, value, optionalTarget);
+	}
+
+	/// <summary>
 	/// Returns a vector representing the position of the object in world space. Records a read op,
 	/// sends it behind every write already pending, and completes with what <c>getWorldPosition</c>
 	/// returned.

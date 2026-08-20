@@ -140,9 +140,9 @@ commands and queries, which are surface rather than behaviour. Subtracting the p
 the ~100 descendants is right, because re-declaring them everywhere would be worse — but it means a member
 **neither** half carries is on **no C# type at all**, without any skip rule below having fired.
 
-Of the 68 `Object3D` members that could be mirrored, the hand-written half implements 22
-(19 properties and 3 methods) and the generated half emits 36
-(21 commands and 15 queries), leaving 10.
+Of the 69 `Object3D` members that could be mirrored, the hand-written half implements 22
+(19 properties and 3 methods) and the generated half emits 37
+(21 commands and 16 queries), leaving 10.
 
 ⚠️ The generated half emits **no mirrored state**, which is why what remains is almost all of that bucket.
 Replaying a property needs an `EmitState` override, and the hand-written half already has one; a second
@@ -510,12 +510,12 @@ three.js is reachable at all" and "how much of what we mirror is state".
 |---|---|---|---|
 | MirroredState | state C# holds and writes through on change | 1162 | 945 |
 | Command | a method recorded as a call op, returning nothing or `this` | 781 | 331 |
-| AsyncQuery | a method whose result the caller needs back | 880 | 541 |
-| Skipped | not mirrored; see the skip list below | 825 | 622 |
+| AsyncQuery | a method whose result the caller needs back | 888 | 548 |
+| Skipped | not mirrored; see the skip list below | 817 | 615 |
 | **total** | | **3648** | **2439** |
 
 Two op kinds answer: **read**, which invokes a method, and **get**, which reads a property.
-541 of the async queries above sit on an emitted class and are generated as `…Async` methods, 186 of
+548 of the async queries above sit on an emitted class and are generated as `…Async` methods, 186 of
 them over the get op rather than the read op. Both kinds answer with a value where one can travel, and
 with a handle to an object where it cannot.
 
@@ -552,25 +552,23 @@ the README's coverage table.
 | `NotInstanceApi` | 38 | static, non-public or `@internal` — not part of the mirrored instance API |
 | `AnonymousObjectType` | 32 | an anonymous object literal type with no name to give a C# type |
 | `OptionsInterface` | 32 | a structural interface — an options bag or an event map — with no C# type to be |
-| `UntypedValue` | 30 | declared `any` / `unknown`, or with no type at all |
+| `UntypedValue` | 31 | declared `any` / `unknown`, or with no type at all |
 | `NotExported` | 19 | three.js's public barrel does not re-export it as a value, so the applier cannot reach it on `THREE` |
 | `ExternalType` | 15 | declared outside the scanned `src/` surface |
 | `AbstractClass` | 13 | the class is abstract, so it has no constructor to mirror |
 | `UnmappedTypeAlias` | 13 | a type alias that is neither a constant group nor a rename of a mapped type |
 | `UnwrappedClass` | 12 | an in-scope class that is itself not emitted |
 | `UnerasableTypeParameter` | 8 | a type parameter with neither a default nor a constraint to erase to |
-| `UnmappedTypeSyntax` | 7 | a TypeScript type form with no C# equivalent |
-| `NoHandleForResult` | 6 | its result is neither a value the read op carries nor one object a handle could name — an array of objects needs a handle per element, not one for the result |
+| `UnmappedTypeSyntax` | 4 | a TypeScript type form with no C# equivalent |
 | `RestParameter` | 1 | a rest parameter, including the rest-union-tuple pseudo-overload form |
 
-<details><summary>Every skipped member (825)</summary>
+<details><summary>Every skipped member (817)</summary>
 
 | class | member | obstacle | why |
 |---|---|---|---|
 | `AnimationClip` | `property tracks` | `UnmappedUnion` | `Array<KeyframeTrack>` is an array whose element type cannot be mapped: `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `AnimationClip` | `property userData` | `DomOrLibType` | `Record<string, unknown>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `AnimationClip` | `method CreateClipsFromMorphTargetSequences` | `NoHandleForResult` | returns `AnimationClip?[]`, which is neither a value the read op carries nor a three.js object a handle could name |
-| `AnimationLoader` | `method parse` | `UnmappedTypeSyntax` | parameter 'json': `readonly unknown[]` is a TypeScript `typeOperator` type, which has no C# equivalent |
+| `AnimationLoader` | `method parse` | `UntypedValue` | parameter 'json': `unknown[]` is an array whose element type cannot be mapped: `unknown` carries no type information a C# signature could express |
 | `AnimationMixer` | `property _root` | `NotInstanceApi` | declared `protected`, so it is not part of the public API |
 | `AnimationMixer` | `property _actions` | `NotInstanceApi` | declared `protected`, so it is not part of the public API |
 | `AnimationMixer` | `property _nActiveActions` | `NotInstanceApi` | declared `protected`, so it is not part of the public API |
@@ -1074,14 +1072,10 @@ the README's coverage table.
 | `Object3D` | `method onAfterShadow` | `NotExported` | parameter 'renderer': `WebGLRenderer` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `Object3D` | `method onBeforeRender` | `NotExported` | parameter 'renderer': `WebGLRenderer` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `Object3D` | `method onAfterRender` | `NotExported` | parameter 'renderer': `WebGLRenderer` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
-| `Object3D` | `method getObjectsByProperty` | `NoHandleForResult` | returns `Object3D?[]`, which is neither a value the read op carries nor a three.js object a handle could name |
 | `Object3D` | `method traverse` | `CallbackType` | parameter 'callback': `(object: Object3D) => any` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Object3D` | `method traverseVisible` | `CallbackType` | parameter 'callback': `(object: Object3D) => any` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Object3D` | `method traverseAncestors` | `CallbackType` | parameter 'callback': `(object: Object3D) => any` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Object3D` | `method toJSON` | `OptionsInterface` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
-| `ObjectLoader` | `method parseGeometries` | `NoHandleForResult` | returns `Dictionary<string, ThreeObject>`, which is neither a value the read op carries nor a three.js object a handle could name |
-| `ObjectLoader` | `method parseMaterials` | `NoHandleForResult` | returns `Dictionary<string, Material>`, which is neither a value the read op carries nor a three.js object a handle could name |
-| `ObjectLoader` | `method parseAnimations` | `NoHandleForResult` | returns `Dictionary<string, AnimationClip>`, which is neither a value the read op carries nor a three.js object a handle could name |
 | `ObjectLoader` | `method parseImages` | `AnonymousObjectType` | return type: `{ [key: string]: Source<unknown> }` is a dictionary whose values cannot be mapped: `Source<unknown>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `ObjectLoader` | `method parseImagesAsync` | `AnonymousObjectType` | return type: `{ [key: string]: Source<unknown> }` is a dictionary whose values cannot be mapped: `Source<unknown>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `ObjectLoader` | `method parseTextures` | `AnonymousObjectType` | parameter 'images': `{ [key: string]: Source<unknown> }` is a dictionary whose values cannot be mapped: `Source<unknown>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
@@ -1200,9 +1194,6 @@ the README's coverage table.
 | `ShadowMaterial` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShapeGeometry` | `method fromJSON` | `NotInstanceApi` | marked `@internal` upstream, so it is not public API |
 | `ShapePath` | `property userData` | `DomOrLibType` | `Record<string, unknown>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `ShapePath` | `method toShapes` | `NoHandleForResult` | returns `Shape?[]`, which is neither a value the read op carries nor a three.js object a handle could name |
-| `ShapeUtils` | `method area` | `UnmappedTypeSyntax` | parameter 'contour': `readonly Vector2Like[]` is a TypeScript `typeOperator` type, which has no C# equivalent |
-| `ShapeUtils` | `method isClockWise` | `UnmappedTypeSyntax` | parameter 'pts': `readonly Vector2Like[]` is a TypeScript `typeOperator` type, which has no C# equivalent |
 | `Skeleton` | `method toJSON` | `OptionsInterface` | return type: `SkeletonJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Skeleton` | `method fromJSON` | `OptionsInterface` | parameter 'json': `SkeletonJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Source` | `property data` | `UnerasableTypeParameter` | type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |

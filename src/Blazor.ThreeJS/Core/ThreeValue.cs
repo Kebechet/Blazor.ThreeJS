@@ -212,6 +212,14 @@ internal static class ThreeValue
 			return (TValue) DecodeTypedArray(constructorName.GetString(), value);
 		}
 
+		// A handle answered where a mirrored object was declared - inside a collection, or as a member of
+		// one. Resolved through the context so a handle it already mirrors hands back that same C# object.
+		if (value.TryGetProperty(ThreeWireFormat.HandleReferenceKey, out _)
+			&& typeof(ThreeObject).IsAssignableFrom(typeof(TValue)))
+		{
+			return (TValue) DecodeMirroredObject(typeof(TValue), value, context)!;
+		}
+
 		if (value.TryGetProperty(ThreeWireFormat.StructureKey, out var members)
 			&& typeof(TValue).IsGenericType
 			&& typeof(TValue).GetGenericTypeDefinition() == typeof(Dictionary<,>))
@@ -320,10 +328,67 @@ internal static class ThreeValue
 	/// <returns>The decoded value.</returns>
 	private static object? DecodeMember(Type valueType, JsonElement element, ThreeContext? context)
 	{
-		return typeof(ThreeValue)
-			.GetMethod(nameof(Decode), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)!
-			.MakeGenericMethod(valueType)
-			.Invoke(null, [(JsonElement?) element, context]);
+		try
+		{
+			return typeof(ThreeValue)
+				.GetMethod(nameof(Decode), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)!
+				.MakeGenericMethod(valueType)
+				.Invoke(null, [(JsonElement?) element, context]);
+		}
+		catch (System.Reflection.TargetInvocationException invocation) when (invocation.InnerException is { } inner)
+		{
+			// Rethrown as itself. A caller should see the failure the decode produced, not a wrapper that
+			// only says the dispatch happened to go through reflection - which is an implementation
+			// detail of the dictionary path and of nothing the caller wrote.
+			System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(inner).Throw();
+			throw;
+		}
+	}
+
+	/// <summary>
+	/// Resolves a handle reference to the mirror this context holds for it, or builds one.
+	/// <para>
+	/// Reached only from inside a collection, where there is no generated adopter to call: the wrapper
+	/// is built through the internal <c>(ThreeBatch, int)</c> constructor every mirrored class carries
+	/// for exactly this - naming an object the browser already made.
+	/// </para>
+	/// </summary>
+	/// <param name="elementType">Mirrored type the element is declared as.</param>
+	/// <param name="element">The wire reference.</param>
+	/// <param name="context">Context the handle belongs to.</param>
+	/// <returns>The mirror.</returns>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when there is no context to resolve against, or the declared type cannot be adopted into.
+	/// </exception>
+	private static object? DecodeMirroredObject(Type elementType, JsonElement element, ThreeContext? context)
+	{
+		if (context is null)
+		{
+			throw new InvalidOperationException(
+				$"A '{elementType.Name}' came back by handle inside a collection, and resolving it needs the context that object belongs to. " +
+				$"This value was decoded outside one, so there is nothing to adopt the handle into.");
+		}
+
+		var handle = element.GetProperty(ThreeWireFormat.HandleReferenceKey).GetInt32();
+		if (context.Resolve(handle) is { } existing)
+		{
+			return existing;
+		}
+
+		var adoption = elementType.GetConstructor(
+			System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+			binder: null,
+			[typeof(ThreeBatch), typeof(int)],
+			modifiers: null);
+
+		if (adoption is null)
+		{
+			throw new InvalidOperationException(
+				$"'{elementType.FullName}' has no adoption constructor, so a handle answered inside a collection cannot be wrapped as one. " +
+				$"Every generated class carries one; a hand-written wrapper outside this package does not.");
+		}
+
+		return adoption.Invoke([context.Batch, handle]);
 	}
 
 	public static object? OrUnspecified(object? value)
@@ -452,6 +517,16 @@ internal static class ThreeValue
 		if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty(ThreeWireFormat.TagKey, out var tag))
 		{
 			return DecodeMathValue(tag.GetString(), element);
+		}
+
+		// A handle inside a collection: `ObjectLoader.parseMaterials` answers a table of them, and a
+		// clip list answers an array. Resolved through the context so a handle it already mirrors hands
+		// back that same C# object rather than a second wrapper of one three.js instance.
+		if (element.ValueKind == JsonValueKind.Object
+			&& element.TryGetProperty(ThreeWireFormat.HandleReferenceKey, out _)
+			&& typeof(ThreeObject).IsAssignableFrom(elementType))
+		{
+			return DecodeMirroredObject(elementType, element, context);
 		}
 
 		// Back through the full decode rather than deserialized here, so an element that is itself a

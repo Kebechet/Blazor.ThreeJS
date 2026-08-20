@@ -277,4 +277,34 @@ public class StructureValueTests
 		var op = batch.Drain().Single(x => x.Kind == ThreeOpKind.Set && x.Member == "iridescenceThicknessRange");
 		op.Value.ShouldBeOfType<object?[]>().Length.ShouldBe(2);
 	}
+
+	[Fact]
+	public void HandleCollection_DecodedInAContext_ResolvesEachElementToTheMirrorItAlreadyHolds()
+	{
+		// A table of materials is a collection of real objects with identity. Each handle resolves back
+		// to the same C# object rather than to a second wrapper of one three.js instance.
+		var module = new RecordingJsObjectReference();
+		var context = new ThreeContext(module, contextId: 1);
+		var material = new MeshStandardMaterial();
+		context.Attach(material);
+
+		var element = JsonDocument.Parse(
+			"{\"$o\":{\"steel\":{\"$ref\":" + material.Handle + ",\"t\":\"MeshStandardMaterial\"}}}").RootElement;
+
+		var decoded = ThreeValue.Decode<Dictionary<string, Material>>(element, context);
+
+		decoded.ShouldNotBeNull();
+		decoded["steel"].ShouldBeSameAs(material);
+	}
+
+	[Fact]
+	public void HandleCollection_DecodedWithoutAContext_SaysWhyRatherThanAnsweringWithAHole()
+	{
+		var element = JsonDocument.Parse("""{"$o":{"steel":{"$ref":-9,"t":"MeshStandardMaterial"}}}""").RootElement;
+
+		var thrown = Should.Throw<InvalidOperationException>(
+			() => ThreeValue.Decode<Dictionary<string, Material>>(element));
+
+		thrown.Message.ShouldContain("came back by handle inside a collection");
+	}
 }

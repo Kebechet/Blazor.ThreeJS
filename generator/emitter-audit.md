@@ -275,10 +275,9 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `AmbientLight` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `AnimationClip` | `constructor parameter blendMode` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `AnimationClip` | `constructor parameter tracks` | `Array<KeyframeTrack>` is an array whose element type cannot be mapped: `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `AnimationClip` | `method CreateClipsFromMorphTargetSequences` | returns `AnimationClip?[]`, which is neither a value the read op carries nor a three.js object a handle could name |
 | `AnimationClip` | `property tracks` | `Array<KeyframeTrack>` is an array whose element type cannot be mapped: `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `AnimationClip` | `property userData` | `Record<string, unknown>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `AnimationLoader` | `method parse` | parameter 'json': `readonly unknown[]` is a TypeScript `typeOperator` type, which has no C# equivalent |
+| `AnimationLoader` | `method parse` | parameter 'json': `unknown[]` is an array whose element type cannot be mapped: `unknown` carries no type information a C# signature could express |
 | `AnimationMixer` | `property _accuIndex` | declared `protected`, so it is not part of the public API |
 | `AnimationMixer` | `property _actions` | declared `protected`, so it is not part of the public API |
 | `AnimationMixer` | `property _actionsByClip` | declared `protected`, so it is not part of the public API |
@@ -869,11 +868,8 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `NumberKeyframeTrack` | `method toJSON` | parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `NumberKeyframeTrack` | `property TimeBufferType` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `NumberKeyframeTrack` | `property ValueBufferType` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `ObjectLoader` | `method parseAnimations` | returns `Dictionary<string, AnimationClip>`, which is neither a value the read op carries nor a three.js object a handle could name |
-| `ObjectLoader` | `method parseGeometries` | returns `Dictionary<string, ThreeObject>`, which is neither a value the read op carries nor a three.js object a handle could name |
 | `ObjectLoader` | `method parseImages` | return type: `{ [key: string]: Source<unknown> }` is a dictionary whose values cannot be mapped: `Source<unknown>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `ObjectLoader` | `method parseImagesAsync` | return type: `{ [key: string]: Source<unknown> }` is a dictionary whose values cannot be mapped: `Source<unknown>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
-| `ObjectLoader` | `method parseMaterials` | returns `Dictionary<string, Material>`, which is neither a value the read op carries nor a three.js object a handle could name |
 | `ObjectLoader` | `method parseTextures` | parameter 'images': `{ [key: string]: Source<unknown> }` is a dictionary whose values cannot be mapped: `Source<unknown>` is not an emitted class: required parameter 'data' cannot be mapped: type parameter `TData` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `OrthographicCamera` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `Path` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
@@ -1022,10 +1018,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Shape` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `ShapeGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `ShapeGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
-| `ShapePath` | `method toShapes` | returns `Shape?[]`, which is neither a value the read op carries nor a three.js object a handle could name |
 | `ShapePath` | `property userData` | `Record<string, unknown>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `ShapeUtils` | `method area` | parameter 'contour': `readonly Vector2Like[]` is a TypeScript `typeOperator` type, which has no C# equivalent |
-| `ShapeUtils` | `method isClockWise` | parameter 'pts': `readonly Vector2Like[]` is a TypeScript `typeOperator` type, which has no C# equivalent |
 | `Skeleton` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `Skeleton` | `method fromJSON` | parameter 'json': `SkeletonJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Skeleton` | `method toJSON` | return type: `SkeletonJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |

@@ -718,6 +718,7 @@ internal sealed class ClassEmitter
 				IsAdoptedResult = member.IsAdoptedResult,
 				IsUntypedObjectResult = member.IsUntypedObjectResult,
 				IsAwaitedVoidResult = member.IsAwaitedVoidResult,
+				AnswersWithHandles = member.AnswersWithHandles,
 				IsStatic = member.IsStatic,
 				Documentation = member.Property?.Doc
 			};
@@ -733,6 +734,7 @@ internal sealed class ClassEmitter
 			IsAdoptedResult = member.IsAdoptedResult,
 			IsUntypedObjectResult = member.IsUntypedObjectResult,
 			IsAwaitedVoidResult = member.IsAwaitedVoidResult,
+			AnswersWithHandles = member.AnswersWithHandles,
 			IsStatic = member.IsStatic,
 			Documentation = member.Method.Signature?.Doc
 		};
@@ -1772,7 +1774,12 @@ internal sealed class ClassEmitter
 			{
 				// RecordRead owns attaching any argument that is itself a mirrored object, for the same reason
 				// RecordCall does: one owner for the invariant is what keeps the two paths from drifting.
-				writer.WriteLine($"return RecordRead<{query.ReturnTypeName}>(\"{query.ThreeName}\"{arguments});");
+				//
+				// A collection of mirrored objects asks for handles instead of values: the elements are real
+				// objects with identity, and the applier has no value encoding for one.
+				writer.WriteLine(query.AnswersWithHandles
+					? $"return RecordReadHandles<{query.ReturnTypeName}>(\"{query.ThreeName}\"{arguments});"
+					: $"return RecordRead<{query.ReturnTypeName}>(\"{query.ThreeName}\"{arguments});");
 			}
 
 			writer.Outdent();
@@ -2080,6 +2087,12 @@ internal sealed class EmittedQuery
 
 	/// <summary>Whether the query answers nothing and is emitted as a bare <c>Task</c>.</summary>
 	public bool IsAwaitedVoidResult { get; init; }
+
+	/// <summary>
+	/// Whether the answer is a collection of mirrored objects, so the read asks for a handle per element
+	/// rather than for values the applier has no encoding for.
+	/// </summary>
+	public bool AnswersWithHandles { get; init; }
 
 	/// <summary>
 	/// Whether three.js declares this a static, so it belongs to the class rather than to any object.

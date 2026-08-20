@@ -69,6 +69,40 @@ public class ObjectLoader : Loader
 	}
 
 	/// <summary>
+	/// Reads <c>parseGeometries</c> back from the JavaScript-side object. Records a read op, sends it
+	/// behind every write already pending, and completes with what <c>parseGeometries</c> returned.
+	/// </summary>
+	/// <param name="json">Value forwarded to the <c>json</c> argument.</param>
+	/// <returns>The value <c>parseGeometries</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Dictionary<string, ThreeObject>> ParseGeometriesAsync(object? json)
+	{
+		return RecordReadHandles<Dictionary<string, ThreeObject>>("parseGeometries", json);
+	}
+
+	/// <summary>
+	/// Reads <c>parseMaterials</c> back from the JavaScript-side object. Records a read op, sends it
+	/// behind every write already pending, and completes with what <c>parseMaterials</c> returned.
+	/// </summary>
+	/// <param name="json">Value forwarded to the <c>json</c> argument.</param>
+	/// <param name="textures">Value forwarded to the <c>textures</c> argument.</param>
+	/// <returns>The value <c>parseMaterials</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Dictionary<string, Material>> ParseMaterialsAsync(object? json, Dictionary<string, Texture> textures)
+	{
+		return RecordReadHandles<Dictionary<string, Material>>("parseMaterials", json, textures);
+	}
+
+	/// <summary>
+	/// Reads <c>parseAnimations</c> back from the JavaScript-side object. Records a read op, sends it
+	/// behind every write already pending, and completes with what <c>parseAnimations</c> returned.
+	/// </summary>
+	/// <param name="json">Value forwarded to the <c>json</c> argument.</param>
+	/// <returns>The value <c>parseAnimations</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Dictionary<string, AnimationClip>> ParseAnimationsAsync(object? json)
+	{
+		return RecordReadHandles<Dictionary<string, AnimationClip>>("parseAnimations", json);
+	}
+
+	/// <summary>
 	/// Reads <c>parseObject</c> back from the JavaScript-side object. Records a read op, sends it
 	/// behind every write already pending, and completes with what <c>parseObject</c> returned.
 	/// </summary>

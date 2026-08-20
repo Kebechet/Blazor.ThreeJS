@@ -716,6 +716,29 @@ public abstract class ThreeObject
 	/// Thrown when this object is not attached to a <see cref="ThreeContext"/>, so there is nothing to
 	/// read from.
 	/// </exception>
+	/// <summary>
+	/// Invokes a method whose answer is a collection of three.js objects, asking the applier for a
+	/// handle per element rather than for values it has no encoding for.
+	/// <para>
+	/// `ObjectLoader.parseMaterials` answers a table of materials; each one is a real object with
+	/// identity, and the decoder resolves each handle back to the mirror this context already holds.
+	/// </para>
+	/// </summary>
+	/// <typeparam name="TValue">The collection type the query declares it returns.</typeparam>
+	/// <param name="member">Name of the three.js method to invoke.</param>
+	/// <param name="args">Positional arguments to pass.</param>
+	/// <returns>The decoded collection.</returns>
+	protected Task<TValue> RecordReadHandles<TValue>(string member, params object?[] args)
+	{
+		var context = RequireContext(member);
+		AttachMirroredArguments(context.Batch, args);
+		var encodedArgs = args
+			.Select(x => EncodeOrExplain(member, x))
+			.ToArray();
+
+		return context.ReadAsync<TValue>(Handle, member, encodedArgs, mintsHandle: true);
+	}
+
 	protected Task<TValue> RecordRead<TValue>(string member, params object?[] args)
 	{
 		var context = RequireContext(member);

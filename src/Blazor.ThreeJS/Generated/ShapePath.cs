@@ -187,6 +187,16 @@ public sealed class ShapePath : ThreeObject
 	}
 
 	/// <summary>
+	/// Converts the paths into an array of shapes. Records a read op, sends it behind every write
+	/// already pending, and completes with what <c>toShapes</c> returned.
+	/// </summary>
+	/// <returns>The value <c>toShapes</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Shape?[]> ToShapesAsync()
+	{
+		return RecordReadHandles<Shape?[]>("toShapes");
+	}
+
+	/// <summary>
 	/// Emits the create op for <c>THREE.ShapePath</c>, then replays every property written before this
 	/// object was attached. A replayed value that is itself a mirrored object is attached first, so its
 	/// create op reaches the batch before the write that references it by handle.

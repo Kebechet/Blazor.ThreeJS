@@ -289,6 +289,15 @@ internal sealed class IrType
 	public IrTypeTarget? Target { get; set; }
 
 	/// <summary>
+	/// Operator of a <c>typeOperator</c> node: <c>readonly</c>, <c>keyof</c> or <c>unique</c>.
+	/// </summary>
+	public string? Operator { get; set; }
+
+	/// <summary>The type a <c>typeOperator</c> applies to, e.g. the array in <c>readonly T[]</c>.</summary>
+	[System.Text.Json.Serialization.JsonPropertyName("type")]
+	public IrType? OperandType { get; set; }
+
+	/// <summary>
 	/// Members of an <c>object</c> node - the inline shapes three.js writes without a name, like
 	/// <c>PerspectiveCamera.view</c> and every geometry's <c>parameters</c>.
 	/// </summary>

@@ -203,6 +203,29 @@ public sealed class AnimationClip : ThreeObject
 	}
 
 	/// <summary>
+	/// Returns an array of new AnimationClips created from the morph target sequences of a geometry,
+	/// trying to sort morph target names into animation-group-based patterns like "Walk_001, Walk_002,
+	/// Run_001, Run_002...". See <c>MD2Loader#parse</c> as an example for how the method should be
+	/// used. Records a read op, sends it behind every write already pending, and completes with what
+	/// <c>CreateClipsFromMorphTargetSequences</c> returned.
+	/// </summary>
+	/// <param name="morphTargets">A sequence of morph targets.</param>
+	/// <param name="fps">The Frames-Per-Second value.</param>
+	/// <param name="noLoop">Whether the clip should be no loop or not.</param>
+	/// <returns>
+	/// The value <c>CreateClipsFromMorphTargetSequences</c> returned, once the JavaScript side has
+	/// answered.
+	/// </returns>
+	public static Task<AnimationClip?[]> CreateClipsFromMorphTargetSequencesAsync(
+		ThreeContext context,
+		MorphTarget[] morphTargets,
+		float fps,
+		bool noLoop)
+	{
+		return context.CallStaticAsync<AnimationClip?[]>("AnimationClip", "CreateClipsFromMorphTargetSequences", morphTargets, fps, noLoop);
+	}
+
+	/// <summary>
 	/// Sets the duration of this clip to the duration of its longest keyframe track. Records a read op,
 	/// sends it behind every write already pending, and completes with what <c>resetDuration</c>
 	/// returned.

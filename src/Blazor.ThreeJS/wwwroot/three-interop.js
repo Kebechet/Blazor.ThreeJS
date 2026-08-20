@@ -295,11 +295,18 @@ export function applyBatch(contextId, ops) {
 export function runOps(context, ops) {
     const errors = [];
     const results = [];
+    let pending = null;
     for (const op of ops) {
         try {
             const value = applyOp(context, op);
-            if (producesValue(op)) {
-                results.push({ i: op.i, v: value });
+            if (!producesValue(op)) {
+                continue;
+            }
+
+            const row = { i: op.i, v: value };
+            results.push(row);
+            if (isThenable(value)) {
+                (pending ??= []).push(settleAnswer(row));
             }
         } catch (error) {
             const message = String(error && error.message ? error.message : error);
@@ -312,7 +319,28 @@ export function runOps(context, ops) {
         }
     }
 
-    return { e: errors, r: results };
+    // ⚠️ Synchronous unless something in the batch actually answered with a promise. A batch flushes
+    // once per frame in a running scene, and making every one of them resolve a microtask later - to
+    // wait for something almost none of them contain - would put that cost on the hot path to serve
+    // the rare op. The C# side awaits either shape, since it goes through InvokeAsync.
+    return pending === null
+        ? { e: errors, r: results }
+        : Promise.all(pending).then(() => ({ e: errors, r: results }));
+}
+
+// Replaces a pending row's value with what it settled to, in place, so the response the batch returns
+// carries answers rather than promises.
+//
+// A rejection lands on the row's own error channel rather than on the batch's, for the same reason a
+// throwing read does: exactly one C# task is awaiting this value, and reporting it on OnError as well
+// would announce the same failure twice.
+function settleAnswer(row) {
+    return row.v.then(
+        value => { row.v = value; },
+        error => {
+            delete row.v;
+            row.e = String(error && error.message ? error.message : error);
+        });
 }
 
 // Whether an op answers with a value, and therefore belongs on a result row rather than on the error
@@ -390,7 +418,7 @@ export function applyOp(context, op) {
             }
 
             const args = (op.a ?? []).map(value => decode(context, value).value);
-            return encodeResult(context, op, target[op.m](...args));
+            return encodeAnswer(context, op, target[op.m](...args));
         }
         case OP_GET: {
             const target = resolveHandle(context, op.h);
@@ -405,7 +433,7 @@ export function applyOp(context, op) {
                 throw new Error(`'${op.m}' is not a property on the object at handle '${op.h}'`);
             }
 
-            return encodeResult(context, op, target[op.m]);
+            return encodeAnswer(context, op, target[op.m]);
         }
         default:
             throw new Error(`Unknown op kind '${op.k}'`);
@@ -427,6 +455,30 @@ function encodeResult(context, op, value) {
         $ref: handleFor(context, value),
         t: describeType(value)
     };
+}
+
+// Encodes what a read or a get answered with, waiting first when three.js answered with a promise.
+//
+// The WebGPU renderer's own API is half promises - `renderAsync`, `clearAsync`, `hasFeatureAsync`,
+// `readRenderTargetPixelsAsync` - and each of them resolves when the GPU is actually done rather than
+// when the call returns. Encoding the promise object itself would hand C# a handle to a JavaScript
+// Promise, which is not a three.js object and answers nothing; waiting for it is the only reading of
+// the method that means anything.
+//
+// The wait is per answer, not per batch. Nothing else in the batch is held up: ops keep applying in
+// order, and only the row this read fills in arrives late. See `runOps`.
+function encodeAnswer(context, op, value) {
+    return isThenable(value)
+        ? value.then(resolved => encodeResult(context, op, resolved))
+        : encodeResult(context, op, value);
+}
+
+// Whether a value is a promise, by the only test that is safe across realms and across a three.js
+// build that may return its own thenable rather than a native Promise.
+function isThenable(value) {
+    return value !== null
+        && (typeof value === 'object' || typeof value === 'function')
+        && typeof value.then === 'function';
 }
 
 // three.js's own name for an object, so C# can label what it adopted. The declared type is often a

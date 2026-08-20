@@ -10,11 +10,11 @@
     "members": 3805,
     "mirroredState": 1158,
     "commands": 760,
-    "asyncQueries": 791,
+    "asyncQueries": 816,
     "untypedObjectQueries": 11,
-    "skippedMembers": 1096,
+    "skippedMembers": 1071,
     "reachableMembers": 2390,
-    "generatedMembers": 1607,
+    "generatedMembers": 1618,
     "strandedMembers": 1415
   },
   "classes": [
@@ -3899,10 +3899,6 @@
       "members": 103
     },
     {
-      "category": "DomOrLibType",
-      "members": 97
-    },
-    {
       "category": "NotInstanceApi",
       "members": 86
     },
@@ -3915,12 +3911,16 @@
       "members": 73
     },
     {
+      "category": "DomOrLibType",
+      "members": 71
+    },
+    {
       "category": "UnmappedUnion",
       "members": 62
     },
     {
       "category": "UntypedValue",
-      "members": 55
+      "members": 56
     },
     {
       "category": "AbstractClass",
@@ -14194,8 +14194,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "return type: `Promise<TData>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "reason": "return type: `unknown` carries no type information a C# signature could express",
+      "category": "UntypedValue"
     },
     {
       "class": "Loader",
@@ -23806,9 +23806,7 @@
       "member": "renderAsync",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "ProjectorLight",
@@ -25380,9 +25378,7 @@
       "member": "renderAsync",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "RenderTarget",
@@ -25886,36 +25882,29 @@
       "member": "init",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<this>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery",
+      "type": "Renderer"
     },
     {
       "class": "Renderer",
       "member": "compileAsync",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "Renderer",
       "member": "renderAsync",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "Renderer",
       "member": "waitForGPU",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "Renderer",
@@ -26006,7 +25995,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "return type: `Promise<ArrayBuffer>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "reason": "return type: `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
       "category": "DomOrLibType"
     },
     {
@@ -26227,36 +26216,28 @@
       "member": "clearAsync",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "Renderer",
       "member": "clearColorAsync",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "Renderer",
       "member": "clearDepthAsync",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "Renderer",
       "member": "clearStencilAsync",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "Renderer",
@@ -26353,9 +26334,8 @@
       "member": "hasFeatureAsync",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<boolean>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "Renderer",
@@ -26387,9 +26367,7 @@
       "member": "initTextureAsync",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "Renderer",
@@ -26424,9 +26402,8 @@
       "member": "readRenderTargetPixelsAsync",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<TypedArray>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery",
+      "type": "TypedArray"
     },
     {
       "class": "Renderer",
@@ -33085,9 +33062,8 @@
       "member": "readRenderTargetPixelsAsync",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<TypedArray>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery",
+      "type": "TypedArray"
     },
     {
       "class": "WebGLRenderer",
@@ -33942,36 +33918,29 @@
       "member": "init",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<this>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery",
+      "type": "WebGPURenderer"
     },
     {
       "class": "WebGPURenderer",
       "member": "compileAsync",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "WebGPURenderer",
       "member": "renderAsync",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "WebGPURenderer",
       "member": "waitForGPU",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "WebGPURenderer",
@@ -34062,7 +34031,7 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "return type: `Promise<ArrayBuffer>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "reason": "return type: `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
       "category": "DomOrLibType"
     },
     {
@@ -34283,36 +34252,28 @@
       "member": "clearAsync",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "WebGPURenderer",
       "member": "clearColorAsync",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "WebGPURenderer",
       "member": "clearDepthAsync",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "WebGPURenderer",
       "member": "clearStencilAsync",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "WebGPURenderer",
@@ -34409,9 +34370,8 @@
       "member": "hasFeatureAsync",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<boolean>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "WebGPURenderer",
@@ -34443,9 +34403,7 @@
       "member": "initTextureAsync",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "WebGPURenderer",
@@ -34480,9 +34438,8 @@
       "member": "readRenderTargetPixelsAsync",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `Promise<TypedArray>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
+      "bucket": "AsyncQuery",
+      "type": "TypedArray"
     },
     {
       "class": "WebGPURenderer",

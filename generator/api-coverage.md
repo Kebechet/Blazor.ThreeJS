@@ -502,12 +502,12 @@ three.js is reachable at all" and "how much of what we mirror is state".
 |---|---|---|---|
 | MirroredState | state C# holds and writes through on change | 1158 | 899 |
 | Command | a method recorded as a call op, returning nothing or `this` | 760 | 295 |
-| AsyncQuery | a method whose result the caller needs back | 791 | 413 |
-| Skipped | not mirrored; see the skip list below | 1096 | 783 |
+| AsyncQuery | a method whose result the caller needs back | 816 | 424 |
+| Skipped | not mirrored; see the skip list below | 1071 | 772 |
 | **total** | | **3805** | **2390** |
 
 Two op kinds answer: **read**, which invokes a method, and **get**, which reads a property.
-413 of the async queries above sit on an emitted class and are generated as `…Async` methods, 165 of
+424 of the async queries above sit on an emitted class and are generated as `…Async` methods, 165 of
 them over the get op rather than the read op. Both kinds answer with a value where one can travel, and
 with a handle to an object where it cannot.
 
@@ -539,12 +539,12 @@ the README's coverage table.
 |---|---|---|
 | `NodeStackType` | 375 | declared under `src/nodes/**`, the TSL / WebGPU node stack outside the extracted surface |
 | `CallbackType` | 103 | a JavaScript callback; the wire format carries ops in one direction only |
-| `DomOrLibType` | 97 | a TypeScript lib or DOM type; C# holds no browser object and the wire has no encoding for one |
 | `NotInstanceApi` | 86 | static, non-public or `@internal` — not part of the mirrored instance API |
 | `AnonymousObjectType` | 84 | an anonymous object literal type with no name to give a C# type |
 | `OptionsInterface` | 73 | a structural interface — an options bag or an event map — with no C# type to be |
+| `DomOrLibType` | 71 | a TypeScript lib or DOM type; C# holds no browser object and the wire has no encoding for one |
 | `UnmappedUnion` | 62 | a union of several real alternatives in a position that holds one type — a property or a return type, since a required parameter becomes one overload per arm |
-| `UntypedValue` | 55 | declared `any` / `unknown`, or with no type at all |
+| `UntypedValue` | 56 | declared `any` / `unknown`, or with no type at all |
 | `AbstractClass` | 37 | the class is abstract, so it has no constructor to mirror |
 | `MathValueType` | 29 | a `src/math/**` value type that is not one of the hand-written ones |
 | `NotExported` | 22 | three.js's public barrel does not re-export it as a value, so the applier cannot reach it on `THREE` |
@@ -557,7 +557,7 @@ the README's coverage table.
 | `CollectionType` | 3 | a tuple, which has no wire encoding, or an array whose elements have none — `ThreeValue.Encode` does walk a sequence element by element, so an array is exactly as encodable as what is in it |
 | `NoHandleForResult` | 1 | its result is neither a value the read op carries nor one object a handle could name — an array of objects needs a handle per element, not one for the result |
 
-<details><summary>Every skipped member (1096)</summary>
+<details><summary>Every skipped member (1071)</summary>
 
 | class | member | obstacle | why |
 |---|---|---|---|
@@ -867,7 +867,7 @@ the README's coverage table.
 | `Loader` | `property requestHeader` | `AnonymousObjectType` | `{ [header: string]: string }` is an anonymous object literal type with no named C# equivalent |
 | `Loader` | `property DEFAULT_MATERIAL_NAME` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `Loader` | `method load` | `CallbackType` | parameter 'onLoad': `(data: TData) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `Loader` | `method loadAsync` | `DomOrLibType` | return type: `Promise<TData>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
+| `Loader` | `method loadAsync` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
 | `Loader` | `method setRequestHeader` | `AnonymousObjectType` | parameter 'requestHeader': `{ [header: string]: string }` is an anonymous object literal type with no named C# equivalent |
 | `LoaderUtils` | `method extractUrlBase` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `LoaderUtils` | `method resolveURL` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
@@ -1260,7 +1260,6 @@ the README's coverage table.
 | `PositionalAudio` | `method getDistanceModel` | `UnmappedUnion` | return type: `"linear" | "inverse" | "exponential"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `PostProcessing` | `property renderer` | `AbstractClass` | `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `PostProcessing` | `property outputNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `PostProcessing` | `method renderAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `PropertyBinding` | `property parsedPath` | `UntypedValue` | `object` carries no type information a C# signature could express |
 | `PropertyBinding` | `property node` | `UntypedValue` | `object` carries no type information a C# signature could express |
 | `PropertyBinding` | `method create` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
@@ -1306,7 +1305,6 @@ the README's coverage table.
 | `ReadbackBuffer` | `property buffer` | `DomOrLibType` | `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `RenderPipeline` | `property renderer` | `AbstractClass` | `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `RenderPipeline` | `property outputNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `RenderPipeline` | `method renderAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Renderer` | `property backend` | `AbstractClass` | `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `Renderer` | `property info` | `NotExported` | `Info` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `Renderer` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1319,31 +1317,20 @@ the README's coverage table.
 | `Renderer` | `property debug` | `AnonymousObjectType` | `{ /** * - Whether shader errors should be checked or not. */ checkShaderErrors: boolean; /** * - A callback function that is executed when a shader error happens. Only supported with WebGL 2 right now. */ onShaderError: | (( gl: WebGL2RenderingContext, programGPU: WebGLProgram, glVertexShader: WebGLShader, glFragmentShader: WebGLShader, ) => void) | null; /** * - Allows the get the raw shader code for the given scene, camera and 3D object. */ getShaderAsync: (scene: Scene, camera: Camera, object: Object3D) => Promise<{ fragmentShader: string | null; vertexShader: string | null; }>; }` is an anonymous object literal type with no named C# equivalent |
 | `Renderer` | `property domElement` | `DomOrLibType` | `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Renderer` | `property compile` | `CallbackType` | `(scene: Object3D, camera: Camera, targetScene?: Scene | null) => Promise<void>` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `Renderer` | `method init` | `DomOrLibType` | return type: `Promise<this>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Renderer` | `method compileAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Renderer` | `method renderAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Renderer` | `method waitForGPU` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Renderer` | `method setMRT` | `NodeStackType` | parameter 'mrt': `MRTNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Renderer` | `method getMRT` | `NodeStackType` | return type: `MRTNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Renderer` | `method setAnimationLoop` | `CallbackType` | parameter 'callback': `(time: DOMHighResTimeStamp, frame?: XRFrame) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Renderer` | `method getAnimationLoop` | `CallbackType` | return type: `(time: DOMHighResTimeStamp, xrFrame?: XRFrame) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `Renderer` | `method getArrayBufferAsync` | `DomOrLibType` | return type: `Promise<ArrayBuffer>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
+| `Renderer` | `method getArrayBufferAsync` | `DomOrLibType` | return type: `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Renderer` | `method getContext` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
 | `Renderer` | `method setOpaqueSort` | `CallbackType` | parameter 'method': `(a: RenderItem, b: RenderItem) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Renderer` | `method setTransparentSort` | `CallbackType` | parameter 'method': `(a: RenderItem, b: RenderItem) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `Renderer` | `method clearAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Renderer` | `method clearColorAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Renderer` | `method clearDepthAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Renderer` | `method clearStencilAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Renderer` | `method setCanvasTarget` | `UnmappedUnion` | parameter 'canvasTarget': `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Renderer` | `method setRenderObjectFunction` | `CallbackType` | parameter 'renderObjectFunction': `( object: Object3D, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: GeometryGroup | null, lightsNode: LightsNode, clippingContext: ClippingContext, passId?: string | null | undefined, ) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Renderer` | `method getRenderObjectFunction` | `CallbackType` | return type: `( object: Object3D, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: GeometryGroup | null, lightsNode: LightsNode, clippingContext: ClippingContext, passId?: string | null | undefined, ) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Renderer` | `method compute` | `NodeStackType` | parameter 'computeNodes': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Renderer` | `method computeAsync` | `NodeStackType` | parameter 'computeNodes': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `Renderer` | `method hasFeatureAsync` | `DomOrLibType` | return type: `Promise<boolean>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Renderer` | `method resolveTimestampsAsync` | `UnmappedTypeAlias` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
-| `Renderer` | `method initTextureAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Renderer` | `method readRenderTargetPixelsAsync` | `DomOrLibType` | return type: `Promise<TypedArray>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Renderer` | `method renderObject` | `OptionsInterface` | parameter 'group': `GeometryGroup` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `RingGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly innerRadius: number; readonly outerRadius: number; readonly thetaSegments: number; readonly phiSegments: number; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent |
 | `RingGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
@@ -1551,7 +1538,6 @@ the README's coverage table.
 | `WebGLRenderer` | `method setNodesHandler` | `OptionsInterface` | parameter 'nodesHandler': `NodesHandler` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `WebGLRenderer` | `method renderBufferDirect` | `OptionsInterface` | parameter 'group': `GeometryGroup` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `WebGLRenderer` | `method setAnimationLoop` | `ExternalType` | parameter 'callback': `XRFrameRequestCallback` is declared in another package |
-| `WebGLRenderer` | `method readRenderTargetPixelsAsync` | `DomOrLibType` | return type: `Promise<TypedArray>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGLShadowMap` | `method render` | `AbstractClass` | parameter 'shadowsArray': `Light[]` is an array whose element type cannot be mapped: `Light` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `WebGLState` | `property buffers` | `AnonymousObjectType` | `{ color: WebGLColorBuffer; depth: WebGLDepthBuffer; stencil: WebGLStencilBuffer; }` is an anonymous object literal type with no named C# equivalent |
 | `WebGLState` | `method bindFramebuffer` | `DomOrLibType` | parameter 'framebuffer': `WebGLFramebuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -1586,31 +1572,20 @@ the README's coverage table.
 | `WebGPURenderer` | `property debug` | `AnonymousObjectType` | `{ /** * - Whether shader errors should be checked or not. */ checkShaderErrors: boolean; /** * - A callback function that is executed when a shader error happens. Only supported with WebGL 2 right now. */ onShaderError: | (( gl: WebGL2RenderingContext, programGPU: WebGLProgram, glVertexShader: WebGLShader, glFragmentShader: WebGLShader, ) => void) | null; /** * - Allows the get the raw shader code for the given scene, camera and 3D object. */ getShaderAsync: (scene: Scene, camera: Camera, object: Object3D) => Promise<{ fragmentShader: string | null; vertexShader: string | null; }>; }` is an anonymous object literal type with no named C# equivalent |
 | `WebGPURenderer` | `property domElement` | `DomOrLibType` | `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPURenderer` | `property compile` | `CallbackType` | `(scene: Object3D, camera: Camera, targetScene?: Scene | null) => Promise<void>` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `WebGPURenderer` | `method init` | `DomOrLibType` | return type: `Promise<this>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGPURenderer` | `method compileAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGPURenderer` | `method renderAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGPURenderer` | `method waitForGPU` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPURenderer` | `method setMRT` | `NodeStackType` | parameter 'mrt': `MRTNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `WebGPURenderer` | `method getMRT` | `NodeStackType` | return type: `MRTNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `WebGPURenderer` | `method setAnimationLoop` | `CallbackType` | parameter 'callback': `(time: DOMHighResTimeStamp, frame?: XRFrame) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGPURenderer` | `method getAnimationLoop` | `CallbackType` | return type: `(time: DOMHighResTimeStamp, xrFrame?: XRFrame) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `WebGPURenderer` | `method getArrayBufferAsync` | `DomOrLibType` | return type: `Promise<ArrayBuffer>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
+| `WebGPURenderer` | `method getArrayBufferAsync` | `DomOrLibType` | return type: `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPURenderer` | `method getContext` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
 | `WebGPURenderer` | `method setOpaqueSort` | `CallbackType` | parameter 'method': `(a: RenderItem, b: RenderItem) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGPURenderer` | `method setTransparentSort` | `CallbackType` | parameter 'method': `(a: RenderItem, b: RenderItem) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `WebGPURenderer` | `method clearAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGPURenderer` | `method clearColorAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGPURenderer` | `method clearDepthAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGPURenderer` | `method clearStencilAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPURenderer` | `method setCanvasTarget` | `UnmappedUnion` | parameter 'canvasTarget': `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `WebGPURenderer` | `method setRenderObjectFunction` | `CallbackType` | parameter 'renderObjectFunction': `( object: Object3D, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: GeometryGroup | null, lightsNode: LightsNode, clippingContext: ClippingContext, passId?: string | null | undefined, ) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGPURenderer` | `method getRenderObjectFunction` | `CallbackType` | return type: `( object: Object3D, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: GeometryGroup | null, lightsNode: LightsNode, clippingContext: ClippingContext, passId?: string | null | undefined, ) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGPURenderer` | `method compute` | `NodeStackType` | parameter 'computeNodes': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `WebGPURenderer` | `method computeAsync` | `NodeStackType` | parameter 'computeNodes': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `WebGPURenderer` | `method hasFeatureAsync` | `DomOrLibType` | return type: `Promise<boolean>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPURenderer` | `method resolveTimestampsAsync` | `UnmappedTypeAlias` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
-| `WebGPURenderer` | `method initTextureAsync` | `DomOrLibType` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGPURenderer` | `method readRenderTargetPixelsAsync` | `DomOrLibType` | return type: `Promise<TypedArray>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPURenderer` | `method renderObject` | `OptionsInterface` | parameter 'group': `GeometryGroup` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `WebXRController` | `method dispatchEvent` | `AnonymousObjectType` | parameter 'event': `{ type: XRControllerEventType; data?: XRInputSource }` is an anonymous object literal type with no named C# equivalent |
 | `WebXRController` | `method connect` | `ExternalType` | parameter 'inputSource': `XRInputSource` is declared in another package |

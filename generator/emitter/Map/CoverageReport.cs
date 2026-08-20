@@ -397,7 +397,11 @@ internal sealed class CoverageReport
 		var queries = emittableMembers.Where(x => x.Bucket == MemberBucket.AsyncQuery).ToList();
 		var adoptedCount = queries.Count(x => x.IsAdoptedResult);
 		var untypedObjectCount = queries.Count(x => x.IsUntypedObjectResult);
-		var valueQueries = queries.Where(x => !x.IsAdoptedResult && !x.IsUntypedObjectResult).ToList();
+		// An awaited void is a query that answers nothing: three.js's `clearAsync` and friends resolve
+		// when the GPU is done, and the completion is the whole answer. Counted apart from the value
+		// queries, which would otherwise say a value comes back where none does.
+		var awaitedVoidQueries = queries.Where(x => x.IsAwaitedVoidResult).ToList();
+		var valueQueries = queries.Where(x => !x.IsAdoptedResult && !x.IsUntypedObjectResult && !x.IsAwaitedVoidResult).ToList();
 		var valuePropertyCount = valueQueries.Count(x => x.IsPropertyRead);
 		var valueMethodCount = valueQueries.Count - valuePropertyCount;
 		var noHandleCount = emittableMembers.Count(x => x.SkipCategory == SkipCategory.NoHandleForResult);
@@ -444,6 +448,15 @@ internal sealed class CoverageReport
 		AppendLine(builder, "  on it. Adoption dedupes here on the same terms as above, and a handle this context mirrors as");
 		AppendLine(builder, "  something *other* than a `Primitive` faults instead of being wrapped a second time - that mirror is the");
 		AppendLine(builder, "  better answer and the caller is already holding it.");
+		if (awaitedVoidQueries.Count > 0)
+		{
+			AppendLine(builder, $"- **{awaitedVoidQueries.Count} answer nothing at all** - a bare `Task`, awaited for *when* rather than for what.");
+			AppendLine(builder, "  three.js declares these as returning a promise (`renderer.clearAsync`, `renderer.waitForGPU`), and the");
+			AppendLine(builder, "  promise settles when the GPU has finished rather than when the call returned - so the applier waits");
+			AppendLine(builder, "  for it before answering the row. Recording them as call ops would apply just as well and complete");
+			AppendLine(builder, "  immediately, which is the one thing their name says they do not do.");
+		}
+
 		AppendLine(builder);
 		AppendLine(builder, "What remains out of reach is out for reasons a handle does not fix:");
 		AppendLine(builder);

@@ -582,7 +582,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `LineDashedNodeMaterial` | `property gapSizeNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineDashedNodeMaterial` | `property offsetNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Loader` | `method load` | parameter 'onLoad': `(data: TData) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `Loader` | `method loadAsync` | return type: `Promise<TData>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
+| `Loader` | `method loadAsync` | return type: `unknown` carries no type information a C# signature could express |
 | `Loader` | `method setRequestHeader` | parameter 'requestHeader': `{ [header: string]: string }` is an anonymous object literal type with no named C# equivalent |
 | `Loader` | `property DEFAULT_MATERIAL_NAME` | static; the mirror models instances, and a static write has no handle to address |
 | `Loader` | `property requestHeader` | `{ [header: string]: string }` is an anonymous object literal type with no named C# equivalent |
@@ -1211,23 +1211,13 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `WebGPUBackend` | `property renderer` | `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `WebGPURenderer` | `constructor parameter parameters` | `WebGPURendererParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `WebGPURenderer` | `fenced code in the method setDrawingBufferSize summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
-| `WebGPURenderer` | `method clearAsync` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGPURenderer` | `method clearColorAsync` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGPURenderer` | `method clearDepthAsync` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGPURenderer` | `method clearStencilAsync` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGPURenderer` | `method compileAsync` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPURenderer` | `method compute` | parameter 'computeNodes': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `WebGPURenderer` | `method computeAsync` | parameter 'computeNodes': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `WebGPURenderer` | `method getAnimationLoop` | return type: `(time: DOMHighResTimeStamp, xrFrame?: XRFrame) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `WebGPURenderer` | `method getArrayBufferAsync` | return type: `Promise<ArrayBuffer>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
+| `WebGPURenderer` | `method getArrayBufferAsync` | return type: `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPURenderer` | `method getContext` | return type: `unknown` carries no type information a C# signature could express |
 | `WebGPURenderer` | `method getMRT` | return type: `MRTNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `WebGPURenderer` | `method getRenderObjectFunction` | return type: `( object: Object3D, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: GeometryGroup | null, lightsNode: LightsNode, clippingContext: ClippingContext, passId?: string | null | undefined, ) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `WebGPURenderer` | `method hasFeatureAsync` | return type: `Promise<boolean>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGPURenderer` | `method init` | return type: `Promise<this>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGPURenderer` | `method initTextureAsync` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGPURenderer` | `method readRenderTargetPixelsAsync` | return type: `Promise<TypedArray>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `WebGPURenderer` | `method renderAsync` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPURenderer` | `method renderObject` | parameter 'group': `GeometryGroup` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `WebGPURenderer` | `method resolveTimestampsAsync` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
 | `WebGPURenderer` | `method setAnimationLoop` | parameter 'callback': `(time: DOMHighResTimeStamp, frame?: XRFrame) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
@@ -1236,7 +1226,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `WebGPURenderer` | `method setOpaqueSort` | parameter 'method': `(a: RenderItem, b: RenderItem) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGPURenderer` | `method setRenderObjectFunction` | parameter 'renderObjectFunction': `( object: Object3D, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: GeometryGroup | null, lightsNode: LightsNode, clippingContext: ClippingContext, passId?: string | null | undefined, ) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGPURenderer` | `method setTransparentSort` | parameter 'method': `(a: RenderItem, b: RenderItem) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `WebGPURenderer` | `method waitForGPU` | return type: `Promise<void>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `WebGPURenderer` | `property _currentSourceMaterial` | declared `private`, so it is not part of the public API |
 | `WebGPURenderer` | `property backend` | `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror |
 | `WebGPURenderer` | `property compile` | `(scene: Object3D, camera: Camera, targetScene?: Scene | null) => Promise<void>` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |

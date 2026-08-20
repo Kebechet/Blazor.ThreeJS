@@ -1125,6 +1125,75 @@ disposeDecoders(retryContext);
 modelServer.close();
 
 // ---------------------------------------------------------------------------------------------
+// A promise answer. three.js's WebGPU renderer resolves half its API - renderAsync, clearAsync,
+// readRenderTargetPixelsAsync - when the GPU is done rather than when the call returns, so the
+// applier has to wait for the promise before filling in the row. Driven against a stand-in object
+// rather than a real renderer, because no WebGPU device exists under Node and what is being pinned
+// is the wire behaviour, not the renderer.
+// ---------------------------------------------------------------------------------------------
+
+const promiseContext = createContextAround({ isPromiseStandIn: true });
+let sideEffectOrder = [];
+promiseContext.objects.set(1, {
+    settleAfter: 0,
+    slowAnswer(value) {
+        sideEffectOrder.push('called');
+        return new Promise(resolve => setTimeout(() => resolve(value), this.settleAfter));
+    },
+    failsLater() {
+        return Promise.reject(new Error('the GPU said no'));
+    },
+    fastAnswer() {
+        return 7;
+    },
+    marker: 0
+});
+
+// A batch with no promise in it answers synchronously, which is what keeps a per-frame flush off the
+// microtask queue. Asserted as "not a thenable" rather than by awaiting, since awaiting would pass
+// either way.
+const syncResponse = runOps(promiseContext, [{ k: OP_READ, h: 1, m: 'fastAnswer', a: [], i: 1 }]);
+assert.equal(typeof syncResponse.then, 'undefined', 'a batch with no promise answer must not become a promise itself');
+assert.equal(syncResponse.r[0].v, 7, 'a plain answer should still come back as itself');
+
+// A promise answer makes the whole response a promise, and the row carries what it settled to rather
+// than the promise object.
+sideEffectOrder = [];
+const promised = runOps(promiseContext, [
+    { k: OP_READ, h: 1, m: 'slowAnswer', a: [42], i: 2 },
+    { k: OP_SET, h: 1, m: 'marker', v: 5 }
+]);
+
+assert.equal(typeof promised.then, 'function', 'a batch carrying a promise answer must answer with a promise');
+assert.equal(promiseContext.objects.get(1).marker, 5,
+    'ops behind a promise answer must still apply in order, without waiting for it');
+
+const promisedResponse = await promised;
+assert.deepEqual(promisedResponse.e, [], 'a settled promise answer is not an error');
+assert.equal(promisedResponse.r.length, 1, 'the promise answer should fill in exactly one row');
+assert.equal(promisedResponse.r[0].i, 2, 'the row should still carry its own request id');
+assert.equal(promisedResponse.r[0].v, 42, 'the row should carry what the promise settled to, not the promise');
+
+// A rejected promise faults the one row that asked, on the same channel a throwing read uses, and
+// leaves the batch's error channel alone - exactly one C# task is awaiting it.
+const rejectedResponse = await runOps(promiseContext, [{ k: OP_READ, h: 1, m: 'failsLater', a: [], i: 3 }]);
+assert.deepEqual(rejectedResponse.e, [], 'a rejected read must not also be announced on the batch error channel');
+assert.equal(rejectedResponse.r.length, 1, 'a rejected read still produces its own row');
+assert.equal(rejectedResponse.r[0].v, undefined, 'a rejected row must not carry a value');
+assert.match(rejectedResponse.r[0].e, /the GPU said no/, "the row should carry the promise's own rejection message");
+
+// Two promise answers in one batch both settle before the response resolves, whichever order they
+// settle in, and each row still answers its own request.
+promiseContext.objects.get(1).settleAfter = 0;
+const slowThenFast = await runOps(promiseContext, [
+    { k: OP_READ, h: 1, m: 'slowAnswer', a: ['first'], i: 4 },
+    { k: OP_READ, h: 1, m: 'slowAnswer', a: ['second'], i: 5 }
+]);
+
+assert.equal(slowThenFast.r.find(row => row.i === 4).v, 'first', 'request 4 should carry its own answer');
+assert.equal(slowThenFast.r.find(row => row.i === 5).v, 'second', 'request 5 should carry its own answer');
+
+// ---------------------------------------------------------------------------------------------
 // OrbitControls. The camera moves every frame on this side of the boundary, which is the whole
 // point, so what is asserted here is that it moves *and* that nothing crosses the boundary while it
 // does - and that every listener the addon registered comes back off on detach.
@@ -1264,6 +1333,7 @@ console.log('Picking OK - one callback per hit, none for a miss, and no pointer-
 console.log(`GLTFLoader OK - the demo's own model fetched, parsed and mirrored as ${loadedNodes.length} nodes on browser-minted handles, then released.`);
 console.log('DRACO decoding OK - the same compressed file rejects with no options, decodes with {draco:true}, reuses its cached decoder on a second load and on a racing first pair, and releases it on dispose.');
 console.log('KTX2 opt-in OK - {ktx2:true} still loads a file with no KTX2 texture, reuses its cached decoder on a second load, releases it on dispose, and clears a failed build so a retry gets a real second attempt.');
+console.log('Promise answers OK - a batch with none stays synchronous, one with them waits for each, a rejection faults only its own row.');
 console.log('OrbitControls OK - attached to the real canvas, 120 frames of camera movement, zero interop, every listener removed on detach.');
 console.log(`Generated surface OK - ${generatedClassNames.length} generated classes are constructors on the vendored three.js.`);
 console.log(`Escape hatch OK - '${UNWRAPPED_CLASS}' has no generated wrapper and was still constructed, mutated and read back; ${reachableClassNames.length} classes are reachable, from both sides.`);

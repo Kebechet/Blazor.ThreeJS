@@ -746,6 +746,62 @@ public sealed class WebGPURenderer : ThreeObject
 	}
 
 	/// <summary>
+	/// Initializes the renderer so it is ready for usage. Records a read op, sends it behind every
+	/// write already pending, and completes with what <c>init</c> returned.
+	/// </summary>
+	/// <returns>The value <c>init</c> returned, once the JavaScript side has answered.</returns>
+	public Task<WebGPURenderer?> InitAsync()
+	{
+		return RecordReadObject<WebGPURenderer>("init", (adoptedBatch, adoptedHandle) => new WebGPURenderer(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
+	/// Compiles all materials in the given scene. This can be useful to avoid a phenomenon which is
+	/// called "shader compilation stutter", which occurs when rendering an object with a new shader for
+	/// the first time. If you want to add a 3D object to an existing scene, use the third optional
+	/// parameter for applying the target scene. Note that the (target) scene's lighting and environment
+	/// must be configured before calling this method. Answers nothing, and is awaited for when rather
+	/// than for what: records a read op, sends it behind every write already pending, and completes
+	/// once the promise <c>compileAsync</c> returned has settled.
+	/// </summary>
+	/// <param name="scene">The scene or 3D object to precompile.</param>
+	/// <param name="camera">The camera that is used to render the scene.</param>
+	/// <param name="targetScene">
+	/// If the first argument is a 3D object, this parameter must represent the scene the 3D object is
+	/// going to be added.
+	/// </param>
+	/// <returns>A task that completes once <c>compileAsync</c> has finished.</returns>
+	public Task CompileAsync(Object3D scene, Camera camera, Scene? targetScene)
+	{
+		return RecordRead<object?>("compileAsync", scene, camera, targetScene);
+	}
+
+	/// <summary>
+	/// Renders the scene in an async fashion. Answers nothing, and is awaited for when rather than for
+	/// what: records a read op, sends it behind every write already pending, and completes once the
+	/// promise <c>renderAsync</c> returned has settled.
+	/// </summary>
+	/// <param name="scene">The scene or 3D object to render.</param>
+	/// <param name="camera">The camera.</param>
+	/// <returns>A task that completes once <c>renderAsync</c> has finished.</returns>
+	public Task RenderAsync(Object3D scene, Camera camera)
+	{
+		return RecordRead<object?>("renderAsync", scene, camera);
+	}
+
+	/// <summary>
+	/// Can be used to synchronize CPU operations with GPU tasks. So when this method is called, the CPU
+	/// waits for the GPU to complete its operation (e.g. a compute task). Answers nothing, and is
+	/// awaited for when rather than for what: records a read op, sends it behind every write already
+	/// pending, and completes once the promise <c>waitForGPU</c> returned has settled.
+	/// </summary>
+	/// <returns>A task that completes once <c>waitForGPU</c> has finished.</returns>
+	public Task WaitForGPUAsync()
+	{
+		return RecordRead<object?>("waitForGPU");
+	}
+
+	/// <summary>
 	/// Returns the output buffer type. Records a read op, sends it behind every write already pending,
 	/// and completes with what <c>getOutputBufferType</c> returned.
 	/// </summary>
@@ -915,6 +971,53 @@ public sealed class WebGPURenderer : ThreeObject
 	}
 
 	/// <summary>
+	/// Async version of <c>Renderer#clear</c>. Answers nothing, and is awaited for when rather than for
+	/// what: records a read op, sends it behind every write already pending, and completes once the
+	/// promise <c>clearAsync</c> returned has settled.
+	/// </summary>
+	/// <param name="color">Whether the color buffer should be cleared or not.</param>
+	/// <param name="depth">Whether the depth buffer should be cleared or not.</param>
+	/// <param name="stencil">Whether the stencil buffer should be cleared or not.</param>
+	/// <returns>A task that completes once <c>clearAsync</c> has finished.</returns>
+	public Task ClearAsync(bool color = true, bool depth = true, bool stencil = true)
+	{
+		return RecordRead<object?>("clearAsync", color, depth, stencil);
+	}
+
+	/// <summary>
+	/// Async version of <c>Renderer#clearColor</c>. Answers nothing, and is awaited for when rather
+	/// than for what: records a read op, sends it behind every write already pending, and completes
+	/// once the promise <c>clearColorAsync</c> returned has settled.
+	/// </summary>
+	/// <returns>A task that completes once <c>clearColorAsync</c> has finished.</returns>
+	public Task ClearColorAsync()
+	{
+		return RecordRead<object?>("clearColorAsync");
+	}
+
+	/// <summary>
+	/// Async version of <c>Renderer#clearDepth</c>. Answers nothing, and is awaited for when rather
+	/// than for what: records a read op, sends it behind every write already pending, and completes
+	/// once the promise <c>clearDepthAsync</c> returned has settled.
+	/// </summary>
+	/// <returns>A task that completes once <c>clearDepthAsync</c> has finished.</returns>
+	public Task ClearDepthAsync()
+	{
+		return RecordRead<object?>("clearDepthAsync");
+	}
+
+	/// <summary>
+	/// Async version of <c>Renderer#clearStencil</c>. Answers nothing, and is awaited for when rather
+	/// than for what: records a read op, sends it behind every write already pending, and completes
+	/// once the promise <c>clearStencilAsync</c> returned has settled.
+	/// </summary>
+	/// <returns>A task that completes once <c>clearStencilAsync</c> has finished.</returns>
+	public Task ClearStencilAsync()
+	{
+		return RecordRead<object?>("clearStencilAsync");
+	}
+
+	/// <summary>
 	/// Returns the current render target. Records a read op, sends it behind every write already
 	/// pending, and completes with what <c>getRenderTarget</c> returned.
 	/// </summary>
@@ -951,6 +1054,17 @@ public sealed class WebGPURenderer : ThreeObject
 	}
 
 	/// <summary>
+	/// Checks if the given feature is supported by the selected backend. Records a read op, sends it
+	/// behind every write already pending, and completes with what <c>hasFeatureAsync</c> returned.
+	/// </summary>
+	/// <param name="name">The feature's name.</param>
+	/// <returns>The value <c>hasFeatureAsync</c> returned, once the JavaScript side has answered.</returns>
+	public Task<bool> HasFeatureAsyncAsync(string name)
+	{
+		return RecordRead<bool>("hasFeatureAsync", name);
+	}
+
+	/// <summary>
 	/// Checks if the given feature is supported by the selected backend. If the renderer has not been
 	/// initialized, this method always returns <c>false</c>. Records a read op, sends it behind every
 	/// write already pending, and completes with what <c>hasFeature</c> returned.
@@ -970,6 +1084,45 @@ public sealed class WebGPURenderer : ThreeObject
 	public Task<bool> HasInitializedAsync()
 	{
 		return RecordRead<bool>("hasInitialized");
+	}
+
+	/// <summary>
+	/// Initializes the given textures. Useful for preloading a texture rather than waiting until first
+	/// render (which can cause noticeable lags due to decode and GPU upload overhead). Answers nothing,
+	/// and is awaited for when rather than for what: records a read op, sends it behind every write
+	/// already pending, and completes once the promise <c>initTextureAsync</c> returned has settled.
+	/// </summary>
+	/// <param name="texture">The texture.</param>
+	/// <returns>A task that completes once <c>initTextureAsync</c> has finished.</returns>
+	public Task InitTextureAsync(Texture texture)
+	{
+		return RecordRead<object?>("initTextureAsync", texture);
+	}
+
+	/// <summary>
+	/// Reads pixel data from the given render target. Records a read op, sends it behind every write
+	/// already pending, and completes with what <c>readRenderTargetPixelsAsync</c> returned.
+	/// </summary>
+	/// <param name="renderTarget">The render target to read from.</param>
+	/// <param name="x">The <c>x</c> coordinate of the copy region's origin.</param>
+	/// <param name="y">The <c>y</c> coordinate of the copy region's origin.</param>
+	/// <param name="width">The width of the copy region.</param>
+	/// <param name="height">The height of the copy region.</param>
+	/// <param name="textureIndex">The texture index of a MRT render target.</param>
+	/// <param name="faceIndex">The active cube face index.</param>
+	/// <returns>
+	/// The value <c>readRenderTargetPixelsAsync</c> returned, once the JavaScript side has answered.
+	/// </returns>
+	public Task<TypedArray> ReadRenderTargetPixelsAsync(
+		RenderTarget renderTarget,
+		float x,
+		float y,
+		float width,
+		float height,
+		int textureIndex = 0,
+		int faceIndex = 0)
+	{
+		return RecordRead<TypedArray>("readRenderTargetPixelsAsync", renderTarget, x, y, width, height, textureIndex, faceIndex);
 	}
 
 	/// <summary>

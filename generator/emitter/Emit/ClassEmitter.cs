@@ -262,7 +262,9 @@ internal sealed class ClassEmitter
 		var commands = new List<EmittedCommand>();
 		var queries = new List<EmittedQuery>();
 
-		foreach (var member in _classifier.Classify(irClass))
+		var classified = _classifier.Classify(irClass).ToList();
+		var cSharpNames = ResolveCSharpNames(classified);
+		foreach (var member in classified)
 		{
 			if (member.Bucket is not (MemberBucket.Command or MemberBucket.AsyncQuery))
 			{
@@ -274,9 +276,7 @@ internal sealed class ClassEmitter
 				continue;
 			}
 
-			var cSharpName = member.Bucket == MemberBucket.AsyncQuery
-				? ToPascalCase(member.MemberName) + EmitterConfig.QueryMethodSuffix
-				: ToPascalCase(member.MemberName);
+			var cSharpName = cSharpNames[member.MemberName];
 
 			if (!takenCSharpNames.Add(cSharpName))
 			{
@@ -560,7 +560,9 @@ internal sealed class ClassEmitter
 		var commands = new List<EmittedCommand>();
 		var queries = new List<EmittedQuery>();
 
-		foreach (var member in _classifier.Classify(irClass))
+		var classified = _classifier.Classify(irClass).ToList();
+		var cSharpNames = ResolveCSharpNames(classified);
+		foreach (var member in classified)
 		{
 			var kind = member.MemberKind == ClassifiedMemberKind.Property ? "property" : "method";
 			if (member.Bucket == MemberBucket.Skipped)
@@ -569,9 +571,7 @@ internal sealed class ClassEmitter
 				continue;
 			}
 
-			var cSharpName = member.Bucket == MemberBucket.AsyncQuery
-				? ToPascalCase(member.MemberName) + EmitterConfig.QueryMethodSuffix
-				: ToPascalCase(member.MemberName);
+			var cSharpName = cSharpNames[member.MemberName];
 
 			if (!takenCSharpNames.Add(cSharpName))
 			{
@@ -714,6 +714,7 @@ internal sealed class ClassEmitter
 				IsPropertyRead = true,
 				IsAdoptedResult = member.IsAdoptedResult,
 				IsUntypedObjectResult = member.IsUntypedObjectResult,
+				IsAwaitedVoidResult = member.IsAwaitedVoidResult,
 				Documentation = member.Property?.Doc
 			};
 		}
@@ -727,6 +728,7 @@ internal sealed class ClassEmitter
 			ReturnMapping = member.ReturnMapping,
 			IsAdoptedResult = member.IsAdoptedResult,
 			IsUntypedObjectResult = member.IsUntypedObjectResult,
+			IsAwaitedVoidResult = member.IsAwaitedVoidResult,
 			Documentation = member.Method.Signature?.Doc
 		};
 	}
@@ -1027,6 +1029,55 @@ internal sealed class ClassEmitter
 		}
 
 		WriteAdoptionConstructor(writer, threeTypeName, baseTypeName, constructor.Parameters, properties);
+	}
+
+	/// <summary>
+	/// The C# name each classified member takes, resolved for the whole class at once.
+	/// <para>
+	/// A query is renamed with an <c>Async</c> suffix, because it hands back a <c>Task</c> and a method
+	/// that does so without saying it reads as a synchronous call. three.js has its own <c>*Async</c>
+	/// methods though — the WebGPU renderer's are half of its API — and appending to those produces
+	/// <c>ClearAsyncAsync</c>, which says the same thing twice. Such a member keeps three.js's own name.
+	/// </para>
+	/// <para>
+	/// ⚠️ Unless another member of the same class would then have the same name. <c>hasFeature</c> and
+	/// <c>hasFeatureAsync</c> are two real methods of <c>WebGPURenderer</c>, and both want
+	/// <c>HasFeatureAsync</c>; the doubled form is ugly, but it is a name, whereas dropping one of two
+	/// methods three.js offers is a missing feature. Resolved across the whole member list rather than
+	/// as each one is reached, so which of the two yields does not depend on classification order.
+	/// </para>
+	/// </summary>
+	/// <param name="members">Every classified member of the class.</param>
+	/// <returns>The C# name to use, keyed by the three.js member name.</returns>
+	private static Dictionary<string, string> ResolveCSharpNames(IReadOnlyList<ClassifiedMember> members)
+	{
+		var mechanical = new Dictionary<string, string>(StringComparer.Ordinal);
+		foreach (var member in members)
+		{
+			mechanical[member.MemberName] = member.Bucket == MemberBucket.AsyncQuery
+				? ToPascalCase(member.MemberName) + EmitterConfig.QueryMethodSuffix
+				: ToPascalCase(member.MemberName);
+		}
+
+		var contested = mechanical.Values
+			.Concat(members.Select(x => ToPascalCase(x.MemberName)))
+			.GroupBy(x => x, StringComparer.Ordinal)
+			.Where(x => x.Count() > 1)
+			.Select(x => x.Key)
+			.ToHashSet(StringComparer.Ordinal);
+
+		var resolved = new Dictionary<string, string>(StringComparer.Ordinal);
+		foreach (var member in members)
+		{
+			var shortened = ToPascalCase(member.MemberName);
+			resolved[member.MemberName] = member.Bucket == MemberBucket.AsyncQuery
+				&& member.MemberName.EndsWith(EmitterConfig.QueryMethodSuffix, StringComparison.Ordinal)
+				&& !contested.Contains(shortened)
+					? shortened
+					: mechanical[member.MemberName];
+		}
+
+		return resolved;
 	}
 
 	/// <summary>
@@ -1519,6 +1570,10 @@ internal sealed class ClassEmitter
 
 			summary += " The mirror learns nothing from it — its members are reached by their three.js names, and nothing here checks them.";
 		}
+		else if (query.IsAwaitedVoidResult)
+		{
+			summary += $" Answers nothing, and is awaited for when rather than for what: records a read op, sends it behind every write already pending, and completes once the promise <c>{query.ThreeName}</c> returned has settled.";
+		}
 		else
 		{
 			summary += query.IsPropertyRead
@@ -1528,9 +1583,12 @@ internal sealed class ClassEmitter
 
 		// An object result is nullable: three.js answers with nothing when the member held no object,
 		// and a non-nullable signature would make that indistinguishable from an object at handle zero.
-		var returnTypeName = query.IsAdoptedResult || query.IsUntypedObjectResult
-			? $"Task<{query.ReturnTypeName}?>"
-			: $"Task<{query.ReturnTypeName}>";
+		var returnTypeName = query switch
+		{
+			{ IsAwaitedVoidResult: true } => "Task",
+			{ IsAdoptedResult: true } or { IsUntypedObjectResult: true } => $"Task<{query.ReturnTypeName}?>",
+			_ => $"Task<{query.ReturnTypeName}>"
+		};
 
 		foreach (var (index, parameters) in query.Overloads.Index())
 		{
@@ -1554,6 +1612,10 @@ internal sealed class ClassEmitter
 				DocCommentEmitter.WriteReturns(writer, query.IsPropertyRead
 					? $"The object <c>{query.ThreeName}</c> held, under its own handle, or <see langword=\"null\"/> when it held none."
 					: $"The object <c>{query.ThreeName}</c> returned, under its own handle, or <see langword=\"null\"/> when it returned none.");
+			}
+			else if (query.IsAwaitedVoidResult)
+			{
+				DocCommentEmitter.WriteReturns(writer, $"A task that completes once <c>{query.ThreeName}</c> has finished.");
 			}
 			else
 			{
@@ -1589,6 +1651,13 @@ internal sealed class ClassEmitter
 				writer.WriteLine(query.IsPropertyRead
 					? $"return RecordGetObject<{query.ReturnTypeName}>(\"{query.ThreeName}\", {adopt});"
 					: $"return RecordReadObject<{query.ReturnTypeName}>(\"{query.ThreeName}\", {adopt}{arguments});");
+			}
+			else if (query.IsAwaitedVoidResult)
+			{
+				// Read through the value channel and the value discarded, because the answer is the
+				// completion rather than anything in it. `Task<object?>` returns as the bare `Task` the
+				// signature declares, so no second helper is needed to say "nothing came back".
+				writer.WriteLine($"return RecordRead<object?>(\"{query.ThreeName}\"{arguments});");
 			}
 			else if (query.IsPropertyRead)
 			{
@@ -1892,6 +1961,9 @@ internal sealed class EmittedQuery
 	/// as an untyped <c>Primitive</c> rather than as the declared type.
 	/// </summary>
 	public bool IsUntypedObjectResult { get; init; }
+
+	/// <summary>Whether the query answers nothing and is emitted as a bare <c>Task</c>.</summary>
+	public bool IsAwaitedVoidResult { get; init; }
 
 	/// <summary>Upstream JSDoc for the signature.</summary>
 	public IrDoc? Documentation { get; init; }

@@ -181,13 +181,28 @@ internal sealed class MemberClassifier
 		}
 
 		row.Method = mappedMethod;
-		if (IsVoid(signature.ReturnType))
+
+		// A promise-returning method is read through its awaited type from here on. three.js's WebGPU
+		// renderer resolves its `*Async` methods when the GPU is done rather than when the call returns,
+		// so what the caller wants back is what the promise settles to.
+		var returnType = UnwrapAwaited(signature.ReturnType, out var isAwaited);
+		if (IsVoid(returnType))
 		{
+			// An awaited void still has to be a query. `clearAsync` answers nothing, but it answers
+			// *later*, and recording it as a fire-and-forget call op would take away the only thing its
+			// name promises: a point at which the work has finished.
+			if (isAwaited)
+			{
+				row.IsAwaitedVoidResult = true;
+				row.Bucket = MemberBucket.AsyncQuery;
+				return row;
+			}
+
 			row.Bucket = MemberBucket.Command;
 			return row;
 		}
 
-		if (IsSelfReturn(irClass, member.DeclaringName, signature.ReturnType))
+		if (IsSelfReturn(irClass, member.DeclaringName, returnType))
 		{
 			// A `this`-returning method with arguments is three.js's fluent mutator (`copy(source)`), and
 			// recording it as a call op is exact. A `this`-returning method with none has nothing to
@@ -215,7 +230,7 @@ internal sealed class MemberClassifier
 			return row;
 		}
 
-		var returnMapping = _mapper.Map(signature.ReturnType, new TypeMappingContext
+		var returnMapping = _mapper.Map(returnType, new TypeMappingContext
 		{
 			MemberName = method.Name,
 			NumericKind = signature.ReturnNumericKind,
@@ -227,7 +242,7 @@ internal sealed class MemberClassifier
 			// The mapper refused the return type, but a three.js class is still an object the read op can
 			// register and answer with a handle for. The parameters all mapped — the method mapper's own
 			// refusal above is still a skip, because an argument has to be encodable to be sent at all.
-			if (IsThreeObjectShape(signature.ReturnType))
+			if (IsThreeObjectShape(returnType))
 			{
 				row.IsUntypedObjectResult = true;
 				row.Bucket = MemberBucket.AsyncQuery;
@@ -244,7 +259,7 @@ internal sealed class MemberClassifier
 			// Anything else genuinely has nowhere to go.
 			if (returnMapping.Kind != TypeMappingKind.GeneratedWrapperClass)
 			{
-				if (IsThreeObjectShape(signature.ReturnType))
+				if (IsThreeObjectShape(returnType))
 				{
 					row.IsUntypedObjectResult = true;
 					row.Bucket = MemberBucket.AsyncQuery;
@@ -355,6 +370,35 @@ internal sealed class MemberClassifier
 	private static bool IsNullishArm(IrType type)
 	{
 		return type is { Kind: "primitive", Name: "null" or "undefined" };
+	}
+
+	/// <summary>
+	/// The type a promise-returning method actually answers with, and whether it was one.
+	/// <para>
+	/// A read op already answers on a <c>Task</c>, so a <c>Promise&lt;T&gt;</c> and a <c>T</c> reach the
+	/// caller as the same C# signature; what differs is when. The applier waits for the promise before
+	/// filling in the answer, which is what makes <c>readRenderTargetPixelsAsync</c> hand back pixels
+	/// that have actually been read rather than a handle to a pending Promise.
+	/// </para>
+	/// <para>
+	/// Only the outer <c>Promise</c> is removed, and only once: a nested one would be three.js
+	/// promising a promise, which nothing in the snapshot does, and unwrapping to a fixpoint would
+	/// quietly flatten it if it ever did.
+	/// </para>
+	/// </summary>
+	/// <param name="returnType">Declared return type, absent on a signature with none.</param>
+	/// <param name="isAwaited">Whether the declared type was a promise.</param>
+	/// <returns>The awaited type, or the declared one unchanged.</returns>
+	private static IrType? UnwrapAwaited(IrType? returnType, out bool isAwaited)
+	{
+		if (returnType is { Kind: "reference", Name: "Promise", TypeArguments: [{ } awaited] })
+		{
+			isAwaited = true;
+			return awaited;
+		}
+
+		isAwaited = false;
+		return returnType;
 	}
 
 	/// <summary>Whether a return type means no value comes back at all.</summary>
@@ -516,6 +560,13 @@ internal sealed class ClassifiedMember
 	/// <c>Primitive</c> whose members are named the way three.js names them.
 	/// </summary>
 	public bool IsUntypedObjectResult { get; set; }
+
+	/// <summary>
+	/// Whether this query answers nothing, and exists only so the caller can wait for the work to
+	/// finish. Emitted as a bare <c>Task</c>: three.js's <c>clearAsync</c> and friends resolve when the
+	/// GPU is done, and that instant is the whole value of calling them.
+	/// </summary>
+	public bool IsAwaitedVoidResult { get; set; }
 
 	/// <summary>Number of overloads, on a method.</summary>
 	public int OverloadCount { get; init; }

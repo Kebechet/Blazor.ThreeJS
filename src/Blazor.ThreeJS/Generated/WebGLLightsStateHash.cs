@@ -72,21 +72,22 @@ public sealed record WebGLLightsStateHash : IThreeStructure
 	/// is the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new WebGLLightsStateHash
 		{
-			DirectionalLength = members.TryGetValue("directionalLength", out var directionalLengthElement) ? ThreeValue.Decode<float>(directionalLengthElement) : DirectionalLength,
-			PointLength = members.TryGetValue("pointLength", out var pointLengthElement) ? ThreeValue.Decode<float>(pointLengthElement) : PointLength,
-			SpotLength = members.TryGetValue("spotLength", out var spotLengthElement) ? ThreeValue.Decode<float>(spotLengthElement) : SpotLength,
-			RectAreaLength = members.TryGetValue("rectAreaLength", out var rectAreaLengthElement) ? ThreeValue.Decode<float>(rectAreaLengthElement) : RectAreaLength,
-			HemiLength = members.TryGetValue("hemiLength", out var hemiLengthElement) ? ThreeValue.Decode<float>(hemiLengthElement) : HemiLength,
-			NumDirectionalShadows = members.TryGetValue("numDirectionalShadows", out var numDirectionalShadowsElement) ? ThreeValue.Decode<float>(numDirectionalShadowsElement) : NumDirectionalShadows,
-			NumPointShadows = members.TryGetValue("numPointShadows", out var numPointShadowsElement) ? ThreeValue.Decode<float>(numPointShadowsElement) : NumPointShadows,
-			NumSpotShadows = members.TryGetValue("numSpotShadows", out var numSpotShadowsElement) ? ThreeValue.Decode<float>(numSpotShadowsElement) : NumSpotShadows,
-			NumSpotMaps = members.TryGetValue("numSpotMaps", out var numSpotMapsElement) ? ThreeValue.Decode<float>(numSpotMapsElement) : NumSpotMaps,
-			NumLightProbes = members.TryGetValue("numLightProbes", out var numLightProbesElement) ? ThreeValue.Decode<float>(numLightProbesElement) : NumLightProbes
+			DirectionalLength = members.TryGetValue("directionalLength", out var directionalLengthElement) ? ThreeValue.Decode<float>(directionalLengthElement, context) : DirectionalLength,
+			PointLength = members.TryGetValue("pointLength", out var pointLengthElement) ? ThreeValue.Decode<float>(pointLengthElement, context) : PointLength,
+			SpotLength = members.TryGetValue("spotLength", out var spotLengthElement) ? ThreeValue.Decode<float>(spotLengthElement, context) : SpotLength,
+			RectAreaLength = members.TryGetValue("rectAreaLength", out var rectAreaLengthElement) ? ThreeValue.Decode<float>(rectAreaLengthElement, context) : RectAreaLength,
+			HemiLength = members.TryGetValue("hemiLength", out var hemiLengthElement) ? ThreeValue.Decode<float>(hemiLengthElement, context) : HemiLength,
+			NumDirectionalShadows = members.TryGetValue("numDirectionalShadows", out var numDirectionalShadowsElement) ? ThreeValue.Decode<float>(numDirectionalShadowsElement, context) : NumDirectionalShadows,
+			NumPointShadows = members.TryGetValue("numPointShadows", out var numPointShadowsElement) ? ThreeValue.Decode<float>(numPointShadowsElement, context) : NumPointShadows,
+			NumSpotShadows = members.TryGetValue("numSpotShadows", out var numSpotShadowsElement) ? ThreeValue.Decode<float>(numSpotShadowsElement, context) : NumSpotShadows,
+			NumSpotMaps = members.TryGetValue("numSpotMaps", out var numSpotMapsElement) ? ThreeValue.Decode<float>(numSpotMapsElement, context) : NumSpotMaps,
+			NumLightProbes = members.TryGetValue("numLightProbes", out var numLightProbesElement) ? ThreeValue.Decode<float>(numLightProbesElement, context) : NumLightProbes
 		};
 	}
 }

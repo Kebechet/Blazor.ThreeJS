@@ -41,13 +41,14 @@ public sealed record ShapeExtractPoints : IThreeStructure
 	/// the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new ShapeExtractPoints
 		{
-			Shape = members.TryGetValue("shape", out var shapeElement) ? ThreeValue.Decode<Vector2[]>(shapeElement) : Shape,
-			Holes = members.TryGetValue("holes", out var holesElement) ? ThreeValue.Decode<Vector2[][]>(holesElement) : Holes
+			Shape = members.TryGetValue("shape", out var shapeElement) ? ThreeValue.Decode<Vector2[]>(shapeElement, context) : Shape,
+			Holes = members.TryGetValue("holes", out var holesElement) ? ThreeValue.Decode<Vector2[][]>(holesElement, context) : Holes
 		};
 	}
 }

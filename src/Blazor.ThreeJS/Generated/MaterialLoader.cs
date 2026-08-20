@@ -9,6 +9,8 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 public class MaterialLoader : Loader
 {
 	private readonly LoadingManager? _manager;
+	private Dictionary<string, Texture> _textures;
+	private bool _isTexturesWritten;
 
 	/// <summary>Initializes a new <see cref="MaterialLoader"/>.</summary>
 	/// <param name="manager">Value forwarded to the <c>manager</c> constructor argument.</param>
@@ -47,6 +49,38 @@ public class MaterialLoader : Loader
 	}
 
 	/// <summary>
+	/// The <c>textures</c> property of the JavaScript-side object. Writing it records a <c>textures</c>
+	/// property write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public Dictionary<string, Texture> Textures
+	{
+		get { return _textures; }
+		set
+		{
+			if (_textures == value)
+			{
+				return;
+			}
+
+			_textures = value;
+			_isTexturesWritten = true;
+			RecordSet("textures", value);
+		}
+	}
+
+	/// <summary>
+	/// Records a call to <c>setTextures</c> on the JavaScript-side object. This writes the same
+	/// three.js state as <see cref="Textures"/> and the mirror does not learn from it: afterwards
+	/// <c>Textures</c> still reports its previous value, and writing that value back records nothing at
+	/// all. Where the property exists, write the property.
+	/// </summary>
+	/// <param name="textures">Value forwarded to the <c>textures</c> argument.</param>
+	public void SetTextures(Dictionary<string, Texture> textures)
+	{
+		RecordCall("setTextures", textures);
+	}
+
+	/// <summary>
 	/// Reads <c>createMaterialFromType</c> back from the JavaScript-side object. Records a read op,
 	/// sends it behind every write already pending, and completes with what
 	/// <c>createMaterialFromType</c> returned.
@@ -68,5 +102,10 @@ public class MaterialLoader : Loader
 		_manager?.AttachTo(batch);
 
 		base.EmitCreate(batch);
+
+		if (_isTexturesWritten)
+		{
+			batch.Set(Handle, "textures", ThreeValue.Encode(_textures));
+		}
 	}
 }

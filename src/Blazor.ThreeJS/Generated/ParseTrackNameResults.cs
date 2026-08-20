@@ -52,16 +52,17 @@ public sealed record ParseTrackNameResults : IThreeStructure
 	/// is the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new ParseTrackNameResults
 		{
-			NodeName = members.TryGetValue("nodeName", out var nodeNameElement) ? ThreeValue.Decode<string>(nodeNameElement) : NodeName,
-			ObjectName = members.TryGetValue("objectName", out var objectNameElement) ? ThreeValue.Decode<string>(objectNameElement) : ObjectName,
-			ObjectIndex = members.TryGetValue("objectIndex", out var objectIndexElement) ? ThreeValue.Decode<string>(objectIndexElement) : ObjectIndex,
-			PropertyName = members.TryGetValue("propertyName", out var propertyNameElement) ? ThreeValue.Decode<string>(propertyNameElement) : PropertyName,
-			PropertyIndex = members.TryGetValue("propertyIndex", out var propertyIndexElement) ? ThreeValue.Decode<string>(propertyIndexElement) : PropertyIndex
+			NodeName = members.TryGetValue("nodeName", out var nodeNameElement) ? ThreeValue.Decode<string>(nodeNameElement, context) : NodeName,
+			ObjectName = members.TryGetValue("objectName", out var objectNameElement) ? ThreeValue.Decode<string>(objectNameElement, context) : ObjectName,
+			ObjectIndex = members.TryGetValue("objectIndex", out var objectIndexElement) ? ThreeValue.Decode<string>(objectIndexElement, context) : ObjectIndex,
+			PropertyName = members.TryGetValue("propertyName", out var propertyNameElement) ? ThreeValue.Decode<string>(propertyNameElement, context) : PropertyName,
+			PropertyIndex = members.TryGetValue("propertyIndex", out var propertyIndexElement) ? ThreeValue.Decode<string>(propertyIndexElement, context) : PropertyIndex
 		};
 	}
 }

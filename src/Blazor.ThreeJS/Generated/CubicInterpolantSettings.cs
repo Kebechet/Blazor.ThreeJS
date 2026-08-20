@@ -40,13 +40,14 @@ public sealed record CubicInterpolantSettings : IThreeStructure
 	/// builds is the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new CubicInterpolantSettings
 		{
-			EndingStart = members.TryGetValue("endingStart", out var endingStartElement) ? ThreeValue.Decode<InterpolationEndingModes>(endingStartElement) : EndingStart,
-			EndingEnd = members.TryGetValue("endingEnd", out var endingEndElement) ? ThreeValue.Decode<InterpolationEndingModes>(endingEndElement) : EndingEnd
+			EndingStart = members.TryGetValue("endingStart", out var endingStartElement) ? ThreeValue.Decode<InterpolationEndingModes>(endingStartElement, context) : EndingStart,
+			EndingEnd = members.TryGetValue("endingEnd", out var endingEndElement) ? ThreeValue.Decode<InterpolationEndingModes>(endingEndElement, context) : EndingEnd
 		};
 	}
 }

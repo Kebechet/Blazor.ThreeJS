@@ -51,14 +51,15 @@ public sealed record GeometryGroup : IThreeStructure
 	/// default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new GeometryGroup
 		{
-			Start = members.TryGetValue("start", out var startElement) ? ThreeValue.Decode<int>(startElement) : Start,
-			Count = members.TryGetValue("count", out var countElement) ? ThreeValue.Decode<int>(countElement) : Count,
-			MaterialIndex = members.TryGetValue("materialIndex", out var materialIndexElement) ? ThreeValue.Decode<int?>(materialIndexElement) : MaterialIndex
+			Start = members.TryGetValue("start", out var startElement) ? ThreeValue.Decode<int>(startElement, context) : Start,
+			Count = members.TryGetValue("count", out var countElement) ? ThreeValue.Decode<int>(countElement, context) : Count,
+			MaterialIndex = members.TryGetValue("materialIndex", out var materialIndexElement) ? ThreeValue.Decode<int?>(materialIndexElement, context) : MaterialIndex
 		};
 	}
 }

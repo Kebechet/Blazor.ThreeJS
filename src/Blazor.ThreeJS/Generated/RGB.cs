@@ -44,14 +44,15 @@ public sealed record RGB : IThreeStructure
 	/// default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new RGB
 		{
-			R = members.TryGetValue("r", out var rElement) ? ThreeValue.Decode<float>(rElement) : R,
-			G = members.TryGetValue("g", out var gElement) ? ThreeValue.Decode<float>(gElement) : G,
-			B = members.TryGetValue("b", out var bElement) ? ThreeValue.Decode<float>(bElement) : B
+			R = members.TryGetValue("r", out var rElement) ? ThreeValue.Decode<float>(rElement, context) : R,
+			G = members.TryGetValue("g", out var gElement) ? ThreeValue.Decode<float>(gElement, context) : G,
+			B = members.TryGetValue("b", out var bElement) ? ThreeValue.Decode<float>(bElement, context) : B
 		};
 	}
 }

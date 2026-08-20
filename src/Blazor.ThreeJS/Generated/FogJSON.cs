@@ -52,16 +52,17 @@ public sealed record FogJSON : IThreeStructure
 	/// default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new FogJSON
 		{
-			Type = members.TryGetValue("type", out var typeElement) ? ThreeValue.Decode<string>(typeElement) : Type,
-			Name = members.TryGetValue("name", out var nameElement) ? ThreeValue.Decode<string>(nameElement) : Name,
-			Color = members.TryGetValue("color", out var colorElement) ? ThreeValue.Decode<float>(colorElement) : Color,
-			Near = members.TryGetValue("near", out var nearElement) ? ThreeValue.Decode<float>(nearElement) : Near,
-			Far = members.TryGetValue("far", out var farElement) ? ThreeValue.Decode<float>(farElement) : Far
+			Type = members.TryGetValue("type", out var typeElement) ? ThreeValue.Decode<string>(typeElement, context) : Type,
+			Name = members.TryGetValue("name", out var nameElement) ? ThreeValue.Decode<string>(nameElement, context) : Name,
+			Color = members.TryGetValue("color", out var colorElement) ? ThreeValue.Decode<float>(colorElement, context) : Color,
+			Near = members.TryGetValue("near", out var nearElement) ? ThreeValue.Decode<float>(nearElement, context) : Near,
+			Far = members.TryGetValue("far", out var farElement) ? ThreeValue.Decode<float>(farElement, context) : Far
 		};
 	}
 }

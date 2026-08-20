@@ -56,16 +56,17 @@ public sealed record KeyframeTrackJSON : IThreeStructure
 	/// the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new KeyframeTrackJSON
 		{
-			Name = members.TryGetValue("name", out var nameElement) ? ThreeValue.Decode<string>(nameElement) : Name,
-			Times = members.TryGetValue("times", out var timesElement) ? ThreeValue.Decode<float[]>(timesElement) : Times,
-			Values = members.TryGetValue("values", out var valuesElement) ? ThreeValue.Decode<float[]>(valuesElement) : Values,
-			Interpolation = members.TryGetValue("interpolation", out var interpolationElement) ? ThreeValue.Decode<InterpolationModes?>(interpolationElement) : Interpolation,
-			Type = members.TryGetValue("type", out var typeElement) ? ThreeValue.Decode<string>(typeElement) : Type
+			Name = members.TryGetValue("name", out var nameElement) ? ThreeValue.Decode<string>(nameElement, context) : Name,
+			Times = members.TryGetValue("times", out var timesElement) ? ThreeValue.Decode<float[]>(timesElement, context) : Times,
+			Values = members.TryGetValue("values", out var valuesElement) ? ThreeValue.Decode<float[]>(valuesElement, context) : Values,
+			Interpolation = members.TryGetValue("interpolation", out var interpolationElement) ? ThreeValue.Decode<InterpolationModes?>(interpolationElement, context) : Interpolation,
+			Type = members.TryGetValue("type", out var typeElement) ? ThreeValue.Decode<string>(typeElement, context) : Type
 		};
 	}
 }

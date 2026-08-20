@@ -108,30 +108,31 @@ public sealed record InfoMemory : IThreeStructure
 	/// default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new InfoMemory
 		{
-			Attributes = members.TryGetValue("attributes", out var attributesElement) ? ThreeValue.Decode<float>(attributesElement) : Attributes,
-			AttributesSize = members.TryGetValue("attributesSize", out var attributesSizeElement) ? ThreeValue.Decode<float>(attributesSizeElement) : AttributesSize,
-			Geometries = members.TryGetValue("geometries", out var geometriesElement) ? ThreeValue.Decode<float>(geometriesElement) : Geometries,
-			IndexAttributes = members.TryGetValue("indexAttributes", out var indexAttributesElement) ? ThreeValue.Decode<float>(indexAttributesElement) : IndexAttributes,
-			IndexAttributesSize = members.TryGetValue("indexAttributesSize", out var indexAttributesSizeElement) ? ThreeValue.Decode<float>(indexAttributesSizeElement) : IndexAttributesSize,
-			IndirectStorageAttributes = members.TryGetValue("indirectStorageAttributes", out var indirectStorageAttributesElement) ? ThreeValue.Decode<float>(indirectStorageAttributesElement) : IndirectStorageAttributes,
-			IndirectStorageAttributesSize = members.TryGetValue("indirectStorageAttributesSize", out var indirectStorageAttributesSizeElement) ? ThreeValue.Decode<float>(indirectStorageAttributesSizeElement) : IndirectStorageAttributesSize,
-			Programs = members.TryGetValue("programs", out var programsElement) ? ThreeValue.Decode<float>(programsElement) : Programs,
-			ProgramsSize = members.TryGetValue("programsSize", out var programsSizeElement) ? ThreeValue.Decode<float>(programsSizeElement) : ProgramsSize,
-			ReadbackBuffers = members.TryGetValue("readbackBuffers", out var readbackBuffersElement) ? ThreeValue.Decode<float>(readbackBuffersElement) : ReadbackBuffers,
-			ReadbackBuffersSize = members.TryGetValue("readbackBuffersSize", out var readbackBuffersSizeElement) ? ThreeValue.Decode<float>(readbackBuffersSizeElement) : ReadbackBuffersSize,
-			RenderTargets = members.TryGetValue("renderTargets", out var renderTargetsElement) ? ThreeValue.Decode<float>(renderTargetsElement) : RenderTargets,
-			StorageAttributes = members.TryGetValue("storageAttributes", out var storageAttributesElement) ? ThreeValue.Decode<float>(storageAttributesElement) : StorageAttributes,
-			StorageAttributesSize = members.TryGetValue("storageAttributesSize", out var storageAttributesSizeElement) ? ThreeValue.Decode<float>(storageAttributesSizeElement) : StorageAttributesSize,
-			Textures = members.TryGetValue("textures", out var texturesElement) ? ThreeValue.Decode<float>(texturesElement) : Textures,
-			TexturesSize = members.TryGetValue("texturesSize", out var texturesSizeElement) ? ThreeValue.Decode<float>(texturesSizeElement) : TexturesSize,
-			UniformBuffers = members.TryGetValue("uniformBuffers", out var uniformBuffersElement) ? ThreeValue.Decode<float>(uniformBuffersElement) : UniformBuffers,
-			UniformBuffersSize = members.TryGetValue("uniformBuffersSize", out var uniformBuffersSizeElement) ? ThreeValue.Decode<float>(uniformBuffersSizeElement) : UniformBuffersSize,
-			Total = members.TryGetValue("total", out var totalElement) ? ThreeValue.Decode<float>(totalElement) : Total
+			Attributes = members.TryGetValue("attributes", out var attributesElement) ? ThreeValue.Decode<float>(attributesElement, context) : Attributes,
+			AttributesSize = members.TryGetValue("attributesSize", out var attributesSizeElement) ? ThreeValue.Decode<float>(attributesSizeElement, context) : AttributesSize,
+			Geometries = members.TryGetValue("geometries", out var geometriesElement) ? ThreeValue.Decode<float>(geometriesElement, context) : Geometries,
+			IndexAttributes = members.TryGetValue("indexAttributes", out var indexAttributesElement) ? ThreeValue.Decode<float>(indexAttributesElement, context) : IndexAttributes,
+			IndexAttributesSize = members.TryGetValue("indexAttributesSize", out var indexAttributesSizeElement) ? ThreeValue.Decode<float>(indexAttributesSizeElement, context) : IndexAttributesSize,
+			IndirectStorageAttributes = members.TryGetValue("indirectStorageAttributes", out var indirectStorageAttributesElement) ? ThreeValue.Decode<float>(indirectStorageAttributesElement, context) : IndirectStorageAttributes,
+			IndirectStorageAttributesSize = members.TryGetValue("indirectStorageAttributesSize", out var indirectStorageAttributesSizeElement) ? ThreeValue.Decode<float>(indirectStorageAttributesSizeElement, context) : IndirectStorageAttributesSize,
+			Programs = members.TryGetValue("programs", out var programsElement) ? ThreeValue.Decode<float>(programsElement, context) : Programs,
+			ProgramsSize = members.TryGetValue("programsSize", out var programsSizeElement) ? ThreeValue.Decode<float>(programsSizeElement, context) : ProgramsSize,
+			ReadbackBuffers = members.TryGetValue("readbackBuffers", out var readbackBuffersElement) ? ThreeValue.Decode<float>(readbackBuffersElement, context) : ReadbackBuffers,
+			ReadbackBuffersSize = members.TryGetValue("readbackBuffersSize", out var readbackBuffersSizeElement) ? ThreeValue.Decode<float>(readbackBuffersSizeElement, context) : ReadbackBuffersSize,
+			RenderTargets = members.TryGetValue("renderTargets", out var renderTargetsElement) ? ThreeValue.Decode<float>(renderTargetsElement, context) : RenderTargets,
+			StorageAttributes = members.TryGetValue("storageAttributes", out var storageAttributesElement) ? ThreeValue.Decode<float>(storageAttributesElement, context) : StorageAttributes,
+			StorageAttributesSize = members.TryGetValue("storageAttributesSize", out var storageAttributesSizeElement) ? ThreeValue.Decode<float>(storageAttributesSizeElement, context) : StorageAttributesSize,
+			Textures = members.TryGetValue("textures", out var texturesElement) ? ThreeValue.Decode<float>(texturesElement, context) : Textures,
+			TexturesSize = members.TryGetValue("texturesSize", out var texturesSizeElement) ? ThreeValue.Decode<float>(texturesSizeElement, context) : TexturesSize,
+			UniformBuffers = members.TryGetValue("uniformBuffers", out var uniformBuffersElement) ? ThreeValue.Decode<float>(uniformBuffersElement, context) : UniformBuffers,
+			UniformBuffersSize = members.TryGetValue("uniformBuffersSize", out var uniformBuffersSizeElement) ? ThreeValue.Decode<float>(uniformBuffersSizeElement, context) : UniformBuffersSize,
+			Total = members.TryGetValue("total", out var totalElement) ? ThreeValue.Decode<float>(totalElement, context) : Total
 		};
 	}
 }

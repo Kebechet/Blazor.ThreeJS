@@ -1125,6 +1125,42 @@ disposeDecoders(retryContext);
 modelServer.close();
 
 // ---------------------------------------------------------------------------------------------
+// A raycast. Every intersection three.js reports names the object it hit, so a structure the read
+// answers with may itself carry a three.js object - and that object has identity a copy of its fields
+// would lose. Driven against a real Raycaster and a real Mesh.
+// ---------------------------------------------------------------------------------------------
+
+const raycastContext = createContextAround({ isRaycastStandIn: true });
+const hitMesh = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshBasicMaterial());
+raycastContext.objects.set(40, hitMesh);
+
+const raycaster = new THREE.Raycaster();
+raycaster.set(new THREE.Vector3(0, 0, 5), new THREE.Vector3(0, 0, -1));
+raycastContext.objects.set(41, raycaster);
+
+const hits = runOps(raycastContext, [
+    { k: OP_READ, h: 41, m: 'intersectObject', a: [{ $ref: 40 }], i: 80, n: true }
+]);
+
+assert.equal(hits.r.length, 1, 'the raycast should produce one result row');
+const encodedHits = hits.r[0].v;
+assert.ok(Array.isArray(encodedHits) && encodedHits.length > 0, 'the ray should hit the box it was aimed at');
+
+const firstHit = encodedHits[0].$o;
+assert.ok(firstHit, 'an intersection is a plain object, so it answers under the structure tag');
+assert.ok(typeof firstHit.distance === 'number', 'and carries its distance as a value');
+assert.ok(firstHit.point.$t === 'Vector3', 'and its point as a tagged math value');
+
+// The object it hit comes back as a reference to the handle this context already holds for it, not as
+// a second registration - which is what makes the C# side able to hand back the same mirror.
+// Minted here rather than reused, because this stand-in put the mesh in the object table directly
+// instead of through the applier's own registration - which is the reverse lookup handleFor reads.
+// What matters is that it is a *reference* rather than a copy of the mesh's fields.
+assert.equal(typeof firstHit.object.$ref, 'number', 'the hit object should come back as a handle reference');
+assert.ok(raycastContext.objects.get(firstHit.object.$ref) === hitMesh, 'and that handle should name the mesh that was hit');
+assert.equal(firstHit.object.t, 'Mesh', 'and name the type three.js knows it by');
+
+// ---------------------------------------------------------------------------------------------
 // A static. three.js's utility classes - AnimationUtils, ShapeUtils, DataUtils - hang their work off
 // the class rather than off any object, so there is no handle to address them by. The op carries the
 // three.js type name instead, under the same `t` the create op already uses.
@@ -1407,6 +1443,7 @@ console.log('Picking OK - one callback per hit, none for a miss, and no pointer-
 console.log(`GLTFLoader OK - the demo's own model fetched, parsed and mirrored as ${loadedNodes.length} nodes on browser-minted handles, then released.`);
 console.log('DRACO decoding OK - the same compressed file rejects with no options, decodes with {draco:true}, reuses its cached decoder on a second load and on a racing first pair, and releases it on dispose.');
 console.log('KTX2 opt-in OK - {ktx2:true} still loads a file with no KTX2 texture, reuses its cached decoder on a second load, releases it on dispose, and clears a failed build so a retry gets a real second attempt.');
+console.log('Raycasting OK - an intersection answers as a structure whose hit object references the handle the context already held.');
 console.log('Statics OK - a utility class runs by name, answers what three.js answers, registers no handle, and an unknown class is named in the failure.');
 console.log('Structures OK - a plain object round-trips as its own members, a nested math value decodes, a three.js instance is still refused.');
 console.log('Promise answers OK - a batch with none stays synchronous, one with them waits for each, a rejection faults only its own row.');

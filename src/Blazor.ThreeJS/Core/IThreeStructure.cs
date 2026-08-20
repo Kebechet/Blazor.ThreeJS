@@ -37,6 +37,39 @@ public interface IThreeStructure
     /// </para>
     /// </summary>
     /// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+    /// <param name="context">
+    /// Context to adopt a member that is itself a mirrored object into, or <see langword="null"/> when
+    /// the value is being decoded outside one. A structure with such a member faults rather than
+    /// answering with a hole, since a hole would be indistinguishable from three.js carrying nothing.
+    /// </param>
     /// <returns>The value those members describe.</returns>
-    IThreeStructure FromWireMembers(IReadOnlyDictionary<string, JsonElement> members);
+    IThreeStructure FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context);
+}
+
+/// <summary>
+/// Helpers a generated structure calls. A separate type rather than members on
+/// <see cref="IThreeStructure"/>, because a record implementing the interface explicitly cannot reach
+/// an interface member by its simple name.
+/// </summary>
+public static class ThreeStructure
+{
+    /// <summary>
+    /// The context a structure member needs to be adopted into, or a failure naming what is missing.
+    /// <para>
+    /// Only a structure carrying a mirrored object reaches this. Decoding one outside a context has no
+    /// honest answer: the handle names a real object on the JavaScript side, and answering with null
+    /// would be indistinguishable from three.js having carried nothing there.
+    /// </para>
+    /// </summary>
+    /// <param name="context">The context, when the decode had one.</param>
+    /// <param name="member">Member being decoded, named in the failure.</param>
+    /// <returns>The context.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when there is no context to adopt into.</exception>
+    public static ThreeContext RequireContext(ThreeContext? context, string member)
+    {
+        return context ?? throw new InvalidOperationException(
+            $"'{member}' names a three.js object, and decoding it needs the context that object belongs to. " +
+            $"This value was decoded outside one, so there is nothing to adopt the handle into - and answering " +
+            $"with null would be indistinguishable from three.js having carried no object there.");
+    }
 }

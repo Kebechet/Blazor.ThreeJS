@@ -102,6 +102,17 @@ public sealed class LOD : Object3D
 	}
 
 	/// <summary>
+	/// An array of level objects. Read-only in three.js, so it is read on demand rather than mirrored:
+	/// records a get op, sends it behind every write already pending, and completes with the value
+	/// <c>levels</c> held.
+	/// </summary>
+	/// <returns>The value <c>levels</c> held, once the JavaScript side has answered.</returns>
+	public Task<LODLevels[]> LevelsAsync()
+	{
+		return GetAsync<LODLevels[]>("levels");
+	}
+
+	/// <summary>
 	/// Removes an existing level, based on the distance from the camera. Returns <c>true</c> when the
 	/// level has been removed. Otherwise <c>false</c>. Records a read op, sends it behind every write
 	/// already pending, and completes with what <c>removeLevel</c> returned.

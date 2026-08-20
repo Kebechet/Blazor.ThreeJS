@@ -60,18 +60,19 @@ public sealed record TorusGeometryParameters : IThreeStructure
 	/// builds is the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new TorusGeometryParameters
 		{
-			Radius = members.TryGetValue("radius", out var radiusElement) ? ThreeValue.Decode<float>(radiusElement) : Radius,
-			Tube = members.TryGetValue("tube", out var tubeElement) ? ThreeValue.Decode<float>(tubeElement) : Tube,
-			RadialSegments = members.TryGetValue("radialSegments", out var radialSegmentsElement) ? ThreeValue.Decode<int>(radialSegmentsElement) : RadialSegments,
-			TubularSegments = members.TryGetValue("tubularSegments", out var tubularSegmentsElement) ? ThreeValue.Decode<int>(tubularSegmentsElement) : TubularSegments,
-			Arc = members.TryGetValue("arc", out var arcElement) ? ThreeValue.Decode<float>(arcElement) : Arc,
-			ThetaStart = members.TryGetValue("thetaStart", out var thetaStartElement) ? ThreeValue.Decode<float>(thetaStartElement) : ThetaStart,
-			ThetaLength = members.TryGetValue("thetaLength", out var thetaLengthElement) ? ThreeValue.Decode<float>(thetaLengthElement) : ThetaLength
+			Radius = members.TryGetValue("radius", out var radiusElement) ? ThreeValue.Decode<float>(radiusElement, context) : Radius,
+			Tube = members.TryGetValue("tube", out var tubeElement) ? ThreeValue.Decode<float>(tubeElement, context) : Tube,
+			RadialSegments = members.TryGetValue("radialSegments", out var radialSegmentsElement) ? ThreeValue.Decode<int>(radialSegmentsElement, context) : RadialSegments,
+			TubularSegments = members.TryGetValue("tubularSegments", out var tubularSegmentsElement) ? ThreeValue.Decode<int>(tubularSegmentsElement, context) : TubularSegments,
+			Arc = members.TryGetValue("arc", out var arcElement) ? ThreeValue.Decode<float>(arcElement, context) : Arc,
+			ThetaStart = members.TryGetValue("thetaStart", out var thetaStartElement) ? ThreeValue.Decode<float>(thetaStartElement, context) : ThetaStart,
+			ThetaLength = members.TryGetValue("thetaLength", out var thetaLengthElement) ? ThreeValue.Decode<float>(thetaLengthElement, context) : ThetaLength
 		};
 	}
 }

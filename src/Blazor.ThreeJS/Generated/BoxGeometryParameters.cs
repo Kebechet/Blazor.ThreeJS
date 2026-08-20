@@ -56,17 +56,18 @@ public sealed record BoxGeometryParameters : IThreeStructure
 	/// is the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new BoxGeometryParameters
 		{
-			Width = members.TryGetValue("width", out var widthElement) ? ThreeValue.Decode<float>(widthElement) : Width,
-			Height = members.TryGetValue("height", out var heightElement) ? ThreeValue.Decode<float>(heightElement) : Height,
-			Depth = members.TryGetValue("depth", out var depthElement) ? ThreeValue.Decode<float>(depthElement) : Depth,
-			WidthSegments = members.TryGetValue("widthSegments", out var widthSegmentsElement) ? ThreeValue.Decode<int>(widthSegmentsElement) : WidthSegments,
-			HeightSegments = members.TryGetValue("heightSegments", out var heightSegmentsElement) ? ThreeValue.Decode<int>(heightSegmentsElement) : HeightSegments,
-			DepthSegments = members.TryGetValue("depthSegments", out var depthSegmentsElement) ? ThreeValue.Decode<int>(depthSegmentsElement) : DepthSegments
+			Width = members.TryGetValue("width", out var widthElement) ? ThreeValue.Decode<float>(widthElement, context) : Width,
+			Height = members.TryGetValue("height", out var heightElement) ? ThreeValue.Decode<float>(heightElement, context) : Height,
+			Depth = members.TryGetValue("depth", out var depthElement) ? ThreeValue.Decode<float>(depthElement, context) : Depth,
+			WidthSegments = members.TryGetValue("widthSegments", out var widthSegmentsElement) ? ThreeValue.Decode<int>(widthSegmentsElement, context) : WidthSegments,
+			HeightSegments = members.TryGetValue("heightSegments", out var heightSegmentsElement) ? ThreeValue.Decode<int>(heightSegmentsElement, context) : HeightSegments,
+			DepthSegments = members.TryGetValue("depthSegments", out var depthSegmentsElement) ? ThreeValue.Decode<int>(depthSegmentsElement, context) : DepthSegments
 		};
 	}
 }

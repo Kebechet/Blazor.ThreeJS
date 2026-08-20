@@ -44,14 +44,15 @@ public sealed record AnimationMixerStats : IThreeStructure
 	/// is the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new AnimationMixerStats
 		{
-			Actions = members.TryGetValue("actions", out var actionsElement) ? ThreeValue.Decode<AnimationMixerStatsActions>(actionsElement) : Actions,
-			Bindings = members.TryGetValue("bindings", out var bindingsElement) ? ThreeValue.Decode<AnimationMixerStatsActions>(bindingsElement) : Bindings,
-			ControlInterpolants = members.TryGetValue("controlInterpolants", out var controlInterpolantsElement) ? ThreeValue.Decode<AnimationMixerStatsActions>(controlInterpolantsElement) : ControlInterpolants
+			Actions = members.TryGetValue("actions", out var actionsElement) ? ThreeValue.Decode<AnimationMixerStatsActions>(actionsElement, context) : Actions,
+			Bindings = members.TryGetValue("bindings", out var bindingsElement) ? ThreeValue.Decode<AnimationMixerStatsActions>(bindingsElement, context) : Bindings,
+			ControlInterpolants = members.TryGetValue("controlInterpolants", out var controlInterpolantsElement) ? ThreeValue.Decode<AnimationMixerStatsActions>(controlInterpolantsElement, context) : ControlInterpolants
 		};
 	}
 }

@@ -60,18 +60,19 @@ public sealed record OrthographicCameraView : IThreeStructure
 	/// is the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new OrthographicCameraView
 		{
-			Enabled = members.TryGetValue("enabled", out var enabledElement) ? ThreeValue.Decode<bool>(enabledElement) : Enabled,
-			FullWidth = members.TryGetValue("fullWidth", out var fullWidthElement) ? ThreeValue.Decode<float>(fullWidthElement) : FullWidth,
-			FullHeight = members.TryGetValue("fullHeight", out var fullHeightElement) ? ThreeValue.Decode<float>(fullHeightElement) : FullHeight,
-			OffsetX = members.TryGetValue("offsetX", out var offsetXElement) ? ThreeValue.Decode<float>(offsetXElement) : OffsetX,
-			OffsetY = members.TryGetValue("offsetY", out var offsetYElement) ? ThreeValue.Decode<float>(offsetYElement) : OffsetY,
-			Width = members.TryGetValue("width", out var widthElement) ? ThreeValue.Decode<float>(widthElement) : Width,
-			Height = members.TryGetValue("height", out var heightElement) ? ThreeValue.Decode<float>(heightElement) : Height
+			Enabled = members.TryGetValue("enabled", out var enabledElement) ? ThreeValue.Decode<bool>(enabledElement, context) : Enabled,
+			FullWidth = members.TryGetValue("fullWidth", out var fullWidthElement) ? ThreeValue.Decode<float>(fullWidthElement, context) : FullWidth,
+			FullHeight = members.TryGetValue("fullHeight", out var fullHeightElement) ? ThreeValue.Decode<float>(fullHeightElement, context) : FullHeight,
+			OffsetX = members.TryGetValue("offsetX", out var offsetXElement) ? ThreeValue.Decode<float>(offsetXElement, context) : OffsetX,
+			OffsetY = members.TryGetValue("offsetY", out var offsetYElement) ? ThreeValue.Decode<float>(offsetYElement, context) : OffsetY,
+			Width = members.TryGetValue("width", out var widthElement) ? ThreeValue.Decode<float>(widthElement, context) : Width,
+			Height = members.TryGetValue("height", out var heightElement) ? ThreeValue.Decode<float>(heightElement, context) : Height
 		};
 	}
 }

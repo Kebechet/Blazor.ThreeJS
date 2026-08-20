@@ -48,15 +48,16 @@ public sealed record PolyhedronGeometryParameters : IThreeStructure
 	/// builds is the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new PolyhedronGeometryParameters
 		{
-			Vertices = members.TryGetValue("vertices", out var verticesElement) ? ThreeValue.Decode<float[]>(verticesElement) : Vertices,
-			Indices = members.TryGetValue("indices", out var indicesElement) ? ThreeValue.Decode<float[]>(indicesElement) : Indices,
-			Radius = members.TryGetValue("radius", out var radiusElement) ? ThreeValue.Decode<float>(radiusElement) : Radius,
-			Detail = members.TryGetValue("detail", out var detailElement) ? ThreeValue.Decode<float>(detailElement) : Detail
+			Vertices = members.TryGetValue("vertices", out var verticesElement) ? ThreeValue.Decode<float[]>(verticesElement, context) : Vertices,
+			Indices = members.TryGetValue("indices", out var indicesElement) ? ThreeValue.Decode<float[]>(indicesElement, context) : Indices,
+			Radius = members.TryGetValue("radius", out var radiusElement) ? ThreeValue.Decode<float>(radiusElement, context) : Radius,
+			Detail = members.TryGetValue("detail", out var detailElement) ? ThreeValue.Decode<float>(detailElement, context) : Detail
 		};
 	}
 }

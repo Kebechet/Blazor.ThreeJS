@@ -40,13 +40,14 @@ public sealed record Box3JSON : IThreeStructure
 	/// default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new Box3JSON
 		{
-			Min = members.TryGetValue("min", out var minElement) ? ThreeValue.Decode<float[]>(minElement) : Min,
-			Max = members.TryGetValue("max", out var maxElement) ? ThreeValue.Decode<float[]>(maxElement) : Max
+			Min = members.TryGetValue("min", out var minElement) ? ThreeValue.Decode<float[]>(minElement, context) : Min,
+			Max = members.TryGetValue("max", out var maxElement) ? ThreeValue.Decode<float[]>(maxElement, context) : Max
 		};
 	}
 }

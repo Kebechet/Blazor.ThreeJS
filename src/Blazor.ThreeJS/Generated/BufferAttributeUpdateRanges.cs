@@ -40,13 +40,14 @@ public sealed record BufferAttributeUpdateRanges : IThreeStructure
 	/// builds is the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new BufferAttributeUpdateRanges
 		{
-			Start = members.TryGetValue("start", out var startElement) ? ThreeValue.Decode<float>(startElement) : Start,
-			Count = members.TryGetValue("count", out var countElement) ? ThreeValue.Decode<int>(countElement) : Count
+			Start = members.TryGetValue("start", out var startElement) ? ThreeValue.Decode<float>(startElement, context) : Start,
+			Count = members.TryGetValue("count", out var countElement) ? ThreeValue.Decode<int>(countElement, context) : Count
 		};
 	}
 }

@@ -41,13 +41,14 @@ public sealed record MorphTarget : IThreeStructure
 	/// default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new MorphTarget
 		{
-			Name = members.TryGetValue("name", out var nameElement) ? ThreeValue.Decode<string>(nameElement) : Name,
-			Vertices = members.TryGetValue("vertices", out var verticesElement) ? ThreeValue.Decode<Vector3[]>(verticesElement) : Vertices
+			Name = members.TryGetValue("name", out var nameElement) ? ThreeValue.Decode<string>(nameElement, context) : Name,
+			Vertices = members.TryGetValue("vertices", out var verticesElement) ? ThreeValue.Decode<Vector3[]>(verticesElement, context) : Vertices
 		};
 	}
 }

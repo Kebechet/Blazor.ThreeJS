@@ -9,6 +9,8 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 public sealed class NodeObjectLoader : ObjectLoader
 {
 	private readonly LoadingManager? _manager;
+	private Dictionary<string, NodeMaterial> _nodeMaterials;
+	private bool _isNodeMaterialsWritten;
 
 	/// <summary>Initializes a new <see cref="NodeObjectLoader"/>.</summary>
 	/// <param name="manager">Value forwarded to the <c>manager</c> constructor argument.</param>
@@ -47,6 +49,39 @@ public sealed class NodeObjectLoader : ObjectLoader
 	}
 
 	/// <summary>
+	/// The <c>nodeMaterials</c> property of the JavaScript-side object. Writing it records a
+	/// <c>nodeMaterials</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public Dictionary<string, NodeMaterial> NodeMaterials
+	{
+		get { return _nodeMaterials; }
+		set
+		{
+			if (_nodeMaterials == value)
+			{
+				return;
+			}
+
+			_nodeMaterials = value;
+			_isNodeMaterialsWritten = true;
+			RecordSet("nodeMaterials", value);
+		}
+	}
+
+	/// <summary>
+	/// Records a call to <c>setNodeMaterials</c> on the JavaScript-side object. This writes the same
+	/// three.js state as <see cref="NodeMaterials"/> and the mirror does not learn from it: afterwards
+	/// <c>NodeMaterials</c> still reports its previous value, and writing that value back records
+	/// nothing at all. Where the property exists, write the property.
+	/// </summary>
+	/// <param name="value">Value forwarded to the <c>value</c> argument.</param>
+	public void SetNodeMaterials(Dictionary<string, NodeMaterial> value)
+	{
+		RecordCall("setNodeMaterials", value);
+	}
+
+	/// <summary>
 	/// Attaches the objects <c>THREE.NodeObjectLoader</c> is constructed from, so their create ops
 	/// reach the batch before the one that references them by handle, then emits this object's own.
 	/// </summary>
@@ -56,5 +91,10 @@ public sealed class NodeObjectLoader : ObjectLoader
 		_manager?.AttachTo(batch);
 
 		base.EmitCreate(batch);
+
+		if (_isNodeMaterialsWritten)
+		{
+			batch.Set(Handle, "nodeMaterials", ThreeValue.Encode(_nodeMaterials));
+		}
 	}
 }

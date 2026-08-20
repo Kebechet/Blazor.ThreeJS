@@ -40,13 +40,14 @@ public sealed record SphereJSON : IThreeStructure
 	/// default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new SphereJSON
 		{
-			Radius = members.TryGetValue("radius", out var radiusElement) ? ThreeValue.Decode<float>(radiusElement) : Radius,
-			Center = members.TryGetValue("center", out var centerElement) ? ThreeValue.Decode<float[]>(centerElement) : Center
+			Radius = members.TryGetValue("radius", out var radiusElement) ? ThreeValue.Decode<float>(radiusElement, context) : Radius,
+			Center = members.TryGetValue("center", out var centerElement) ? ThreeValue.Decode<float[]>(centerElement, context) : Center
 		};
 	}
 }

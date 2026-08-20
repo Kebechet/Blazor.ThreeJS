@@ -52,16 +52,17 @@ public sealed record AnimationClipJSON : IThreeStructure
 	/// the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new AnimationClipJSON
 		{
-			Name = members.TryGetValue("name", out var nameElement) ? ThreeValue.Decode<string>(nameElement) : Name,
-			Duration = members.TryGetValue("duration", out var durationElement) ? ThreeValue.Decode<float>(durationElement) : Duration,
-			Tracks = members.TryGetValue("tracks", out var tracksElement) ? ThreeValue.Decode<KeyframeTrackJSON[]>(tracksElement) : Tracks,
-			Uuid = members.TryGetValue("uuid", out var uuidElement) ? ThreeValue.Decode<string>(uuidElement) : Uuid,
-			BlendMode = members.TryGetValue("blendMode", out var blendModeElement) ? ThreeValue.Decode<AnimationBlendMode>(blendModeElement) : BlendMode
+			Name = members.TryGetValue("name", out var nameElement) ? ThreeValue.Decode<string>(nameElement, context) : Name,
+			Duration = members.TryGetValue("duration", out var durationElement) ? ThreeValue.Decode<float>(durationElement, context) : Duration,
+			Tracks = members.TryGetValue("tracks", out var tracksElement) ? ThreeValue.Decode<KeyframeTrackJSON[]>(tracksElement, context) : Tracks,
+			Uuid = members.TryGetValue("uuid", out var uuidElement) ? ThreeValue.Decode<string>(uuidElement, context) : Uuid,
+			BlendMode = members.TryGetValue("blendMode", out var blendModeElement) ? ThreeValue.Decode<AnimationBlendMode>(blendModeElement, context) : BlendMode
 		};
 	}
 }

@@ -45,14 +45,15 @@ public sealed record FrenetFrames : IThreeStructure
 	/// default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new FrenetFrames
 		{
-			Tangents = members.TryGetValue("tangents", out var tangentsElement) ? ThreeValue.Decode<Vector3[]>(tangentsElement) : Tangents,
-			Normals = members.TryGetValue("normals", out var normalsElement) ? ThreeValue.Decode<Vector3[]>(normalsElement) : Normals,
-			Binormals = members.TryGetValue("binormals", out var binormalsElement) ? ThreeValue.Decode<Vector3[]>(binormalsElement) : Binormals
+			Tangents = members.TryGetValue("tangents", out var tangentsElement) ? ThreeValue.Decode<Vector3[]>(tangentsElement, context) : Tangents,
+			Normals = members.TryGetValue("normals", out var normalsElement) ? ThreeValue.Decode<Vector3[]>(normalsElement, context) : Normals,
+			Binormals = members.TryGetValue("binormals", out var binormalsElement) ? ThreeValue.Decode<Vector3[]>(binormalsElement, context) : Binormals
 		};
 	}
 }

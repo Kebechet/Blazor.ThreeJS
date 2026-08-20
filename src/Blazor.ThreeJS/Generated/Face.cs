@@ -3,24 +3,31 @@
 
 using System.Text.Json;
 using Kebechet.Blazor.ThreeJS.Core;
+using Kebechet.Blazor.ThreeJS.Math;
 
 namespace Kebechet.Blazor.ThreeJS.Objects;
 
 /// <summary>
-/// The shape three.js calls <c>HSL</c>. A plain value rather than a handle-backed object: three.js
+/// The shape three.js calls <c>Face</c>. A plain value rather than a handle-backed object: three.js
 /// declares it as a shape, and nothing on either side keeps a reference to one. It travels as its
 /// own members, under three.js's names for them.
 /// </summary>
-public sealed record HSL : IThreeStructure
+public sealed record Face : IThreeStructure
 {
-	/// <summary>three.js's <c>h</c>.</summary>
-	public float H { get; init; }
+	/// <summary>three.js's <c>a</c>.</summary>
+	public float A { get; init; }
 
-	/// <summary>three.js's <c>s</c>.</summary>
-	public float S { get; init; }
+	/// <summary>three.js's <c>b</c>.</summary>
+	public float B { get; init; }
 
-	/// <summary>three.js's <c>l</c>.</summary>
-	public float L { get; init; }
+	/// <summary>three.js's <c>c</c>.</summary>
+	public float C { get; init; }
+
+	/// <summary>three.js's <c>normal</c>.</summary>
+	public Vector3 Normal { get; init; }
+
+	/// <summary>three.js's <c>materialIndex</c>.</summary>
+	public int MaterialIndex { get; init; }
 
 	/// <summary>
 	/// This value's members, keyed by three.js's name for each. An optional member left unset is
@@ -31,15 +38,17 @@ public sealed record HSL : IThreeStructure
 	IReadOnlyDictionary<string, object?> IThreeStructure.ToWireMembers()
 	{
 		var members = new Dictionary<string, object?>(StringComparer.Ordinal);
-		members["h"] = H;
-		members["s"] = S;
-		members["l"] = L;
+		members["a"] = A;
+		members["b"] = B;
+		members["c"] = C;
+		members["normal"] = Normal;
+		members["materialIndex"] = MaterialIndex;
 
 		return members;
 	}
 
 	/// <summary>
-	/// Builds a <c>HSL</c> from the members the applier sent back. A member three.js did not carry
+	/// Builds a <c>Face</c> from the members the applier sent back. A member three.js did not carry
 	/// keeps this instance's own value, which for the blank instance the decoder builds is the C#
 	/// default - and an absent optional member is exactly that.
 	/// </summary>
@@ -48,11 +57,13 @@ public sealed record HSL : IThreeStructure
 	/// <returns>The value those members describe.</returns>
 	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
-		return new HSL
+		return new Face
 		{
-			H = members.TryGetValue("h", out var hElement) ? ThreeValue.Decode<float>(hElement, context) : H,
-			S = members.TryGetValue("s", out var sElement) ? ThreeValue.Decode<float>(sElement, context) : S,
-			L = members.TryGetValue("l", out var lElement) ? ThreeValue.Decode<float>(lElement, context) : L
+			A = members.TryGetValue("a", out var aElement) ? ThreeValue.Decode<float>(aElement, context) : A,
+			B = members.TryGetValue("b", out var bElement) ? ThreeValue.Decode<float>(bElement, context) : B,
+			C = members.TryGetValue("c", out var cElement) ? ThreeValue.Decode<float>(cElement, context) : C,
+			Normal = members.TryGetValue("normal", out var normalElement) ? ThreeValue.Decode<Vector3>(normalElement, context) : Normal,
+			MaterialIndex = members.TryGetValue("materialIndex", out var materialIndexElement) ? ThreeValue.Decode<int>(materialIndexElement, context) : MaterialIndex
 		};
 	}
 }

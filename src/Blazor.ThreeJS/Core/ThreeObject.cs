@@ -531,6 +531,30 @@ public abstract class ThreeObject
 	/// an object the declared return type does not describe, which a fresh wrapper would paper over by
 	/// producing a second mirror of one object.
 	/// </exception>
+	/// <summary>
+	/// Adopts a handle carried inside a structure, which is the one adoption a generated record makes.
+	/// <para>
+	/// Every raycast intersection names the object it hit, and that object has identity - a copy of its
+	/// fields would be a different thing. So the applier mints a handle for it and this resolves it back
+	/// to the mirror the context already holds, or wraps it where the context has never seen it.
+	/// </para>
+	/// </summary>
+	/// <typeparam name="TValue">Mirrored type the member is declared as.</typeparam>
+	/// <param name="context">Context the handle belongs to.</param>
+	/// <param name="member">Member that carried the reference, named in any failure.</param>
+	/// <param name="reference">The reference the applier answered with.</param>
+	/// <param name="adopt">Builds the wrapper for a handle this context has never seen.</param>
+	/// <returns>The mirror, or <see langword="null"/> when three.js carried nothing.</returns>
+	internal static TValue? AdoptStructureMember<TValue>(
+		ThreeContext context,
+		string member,
+		ThreeObjectReference? reference,
+		Func<ThreeBatch, int, TValue> adopt)
+		where TValue : ThreeObject
+	{
+		return AdoptTyped(context, member, reference, adopt);
+	}
+
 	private static TValue? AdoptTyped<TValue>(
 		ThreeContext context,
 		string member,
@@ -862,6 +886,28 @@ public abstract class ThreeObject
 			return;
 		}
 
+		// A structure or a dictionary can carry mirrored objects too - a loader's texture table is
+		// `{ [name]: Texture }` - and each of those has to exist before the op that names it by handle.
+		if (value is IThreeStructure structure)
+		{
+			foreach (var member in structure.ToWireMembers().Values)
+			{
+				AttachMirroredValue(batch, member);
+			}
+
+			return;
+		}
+
+		if (value is System.Collections.IDictionary map)
+		{
+			foreach (var entry in map.Values)
+			{
+				AttachMirroredValue(batch, entry);
+			}
+
+			return;
+		}
+
 		if (value is string || value is not System.Collections.IEnumerable sequence)
 		{
 			return;
@@ -869,10 +915,7 @@ public abstract class ThreeObject
 
 		foreach (var element in sequence)
 		{
-			if (element is ThreeObject mirroredElement)
-			{
-				mirroredElement.AttachTo(batch);
-			}
+			AttachMirroredValue(batch, element);
 		}
 	}
 

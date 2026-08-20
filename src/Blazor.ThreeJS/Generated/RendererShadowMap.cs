@@ -44,14 +44,15 @@ public sealed record RendererShadowMap : IThreeStructure
 	/// the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new RendererShadowMap
 		{
-			Enabled = members.TryGetValue("enabled", out var enabledElement) ? ThreeValue.Decode<bool>(enabledElement) : Enabled,
-			Transmitted = members.TryGetValue("transmitted", out var transmittedElement) ? ThreeValue.Decode<bool>(transmittedElement) : Transmitted,
-			Type = members.TryGetValue("type", out var typeElement) ? ThreeValue.Decode<ShadowMapType>(typeElement) : Type
+			Enabled = members.TryGetValue("enabled", out var enabledElement) ? ThreeValue.Decode<bool>(enabledElement, context) : Enabled,
+			Transmitted = members.TryGetValue("transmitted", out var transmittedElement) ? ThreeValue.Decode<bool>(transmittedElement, context) : Transmitted,
+			Type = members.TryGetValue("type", out var typeElement) ? ThreeValue.Decode<ShadowMapType>(typeElement, context) : Type
 		};
 	}
 }

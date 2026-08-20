@@ -52,16 +52,17 @@ public sealed record CapsuleGeometryParameters : IThreeStructure
 	/// builds is the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new CapsuleGeometryParameters
 		{
-			Radius = members.TryGetValue("radius", out var radiusElement) ? ThreeValue.Decode<float>(radiusElement) : Radius,
-			Height = members.TryGetValue("height", out var heightElement) ? ThreeValue.Decode<float>(heightElement) : Height,
-			CapSegments = members.TryGetValue("capSegments", out var capSegmentsElement) ? ThreeValue.Decode<int>(capSegmentsElement) : CapSegments,
-			RadialSegments = members.TryGetValue("radialSegments", out var radialSegmentsElement) ? ThreeValue.Decode<int>(radialSegmentsElement) : RadialSegments,
-			HeightSegments = members.TryGetValue("heightSegments", out var heightSegmentsElement) ? ThreeValue.Decode<int>(heightSegmentsElement) : HeightSegments
+			Radius = members.TryGetValue("radius", out var radiusElement) ? ThreeValue.Decode<float>(radiusElement, context) : Radius,
+			Height = members.TryGetValue("height", out var heightElement) ? ThreeValue.Decode<float>(heightElement, context) : Height,
+			CapSegments = members.TryGetValue("capSegments", out var capSegmentsElement) ? ThreeValue.Decode<int>(capSegmentsElement, context) : CapSegments,
+			RadialSegments = members.TryGetValue("radialSegments", out var radialSegmentsElement) ? ThreeValue.Decode<int>(radialSegmentsElement, context) : RadialSegments,
+			HeightSegments = members.TryGetValue("heightSegments", out var heightSegmentsElement) ? ThreeValue.Decode<int>(heightSegmentsElement, context) : HeightSegments
 		};
 	}
 }

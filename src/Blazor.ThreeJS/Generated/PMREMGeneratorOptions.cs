@@ -48,13 +48,14 @@ public sealed record PMREMGeneratorOptions : IThreeStructure
 	/// is the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new PMREMGeneratorOptions
 		{
-			Size = members.TryGetValue("size", out var sizeElement) ? ThreeValue.Decode<float?>(sizeElement) : Size,
-			Position = members.TryGetValue("position", out var positionElement) ? ThreeValue.Decode<Vector3?>(positionElement) : Position
+			Size = members.TryGetValue("size", out var sizeElement) ? ThreeValue.Decode<float?>(sizeElement, context) : Size,
+			Position = members.TryGetValue("position", out var positionElement) ? ThreeValue.Decode<Vector3?>(positionElement, context) : Position
 		};
 	}
 }

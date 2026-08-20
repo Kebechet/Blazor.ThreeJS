@@ -60,18 +60,19 @@ public sealed record SphereGeometryParameters : IThreeStructure
 	/// builds is the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new SphereGeometryParameters
 		{
-			Radius = members.TryGetValue("radius", out var radiusElement) ? ThreeValue.Decode<float>(radiusElement) : Radius,
-			WidthSegments = members.TryGetValue("widthSegments", out var widthSegmentsElement) ? ThreeValue.Decode<int>(widthSegmentsElement) : WidthSegments,
-			HeightSegments = members.TryGetValue("heightSegments", out var heightSegmentsElement) ? ThreeValue.Decode<int>(heightSegmentsElement) : HeightSegments,
-			PhiStart = members.TryGetValue("phiStart", out var phiStartElement) ? ThreeValue.Decode<float>(phiStartElement) : PhiStart,
-			PhiLength = members.TryGetValue("phiLength", out var phiLengthElement) ? ThreeValue.Decode<float>(phiLengthElement) : PhiLength,
-			ThetaStart = members.TryGetValue("thetaStart", out var thetaStartElement) ? ThreeValue.Decode<float>(thetaStartElement) : ThetaStart,
-			ThetaLength = members.TryGetValue("thetaLength", out var thetaLengthElement) ? ThreeValue.Decode<float>(thetaLengthElement) : ThetaLength
+			Radius = members.TryGetValue("radius", out var radiusElement) ? ThreeValue.Decode<float>(radiusElement, context) : Radius,
+			WidthSegments = members.TryGetValue("widthSegments", out var widthSegmentsElement) ? ThreeValue.Decode<int>(widthSegmentsElement, context) : WidthSegments,
+			HeightSegments = members.TryGetValue("heightSegments", out var heightSegmentsElement) ? ThreeValue.Decode<int>(heightSegmentsElement, context) : HeightSegments,
+			PhiStart = members.TryGetValue("phiStart", out var phiStartElement) ? ThreeValue.Decode<float>(phiStartElement, context) : PhiStart,
+			PhiLength = members.TryGetValue("phiLength", out var phiLengthElement) ? ThreeValue.Decode<float>(phiLengthElement, context) : PhiLength,
+			ThetaStart = members.TryGetValue("thetaStart", out var thetaStartElement) ? ThreeValue.Decode<float>(thetaStartElement, context) : ThetaStart,
+			ThetaLength = members.TryGetValue("thetaLength", out var thetaLengthElement) ? ThreeValue.Decode<float>(thetaLengthElement, context) : ThetaLength
 		};
 	}
 }

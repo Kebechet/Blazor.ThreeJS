@@ -166,7 +166,7 @@ internal static class ThreeValue
 	/// read must never produce.
 	/// </exception>
 	/// <exception cref="NotSupportedException">Thrown for a <c>$t</c> tag this decoder has no arm for.</exception>
-	public static TValue Decode<TValue>(JsonElement? element)
+	public static TValue Decode<TValue>(JsonElement? element, ThreeContext? context = null)
 	{
 		if (element is not { } value || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
 		{
@@ -178,7 +178,7 @@ internal static class ThreeValue
 		// binds nothing and yields an array of zeroed instances — a fabricated answer with no error.
 		if (value.ValueKind == JsonValueKind.Array && typeof(TValue).IsArray)
 		{
-			return (TValue) DecodeArray(typeof(TValue).GetElementType()!, value);
+			return (TValue) DecodeArray(typeof(TValue).GetElementType()!, value, context);
 		}
 
 		// A string-valued enum comes back as the token three.js compares against, which the plain
@@ -222,7 +222,7 @@ internal static class ThreeValue
 			var map = (System.Collections.IDictionary) Activator.CreateInstance(typeof(TValue))!;
 			foreach (var entry in members.EnumerateObject())
 			{
-				map[entry.Name] = DecodeMember(valueType, entry.Value);
+				map[entry.Name] = DecodeMember(valueType, entry.Value, context);
 			}
 
 			return (TValue) map;
@@ -235,9 +235,9 @@ internal static class ThreeValue
 			// own member names and the plain deserializer knows only the C# ones. `new()` is enough of a
 			// constraint to state here: every implementation is a generated record with one.
 			var blank = (IThreeStructure) Activator.CreateInstance(typeof(TValue))!;
-			return (TValue) blank.FromWireMembers(members
-				.EnumerateObject()
-				.ToDictionary(x => x.Name, x => x.Value, StringComparer.Ordinal));
+			return (TValue) blank.FromWireMembers(
+				members.EnumerateObject().ToDictionary(x => x.Name, x => x.Value, StringComparer.Ordinal),
+				context);
 		}
 
 		if (!value.TryGetProperty(ThreeWireFormat.TagKey, out var tag))
@@ -316,13 +316,14 @@ internal static class ThreeValue
 	/// </summary>
 	/// <param name="valueType">The type to decode into.</param>
 	/// <param name="element">The wire value.</param>
+	/// <param name="context">Context a nested mirrored object is adopted into.</param>
 	/// <returns>The decoded value.</returns>
-	private static object? DecodeMember(Type valueType, JsonElement element)
+	private static object? DecodeMember(Type valueType, JsonElement element, ThreeContext? context)
 	{
 		return typeof(ThreeValue)
 			.GetMethod(nameof(Decode), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)!
 			.MakeGenericMethod(valueType)
-			.Invoke(null, [(JsonElement?) element]);
+			.Invoke(null, [(JsonElement?) element, context]);
 	}
 
 	public static object? OrUnspecified(object? value)
@@ -429,13 +430,13 @@ internal static class ThreeValue
 	/// <param name="elementType">C# type of one element.</param>
 	/// <param name="array">The JSON array the applier sent back.</param>
 	/// <returns>The decoded array, boxed as <see cref="object"/> for the generic caller to cast.</returns>
-	private static object DecodeArray(Type elementType, JsonElement array)
+	private static object DecodeArray(Type elementType, JsonElement array, ThreeContext? context)
 	{
 		var decoded = Array.CreateInstance(elementType, array.GetArrayLength());
 		var index = 0;
 		foreach (var element in array.EnumerateArray())
 		{
-			decoded.SetValue(DecodeElement(elementType, element), index);
+			decoded.SetValue(DecodeElement(elementType, element, context), index);
 			index++;
 		}
 
@@ -446,11 +447,20 @@ internal static class ThreeValue
 	/// <param name="elementType">C# type of the element.</param>
 	/// <param name="element">The element as it arrived.</param>
 	/// <returns>The decoded element.</returns>
-	private static object? DecodeElement(Type elementType, JsonElement element)
+	private static object? DecodeElement(Type elementType, JsonElement element, ThreeContext? context)
 	{
 		if (element.ValueKind == JsonValueKind.Object && element.TryGetProperty(ThreeWireFormat.TagKey, out var tag))
 		{
 			return DecodeMathValue(tag.GetString(), element);
+		}
+
+		// Back through the full decode rather than deserialized here, so an element that is itself a
+		// structure, a dictionary or a typed array is bound the way it would be on its own. Plain
+		// deserialization binds none of those: a `$o`-tagged intersection has no field called `$o` to
+		// match, so every member would come back at its C# default.
+		if (element.ValueKind == JsonValueKind.Object)
+		{
+			return DecodeMember(elementType, element, context);
 		}
 
 		return element.Deserialize(elementType, _readOptions);

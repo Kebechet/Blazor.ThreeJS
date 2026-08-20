@@ -184,4 +184,54 @@ public class StructureValueTests
 		parameters.Width.ShouldBe(2f);
 		parameters.Depth.ShouldBe(4f);
 	}
+
+	[Fact]
+	public async Task Raycaster_Intersection_HandsBackTheMirrorTheContextAlreadyHoldsForTheObjectItHit()
+	{
+		// Arrange: an intersection names the object it hit, and that object has identity - a copy of its
+		// fields would be a different thing. The applier mints a handle for it inside the structure, and
+		// a handle this context already mirrors resolves back to that same C# object.
+		var mesh = new Mesh(new BoxGeometry(), new MeshStandardMaterial());
+		var module = new RecordingJsObjectReference();
+		var context = new ThreeContext(module, contextId: 1);
+		context.Attach(mesh);
+
+		var raycaster = new Raycaster();
+		context.Attach(raycaster);
+
+		module.RespondToBatch = ops => new ThreeBatchResponse
+		{
+			Results = ops
+				.Where(x => x.Kind is ThreeOpKind.Read)
+				.Select(x => new ThreeReadResult
+				{
+					RequestId = x.RequestId,
+					Value = JsonDocument.Parse(
+						"[{\"$o\":{\"distance\":4,\"point\":{\"$t\":\"Vector3\",\"v\":[0,0,1]},"
+						+ "\"object\":{\"$ref\":" + mesh.Handle + ",\"t\":\"Mesh\"}}}]").RootElement
+				})
+				.ToList()
+		};
+
+		// Act
+		var hits = await raycaster.IntersectObjectAsync(mesh, recursive: true, optionalTarget: []);
+
+		// Assert
+		var hit = hits.ShouldHaveSingleItem();
+		hit.Distance.ShouldBe(4f);
+		hit.Point!.Z.ShouldBe(1f);
+		hit.Object.ShouldBeSameAs(mesh);
+	}
+
+	[Fact]
+	public void Intersection_DecodedWithoutAContext_SaysWhyRatherThanAnsweringWithAHole()
+	{
+		// A handle names a real object on the JavaScript side. Answering null would be indistinguishable
+		// from three.js having carried nothing there, so this faults and names the member.
+		var element = JsonDocument.Parse("""{"$o":{"distance":4,"object":{"$ref":-7,"t":"Mesh"}}}""").RootElement;
+
+		var thrown = Should.Throw<InvalidOperationException>(() => ThreeValue.Decode<Intersection>(element));
+
+		thrown.Message.ShouldContain("object");
+	}
 }

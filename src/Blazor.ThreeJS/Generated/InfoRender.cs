@@ -60,18 +60,19 @@ public sealed record InfoRender : IThreeStructure
 	/// default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new InfoRender
 		{
-			Calls = members.TryGetValue("calls", out var callsElement) ? ThreeValue.Decode<float>(callsElement) : Calls,
-			FrameCalls = members.TryGetValue("frameCalls", out var frameCallsElement) ? ThreeValue.Decode<float>(frameCallsElement) : FrameCalls,
-			DrawCalls = members.TryGetValue("drawCalls", out var drawCallsElement) ? ThreeValue.Decode<float>(drawCallsElement) : DrawCalls,
-			Triangles = members.TryGetValue("triangles", out var trianglesElement) ? ThreeValue.Decode<float>(trianglesElement) : Triangles,
-			Points = members.TryGetValue("points", out var pointsElement) ? ThreeValue.Decode<float>(pointsElement) : Points,
-			Lines = members.TryGetValue("lines", out var linesElement) ? ThreeValue.Decode<float>(linesElement) : Lines,
-			Timestamp = members.TryGetValue("timestamp", out var timestampElement) ? ThreeValue.Decode<float>(timestampElement) : Timestamp
+			Calls = members.TryGetValue("calls", out var callsElement) ? ThreeValue.Decode<float>(callsElement, context) : Calls,
+			FrameCalls = members.TryGetValue("frameCalls", out var frameCallsElement) ? ThreeValue.Decode<float>(frameCallsElement, context) : FrameCalls,
+			DrawCalls = members.TryGetValue("drawCalls", out var drawCallsElement) ? ThreeValue.Decode<float>(drawCallsElement, context) : DrawCalls,
+			Triangles = members.TryGetValue("triangles", out var trianglesElement) ? ThreeValue.Decode<float>(trianglesElement, context) : Triangles,
+			Points = members.TryGetValue("points", out var pointsElement) ? ThreeValue.Decode<float>(pointsElement, context) : Points,
+			Lines = members.TryGetValue("lines", out var linesElement) ? ThreeValue.Decode<float>(linesElement, context) : Lines,
+			Timestamp = members.TryGetValue("timestamp", out var timestampElement) ? ThreeValue.Decode<float>(timestampElement, context) : Timestamp
 		};
 	}
 }

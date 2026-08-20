@@ -64,17 +64,18 @@ public sealed record BufferAttributeJSON : IThreeStructure
 	/// is the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new BufferAttributeJSON
 		{
-			ItemSize = members.TryGetValue("itemSize", out var itemSizeElement) ? ThreeValue.Decode<float>(itemSizeElement) : ItemSize,
-			Type = members.TryGetValue("type", out var typeElement) ? ThreeValue.Decode<string>(typeElement) : Type,
-			Array = members.TryGetValue("array", out var arrayElement) ? ThreeValue.Decode<float[]>(arrayElement) : Array,
-			Normalized = members.TryGetValue("normalized", out var normalizedElement) ? ThreeValue.Decode<bool>(normalizedElement) : Normalized,
-			Name = members.TryGetValue("name", out var nameElement) ? ThreeValue.Decode<string?>(nameElement) : Name,
-			Usage = members.TryGetValue("usage", out var usageElement) ? ThreeValue.Decode<Usage?>(usageElement) : Usage
+			ItemSize = members.TryGetValue("itemSize", out var itemSizeElement) ? ThreeValue.Decode<float>(itemSizeElement, context) : ItemSize,
+			Type = members.TryGetValue("type", out var typeElement) ? ThreeValue.Decode<string>(typeElement, context) : Type,
+			Array = members.TryGetValue("array", out var arrayElement) ? ThreeValue.Decode<float[]>(arrayElement, context) : Array,
+			Normalized = members.TryGetValue("normalized", out var normalizedElement) ? ThreeValue.Decode<bool>(normalizedElement, context) : Normalized,
+			Name = members.TryGetValue("name", out var nameElement) ? ThreeValue.Decode<string?>(nameElement, context) : Name,
+			Usage = members.TryGetValue("usage", out var usageElement) ? ThreeValue.Decode<Usage?>(usageElement, context) : Usage
 		};
 	}
 }

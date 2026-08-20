@@ -457,7 +457,10 @@ export function applyOp(context, op) {
 // components C# can already hold. Only what `encode` has no form for becomes a reference.
 function encodeResult(context, op, value) {
     if (op.n !== true || value === null || typeof value !== 'object' || isEncodableValue(value)) {
-        return encode(value);
+        // The context and the flag travel down with it: a structure the read answers with may itself
+        // carry three.js objects - every raycast intersection names the object it hit - and those need
+        // handles minted the same way the top-level answer would.
+        return encode(value, context, op.n === true);
     }
 
     return {
@@ -642,7 +645,7 @@ function decode(context, value) {
 // object would arrive in C# as a bag of numbers that deserializes onto whichever fields happen to
 // match — a fabricated value where the caller expects a read one. The refusal mirrors the same rule
 // on the C# encode side.
-function encode(value) {
+function encode(value, context, mintsHandle) {
     if (value === undefined || value === null) {
         return null;
     }
@@ -665,7 +668,7 @@ function encode(value) {
     }
 
     if (Array.isArray(value)) {
-        return value.map(encode);
+        return value.map(element => encode(element, context, mintsHandle));
     }
 
     if (value.isEuler) {
@@ -690,10 +693,17 @@ function encode(value) {
     if (prototype === Object.prototype || prototype === null) {
         const members = {};
         for (const [key, member] of Object.entries(value)) {
-            members[key] = encode(member);
+            members[key] = encode(member, context, mintsHandle);
         }
 
         return { [STRUCTURE_KEY]: members };
+    }
+
+    // A three.js object nested inside something the read is answering with. Reached only when the read
+    // asked for handles: `Raycaster.intersectObject` answers `{ distance, point, object }`, and `object`
+    // is the mesh that was hit - a real object with identity, which a copy of its fields would not be.
+    if (mintsHandle && context !== undefined) {
+        return { $ref: handleFor(context, value), t: describeType(value) };
     }
 
     throw new Error(`A '${value.constructor ? value.constructor.name : type}' value has no wire encoding, so it cannot be read back`);

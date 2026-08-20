@@ -44,14 +44,15 @@ public sealed record CompressedTextureMipmap : IThreeStructure
 	/// builds is the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new CompressedTextureMipmap
 		{
-			Data = members.TryGetValue("data", out var dataElement) ? ThreeValue.Decode<TypedArray>(dataElement) : Data,
-			Width = members.TryGetValue("width", out var widthElement) ? ThreeValue.Decode<float>(widthElement) : Width,
-			Height = members.TryGetValue("height", out var heightElement) ? ThreeValue.Decode<float>(heightElement) : Height
+			Data = members.TryGetValue("data", out var dataElement) ? ThreeValue.Decode<TypedArray>(dataElement, context) : Data,
+			Width = members.TryGetValue("width", out var widthElement) ? ThreeValue.Decode<float>(widthElement, context) : Width,
+			Height = members.TryGetValue("height", out var heightElement) ? ThreeValue.Decode<float>(heightElement, context) : Height
 		};
 	}
 }

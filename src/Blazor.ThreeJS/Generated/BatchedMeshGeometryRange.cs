@@ -64,19 +64,20 @@ public sealed record BatchedMeshGeometryRange : IThreeStructure
 	/// builds is the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new BatchedMeshGeometryRange
 		{
-			VertexStart = members.TryGetValue("vertexStart", out var vertexStartElement) ? ThreeValue.Decode<float>(vertexStartElement) : VertexStart,
-			VertexCount = members.TryGetValue("vertexCount", out var vertexCountElement) ? ThreeValue.Decode<int>(vertexCountElement) : VertexCount,
-			ReservedVertexCount = members.TryGetValue("reservedVertexCount", out var reservedVertexCountElement) ? ThreeValue.Decode<int>(reservedVertexCountElement) : ReservedVertexCount,
-			IndexStart = members.TryGetValue("indexStart", out var indexStartElement) ? ThreeValue.Decode<float>(indexStartElement) : IndexStart,
-			IndexCount = members.TryGetValue("indexCount", out var indexCountElement) ? ThreeValue.Decode<int>(indexCountElement) : IndexCount,
-			ReservedIndexCount = members.TryGetValue("reservedIndexCount", out var reservedIndexCountElement) ? ThreeValue.Decode<int>(reservedIndexCountElement) : ReservedIndexCount,
-			Start = members.TryGetValue("start", out var startElement) ? ThreeValue.Decode<float>(startElement) : Start,
-			Count = members.TryGetValue("count", out var countElement) ? ThreeValue.Decode<int>(countElement) : Count
+			VertexStart = members.TryGetValue("vertexStart", out var vertexStartElement) ? ThreeValue.Decode<float>(vertexStartElement, context) : VertexStart,
+			VertexCount = members.TryGetValue("vertexCount", out var vertexCountElement) ? ThreeValue.Decode<int>(vertexCountElement, context) : VertexCount,
+			ReservedVertexCount = members.TryGetValue("reservedVertexCount", out var reservedVertexCountElement) ? ThreeValue.Decode<int>(reservedVertexCountElement, context) : ReservedVertexCount,
+			IndexStart = members.TryGetValue("indexStart", out var indexStartElement) ? ThreeValue.Decode<float>(indexStartElement, context) : IndexStart,
+			IndexCount = members.TryGetValue("indexCount", out var indexCountElement) ? ThreeValue.Decode<int>(indexCountElement, context) : IndexCount,
+			ReservedIndexCount = members.TryGetValue("reservedIndexCount", out var reservedIndexCountElement) ? ThreeValue.Decode<int>(reservedIndexCountElement, context) : ReservedIndexCount,
+			Start = members.TryGetValue("start", out var startElement) ? ThreeValue.Decode<float>(startElement, context) : Start,
+			Count = members.TryGetValue("count", out var countElement) ? ThreeValue.Decode<int>(countElement, context) : Count
 		};
 	}
 }

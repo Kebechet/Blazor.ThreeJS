@@ -59,6 +59,17 @@ public sealed class ShapeGeometry : BufferGeometry
 	}
 
 	/// <summary>
+	/// An object with a property for each of the constructor parameters. Read-only in three.js, so it
+	/// is read on demand rather than mirrored: records a get op, sends it behind every write already
+	/// pending, and completes with the value <c>parameters</c> held.
+	/// </summary>
+	/// <returns>The value <c>parameters</c> held, once the JavaScript side has answered.</returns>
+	public Task<ShapeGeometryParameters> ParametersAsync()
+	{
+		return GetAsync<ShapeGeometryParameters>("parameters");
+	}
+
+	/// <summary>
 	/// Attaches the objects <c>THREE.ShapeGeometry</c> is constructed from, so their create ops reach
 	/// the batch before the one that references them by handle, then emits this object's own.
 	/// </summary>

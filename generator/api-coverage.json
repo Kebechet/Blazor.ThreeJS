@@ -8,13 +8,13 @@
     "blockedClasses": 30,
     "reachableClasses": 264,
     "members": 3648,
-    "mirroredState": 1149,
-    "commands": 765,
-    "asyncQueries": 866,
+    "mirroredState": 1153,
+    "commands": 770,
+    "asyncQueries": 870,
     "untypedObjectQueries": 11,
-    "skippedMembers": 868,
+    "skippedMembers": 855,
     "reachableMembers": 2439,
-    "generatedMembers": 1779,
+    "generatedMembers": 1791,
     "strandedMembers": 1209
   },
   "classes": [
@@ -3939,16 +3939,16 @@
       "members": 42
     },
     {
-      "category": "AnonymousObjectType",
-      "members": 40
-    },
-    {
       "category": "NotInstanceApi",
       "members": 38
     },
     {
       "category": "OptionsInterface",
-      "members": 34
+      "members": 31
+    },
+    {
+      "category": "AnonymousObjectType",
+      "members": 30
     },
     {
       "category": "NotExported",
@@ -12255,9 +12255,8 @@
       "member": "levels",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`Array<{ /** The Object3D to display at this level. */ object: Object3D; /** The distance at which to display this level of detail. Expects a `Float`. */ distance: number; /** Threshold used to avoid flickering at LOD boundaries, as a fraction of distance. Expects a `Float`. */ hysteresis: number; }>` is an array whose element type cannot be mapped: `{ /** The Object3D to display at this level. */ object: Object3D; /** The distance at which to display this level of detail. Expects a `Float`. */ distance: number; /** Threshold used to avoid flickering at LOD boundaries, as a fraction of distance. Expects a `Float`. */ hysteresis: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "LODLevels[]"
     },
     {
       "class": "LOD",
@@ -14652,9 +14651,8 @@
       "member": "textures",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ [key: string]: Texture }` is a dictionary whose values cannot be mapped: they are not values the wire carries",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "Dictionary<string, Texture>"
     },
     {
       "class": "MaterialLoader",
@@ -14670,9 +14668,7 @@
       "member": "setTextures",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'textures': `{ [key: string]: Texture }` is a dictionary whose values cannot be mapped: they are not values the wire carries",
-      "category": "AnonymousObjectType"
+      "bucket": "Command"
     },
     {
       "class": "MaterialLoader",
@@ -20641,9 +20637,8 @@
       "member": "textures",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ [key: string]: Texture }` is a dictionary whose values cannot be mapped: they are not values the wire carries",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "Dictionary<string, Texture>"
     },
     {
       "class": "NodeLoader",
@@ -20677,9 +20672,7 @@
       "member": "setTextures",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'textures': `{ [key: string]: Texture }` is a dictionary whose values cannot be mapped: they are not values the wire carries",
-      "category": "AnonymousObjectType"
+      "bucket": "Command"
     },
     {
       "class": "NodeLoader",
@@ -21158,9 +21151,8 @@
       "member": "nodeMaterials",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ [type: string]: NodeMaterial }` is a dictionary whose values cannot be mapped: they are not values the wire carries",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "Dictionary<string, NodeMaterial>"
     },
     {
       "class": "NodeMaterialLoader",
@@ -21176,9 +21168,7 @@
       "member": "setNodeMaterials",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'value': `{ [type: string]: NodeMaterial }` is a dictionary whose values cannot be mapped: they are not values the wire carries",
-      "category": "AnonymousObjectType"
+      "bucket": "Command"
     },
     {
       "class": "NodeMaterialObserver",
@@ -21243,9 +21233,8 @@
       "member": "nodeMaterials",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ [type: string]: NodeMaterial }` is a dictionary whose values cannot be mapped: they are not values the wire carries",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "Dictionary<string, NodeMaterial>"
     },
     {
       "class": "NodeObjectLoader",
@@ -21261,9 +21250,7 @@
       "member": "setNodeMaterials",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'value': `{ [type: string]: NodeMaterial }` is a dictionary whose values cannot be mapped: they are not values the wire carries",
-      "category": "AnonymousObjectType"
+      "bucket": "Command"
     },
     {
       "class": "NodeObjectLoader",
@@ -21993,9 +21980,7 @@
       "member": "raycast",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'intersects': `Intersection[]` is an array whose element type cannot be mapped: `Intersection` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "Object3D",
@@ -24860,18 +24845,16 @@
       "member": "intersectObject",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `Array<Intersection<TIntersected>>` is an array whose element type cannot be mapped: `Intersection<TIntersected>` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "AsyncQuery",
+      "type": "Intersection[]"
     },
     {
       "class": "Raycaster",
       "member": "intersectObjects",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `Array<Intersection<TIntersected>>` is an array whose element type cannot be mapped: `Intersection<TIntersected>` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "AsyncQuery",
+      "type": "Intersection[]"
     },
     {
       "class": "ReadbackBuffer",
@@ -26610,9 +26593,8 @@
       "member": "parameters",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ readonly shapes: Shape | Shape[]; readonly curveSegments: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "ShapeGeometryParameters"
     },
     {
       "class": "ShapeGeometry",

@@ -36,12 +36,13 @@ public sealed record XRHandInputState : IThreeStructure
 	/// the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new XRHandInputState
 		{
-			Pinching = members.TryGetValue("pinching", out var pinchingElement) ? ThreeValue.Decode<bool>(pinchingElement) : Pinching
+			Pinching = members.TryGetValue("pinching", out var pinchingElement) ? ThreeValue.Decode<bool>(pinchingElement, context) : Pinching
 		};
 	}
 }

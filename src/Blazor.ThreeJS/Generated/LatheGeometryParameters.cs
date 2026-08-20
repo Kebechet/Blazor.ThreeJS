@@ -49,15 +49,16 @@ public sealed record LatheGeometryParameters : IThreeStructure
 	/// builds is the C# default - and an absent optional member is exactly that.
 	/// </summary>
 	/// <param name="members">The decoded members, keyed by three.js's name for each.</param>
+	/// <param name="context">Context a member that is itself a mirrored object is adopted into.</param>
 	/// <returns>The value those members describe.</returns>
-	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)
+	IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)
 	{
 		return new LatheGeometryParameters
 		{
-			Points = members.TryGetValue("points", out var pointsElement) ? ThreeValue.Decode<Vector2[]>(pointsElement) : Points,
-			Segments = members.TryGetValue("segments", out var segmentsElement) ? ThreeValue.Decode<int>(segmentsElement) : Segments,
-			PhiStart = members.TryGetValue("phiStart", out var phiStartElement) ? ThreeValue.Decode<float>(phiStartElement) : PhiStart,
-			PhiLength = members.TryGetValue("phiLength", out var phiLengthElement) ? ThreeValue.Decode<float>(phiLengthElement) : PhiLength
+			Points = members.TryGetValue("points", out var pointsElement) ? ThreeValue.Decode<Vector2[]>(pointsElement, context) : Points,
+			Segments = members.TryGetValue("segments", out var segmentsElement) ? ThreeValue.Decode<int>(segmentsElement, context) : Segments,
+			PhiStart = members.TryGetValue("phiStart", out var phiStartElement) ? ThreeValue.Decode<float>(phiStartElement, context) : PhiStart,
+			PhiLength = members.TryGetValue("phiLength", out var phiLengthElement) ? ThreeValue.Decode<float>(phiLengthElement, context) : PhiLength
 		};
 	}
 }

@@ -44,6 +44,7 @@ internal sealed class StructureEmitter
 				{
 					MemberName = x.Name,
 					NumericKind = x.NumericKind,
+					TypeParameters = irInterface.TypeParameters,
 					DeclaringClassName = irInterface.Name
 				}),
 				x.IsOptional,
@@ -179,8 +180,9 @@ internal sealed class StructureEmitter
 			"A member three.js did not carry keeps this instance's own value, which for the blank instance the decoder builds is the C# default - and an absent optional member is exactly that.");
 
 		DocCommentEmitter.WriteParam(writer, "members", "The decoded members, keyed by three.js's name for each.");
+		DocCommentEmitter.WriteParam(writer, "context", "Context a member that is itself a mirrored object is adopted into.");
 		DocCommentEmitter.WriteReturns(writer, "The value those members describe.");
-		writer.WriteLine("IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members)");
+		writer.WriteLine("IThreeStructure IThreeStructure.FromWireMembers(IReadOnlyDictionary<string, JsonElement> members, ThreeContext? context)");
 		writer.WriteLine("{");
 		writer.Indent();
 		writer.WriteLine($"return new {typeName}");
@@ -189,9 +191,28 @@ internal sealed class StructureEmitter
 		foreach (var (index, member) in members.Index())
 		{
 			var comma = index == members.Count - 1 ? string.Empty : ",";
+			if (StructureCatalog.IsMirroredObject(member.Mapping))
+			{
+				// A handle, not a value. Resolved back to the mirror the context already holds where it has
+				// one, so an intersection naming a mesh hands back that mesh rather than a second wrapper
+				// of it - and faulting where there is no context, since a hole would be indistinguishable
+				// from three.js having carried nothing.
+				var adopt = EmitterConfig.AdoptionSubstituteTypeNames.TryGetValue(member.BareTypeName, out var substitute)
+					? $"(adoptedBatch, adoptedHandle) => new {substitute}(adoptedBatch, adoptedHandle, \"{member.BareTypeName}\")"
+					: $"(adoptedBatch, adoptedHandle) => new {member.BareTypeName}(adoptedBatch, adoptedHandle)";
+
+				writer.WriteLine(
+					$"{member.CSharpName} = members.TryGetValue(\"{member.Name}\", out var {member.LocalName})" +
+					$" ? ThreeObject.AdoptStructureMember<{member.BareTypeName}>(" +
+					$"ThreeStructure.RequireContext(context, \"{member.Name}\"), \"{member.Name}\", " +
+					$"ThreeValue.Decode<ThreeObjectReference?>({member.LocalName}), {adopt})" +
+					$" : {member.CSharpName}{comma}");
+				continue;
+			}
+
 			writer.WriteLine(
 				$"{member.CSharpName} = members.TryGetValue(\"{member.Name}\", out var {member.LocalName})" +
-				$" ? ThreeValue.Decode<{member.CSharpTypeName}>({member.LocalName})" +
+				$" ? ThreeValue.Decode<{member.CSharpTypeName}>({member.LocalName}, context)" +
 				$" : {member.CSharpName}{comma}");
 		}
 

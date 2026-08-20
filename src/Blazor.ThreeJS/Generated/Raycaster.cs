@@ -230,6 +230,48 @@ public sealed class Raycaster : ThreeObject
 	}
 
 	/// <summary>
+	/// Checks all intersection between the ray and the object with or without the descendants. Records
+	/// a read op, sends it behind every write already pending, and completes with what
+	/// <c>intersectObject</c> returned.
+	/// </summary>
+	/// <param name="object">The object to check for intersection with the ray.</param>
+	/// <param name="recursive">
+	/// If true, it also checks all descendants. Otherwise it only checks intersection with the object.
+	/// </param>
+	/// <param name="optionalTarget">
+	/// Target to set the result. Otherwise a new <c>Array</c> is instantiated. If set, you must clear
+	/// this array prior to each call (i.e., array.length = 0;).
+	/// </param>
+	/// <returns>The value <c>intersectObject</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Intersection[]> IntersectObjectAsync(Object3D @object, bool recursive, Intersection[] optionalTarget)
+	{
+		return RecordRead<Intersection[]>("intersectObject", @object, recursive, optionalTarget);
+	}
+
+	/// <summary>
+	/// Checks all intersection between the ray and the objects with or without the descendants. Records
+	/// a read op, sends it behind every write already pending, and completes with what
+	/// <c>intersectObjects</c> returned.
+	/// </summary>
+	/// <param name="objects">The objects to check for intersection with the ray.</param>
+	/// <param name="recursive">
+	/// If true, it also checks all descendants of the objects. Otherwise it only checks intersection
+	/// with the objects.
+	/// </param>
+	/// <param name="optionalTarget">
+	/// Target to set the result. Otherwise a new <c>Array</c> is instantiated. If set, you must clear
+	/// this array prior to each call (i.e., array.length = 0;).
+	/// </param>
+	/// <returns>The value <c>intersectObjects</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Intersection[]> IntersectObjectsAsync(
+		Object3D?[] objects,
+		bool recursive,
+		Intersection[] optionalTarget)
+	{
+		return RecordRead<Intersection[]>("intersectObjects", objects, recursive, optionalTarget);
+	}
+
+	/// <summary>
 	/// Emits the create op for <c>THREE.Raycaster</c>, then replays every property written before this
 	/// object was attached. A replayed value that is itself a mirrored object is attached first, so its
 	/// create op reaches the batch before the write that references it by handle.

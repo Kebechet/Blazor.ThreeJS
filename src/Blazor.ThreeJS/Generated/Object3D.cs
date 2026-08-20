@@ -147,6 +147,14 @@ public abstract partial class Object3D
 		RecordCall("attach", @object);
 	}
 
+	/// <summary>Abstract (empty) method to get intersections between a casted ray and this object.</summary>
+	/// <param name="raycaster">Value forwarded to the <c>raycaster</c> argument.</param>
+	/// <param name="intersects">Value forwarded to the <c>intersects</c> argument.</param>
+	public void Raycast(Raycaster raycaster, Intersection[] intersects)
+	{
+		RecordCall("raycast", raycaster, intersects);
+	}
+
 	/// <summary>Updates local transform.</summary>
 	public void UpdateMatrix()
 	{

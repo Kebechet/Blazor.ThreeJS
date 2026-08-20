@@ -352,7 +352,7 @@ internal sealed class TypeMapper
 			&& index.Parameters is [{ Type.Name: "string" }])
 		{
 			var valueMapping = Map(index.ReturnType, context);
-			if (valueMapping.IsMapped && IsWireValue(valueMapping))
+			if (valueMapping.IsMapped && (IsWireValue(valueMapping) || StructureCatalog.IsMirroredObject(valueMapping)))
 			{
 				return TypeMapping.Mapped(
 					$"Dictionary<string, {valueMapping.CSharpTypeName}>",

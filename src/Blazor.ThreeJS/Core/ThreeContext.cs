@@ -375,7 +375,7 @@ public sealed class ThreeContext : IAsyncDisposable
 
 		try
 		{
-			return ThreeValue.Decode<TValue>(result.Value);
+			return ThreeValue.Decode<TValue>(result.Value, this);
 		}
 		catch (JsonException exception)
 		{

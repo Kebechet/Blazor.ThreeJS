@@ -244,7 +244,10 @@ public class MathValueWireFormatTests
 			.GetMethod(nameof(ThreeValue.Decode))!
 			.MakeGenericMethod(mathType);
 
-		return decode.Invoke(null, [(JsonElement?) element]);
+		// Both arguments, including the optional context: MethodInfo.Invoke binds positionally and does
+		// not apply C# optional-parameter defaults. A math value needs no context - only a structure
+		// carrying a mirrored object does - so it is passed as null.
+		return decode.Invoke(null, [(JsonElement?) element, null]);
 	}
 
 	/// <summary>Reads a math value's components through its own <c>ToArray</c>, whatever its type.</summary>

@@ -148,7 +148,7 @@ internal sealed class StructureCatalog
 				DeclaringClassName = name
 			});
 
-			if (!mapping.IsMapped || !TypeMapper.IsWireValue(mapping))
+			if (!mapping.IsMapped || !(TypeMapper.IsWireValue(mapping) || IsMirroredObject(mapping)))
 			{
 				return null;
 			}
@@ -223,6 +223,14 @@ internal sealed class StructureCatalog
 		return value.Length == 0 ? value : char.ToUpperInvariant(value[0]) + value[1..];
 	}
 
+	/// <summary>Whether a member is a mirrored object, which travels inside a structure as a handle.</summary>
+	/// <param name="mapping">The resolved member type.</param>
+	/// <returns><see langword="true"/> when the wire carries it as a reference.</returns>
+	internal static bool IsMirroredObject(TypeMapping mapping)
+	{
+		return mapping.Kind == TypeMappingKind.GeneratedWrapperClass;
+	}
+
 	/// <summary>The properties of a qualifying interface, in declaration order.</summary>
 	/// <param name="name">Interface name.</param>
 	/// <returns>The properties.</returns>
@@ -245,8 +253,11 @@ internal sealed class StructureCatalog
 		// A method needs a receiver, which is exactly what a value with no identity does not have.
 		// Extending another interface, or taking a type parameter, both mean the member set here is not
 		// the whole story - and a record standing for part of a shape is the failure this guards against.
+		// A type parameter is fine, and erases the way a class's does - `Intersection<TIntersected>`
+		// defaults to `Object3D`, which is what every raycast against the mirror produces anyway. A
+		// method needs a receiver, which a value with no identity does not have, and extending another
+		// interface means the member set here is not the whole story.
 		if (irInterface.Methods.Count > 0
-			|| irInterface.TypeParameters.Count > 0
 			|| irInterface.Extends.Count > 0
 			|| irInterface.Properties.Count == 0)
 		{
@@ -261,6 +272,7 @@ internal sealed class StructureCatalog
 			{
 				MemberName = property.Name,
 				NumericKind = property.NumericKind,
+				TypeParameters = irInterface.TypeParameters,
 
 				// The interface names anything nested inside it. `AnimationMixerStats.actions` is
 				// `{ total, inUse }`, which alone would be `Actions` - a word too generic to sit in a
@@ -268,11 +280,10 @@ internal sealed class StructureCatalog
 				DeclaringClassName = name
 			});
 
-			// ⚠️ Values only. A member that is itself a mirrored class would need a handle, and a handle
-			// inside a structure means the applier has to mint one while encoding a read result - which
-			// it cannot do today. `Raycaster.intersectObject` is the member that wants this, and it stays
-			// refused rather than half-answered.
-			if (!mapping.IsMapped || !TypeMapper.IsWireValue(mapping))
+			// Values, or a mirrored object carried by handle. The applier mints one while encoding a read
+			// result - `Raycaster.intersectObject` answers `{ distance, point, object }`, and `object` is
+			// the mesh that was hit, which has identity a copy of its fields would lose.
+			if (!mapping.IsMapped || !(TypeMapper.IsWireValue(mapping) || IsMirroredObject(mapping)))
 			{
 				return false;
 			}

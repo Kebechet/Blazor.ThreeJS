@@ -11,6 +11,7 @@ public class RenderTarget : EventDispatcher
 {
 	private float? _width;
 	private float? _height;
+	private readonly RenderTargetOptions? _options;
 	private float _depth;
 	private bool _scissorTest = false;
 	private Texture?[] _textures = [];
@@ -55,10 +56,12 @@ public class RenderTarget : EventDispatcher
 	/// <summary>Initializes a new <see cref="RenderTarget"/>.</summary>
 	/// <param name="width">Value forwarded to the <c>width</c> constructor argument.</param>
 	/// <param name="height">Value forwarded to the <c>height</c> constructor argument.</param>
-	public RenderTarget(float? width = null, float? height = null)
+	/// <param name="options">Value forwarded to the <c>options</c> constructor argument.</param>
+	public RenderTarget(float? width = null, float? height = null, RenderTargetOptions? options = null)
 	{
 		_width = width;
 		_height = height;
+		_options = options;
 
 		Scissor = new Vector4();
 		Scissor.OnChange = () =>
@@ -108,9 +111,9 @@ public class RenderTarget : EventDispatcher
 	}
 
 	/// <summary>
-	/// Constructor arguments forwarded to <c>THREE.RenderTarget</c>: width, height. An argument the
-	/// caller left unspecified travels as the wire's not-supplied sentinel, or is trimmed when nothing
-	/// supplied follows it, so three.js applies its own default.
+	/// Constructor arguments forwarded to <c>THREE.RenderTarget</c>: width, height, options. An
+	/// argument the caller left unspecified travels as the wire's not-supplied sentinel, or is trimmed
+	/// when nothing supplied follows it, so three.js applies its own default.
 	/// </summary>
 	protected override object?[] ConstructorArgs
 	{
@@ -119,7 +122,8 @@ public class RenderTarget : EventDispatcher
 			return ThreeValue.TrimUnspecifiedTail(
 			[
 				ThreeValue.OrUnspecified(_width),
-				ThreeValue.OrUnspecified(_height)
+				ThreeValue.OrUnspecified(_height),
+				ThreeValue.OrUnspecified(_options)
 			]);
 		}
 	}

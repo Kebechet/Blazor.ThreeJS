@@ -13,12 +13,16 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 public sealed class CubeRenderTarget : RenderTarget
 {
 	private readonly float _size;
+	private readonly RenderTargetOptions? _options;
 
 	/// <summary>Constructs a new cube render target.</summary>
 	/// <param name="size">The size of the render target.</param>
-	public CubeRenderTarget(float size = 1f)
+	/// <param name="options">Value forwarded to the <c>options</c> constructor argument.</param>
+	public CubeRenderTarget(float size = 1f, RenderTargetOptions? options = null)
+		: base(options: options)
 	{
 		_size = size;
+		_options = options;
 	}
 
 	/// <summary>
@@ -41,10 +45,14 @@ public sealed class CubeRenderTarget : RenderTarget
 		get { return "CubeRenderTarget"; }
 	}
 
-	/// <summary>Constructor arguments forwarded to <c>THREE.CubeRenderTarget</c>: size.</summary>
+	/// <summary>
+	/// Constructor arguments forwarded to <c>THREE.CubeRenderTarget</c>: size, options. An argument the
+	/// caller left unspecified travels as the wire's not-supplied sentinel, or is trimmed when nothing
+	/// supplied follows it, so three.js applies its own default.
+	/// </summary>
 	protected override object?[] ConstructorArgs
 	{
-		get { return [_size]; }
+		get { return ThreeValue.TrimUnspecifiedTail([_size, ThreeValue.OrUnspecified(_options)]); }
 	}
 
 	/// <summary>Converts the given equirectangular texture to a cube map.</summary>

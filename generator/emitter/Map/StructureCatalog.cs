@@ -236,7 +236,53 @@ internal sealed class StructureCatalog
 	/// <returns>The properties.</returns>
 	public IReadOnlyList<IrProperty> PropertiesOf(string name)
 	{
-		return _interfacesByName[name].Properties;
+		return PropertiesOf(_interfacesByName[name]);
+	}
+
+	/// <summary>
+	/// An interface's own properties plus every one it inherits, base-first.
+	/// <para>
+	/// A record standing for `CurvePathJSON` has to carry `CurveJSON`'s members too - three.js sends one
+	/// flat object, not a nested one, and a record holding only the half declared here would bind that
+	/// half and silently drop the rest. Flattening is what makes the C# type the same shape as the JSON.
+	/// </para>
+	/// <para>
+	/// A base declared but not in the snapshot ends the walk, and a name already seen ends it too, so a
+	/// cycle in the declarations cannot spin here.
+	/// </para>
+	/// </summary>
+	/// <param name="irInterface">The interface.</param>
+	/// <returns>Its full property set, each name appearing once.</returns>
+	private IReadOnlyList<IrProperty> PropertiesOf(IrInterface irInterface)
+	{
+		var properties = new List<IrProperty>();
+		var seenNames = new HashSet<string>(StringComparer.Ordinal);
+		var seenInterfaces = new HashSet<string>(StringComparer.Ordinal) { irInterface.Name };
+
+		void Collect(IrInterface current)
+		{
+			foreach (var extended in current.Extends)
+			{
+				if (extended.Name is { } baseName
+					&& seenInterfaces.Add(baseName)
+					&& _interfacesByName.TryGetValue(baseName, out var baseInterface))
+				{
+					Collect(baseInterface);
+				}
+			}
+
+			foreach (var property in current.Properties)
+			{
+				// A name redeclared on the derived interface wins, which is what TypeScript means by it.
+				if (seenNames.Add(property.Name))
+				{
+					properties.Add(property);
+				}
+			}
+		}
+
+		Collect(irInterface);
+		return properties;
 	}
 
 	/// <summary>Applies every rule. Split out so <see cref="Qualifies"/> is only the memoisation.</summary>
@@ -255,16 +301,13 @@ internal sealed class StructureCatalog
 		// the whole story - and a record standing for part of a shape is the failure this guards against.
 		// A type parameter is fine, and erases the way a class's does - `Intersection<TIntersected>`
 		// defaults to `Object3D`, which is what every raycast against the mirror produces anyway. A
-		// method needs a receiver, which a value with no identity does not have, and extending another
-		// interface means the member set here is not the whole story.
-		if (irInterface.Methods.Count > 0
-			|| irInterface.Extends.Count > 0
-			|| irInterface.Properties.Count == 0)
+		// method needs a receiver, which a value with no identity does not have.
+		if (irInterface.Methods.Count > 0 || PropertiesOf(irInterface) is { Count: 0 })
 		{
 			return false;
 		}
 
-		foreach (var property in irInterface.Properties)
+		foreach (var property in PropertiesOf(irInterface))
 		{
 			// Read through the mapper rather than pattern-matched here, so a record's members are exactly
 			// as expressible as any other member - and so this stays right as the mapper gains rules.

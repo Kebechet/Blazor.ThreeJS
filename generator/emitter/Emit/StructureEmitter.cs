@@ -22,14 +22,17 @@ internal sealed class StructureEmitter
 {
 	private readonly IrRoot _ir;
 	private readonly TypeMapper _mapper;
+	private readonly StructureCatalog _structures;
 
 	/// <summary>Builds an emitter over one IR snapshot.</summary>
 	/// <param name="ir">The parsed IR, for the provenance header.</param>
 	/// <param name="mapper">Type mapper, which resolves each member's C# type.</param>
-	public StructureEmitter(IrRoot ir, TypeMapper mapper)
+	/// <param name="structures">Catalogue, which owns the flattened property set of each shape.</param>
+	public StructureEmitter(IrRoot ir, TypeMapper mapper, StructureCatalog structures)
 	{
 		_ir = ir;
 		_mapper = mapper;
+		_structures = structures;
 	}
 
 	/// <summary>Emits the C# source for a shape three.js named with an interface.</summary>
@@ -37,7 +40,7 @@ internal sealed class StructureEmitter
 	/// <returns>The generated file.</returns>
 	public EmittedFile Emit(IrInterface irInterface)
 	{
-		return Emit(irInterface.Name, irInterface.Properties
+		return Emit(irInterface.Name, _structures.PropertiesOf(irInterface.Name)
 			.Select(x => new StructureMember(
 				x.Name,
 				_mapper.Map(x.Type, new TypeMappingContext

@@ -86,6 +86,7 @@ const MATH_VALUES = [
     // may transpose.
     { tag: 'Matrix4', is: value => value.isMatrix4, read: value => Array.from(value.elements), build: c => new THREE.Matrix4().fromArray(c) },
     { tag: 'Matrix3', is: value => value.isMatrix3, read: value => Array.from(value.elements), build: c => new THREE.Matrix3().fromArray(c) },
+    { tag: 'Matrix2', is: value => value.isMatrix2, read: value => Array.from(value.elements), build: c => new THREE.Matrix2().fromArray(c) },
     { tag: 'Vector2', is: value => value.isVector2, read: value => [value.x, value.y], build: c => new THREE.Vector2(c[0], c[1]) },
     { tag: 'Vector4', is: value => value.isVector4, read: value => [value.x, value.y, value.z, value.w], build: c => new THREE.Vector4(c[0], c[1], c[2], c[3]) },
     {

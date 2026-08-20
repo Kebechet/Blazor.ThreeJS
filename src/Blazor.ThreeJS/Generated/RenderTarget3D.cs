@@ -11,17 +11,24 @@ public sealed class RenderTarget3D : RenderTarget
 	private readonly float? _width;
 	private readonly float? _height;
 	private readonly float? _depth;
+	private readonly RenderTargetOptions? _options;
 
 	/// <summary>Initializes a new <see cref="RenderTarget3D"/>.</summary>
 	/// <param name="width">Value forwarded to the <c>width</c> constructor argument.</param>
 	/// <param name="height">Value forwarded to the <c>height</c> constructor argument.</param>
 	/// <param name="depth">Value forwarded to the <c>depth</c> constructor argument.</param>
-	public RenderTarget3D(float? width = null, float? height = null, float? depth = null)
-		: base(width: width, height: height)
+	/// <param name="options">Value forwarded to the <c>options</c> constructor argument.</param>
+	public RenderTarget3D(
+		float? width = null,
+		float? height = null,
+		float? depth = null,
+		RenderTargetOptions? options = null)
+		: base(width: width, height: height, options: options)
 	{
 		_width = width;
 		_height = height;
 		_depth = depth;
+		_options = options;
 	}
 
 	/// <summary>
@@ -43,9 +50,9 @@ public sealed class RenderTarget3D : RenderTarget
 	}
 
 	/// <summary>
-	/// Constructor arguments forwarded to <c>THREE.RenderTarget3D</c>: width, height, depth. An
-	/// argument the caller left unspecified travels as the wire's not-supplied sentinel, or is trimmed
-	/// when nothing supplied follows it, so three.js applies its own default.
+	/// Constructor arguments forwarded to <c>THREE.RenderTarget3D</c>: width, height, depth, options.
+	/// An argument the caller left unspecified travels as the wire's not-supplied sentinel, or is
+	/// trimmed when nothing supplied follows it, so three.js applies its own default.
 	/// </summary>
 	protected override object?[] ConstructorArgs
 	{
@@ -55,7 +62,8 @@ public sealed class RenderTarget3D : RenderTarget
 			[
 				ThreeValue.OrUnspecified(_width),
 				ThreeValue.OrUnspecified(_height),
-				ThreeValue.OrUnspecified(_depth)
+				ThreeValue.OrUnspecified(_depth),
+				ThreeValue.OrUnspecified(_options)
 			]);
 		}
 	}

@@ -119,6 +119,13 @@ public class CurvePath : ThreeObject
 		RecordCall("add", curve);
 	}
 
+	/// <summary>Records a call to <c>fromJSON</c> on the JavaScript-side object.</summary>
+	/// <param name="json">Value forwarded to the <c>json</c> argument.</param>
+	public void FromJSON(CurvePathJSON json)
+	{
+		RecordCall("fromJSON", json);
+	}
+
 	/// <summary>Update the cumulative segment distance cache.</summary>
 	public void UpdateArcLengths()
 	{
@@ -162,6 +169,16 @@ public class CurvePath : ThreeObject
 	public Task<float[]> GetCurveLengthsAsync()
 	{
 		return RecordRead<float[]>("getCurveLengths");
+	}
+
+	/// <summary>
+	/// Reads <c>toJSON</c> back from the JavaScript-side object. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>toJSON</c> returned.
+	/// </summary>
+	/// <returns>The value <c>toJSON</c> returned, once the JavaScript side has answered.</returns>
+	public Task<CurvePathJSON> ToJSONAsync()
+	{
+		return RecordRead<CurvePathJSON>("toJSON");
 	}
 
 	/// <summary>

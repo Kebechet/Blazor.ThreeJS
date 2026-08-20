@@ -374,7 +374,7 @@ for (const [typeName, encoded] of Object.entries(mathValues)) {
     mathValueCount++;
 }
 
-assert.equal(mathValueCount, 19, 'every hand-written math type should be in the fixture');
+assert.equal(mathValueCount, 20, 'every hand-written math type should be in the fixture');
 
 // Infinity has no JSON number, and the two runtimes fail differently and quietly if left alone:
 // Utf8JsonWriter throws in C#, and JSON.stringify(Infinity) yields null here. three.js seeds an empty

@@ -10,15 +10,18 @@ public class WebGLRenderTarget : RenderTarget
 {
 	private readonly float? _width;
 	private readonly float? _height;
+	private readonly RenderTargetOptions? _options;
 
 	/// <summary>Initializes a new <see cref="WebGLRenderTarget"/>.</summary>
 	/// <param name="width">Value forwarded to the <c>width</c> constructor argument.</param>
 	/// <param name="height">Value forwarded to the <c>height</c> constructor argument.</param>
-	public WebGLRenderTarget(float? width = null, float? height = null)
-		: base(width: width, height: height)
+	/// <param name="options">Value forwarded to the <c>options</c> constructor argument.</param>
+	public WebGLRenderTarget(float? width = null, float? height = null, RenderTargetOptions? options = null)
+		: base(width: width, height: height, options: options)
 	{
 		_width = width;
 		_height = height;
+		_options = options;
 	}
 
 	/// <summary>
@@ -40,9 +43,9 @@ public class WebGLRenderTarget : RenderTarget
 	}
 
 	/// <summary>
-	/// Constructor arguments forwarded to <c>THREE.WebGLRenderTarget</c>: width, height. An argument
-	/// the caller left unspecified travels as the wire's not-supplied sentinel, or is trimmed when
-	/// nothing supplied follows it, so three.js applies its own default.
+	/// Constructor arguments forwarded to <c>THREE.WebGLRenderTarget</c>: width, height, options. An
+	/// argument the caller left unspecified travels as the wire's not-supplied sentinel, or is trimmed
+	/// when nothing supplied follows it, so three.js applies its own default.
 	/// </summary>
 	protected override object?[] ConstructorArgs
 	{
@@ -51,7 +54,8 @@ public class WebGLRenderTarget : RenderTarget
 			return ThreeValue.TrimUnspecifiedTail(
 			[
 				ThreeValue.OrUnspecified(_width),
-				ThreeValue.OrUnspecified(_height)
+				ThreeValue.OrUnspecified(_height),
+				ThreeValue.OrUnspecified(_options)
 			]);
 		}
 	}

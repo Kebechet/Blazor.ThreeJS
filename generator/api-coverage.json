@@ -9,12 +9,12 @@
     "reachableClasses": 264,
     "members": 3648,
     "mirroredState": 1164,
-    "commands": 798,
-    "asyncQueries": 891,
+    "commands": 799,
+    "asyncQueries": 892,
     "untypedObjectQueries": 11,
-    "skippedMembers": 795,
+    "skippedMembers": 793,
     "reachableMembers": 2441,
-    "generatedMembers": 1842,
+    "generatedMembers": 1844,
     "strandedMembers": 1207
   },
   "classes": [
@@ -273,7 +273,7 @@
       "file": "src/math/Box2.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -284,7 +284,7 @@
       "file": "src/math/Box3.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -510,7 +510,7 @@
       "file": "src/math/Color.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -702,15 +702,8 @@
       "file": "src/renderers/common/CubeRenderTarget.d.ts",
       "status": "emittable",
       "isReachable": true,
-      "constructorParameterCount": 1,
-      "droppedConstructorParameters": [
-        {
-          "name": "options",
-          "type": "RenderTargetOptions",
-          "reason": "`RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument",
-          "category": "OptionsInterface"
-        }
-      ],
+      "constructorParameterCount": 2,
+      "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
     },
     {
@@ -810,7 +803,7 @@
       "file": "src/math/Cylindrical.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -982,7 +975,7 @@
       "file": "src/math/Euler.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -1106,7 +1099,7 @@
       "file": "src/math/Frustum.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -1558,7 +1551,7 @@
       "file": "src/math/Line3.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -1750,7 +1743,7 @@
       "file": "src/math/Matrix2.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -1761,7 +1754,7 @@
       "file": "src/math/Matrix3.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -1772,7 +1765,7 @@
       "file": "src/math/Matrix4.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -2243,7 +2236,7 @@
       "file": "src/math/Plane.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -2464,7 +2457,7 @@
       "file": "src/math/Quaternion.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -2509,7 +2502,7 @@
       "file": "src/math/Ray.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -2568,17 +2561,11 @@
       "file": "src/core/RenderTarget.d.ts",
       "status": "emittable",
       "isReachable": true,
-      "constructorParameterCount": 2,
-      "droppedConstructorParameters": [
-        {
-          "name": "options",
-          "type": "RenderTargetOptions",
-          "reason": "`RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument",
-          "category": "OptionsInterface"
-        }
-      ],
+      "constructorParameterCount": 3,
+      "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
-        "width"
+        "width",
+        "height"
       ]
     },
     {
@@ -2586,18 +2573,12 @@
       "file": "src/core/RenderTarget3D.d.ts",
       "status": "emittable",
       "isReachable": true,
-      "constructorParameterCount": 3,
-      "droppedConstructorParameters": [
-        {
-          "name": "options",
-          "type": "RenderTargetOptions",
-          "reason": "`RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument",
-          "category": "OptionsInterface"
-        }
-      ],
+      "constructorParameterCount": 4,
+      "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
         "width",
-        "height"
+        "height",
+        "depth"
       ]
     },
     {
@@ -2790,7 +2771,7 @@
       "file": "src/math/Sphere.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -2812,7 +2793,7 @@
       "file": "src/math/Spherical.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -2823,7 +2804,7 @@
       "file": "src/math/SphericalHarmonics3.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -3069,7 +3050,7 @@
       "file": "src/math/Triangle.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -3181,7 +3162,7 @@
       "file": "src/math/Vector2.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -3192,7 +3173,7 @@
       "file": "src/math/Vector3.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -3203,7 +3184,7 @@
       "file": "src/math/Vector4.d.ts",
       "status": "outOfSurface",
       "isReachable": true,
-      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
+      "reason": "a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one",
       "category": "MathValueType",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -3276,15 +3257,8 @@
       "file": "src/renderers/WebGL3DRenderTarget.d.ts",
       "status": "emittable",
       "isReachable": true,
-      "constructorParameterCount": 3,
-      "droppedConstructorParameters": [
-        {
-          "name": "options",
-          "type": "RenderTargetOptions",
-          "reason": "`RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument",
-          "category": "OptionsInterface"
-        }
-      ],
+      "constructorParameterCount": 4,
+      "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
     },
     {
@@ -3292,15 +3266,8 @@
       "file": "src/renderers/WebGLArrayRenderTarget.d.ts",
       "status": "emittable",
       "isReachable": true,
-      "constructorParameterCount": 3,
-      "droppedConstructorParameters": [
-        {
-          "name": "options",
-          "type": "RenderTargetOptions",
-          "reason": "`RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument",
-          "category": "OptionsInterface"
-        }
-      ],
+      "constructorParameterCount": 4,
+      "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
     },
     {
@@ -3553,17 +3520,11 @@
       "file": "src/renderers/WebGLRenderTarget.d.ts",
       "status": "emittable",
       "isReachable": true,
-      "constructorParameterCount": 2,
-      "droppedConstructorParameters": [
-        {
-          "name": "options",
-          "type": "RenderTargetOptions",
-          "reason": "`RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument",
-          "category": "OptionsInterface"
-        }
-      ],
+      "constructorParameterCount": 3,
+      "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [
-        "width"
+        "width",
+        "height"
       ]
     },
     {
@@ -3806,12 +3767,12 @@
       "members": 38
     },
     {
-      "category": "OptionsInterface",
-      "members": 32
-    },
-    {
       "category": "AnonymousObjectType",
       "members": 31
+    },
+    {
+      "category": "OptionsInterface",
+      "members": 30
     },
     {
       "category": "UntypedValue",
@@ -9444,18 +9405,15 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `CurvePathJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "AsyncQuery",
+      "type": "CurvePathJSON"
     },
     {
       "class": "CurvePath",
       "member": "fromJSON",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `CurvePathJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "CurvePath",

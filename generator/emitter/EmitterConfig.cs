@@ -283,6 +283,7 @@ internal static class EmitterConfig
 		"Euler",
 		"Frustum",
 		"Line3",
+		"Matrix2",
 		"Matrix3",
 		"Matrix4",
 		"Object3D",
@@ -438,6 +439,7 @@ internal static class EmitterConfig
 		"Euler",
 		"Frustum",
 		"Line3",
+		"Matrix2",
 		"Matrix3",
 		"Matrix4",
 		"Plane",
@@ -547,7 +549,7 @@ internal static class EmitterConfig
 	}
 
 	/// <summary>
-	/// Hand-written math types that cannot report a change. Both matrices hand their <c>Elements</c>
+	/// Hand-written math types that cannot report a change. Every matrix hands its <c>Elements</c>
 	/// array out directly, so <c>m.Elements[0] = 1f</c> is a legal mutation nothing can observe — there
 	/// is no hook to hang a property write off. A matrix-typed property is therefore not mirrored at
 	/// all, rather than mirrored as state that silently stops tracking.
@@ -559,6 +561,7 @@ internal static class EmitterConfig
 	/// </summary>
 	public static readonly IReadOnlySet<string> MathTypeNamesWithoutChangeNotification = new HashSet<string>(StringComparer.Ordinal)
 	{
+		"Matrix2",
 		"Matrix3",
 		"Matrix4"
 	};

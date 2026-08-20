@@ -14,16 +14,27 @@ public sealed class WebGLArrayRenderTarget : WebGLRenderTarget
 	private readonly float _width;
 	private readonly float _height;
 	private readonly float _depth;
+	private readonly RenderTargetOptions? _options;
 
 	/// <summary>Creates a new WebGLArrayRenderTarget.</summary>
 	/// <param name="width">the width of the render target, in pixels. Default is <c>1</c>.</param>
 	/// <param name="height">the height of the render target, in pixels. Default is <c>1</c>.</param>
 	/// <param name="depth">the depth/layer count of the render target. Default is <c>1</c>.</param>
-	public WebGLArrayRenderTarget(float width = 1f, float height = 1f, float depth = 1f)
+	/// <param name="options">
+	/// optional object that holds texture parameters for an auto-generated target texture and
+	/// depthBuffer/stencilBuffer booleans. See <see cref="WebGLRenderTarget"/> for details.
+	/// </param>
+	public WebGLArrayRenderTarget(
+		float width = 1f,
+		float height = 1f,
+		float depth = 1f,
+		RenderTargetOptions? options = null)
+		: base(options: options)
 	{
 		_width = width;
 		_height = height;
 		_depth = depth;
+		_options = options;
 	}
 
 	/// <summary>
@@ -50,11 +61,13 @@ public sealed class WebGLArrayRenderTarget : WebGLRenderTarget
 	}
 
 	/// <summary>
-	/// Constructor arguments forwarded to <c>THREE.WebGLArrayRenderTarget</c>: width, height, depth.
+	/// Constructor arguments forwarded to <c>THREE.WebGLArrayRenderTarget</c>: width, height, depth,
+	/// options. An argument the caller left unspecified travels as the wire's not-supplied sentinel, or
+	/// is trimmed when nothing supplied follows it, so three.js applies its own default.
 	/// </summary>
 	protected override object?[] ConstructorArgs
 	{
-		get { return [_width, _height, _depth]; }
+		get { return ThreeValue.TrimUnspecifiedTail([_width, _height, _depth, ThreeValue.OrUnspecified(_options)]); }
 	}
 
 	/// <summary>

@@ -74,6 +74,8 @@ internal static class ThreeValue
 				return new TaggedValue { Tag = ThreeWireFormat.Vector4Tag, Values = vector4.ToArray() };
 			case Matrix3 matrix3:
 				return new TaggedValue { Tag = ThreeWireFormat.Matrix3Tag, Values = matrix3.ToArray() };
+			case Matrix2 matrix2:
+				return new TaggedValue { Tag = ThreeWireFormat.Matrix2Tag, Values = matrix2.ToArray() };
 			case Box2 box2:
 				return new TaggedValue { Tag = ThreeWireFormat.Box2Tag, Values = box2.ToArray() };
 			case Box3 box3:
@@ -455,6 +457,8 @@ internal static class ThreeValue
 				return new Vector2(Component(components, 0), Component(components, 1));
 			case ThreeWireFormat.Vector4Tag:
 				return new Vector4(Component(components, 0), Component(components, 1), Component(components, 2), Component(components, 3));
+			case ThreeWireFormat.Matrix2Tag:
+				return new Matrix2().FromArray(Components(components, 4));
 			case ThreeWireFormat.Matrix3Tag:
 				// Column-major on the wire, which is how Elements already stores them. See the Matrix4
 				// arm above for why this must not route through Set.

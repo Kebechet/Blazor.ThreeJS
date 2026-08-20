@@ -41,6 +41,7 @@ public class MathValueWireFormatTests
 			{ nameof(Quaternion), new Quaternion(0.1f, 0.2f, 0.3f, 0.4f) },
 			{ nameof(Euler), new Euler(0.1f, 0.2f, 0.3f, EulerOrder.ZYX) },
 			{ nameof(Color), new Color(0.25f, 0.5f, 0.75f) },
+			{ nameof(Matrix2), new Matrix2().FromArray([1f, 2f, 3f, 4f]) },
 			{ nameof(Matrix3), new Matrix3().FromArray([1f, 2f, 3f, 4f, 5f, 6f, 7f, 8f, 9f]) },
 			{ nameof(Matrix4), BuildMatrix4() },
 			{ nameof(Box2), new Box2(new Vector2(-1f, -2f), new Vector2(3f, 4f)) },

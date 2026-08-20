@@ -79,7 +79,7 @@ foreach (var generatedEnum in enums.Generatable)
 // The structural records come after the classes, because which of them exist is decided by what those
 // classes' members turned out to name: a record nothing references would be a public type carrying no
 // capability. See StructureCatalog for which interfaces qualify.
-var structureEmitter = new StructureEmitter(ir, mapper);
+var structureEmitter = new StructureEmitter(ir, mapper, structures);
 foreach (var structure in structures.Used)
 {
 	emittedFiles.Add(structureEmitter.Emit(structure));

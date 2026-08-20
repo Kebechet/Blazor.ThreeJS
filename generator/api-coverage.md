@@ -206,7 +206,7 @@ they are never folded into a coverage claim.
 | obstacle | classes | example reason |
 |---|---|---|
 | `UnwrappedClass` | 32 | renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table |
-| `MathValueType` | 20 | a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 19 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
+| `MathValueType` | 20 | a `src/math/**` value type. The mirror represents math values by value, encoded inline on the wire, not as handle-backed objects. 20 are hand-written (`Box2`, `Box3`, `Color`, `Cylindrical`, `Euler`, `Frustum`, `Line3`, `Matrix2`, `Matrix3`, `Matrix4`, `Plane`, `Quaternion`, `Ray`, `Sphere`, `Spherical`, `SphericalHarmonics3`, `Triangle`, `Vector2`, `Vector3`, `Vector4`) and are never regenerated; giving the rest a representation is a public-API decision, not a mapping one |
 | `HandWritten` | 1 | hand-written by the runtime. It carries scene-graph behaviour — attachment, the transform, pre-attach state replay — rather than surface, so the generated classes derive from it instead of replacing it. A generated `partial` beside it does carry its command and query surface, which is why this is an exclusion from *emitting the type* rather than from the mirror |
 
 The consumer-facing renderer types are checked against the exclusion rather than special-cased:
@@ -317,7 +317,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `ConeGeometry` | 7 | — | `src/geometries/ConeGeometry.d.ts` |
 | `CubeCamera` | 3 | — | `src/cameras/CubeCamera.d.ts` |
 | `CubeDepthTexture` | 9 | — | `src/textures/CubeDepthTexture.d.ts` |
-| `CubeRenderTarget` | 1 | `options` | `src/renderers/common/CubeRenderTarget.d.ts` |
+| `CubeRenderTarget` | 2 | — | `src/renderers/common/CubeRenderTarget.d.ts` |
 | `CubeTexture` | 10 | — | `src/textures/CubeTexture.d.ts` |
 | `CubeTextureLoader` | 1 | — | `src/loaders/CubeTextureLoader.d.ts` |
 | `CubicBezierCurve` | 4 | — | `src/extras/curves/CubicBezierCurve.d.ts` |
@@ -445,8 +445,8 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `ReadbackBuffer` | 1 | — | `src/renderers/common/ReadbackBuffer.d.ts` |
 | `RectAreaLight` | 4 | — | `src/lights/RectAreaLight.d.ts` |
 | `RenderPipeline` | 1 | `outputNode` | `src/renderers/common/RenderPipeline.d.ts` |
-| `RenderTarget` | 2 | `options` | `src/core/RenderTarget.d.ts` |
-| `RenderTarget3D` | 3 | `options` | `src/core/RenderTarget3D.d.ts` |
+| `RenderTarget` | 3 | — | `src/core/RenderTarget.d.ts` |
+| `RenderTarget3D` | 4 | — | `src/core/RenderTarget3D.d.ts` |
 | `Renderer` | 1 | `parameters` | `src/renderers/common/Renderer.d.ts` |
 | `RingGeometry` | 6 | — | `src/geometries/RingGeometry.d.ts` |
 | `Scene` | 0 | — | `src/scenes/Scene.d.ts` |
@@ -491,11 +491,11 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `VideoFrameTexture` | 8 | — | `src/textures/VideoFrameTexture.d.ts` |
 | `VolumeNodeMaterial` | 0 | `parameters` | `src/materials/nodes/VolumeNodeMaterial.d.ts` |
 | `WGSLNodeBuilder` | 2 | — | `src/renderers/webgpu/nodes/WGSLNodeBuilder.d.ts` |
-| `WebGL3DRenderTarget` | 3 | `options` | `src/renderers/WebGL3DRenderTarget.d.ts` |
-| `WebGLArrayRenderTarget` | 3 | `options` | `src/renderers/WebGLArrayRenderTarget.d.ts` |
+| `WebGL3DRenderTarget` | 4 | — | `src/renderers/WebGL3DRenderTarget.d.ts` |
+| `WebGLArrayRenderTarget` | 4 | — | `src/renderers/WebGLArrayRenderTarget.d.ts` |
 | `WebGLBackend` | 0 | `parameters` | `src/renderers/webgl-fallback/WebGLBackend.d.ts` |
 | `WebGLCapabilities` | 1 | — | `src/renderers/webgl-fallback/utils/WebGLCapabilities.d.ts` |
-| `WebGLRenderTarget` | 2 | `options` | `src/renderers/WebGLRenderTarget.d.ts` |
+| `WebGLRenderTarget` | 3 | — | `src/renderers/WebGLRenderTarget.d.ts` |
 | `WebGPUBackend` | 0 | `parameters` | `src/renderers/webgpu/WebGPUBackend.d.ts` |
 | `WebGPURenderer` | 0 | `parameters` | `src/renderers/webgpu/WebGPURenderer.Nodes.d.ts` |
 | `WireframeGeometry` | 1 | — | `src/geometries/WireframeGeometry.d.ts` |
@@ -511,13 +511,13 @@ three.js is reachable at all" and "how much of what we mirror is state".
 | bucket | what it means | all classes | emittable classes |
 |---|---|---|---|
 | MirroredState | state C# holds and writes through on change | 1164 | 947 |
-| Command | a method recorded as a call op, returning nothing or `this` | 798 | 344 |
-| AsyncQuery | a method whose result the caller needs back | 891 | 551 |
-| Skipped | not mirrored; see the skip list below | 795 | 599 |
+| Command | a method recorded as a call op, returning nothing or `this` | 799 | 345 |
+| AsyncQuery | a method whose result the caller needs back | 892 | 552 |
+| Skipped | not mirrored; see the skip list below | 793 | 597 |
 | **total** | | **3648** | **2441** |
 
 Two op kinds answer: **read**, which invokes a method, and **get**, which reads a property.
-551 of the async queries above sit on an emitted class and are generated as `…Async` methods, 187 of
+552 of the async queries above sit on an emitted class and are generated as `…Async` methods, 187 of
 them over the get op rather than the read op. Both kinds answer with a value where one can travel, and
 with a handle to an object where it cannot.
 
@@ -552,8 +552,8 @@ the README's coverage table.
 | `DomOrLibType` | 78 | a TypeScript lib or DOM type; C# holds no browser object and the wire has no encoding for one |
 | `UnmappedUnion` | 42 | a union of several real alternatives in a position that holds one type — a property or a return type, since a required parameter becomes one overload per arm |
 | `NotInstanceApi` | 38 | static, non-public or `@internal` — not part of the mirrored instance API |
-| `OptionsInterface` | 32 | a structural interface — an options bag or an event map — with no C# type to be |
 | `AnonymousObjectType` | 31 | an anonymous object literal type with no name to give a C# type |
+| `OptionsInterface` | 30 | a structural interface — an options bag or an event map — with no C# type to be |
 | `UntypedValue` | 26 | declared `any` / `unknown`, or with no type at all |
 | `NotExported` | 16 | three.js's public barrel does not re-export it as a value, so the applier cannot reach it on `THREE` |
 | `ExternalType` | 15 | declared outside the scanned `src/` surface |
@@ -563,7 +563,7 @@ the README's coverage table.
 | `UnmappedTypeSyntax` | 4 | a TypeScript type form with no C# equivalent |
 | `RestParameter` | 1 | a rest parameter, including the rest-union-tuple pseudo-overload form |
 
-<details><summary>Every skipped member (795)</summary>
+<details><summary>Every skipped member (793)</summary>
 
 | class | member | obstacle | why |
 |---|---|---|---|
@@ -651,8 +651,6 @@ the README's coverage table.
 | `CurvePath` | `method getPoint` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getPoints` | `UnmappedUnion` | return type: `TVector[]` is an array whose element type cannot be mapped: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getSpacedPoints` | `UnmappedUnion` | return type: `TVector[]` is an array whose element type cannot be mapped: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `CurvePath` | `method toJSON` | `OptionsInterface` | return type: `CurvePathJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `CurvePath` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurvePathJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CurvePath` | `method getPointAt` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getTangent` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getTangentAt` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -1527,7 +1525,7 @@ cannot be trimmed and must not be sent as null either — it travels as the `$un
 (`ThreeWireFormat.UndefinedKey`), which `three-interop.js` decodes to a real `undefined`. The
 round trip is pinned end to end by `tests/wire-format.test.mjs` against the vendored three.js.
 
-53 emittable classes carry 117 such parameters. They are the measure of how much
+53 emittable classes carry 120 such parameters. They are the measure of how much
 of the emitted surface that one wire feature holds up.
 
 <details><summary>Every affected class</summary>
@@ -1574,8 +1572,8 @@ of the emitted surface that one wire feature holds up.
 | `QuadraticBezierCurve3` | `v0`, `v1` |
 | `Raycaster` | `origin`, `direction` |
 | `RectAreaLight` | `color` |
-| `RenderTarget` | `width` |
-| `RenderTarget3D` | `width`, `height` |
+| `RenderTarget` | `width`, `height` |
+| `RenderTarget3D` | `width`, `height`, `depth` |
 | `ShapeGeometry` | `shapes` |
 | `Skeleton` | `bones` |
 | `SkinnedMesh` | `geometry`, `material` |
@@ -1586,7 +1584,7 @@ of the emitted surface that one wire feature holds up.
 | `TorusGeometry` | `arc` |
 | `TubeGeometry` | `path` |
 | `VideoFrameTexture` | `mapping`, `wrapS`, `wrapT`, `magFilter`, `minFilter`, `format`, `type` |
-| `WebGLRenderTarget` | `width` |
+| `WebGLRenderTarget` | `width`, `height` |
 
 </details>
 

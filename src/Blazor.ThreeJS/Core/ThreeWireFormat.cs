@@ -35,6 +35,9 @@ internal static class ThreeWireFormat
 	/// <summary>Tag written for an encoded <see cref="Matrix3"/> value.</summary>
 	public const string Matrix3Tag = "Matrix3";
 
+	/// <summary>Tag written for an encoded <see cref="Matrix2"/> value.</summary>
+	public const string Matrix2Tag = "Matrix2";
+
 	/// <summary>Tag written for an encoded <see cref="Box2"/> value.</summary>
 	public const string Box2Tag = "Box2";
 

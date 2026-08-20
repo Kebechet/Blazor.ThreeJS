@@ -386,7 +386,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CubeCamera` | `method update` | parameter 'renderer': `CubeCameraRenderer` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CubeCamera` | `property renderTarget` | `WebGLCubeRenderTarget` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `CubeDepthTexture` | `property images` | `CubeDepthTextureImageData` aliases `[ DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, ]`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `CubeRenderTarget` | `constructor parameter options` | `RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `CubeTexture` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `CubeTexture` | `property images` | `TImage[]` is an array whose element type cannot be mapped: `unknown` carries no type information a C# signature could express |
 | `CubicBezierCurve` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
@@ -400,14 +399,12 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CubicBezierCurve3` | `property v2` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `CubicBezierCurve3` | `property v3` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `CubicInterpolant` | `method getSettings_` | return type: `unknown` carries no type information a C# signature could express |
-| `CurvePath` | `method fromJSON` | parameter 'json': `CurvePathJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CurvePath` | `method getPoint` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getPointAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getPoints` | return type: `TVector[]` is an array whose element type cannot be mapped: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getSpacedPoints` | return type: `TVector[]` is an array whose element type cannot be mapped: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getTangent` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getTangentAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `CurvePath` | `method toJSON` | return type: `CurvePathJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CylinderGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `CylinderGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `Data3DTexture` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
@@ -933,8 +930,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `RectAreaLight` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `RenderPipeline` | `constructor parameter outputNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `RenderPipeline` | `property outputNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `RenderTarget` | `constructor parameter options` | `RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
-| `RenderTarget3D` | `constructor parameter options` | `RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `Renderer` | `constructor parameter parameters` | `RendererParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `Renderer` | `fenced code in the method setDrawingBufferSize summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `Renderer` | `method compute` | parameter 'computeNodes': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1081,10 +1076,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `VolumeNodeMaterial` | `constructor parameter parameters` | `VolumeNodeMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `VolumeNodeMaterial` | `property offsetNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `VolumeNodeMaterial` | `property scatteringNode` | `(params: { positionRay: Node<"vec3"> }) => Node | null` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `WebGL3DRenderTarget` | `constructor parameter options` | `RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
-| `WebGLArrayRenderTarget` | `constructor parameter options` | `RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `WebGLBackend` | `constructor parameter parameters` | `WebGLBackendParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
-| `WebGLRenderTarget` | `constructor parameter options` | `RenderTargetOptions` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `WebGPUBackend` | `constructor parameter parameters` | `WebGPUBackendParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `WebGPURenderer` | `constructor parameter parameters` | `WebGPURendererParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
 | `WireframeGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |

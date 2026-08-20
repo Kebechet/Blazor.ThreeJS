@@ -48,6 +48,9 @@ public sealed class AnimationUtils : ThreeObject
 	/// Returns <c>true</c> if the given object is a typed array. Records a read op, sends it behind
 	/// every write already pending, and completes with what <c>isTypedArray</c> returned.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="object">The object to check.</param>
 	/// <returns>The value <c>isTypedArray</c> returned, once the JavaScript side has answered.</returns>
 	public static Task<bool> IsTypedArrayAsync(ThreeContext context, object? @object)
@@ -59,6 +62,9 @@ public sealed class AnimationUtils : ThreeObject
 	/// Returns an array by which times and values can be sorted. Records a read op, sends it behind
 	/// every write already pending, and completes with what <c>getKeyframeOrder</c> returned.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="times">The keyframe time values.</param>
 	/// <returns>The value <c>getKeyframeOrder</c> returned, once the JavaScript side has answered.</returns>
 	public static Task<float[]> GetKeyframeOrderAsync(ThreeContext context, float[] times)
@@ -71,6 +77,9 @@ public sealed class AnimationUtils : ThreeObject
 	/// read op, sends it behind every write already pending, and completes with what <c>sortedArray</c>
 	/// returned.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="values">The values to sort.</param>
 	/// <param name="stride">The stride.</param>
 	/// <param name="order">The sort order.</param>
@@ -85,6 +94,9 @@ public sealed class AnimationUtils : ThreeObject
 	/// Records a read op, sends it behind every write already pending, and completes with what
 	/// <c>subclip</c> returned.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="sourceClip">The values to sort.</param>
 	/// <param name="name">The name of the clip.</param>
 	/// <param name="startFrame">The start frame.</param>
@@ -107,6 +119,9 @@ public sealed class AnimationUtils : ThreeObject
 	/// sends it behind every write already pending, and completes with what <c>makeClipAdditive</c>
 	/// returned.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="targetClip">The clip to make additive.</param>
 	/// <param name="referenceFrame">The reference frame.</param>
 	/// <param name="referenceClip">The reference clip.</param>

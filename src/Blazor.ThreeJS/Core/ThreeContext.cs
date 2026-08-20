@@ -225,33 +225,6 @@ public sealed class ThreeContext : IAsyncDisposable
 	}
 
 	/// <summary>
-	/// Runs one read: records the read op behind everything already pending, sends the whole batch in a
-	/// single interop call, and decodes the value that comes back.
-	/// <para>
-	/// The read travels <b>inside</b> the batch rather than on a call of its own, which is what makes it
-	/// observe the writes made before it: the applier runs the ops in order, so the value it reads is
-	/// taken after those writes have landed. A caller cannot get stale data by forgetting to flush,
-	/// because there is no separate flush to forget.
-	/// </para>
-	/// <para>
-	/// Unlike <see cref="FlushAsync"/>, a dead circuit is <b>not</b> swallowed here. A write that could
-	/// not be delivered has nobody waiting on it; a read does, and answering it with a fabricated
-	/// default would be worse than failing. <see cref="JSDisconnectedException"/> and
-	/// <see cref="ObjectDisposedException"/> therefore fault the returned task, as does a response that
-	/// never arrives.
-	/// </para>
-	/// </summary>
-	/// <typeparam name="TValue">C# type the query declares it returns.</typeparam>
-	/// <param name="handle">Handle of the object to read from.</param>
-	/// <param name="member">Name of the three.js method to invoke.</param>
-	/// <param name="encodedArgs">Positional arguments, already in wire form.</param>
-	/// <param name="mintsHandle">Whether the applier should answer with a handle instead of a value.</param>
-	/// <returns>The decoded return value.</returns>
-	/// <exception cref="TimeoutException">Thrown when no response arrives within <see cref="ReadTimeout"/>.</exception>
-	/// <exception cref="InvalidOperationException">
-	/// Thrown when the applier rejected the read, or answered the batch without a row for it.
-	/// </exception>
-	/// <summary>
 	/// Invokes a static method of a three.js class and hands its value back.
 	/// <para>
 	/// A static has no handle to address it by, so this is the one query that names a class rather than
@@ -284,6 +257,33 @@ public sealed class ThreeContext : IAsyncDisposable
 		Batch.CallStatic(typeName, member, args.Select(ThreeValue.Encode).ToArray());
 	}
 
+	/// <summary>
+	/// Runs one read: records the read op behind everything already pending, sends the whole batch in a
+	/// single interop call, and decodes the value that comes back.
+	/// <para>
+	/// The read travels <b>inside</b> the batch rather than on a call of its own, which is what makes it
+	/// observe the writes made before it: the applier runs the ops in order, so the value it reads is
+	/// taken after those writes have landed. A caller cannot get stale data by forgetting to flush,
+	/// because there is no separate flush to forget.
+	/// </para>
+	/// <para>
+	/// Unlike <see cref="FlushAsync"/>, a dead circuit is <b>not</b> swallowed here. A write that could
+	/// not be delivered has nobody waiting on it; a read does, and answering it with a fabricated
+	/// default would be worse than failing. <see cref="JSDisconnectedException"/> and
+	/// <see cref="ObjectDisposedException"/> therefore fault the returned task, as does a response that
+	/// never arrives.
+	/// </para>
+	/// </summary>
+	/// <typeparam name="TValue">C# type the query declares it returns.</typeparam>
+	/// <param name="handle">Handle of the object to read from.</param>
+	/// <param name="member">Name of the three.js method to invoke.</param>
+	/// <param name="encodedArgs">Positional arguments, already in wire form.</param>
+	/// <param name="mintsHandle">Whether the applier should answer with a handle instead of a value.</param>
+	/// <returns>The decoded return value.</returns>
+	/// <exception cref="TimeoutException">Thrown when no response arrives within <see cref="ReadTimeout"/>.</exception>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when the applier rejected the read, or answered the batch without a row for it.
+	/// </exception>
 	internal Task<TValue> ReadAsync<TValue>(int handle, string member, object?[] encodedArgs, bool mintsHandle = false)
 	{
 		return AwaitValueAsync<TValue>(Batch.Read(handle, member, encodedArgs, mintsHandle), handle, member);

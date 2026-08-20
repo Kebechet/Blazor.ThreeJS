@@ -114,6 +114,9 @@ public sealed class PropertyBinding : ThreeObject
 	/// compatibility with parseTrackName(). Records a read op, sends it behind every write already
 	/// pending, and completes with what <c>sanitizeNodeName</c> returned.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="name">Node name to be sanitized.</param>
 	/// <returns>The value <c>sanitizeNodeName</c> returned, once the JavaScript side has answered.</returns>
 	public static Task<string> SanitizeNodeNameAsync(ThreeContext context, string name)
@@ -130,6 +133,9 @@ public sealed class PropertyBinding : ThreeObject
 	/// scene:helium_balloon_model:helium_balloon_model.position. Records a read op, sends it behind
 	/// every write already pending, and completes with what <c>parseTrackName</c> returned.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="trackName">The track name to parse.</param>
 	/// <returns>The value <c>parseTrackName</c> returned, once the JavaScript side has answered.</returns>
 	public static Task<ParseTrackNameResults> ParseTrackNameAsync(ThreeContext context, string trackName)

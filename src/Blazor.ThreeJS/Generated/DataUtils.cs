@@ -35,6 +35,9 @@ public sealed class DataUtils : ThreeObject
 	/// Reads <c>toHalfFloat</c> back from the JavaScript-side object. Records a read op, sends it
 	/// behind every write already pending, and completes with what <c>toHalfFloat</c> returned.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="val">Value forwarded to the <c>val</c> argument.</param>
 	/// <returns>The value <c>toHalfFloat</c> returned, once the JavaScript side has answered.</returns>
 	public static Task<float> ToHalfFloatAsync(ThreeContext context, float val)
@@ -46,6 +49,9 @@ public sealed class DataUtils : ThreeObject
 	/// Reads <c>fromHalfFloat</c> back from the JavaScript-side object. Records a read op, sends it
 	/// behind every write already pending, and completes with what <c>fromHalfFloat</c> returned.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="val">Value forwarded to the <c>val</c> argument.</param>
 	/// <returns>The value <c>fromHalfFloat</c> returned, once the JavaScript side has answered.</returns>
 	public static Task<float> FromHalfFloatAsync(ThreeContext context, float val)

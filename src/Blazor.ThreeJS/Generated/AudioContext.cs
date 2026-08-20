@@ -44,6 +44,9 @@ public sealed class AudioContext : ThreeObject
 	/// Returns the global native audio context. Records a read op, sends it behind every write already
 	/// pending, and completes with what <c>getContext</c> returned.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <returns>The value <c>getContext</c> returned, once the JavaScript side has answered.</returns>
 	public static Task<AudioContext?> GetContextAsync(ThreeContext context)
 	{

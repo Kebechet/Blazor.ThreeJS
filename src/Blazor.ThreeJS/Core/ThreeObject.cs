@@ -518,20 +518,6 @@ public abstract class ThreeObject
 	}
 
 	/// <summary>
-	/// Resolves a reference to the mirror this context already holds for it, or builds a new one.
-	/// </summary>
-	/// <typeparam name="TValue">Mirrored type expected.</typeparam>
-	/// <param name="context">Context the handle belongs to.</param>
-	/// <param name="member">Member that produced the reference, named in any failure.</param>
-	/// <param name="reference">The reference, absent when the member produced no object.</param>
-	/// <param name="adopt">Builds the wrapper for a handle this context does not already mirror.</param>
-	/// <returns>The mirrored object.</returns>
-	/// <exception cref="InvalidOperationException">
-	/// Thrown when the handle names a mirror of an incompatible type. That means three.js answered with
-	/// an object the declared return type does not describe, which a fresh wrapper would paper over by
-	/// producing a second mirror of one object.
-	/// </exception>
-	/// <summary>
 	/// Adopts a handle carried inside a structure, which is the one adoption a generated record makes.
 	/// <para>
 	/// Every raycast intersection names the object it hit, and that object has identity - a copy of its
@@ -555,6 +541,20 @@ public abstract class ThreeObject
 		return AdoptTyped(context, member, reference, adopt);
 	}
 
+	/// <summary>
+	/// Resolves a reference to the mirror this context already holds for it, or builds a new one.
+	/// </summary>
+	/// <typeparam name="TValue">Mirrored type expected.</typeparam>
+	/// <param name="context">Context the handle belongs to.</param>
+	/// <param name="member">Member that produced the reference, named in any failure.</param>
+	/// <param name="reference">The reference, absent when the member produced no object.</param>
+	/// <param name="adopt">Builds the wrapper for a handle this context does not already mirror.</param>
+	/// <returns>The mirrored object.</returns>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when the handle names a mirror of an incompatible type. That means three.js answered with
+	/// an object the declared return type does not describe, which a fresh wrapper would paper over by
+	/// producing a second mirror of one object.
+	/// </exception>
 	private static TValue? AdoptTyped<TValue>(
 		ThreeContext context,
 		string member,
@@ -696,27 +696,6 @@ public abstract class ThreeObject
 	}
 
 	/// <summary>
-	/// Invokes a method on this object and hands its return value back, which is the one thing the rest
-	/// of this class cannot do: every other member records an instruction and returns immediately.
-	/// <para>
-	/// The read is recorded into <see cref="Batch"/> behind everything already pending and the whole
-	/// batch is sent in one call, so the value is taken after the writes the caller has already made.
-	/// </para>
-	/// <para>
-	/// Unlike <see cref="RecordCall"/>, a read on an unattached object is <b>not</b> held for replay: a
-	/// held write eventually happens, whereas a held read has no value to give the caller now, and there
-	/// is no JavaScript object to ask yet. It fails at the call site instead.
-	/// </para>
-	/// </summary>
-	/// <typeparam name="TValue">C# type the query declares it returns.</typeparam>
-	/// <param name="member">Name of the three.js method to invoke.</param>
-	/// <param name="args">Positional arguments to pass to the method.</param>
-	/// <returns>The value three.js returned, decoded into <typeparamref name="TValue"/>.</returns>
-	/// <exception cref="InvalidOperationException">
-	/// Thrown when this object is not attached to a <see cref="ThreeContext"/>, so there is nothing to
-	/// read from.
-	/// </exception>
-	/// <summary>
 	/// Invokes a method whose answer is a collection of three.js objects, asking the applier for a
 	/// handle per element rather than for values it has no encoding for.
 	/// <para>
@@ -739,6 +718,27 @@ public abstract class ThreeObject
 		return context.ReadAsync<TValue>(Handle, member, encodedArgs, mintsHandle: true);
 	}
 
+	/// <summary>
+	/// Invokes a method on this object and hands its return value back, which is the one thing the rest
+	/// of this class cannot do: every other member records an instruction and returns immediately.
+	/// <para>
+	/// The read is recorded into <see cref="Batch"/> behind everything already pending and the whole
+	/// batch is sent in one call, so the value is taken after the writes the caller has already made.
+	/// </para>
+	/// <para>
+	/// Unlike <see cref="RecordCall"/>, a read on an unattached object is <b>not</b> held for replay: a
+	/// held write eventually happens, whereas a held read has no value to give the caller now, and there
+	/// is no JavaScript object to ask yet. It fails at the call site instead.
+	/// </para>
+	/// </summary>
+	/// <typeparam name="TValue">C# type the query declares it returns.</typeparam>
+	/// <param name="member">Name of the three.js method to invoke.</param>
+	/// <param name="args">Positional arguments to pass to the method.</param>
+	/// <returns>The value three.js returned, decoded into <typeparamref name="TValue"/>.</returns>
+	/// <exception cref="InvalidOperationException">
+	/// Thrown when this object is not attached to a <see cref="ThreeContext"/>, so there is nothing to
+	/// read from.
+	/// </exception>
 	protected Task<TValue> RecordRead<TValue>(string member, params object?[] args)
 	{
 		var context = RequireContext(member);

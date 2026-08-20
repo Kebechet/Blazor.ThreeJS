@@ -1574,8 +1574,15 @@ internal sealed class ClassEmitter
 				writer.WriteLine();
 			}
 
+			// A static has no `Batch` of its own to record into, so it takes the context explicitly. Named
+			// `context` rather than `this`-like, because it is an argument the caller supplies. It is
+			// documented from the same list it is declared from, so the tag and the signature agree.
+			var staticParameters = command.IsStatic
+				? (IReadOnlyList<MappedParameter>) [ContextParameter, .. parameters]
+				: parameters;
+
 			DocCommentEmitter.WriteSummary(writer, summary + DescribeArmChoice(parameters));
-			foreach (var parameter in parameters)
+			foreach (var parameter in staticParameters)
 			{
 				var text = parameter.Documentation is { Length: > 0 } documentation
 					? DocCommentEmitter.RenderInline(DocCommentEmitter.StripRedundantTail(documentation))
@@ -1583,12 +1590,6 @@ internal sealed class ClassEmitter
 
 				DocCommentEmitter.WriteParam(writer, parameter.Name, text);
 			}
-
-			// A static has no `Batch` of its own to record into, so it takes the context explicitly. Named
-			// `context` rather than `this`-like, because it is an argument the caller supplies.
-			var staticParameters = command.IsStatic
-				? (IReadOnlyList<MappedParameter>) [ContextParameter, .. parameters]
-				: parameters;
 
 			WriteDeclaration(
 				writer,
@@ -1688,8 +1689,14 @@ internal sealed class ClassEmitter
 				writer.WriteLine();
 			}
 
+			// A static reads through the context rather than through a handle, so it takes one explicitly.
+			// Documented from the same list it is declared from, so the tag and the signature agree.
+			var declaredParameters = query.IsStatic
+				? (IReadOnlyList<MappedParameter>) [ContextParameter, .. parameters]
+				: parameters;
+
 			DocCommentEmitter.WriteSummary(writer, summary + DescribeArmChoice(parameters));
-			foreach (var parameter in parameters)
+			foreach (var parameter in declaredParameters)
 			{
 				var text = parameter.Documentation is { Length: > 0 } documentation
 					? DocCommentEmitter.RenderInline(DocCommentEmitter.StripRedundantTail(documentation))
@@ -1714,10 +1721,6 @@ internal sealed class ClassEmitter
 					? $"The value <c>{query.ThreeName}</c> held, once the JavaScript side has answered."
 					: $"The value <c>{query.ThreeName}</c> returned, once the JavaScript side has answered.");
 			}
-
-			var declaredParameters = query.IsStatic
-				? (IReadOnlyList<MappedParameter>) [ContextParameter, .. parameters]
-				: parameters;
 
 			WriteDeclaration(
 				writer,

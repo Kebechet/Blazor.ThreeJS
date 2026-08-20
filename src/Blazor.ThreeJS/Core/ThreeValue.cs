@@ -161,6 +161,7 @@ internal static class ThreeValue
 	/// </summary>
 	/// <typeparam name="TValue">C# type the query declares it returns.</typeparam>
 	/// <param name="element">The raw JSON the applier sent back, absent when the read produced no value.</param>
+	/// <param name="context">Context a mirrored object carried in the value is adopted into, when there is one.</param>
 	/// <returns>The decoded value, or the C# default when the read produced <c>null</c> or <c>undefined</c>.</returns>
 	/// <exception cref="InvalidOperationException">
 	/// Thrown when the applier sent back a math value of a tag <typeparamref name="TValue"/> cannot hold.
@@ -267,18 +268,6 @@ internal static class ThreeValue
 	}
 
 	/// <summary>
-	/// Encodes each element of a sequence, so an array crosses the wire as a JSON array of already
-	/// encoded values rather than as its own serialized shape.
-	/// <para>
-	/// Elements go through <see cref="Encode"/> individually, which is what lets an array of mirrored
-	/// objects arrive as an array of <c>$ref</c> handles and an array of math values as an array of
-	/// tagged values. It also means an element with no encoding throws with its own type named, rather
-	/// than the array's.
-	/// </para>
-	/// </summary>
-	/// <param name="sequence">The sequence to encode.</param>
-	/// <returns>The encoded elements, in order.</returns>
-	/// <summary>
 	/// Encodes a dictionary's entries, keyed by the string three.js indexes them by.
 	/// </summary>
 	/// <param name="map">The dictionary to encode.</param>
@@ -302,6 +291,18 @@ internal static class ThreeValue
 		return encoded;
 	}
 
+	/// <summary>
+	/// Encodes each element of a sequence, so an array crosses the wire as a JSON array of already
+	/// encoded values rather than as its own serialized shape.
+	/// <para>
+	/// Elements go through <see cref="Encode"/> individually, which is what lets an array of mirrored
+	/// objects arrive as an array of <c>$ref</c> handles and an array of math values as an array of
+	/// tagged values. It also means an element with no encoding throws with its own type named, rather
+	/// than the array's.
+	/// </para>
+	/// </summary>
+	/// <param name="sequence">The sequence to encode.</param>
+	/// <returns>The encoded elements, in order.</returns>
 	private static object?[] EncodeSequence(System.Collections.IEnumerable sequence)
 	{
 		var encoded = new List<object?>();
@@ -313,13 +314,6 @@ internal static class ThreeValue
 		return encoded.ToArray();
 	}
 
-	/// <summary>
-	/// Substitutes <see cref="Unspecified"/> for a <see langword="null"/> that means "the caller did
-	/// not supply this constructor argument", leaving every supplied value — including a deliberate
-	/// <see langword="null"/> on a parameter three.js declares nullable — untouched.
-	/// </summary>
-	/// <param name="value">The argument as the generated class holds it.</param>
-	/// <returns>The value, or the sentinel when it was not supplied.</returns>
 	/// <summary>
 	/// Decodes one value of a runtime-known type, by calling <see cref="Decode{TValue}"/> through it.
 	/// Only the dictionary path needs this: every other decode knows its type at compile time.
@@ -393,6 +387,13 @@ internal static class ThreeValue
 		return adoption.Invoke([context.Batch, handle]);
 	}
 
+	/// <summary>
+	/// Substitutes <see cref="Unspecified"/> for a <see langword="null"/> that means "the caller did
+	/// not supply this constructor argument", leaving every supplied value — including a deliberate
+	/// <see langword="null"/> on a parameter three.js declares nullable — untouched.
+	/// </summary>
+	/// <param name="value">The argument as the generated class holds it.</param>
+	/// <returns>The value, or the sentinel when it was not supplied.</returns>
 	public static object? OrUnspecified(object? value)
 	{
 		return value ?? Unspecified;
@@ -498,6 +499,7 @@ internal static class ThreeValue
 	/// </summary>
 	/// <param name="elementType">C# type of one element.</param>
 	/// <param name="array">The JSON array the applier sent back.</param>
+	/// <param name="context">Context a mirrored element is adopted into, when there is one.</param>
 	/// <returns>The decoded array, boxed as <see cref="object"/> for the generic caller to cast.</returns>
 	private static object DecodeArray(Type elementType, JsonElement array, ThreeContext? context)
 	{
@@ -515,6 +517,7 @@ internal static class ThreeValue
 	/// <summary>Decodes one element of an array: a tagged math value, or anything the plain deserializer handles.</summary>
 	/// <param name="elementType">C# type of the element.</param>
 	/// <param name="element">The element as it arrived.</param>
+	/// <param name="context">Context a mirrored element is adopted into, when there is one.</param>
 	/// <returns>The decoded element.</returns>
 	private static object? DecodeElement(Type elementType, JsonElement element, ThreeContext? context)
 	{

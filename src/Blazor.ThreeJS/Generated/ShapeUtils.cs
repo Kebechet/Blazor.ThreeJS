@@ -42,6 +42,9 @@ public sealed class ShapeUtils : ThreeObject
 	/// Calculate area of a ( 2D ) contour polygon. Records a read op, sends it behind every write
 	/// already pending, and completes with what <c>area</c> returned.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="contour">Value forwarded to the <c>contour</c> argument.</param>
 	/// <returns>The value <c>area</c> returned, once the JavaScript side has answered.</returns>
 	public static Task<float> AreaAsync(ThreeContext context, Vector2[] contour)
@@ -54,6 +57,9 @@ public sealed class ShapeUtils : ThreeObject
 	/// components of a polygon. Records a read op, sends it behind every write already pending, and
 	/// completes with what <c>isClockWise</c> returned.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="pts">Value forwarded to the <c>pts</c> argument.</param>
 	/// <returns>The value <c>isClockWise</c> returned, once the JavaScript side has answered.</returns>
 	public static Task<bool> IsClockWiseAsync(ThreeContext context, Vector2[] pts)
@@ -66,6 +72,9 @@ public sealed class ShapeUtils : ThreeObject
 	/// with holes. Records a read op, sends it behind every write already pending, and completes with
 	/// what <c>triangulateShape</c> returned.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="contour">Value forwarded to the <c>contour</c> argument.</param>
 	/// <param name="holes">Value forwarded to the <c>holes</c> argument.</param>
 	/// <returns>The value <c>triangulateShape</c> returned, once the JavaScript side has answered.</returns>

@@ -162,6 +162,9 @@ public sealed class AnimationClip : ThreeObject
 	/// Serializes the given animation clip into JSON. Records a read op, sends it behind every write
 	/// already pending, and completes with what <c>toJSON</c> returned.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="clip">The animation clip to serialize.</param>
 	/// <returns>The value <c>toJSON</c> returned, once the JavaScript side has answered.</returns>
 	public static Task<AnimationClipJSON> ToJSONAsync(ThreeContext context, AnimationClip clip)
@@ -176,6 +179,9 @@ public sealed class AnimationClip : ThreeObject
 	/// This overload takes <c>objectOrClipArray</c> as <c>AnimationClip?[]</c> out of three.js's
 	/// <c>Array&lt;AnimationClip&gt; | Object3D</c>.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="objectOrClipArray">The array or object to search through.</param>
 	/// <param name="name">The name to search for.</param>
 	/// <returns>The value <c>findByName</c> returned, once the JavaScript side has answered.</returns>
@@ -194,6 +200,9 @@ public sealed class AnimationClip : ThreeObject
 	/// This overload takes <c>objectOrClipArray</c> as <c>Object3D</c> out of three.js's
 	/// <c>Array&lt;AnimationClip&gt; | Object3D</c>.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="objectOrClipArray">The array or object to search through.</param>
 	/// <param name="name">The name to search for.</param>
 	/// <returns>The value <c>findByName</c> returned, once the JavaScript side has answered.</returns>
@@ -209,6 +218,9 @@ public sealed class AnimationClip : ThreeObject
 	/// used. Records a read op, sends it behind every write already pending, and completes with what
 	/// <c>CreateClipsFromMorphTargetSequences</c> returned.
 	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="morphTargets">A sequence of morph targets.</param>
 	/// <param name="fps">The Frames-Per-Second value.</param>
 	/// <param name="noLoop">Whether the clip should be no loop or not.</param>

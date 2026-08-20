@@ -130,22 +130,6 @@ internal sealed class ThreeBatch
 	}
 
 	/// <summary>
-	/// Records a method invocation on <paramref name="handle"/> whose return value the caller needs
-	/// back, and allocates the request id the applier will echo on the result row.
-	/// <para>
-	/// Recorded into the same batch as the writes that precede it, rather than sent on its own call, so
-	/// the read runs after every write already made in C# with no ordering discipline for a caller to
-	/// forget. Like <see cref="Call"/> it never coalesces and acts as a barrier for this handle: a read
-	/// observes the object's property state at the point it runs, so a <c>Set</c> recorded afterwards
-	/// appends a new op instead of overwriting a value the read may already have seen.
-	/// </para>
-	/// </summary>
-	/// <param name="handle">Handle of the object to invoke the method on.</param>
-	/// <param name="member">Name of the method to invoke.</param>
-	/// <param name="args">Positional arguments to pass to the method.</param>
-	/// <param name="mintsHandle">Whether the applier should answer with a handle instead of a value.</param>
-	/// <returns>The request id identifying this read in the applier's response.</returns>
-	/// <summary>
 	/// Records a read of a static method of a three.js class, and allocates the request id the applier
 	/// will echo on the result row.
 	/// <para>
@@ -192,6 +176,22 @@ internal sealed class ThreeBatch
 		});
 	}
 
+	/// <summary>
+	/// Records a method invocation on <paramref name="handle"/> whose return value the caller needs
+	/// back, and allocates the request id the applier will echo on the result row.
+	/// <para>
+	/// Recorded into the same batch as the writes that precede it, rather than sent on its own call, so
+	/// the read runs after every write already made in C# with no ordering discipline for a caller to
+	/// forget. Like <see cref="Call"/> it never coalesces and acts as a barrier for this handle: a read
+	/// observes the object's property state at the point it runs, so a <c>Set</c> recorded afterwards
+	/// appends a new op instead of overwriting a value the read may already have seen.
+	/// </para>
+	/// </summary>
+	/// <param name="handle">Handle of the object to invoke the method on.</param>
+	/// <param name="member">Name of the method to invoke.</param>
+	/// <param name="args">Positional arguments to pass to the method.</param>
+	/// <param name="mintsHandle">Whether the applier should answer with a handle instead of a value.</param>
+	/// <returns>The request id identifying this read in the applier's response.</returns>
 	public int Read(int handle, string member, object?[] args, bool mintsHandle = false)
 	{
 		InvalidateSetCoalescing(handle);

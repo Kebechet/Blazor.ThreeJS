@@ -49,6 +49,15 @@ const TYPED_ARRAY_KEY = '$ta';
 // so a bare number cannot carry one in either direction.
 const NON_FINITE_KEY = '$n';
 
+// A plain data object - three.js's `{ start, count, materialIndex }` geometry group, and the other
+// structural shapes its declarations describe with an interface rather than a class.
+//
+// Tagged rather than sent bare, so it can never be confused with a three.js instance. That refusal is
+// the point: serializing a Mesh as a bag of numbers would hand C# a fabricated value, and the test
+// that tells the two apart is the prototype - a plain object has Object.prototype or none, and every
+// three.js class has its own.
+const STRUCTURE_KEY = '$o';
+
 // Handle each context registers its renderer under, shared with ThreeWireFormat.cs. Reserved rather
 // than minted so C# can address the renderer without asking what handle it got; mintHandle seeds its
 // allocator below this, so nothing else can ever be given it.
@@ -575,6 +584,17 @@ function decode(context, value) {
         return { value: undefined, isMathValue: false };
     }
 
+    // Member by member, so a structure carrying a typed array or a math value gets a real one rather
+    // than the wire shape of one.
+    if (Object.prototype.hasOwnProperty.call(value, STRUCTURE_KEY)) {
+        const decoded = {};
+        for (const [key, member] of Object.entries(value[STRUCTURE_KEY])) {
+            decoded[key] = decode(context, member).value;
+        }
+
+        return { value: decoded, isMathValue: false };
+    }
+
     if (value.$t === undefined) {
         return { value, isMathValue: false };
     }
@@ -643,6 +663,19 @@ function encode(value) {
         if (mathValue.is(value)) {
             return { $t: mathValue.tag, v: toComponents(mathValue.read(value)) };
         }
+    }
+
+    // A plain object, and only a plain object: `Object.create(null)` or a `{…}` literal. Anything with
+    // a prototype of its own is a three.js instance and still refused below, which is the rule this
+    // arm narrows rather than replaces.
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype === Object.prototype || prototype === null) {
+        const members = {};
+        for (const [key, member] of Object.entries(value)) {
+            members[key] = encode(member);
+        }
+
+        return { [STRUCTURE_KEY]: members };
     }
 
     throw new Error(`A '${value.constructor ? value.constructor.name : type}' value has no wire encoding, so it cannot be read back`);

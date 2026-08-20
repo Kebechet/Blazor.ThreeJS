@@ -29,7 +29,8 @@ var ir = JsonSerializer.Deserialize<IrRoot>(File.ReadAllText(irPath), IrSerializ
 	?? throw new InvalidOperationException($"'{irPath}' did not deserialize into an IR root.");
 
 var enums = new EnumCatalog(ir);
-var mapper = new TypeMapper(ir, enums);
+var structures = new StructureCatalog(ir);
+var mapper = new TypeMapper(ir, enums, structures);
 var constructorMapper = new ConstructorMapper(ir);
 var methodMapper = new MethodMapper();
 var scope = new EmissionScope(ir, mapper, constructorMapper);
@@ -73,6 +74,15 @@ var enumEmitter = new EnumEmitter(ir);
 foreach (var generatedEnum in enums.Generatable)
 {
 	emittedFiles.Add(enumEmitter.Emit(generatedEnum));
+}
+
+// The structural records come after the classes, because which of them exist is decided by what those
+// classes' members turned out to name: a record nothing references would be a public type carrying no
+// capability. See StructureCatalog for which interfaces qualify.
+var structureEmitter = new StructureEmitter(ir, mapper);
+foreach (var structure in structures.Used)
+{
+	emittedFiles.Add(structureEmitter.Emit(structure));
 }
 
 var stringValuedEnums = enums.Generatable

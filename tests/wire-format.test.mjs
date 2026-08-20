@@ -1125,6 +1125,51 @@ disposeDecoders(retryContext);
 modelServer.close();
 
 // ---------------------------------------------------------------------------------------------
+// A structural value. three.js describes some of what it hands back with an interface rather than a
+// class - `BufferGeometry.groups` is `{ start, count, materialIndex }[]` - and those have no identity,
+// so they travel as their own members rather than behind a handle.
+//
+// ⚠️ Only a *plain* object. A three.js instance flattened into JSON would reach C# as a plausible bag
+// of numbers, which is the refusal this arm narrows rather than replaces.
+// ---------------------------------------------------------------------------------------------
+
+const structureContext = createContextAround({ isStructureStandIn: true });
+structureContext.objects.set(1, new THREE.BufferGeometry());
+structureContext.objects.set(2, { holder: null });
+
+// Read: three.js's own groups array, produced by three.js rather than by anything sent here.
+runOps(structureContext, [{ k: OP_CALL, h: 1, m: 'addGroup', a: [0, 3, 1] }]);
+const groupsRead = runOps(structureContext, [{ k: OP_GET, h: 1, m: 'groups', i: 90 }]);
+
+assert.equal(groupsRead.r.length, 1, 'reading groups should produce one row');
+assert.deepEqual(
+    groupsRead.r[0].v,
+    [{ $o: { start: 0, count: 3, materialIndex: 1 } }],
+    'a plain object answers as its own members under the structure tag, so C# can bind them by name');
+
+// Write: a structure decodes member by member, so a tagged value nested inside one becomes a real
+// three.js value rather than the wire shape of one.
+runOps(structureContext, [{
+    k: OP_SET,
+    h: 2,
+    m: 'holder',
+    v: { $o: { point: { $t: 'Vector3', v: ['1', '2', '3'] }, count: 7 } }
+}]);
+
+const written = structureContext.objects.get(2).holder;
+assert.ok(written.point.isVector3, 'a math value nested in a structure decodes to a real three.js one');
+assert.equal(written.point.x, 1, 'and carries its components');
+assert.equal(written.count, 7, 'a plain member beside it passes through');
+
+// A three.js instance is still refused. This is the rule the plain-object arm narrows, and the reason
+// the wire form is tagged at all.
+const instanceRead = runOps(structureContext, [{ k: OP_READ, h: 1, m: 'clone', a: [], i: 91 }]);
+assert.match(
+    instanceRead.r[0].e ?? '',
+    /has no wire encoding/,
+    'a three.js instance must still be refused rather than serialized as a bag of numbers');
+
+// ---------------------------------------------------------------------------------------------
 // A promise answer. three.js's WebGPU renderer resolves half its API - renderAsync, clearAsync,
 // readRenderTargetPixelsAsync - when the GPU is done rather than when the call returns, so the
 // applier has to wait for the promise before filling in the row. Driven against a stand-in object
@@ -1333,6 +1378,7 @@ console.log('Picking OK - one callback per hit, none for a miss, and no pointer-
 console.log(`GLTFLoader OK - the demo's own model fetched, parsed and mirrored as ${loadedNodes.length} nodes on browser-minted handles, then released.`);
 console.log('DRACO decoding OK - the same compressed file rejects with no options, decodes with {draco:true}, reuses its cached decoder on a second load and on a racing first pair, and releases it on dispose.');
 console.log('KTX2 opt-in OK - {ktx2:true} still loads a file with no KTX2 texture, reuses its cached decoder on a second load, releases it on dispose, and clears a failed build so a retry gets a real second attempt.');
+console.log('Structures OK - a plain object round-trips as its own members, a nested math value decodes, a three.js instance is still refused.');
 console.log('Promise answers OK - a batch with none stays synchronous, one with them waits for each, a rejection faults only its own row.');
 console.log('OrbitControls OK - attached to the real canvas, 120 frames of camera movement, zero interop, every listener removed on detach.');
 console.log(`Generated surface OK - ${generatedClassNames.length} generated classes are constructors on the vendored three.js.`);

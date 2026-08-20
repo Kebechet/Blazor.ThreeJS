@@ -123,6 +123,19 @@ internal static class ThreeWireFormat
 	public const string NonFiniteKey = "$n";
 
 	/// <summary>
+	/// Key of a plain data object, <c>{"$o":{"start":0,"count":3}}</c>. three.js describes some of what
+	/// it hands back with an interface rather than a class - a geometry group, a batched-mesh range -
+	/// and those are values with no identity, so a handle would be the wrong shape for them.
+	/// <para>
+	/// Tagged rather than sent bare, because the applier refuses to serialize a three.js <em>instance</em>
+	/// and that refusal is load-bearing: a <c>Mesh</c> flattened into JSON would reach C# as a plausible
+	/// bag of numbers. The tag is what says "this really is a plain object", and the applier only writes
+	/// it for a value whose prototype is <c>Object.prototype</c> or none.
+	/// </para>
+	/// </summary>
+	public const string StructureKey = "$o";
+
+	/// <summary>
 	/// Wire token for <see cref="float.PositiveInfinity"/> inside a tagged value's component array.
 	/// <para>
 	/// JSON has no numeric form for a non-finite value, and the two runtimes fail differently rather

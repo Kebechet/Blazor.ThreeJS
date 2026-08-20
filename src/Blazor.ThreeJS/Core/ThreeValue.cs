@@ -98,6 +98,11 @@ internal static class ThreeValue
 				return new TaggedValue { Tag = ThreeWireFormat.SphericalHarmonics3Tag, Values = sphericalHarmonics.ToArray() };
 			case ThreeObject threeObject:
 				return new HandleReference { Handle = threeObject.Handle };
+			case IThreeStructure structure:
+				return new StructureValue
+				{
+					Members = structure.ToWireMembers().ToDictionary(x => x.Key, x => Encode(x.Value))
+				};
 			case UnspecifiedValue unspecified:
 				return unspecified;
 			case Enum enumValue:
@@ -200,6 +205,18 @@ internal static class ThreeValue
 		if (value.TryGetProperty(ThreeWireFormat.TypedArrayKey, out var constructorName))
 		{
 			return (TValue) DecodeTypedArray(constructorName.GetString(), value);
+		}
+
+		if (value.TryGetProperty(ThreeWireFormat.StructureKey, out var members)
+			&& typeof(IThreeStructure).IsAssignableFrom(typeof(TValue)))
+		{
+			// Built and filled rather than deserialized, because the generated record knows three.js's
+			// own member names and the plain deserializer knows only the C# ones. `new()` is enough of a
+			// constraint to state here: every implementation is a generated record with one.
+			var blank = (IThreeStructure) Activator.CreateInstance(typeof(TValue))!;
+			return (TValue) blank.FromWireMembers(members
+				.EnumerateObject()
+				.ToDictionary(x => x.Name, x => x.Value, StringComparer.Ordinal));
 		}
 
 		if (!value.TryGetProperty(ThreeWireFormat.TagKey, out var tag))
@@ -698,6 +715,17 @@ internal static class ThreeValue
 		[JsonPropertyName(ThreeWireFormat.ValuesKey)]
 		[JsonConverter(typeof(TypedArrayComponentConverter))]
 		public required double[] Values { get; init; }
+	}
+
+	/// <summary>
+	/// Wire representation of a plain data object: three.js's own member names, each carrying an
+	/// already-encoded value. See <see cref="ThreeWireFormat.StructureKey"/> for why it is tagged.
+	/// </summary>
+	internal sealed class StructureValue
+	{
+		/// <summary>The members, keyed by three.js's own name for each.</summary>
+		[JsonPropertyName(ThreeWireFormat.StructureKey)]
+		public required IReadOnlyDictionary<string, object?> Members { get; init; }
 	}
 
 	/// <summary>

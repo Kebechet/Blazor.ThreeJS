@@ -146,6 +146,12 @@ internal enum TypeMappingKind : byte
 	/// </summary>
 	Sequence,
 
+	/// <summary>
+	/// A generated record standing for a structural interface: a plain data value three.js describes
+	/// with a shape rather than a class. Travels as a tagged plain object, member by member.
+	/// </summary>
+	GeneratedStructure,
+
 	/// <summary>Nothing in C# mirrors it; <see cref="TypeMapping.SkipReason"/> says what and why.</summary>
 	Skipped
 }

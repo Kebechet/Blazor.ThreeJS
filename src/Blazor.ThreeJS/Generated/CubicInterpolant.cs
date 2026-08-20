@@ -17,10 +17,14 @@ public sealed class CubicInterpolant : ThreeObject
 	private readonly float _sampleSize;
 	private TypedArray? _resultBuffer;
 	private float _valueSize;
+	private CubicInterpolantSettings? _settings = null;
+	private CubicInterpolantSettings _defaultSettings_;
 	private bool _isParameterPositionsWritten;
 	private bool _isResultBufferWritten;
 	private bool _isSampleValuesWritten;
 	private bool _isValueSizeWritten;
+	private bool _isSettingsWritten;
+	private bool _isDefaultSettings_Written;
 
 	/// <summary>Initializes a new <see cref="CubicInterpolant"/>.</summary>
 	/// <param name="parameterPositions">The parameter positions hold the interpolation factors.</param>
@@ -161,6 +165,46 @@ public sealed class CubicInterpolant : ThreeObject
 		}
 	}
 
+	/// <summary>
+	/// The interpolation settings. Writing it records a <c>settings</c> property write once this object
+	/// is attached; writing the value already held records nothing.
+	/// </summary>
+	public CubicInterpolantSettings? Settings
+	{
+		get { return _settings; }
+		set
+		{
+			if (_settings == value)
+			{
+				return;
+			}
+
+			_settings = value;
+			_isSettingsWritten = true;
+			RecordSet("settings", value);
+		}
+	}
+
+	/// <summary>
+	/// The default settings object. Writing it records a <c>DefaultSettings_</c> property write once
+	/// this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public CubicInterpolantSettings DefaultSettings_
+	{
+		get { return _defaultSettings_; }
+		set
+		{
+			if (_defaultSettings_ == value)
+			{
+				return;
+			}
+
+			_defaultSettings_ = value;
+			_isDefaultSettings_Written = true;
+			RecordSet("DefaultSettings_", value);
+		}
+	}
+
 	/// <summary>Records a call to <c>intervalChanged_</c> on the JavaScript-side object.</summary>
 	/// <param name="i1">Value forwarded to the <c>i1</c> argument.</param>
 	/// <param name="t0">Value forwarded to the <c>t0</c> argument.</param>
@@ -233,6 +277,16 @@ public sealed class CubicInterpolant : ThreeObject
 		if (_isValueSizeWritten)
 		{
 			batch.Set(Handle, "valueSize", ThreeValue.Encode(_valueSize));
+		}
+
+		if (_isSettingsWritten)
+		{
+			batch.Set(Handle, "settings", ThreeValue.Encode(_settings));
+		}
+
+		if (_isDefaultSettings_Written)
+		{
+			batch.Set(Handle, "DefaultSettings_", ThreeValue.Encode(_defaultSettings_));
 		}
 	}
 }

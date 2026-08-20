@@ -29,6 +29,7 @@ public class BufferGeometry : EventDispatcher
 	private IndirectStorageBufferAttribute? _indirect;
 	private float _indirectOffset;
 	private bool _morphTargetsRelative = false;
+	private GeometryGroup[] _groups = [];
 	private bool _isIdWritten;
 	private bool _isUuidWritten;
 	private bool _isNameWritten;
@@ -36,6 +37,7 @@ public class BufferGeometry : EventDispatcher
 	private bool _isIndirectWritten;
 	private bool _isIndirectOffsetWritten;
 	private bool _isMorphTargetsRelativeWritten;
+	private bool _isGroupsWritten;
 	private bool _isBoundingBoxWritten;
 	private bool _isBoundingSphereWritten;
 
@@ -258,6 +260,28 @@ public class BufferGeometry : EventDispatcher
 			_morphTargetsRelative = value;
 			_isMorphTargetsRelativeWritten = true;
 			RecordSet("morphTargetsRelative", value);
+		}
+	}
+
+	/// <summary>
+	/// Split the geometry into groups, each of which will be rendered in a separate WebGL draw call.
+	/// This allows an array of materials to be used with the geometry. Writing it records a
+	/// <c>groups</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public GeometryGroup[] Groups
+	{
+		get { return _groups; }
+		set
+		{
+			if (_groups == value)
+			{
+				return;
+			}
+
+			_groups = value;
+			_isGroupsWritten = true;
+			RecordSet("groups", value);
 		}
 	}
 
@@ -591,6 +615,11 @@ public class BufferGeometry : EventDispatcher
 		if (_isMorphTargetsRelativeWritten)
 		{
 			batch.Set(Handle, "morphTargetsRelative", ThreeValue.Encode(_morphTargetsRelative));
+		}
+
+		if (_isGroupsWritten)
+		{
+			batch.Set(Handle, "groups", ThreeValue.Encode(_groups));
 		}
 
 		if (_isBoundingBoxWritten)

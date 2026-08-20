@@ -10,6 +10,7 @@ namespace Blazor.ThreeJS.Emitter.Map;
 /// </summary>
 internal sealed class TypeMapper
 {
+	private readonly StructureCatalog _structures;
 	private readonly EnumCatalog _enums;
 	private readonly Dictionary<string, IrTypeAlias> _aliasesByName;
 	private EmissionScope? _scope;
@@ -26,9 +27,10 @@ internal sealed class TypeMapper
 	/// <summary>Builds a mapper over one IR snapshot.</summary>
 	/// <param name="ir">The parsed IR.</param>
 	/// <param name="enums">Catalog of generatable enums.</param>
-	public TypeMapper(IrRoot ir, EnumCatalog enums)
+	public TypeMapper(IrRoot ir, EnumCatalog enums, StructureCatalog structures)
 	{
 		_enums = enums;
+		_structures = structures;
 		_aliasesByName = new Dictionary<string, IrTypeAlias>(StringComparer.Ordinal);
 		foreach (var alias in ir.TypeAliases)
 		{
@@ -334,7 +336,7 @@ internal sealed class TypeMapper
 		return TypeMapping.Skipped(category, $"`{type.Text}` is not an emitted class: {exclusion}");
 	}
 
-	private static TypeMapping MapInterfaceReference(string name, IrType type)
+	private TypeMapping MapInterfaceReference(string name, IrType type)
 	{
 		// A structural stand-in for a math type three.js also has a class for. The mirror can only ever
 		// send the class, which satisfies the interface, so this resolves rather than being refused as
@@ -342,6 +344,13 @@ internal sealed class TypeMapper
 		if (EmitterConfig.StructuralMathInterfaceNames.TryGetValue(name, out var mathTypeName))
 		{
 			return TypeMapping.Mapped(mathTypeName, TypeMappingKind.HandWrittenMathType);
+		}
+
+		// A plain data shape - every member a value, no methods, nothing inherited - becomes a generated
+		// record. See StructureCatalog for the rules and for why they are as narrow as they are.
+		if (_structures.TryUse(name, this))
+		{
+			return TypeMapping.Mapped(name, TypeMappingKind.GeneratedStructure, requiredGeneratedTypeName: name);
 		}
 
 		var isOptionsBag = name.EndsWith("Parameters", StringComparison.Ordinal) ||

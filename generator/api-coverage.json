@@ -3,19 +3,19 @@
   "typesVersion": "0.185.3",
   "totals": {
     "classes": 309,
-    "emittableClasses": 224,
+    "emittableClasses": 226,
     "outOfSurfaceClasses": 53,
-    "blockedClasses": 32,
+    "blockedClasses": 30,
     "reachableClasses": 264,
-    "members": 3650,
-    "mirroredState": 1129,
-    "commands": 743,
-    "asyncQueries": 804,
+    "members": 3648,
+    "mirroredState": 1132,
+    "commands": 747,
+    "asyncQueries": 802,
     "untypedObjectQueries": 11,
-    "skippedMembers": 974,
-    "reachableMembers": 2436,
-    "generatedMembers": 1692,
-    "strandedMembers": 1214
+    "skippedMembers": 967,
+    "reachableMembers": 2439,
+    "generatedMembers": 1698,
+    "strandedMembers": 1209
   },
   "classes": [
     {
@@ -541,8 +541,8 @@
       "file": "src/textures/CompressedArrayTexture.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "required parameter 'mipmaps' cannot be mapped: `CompressedTextureMipmap[]` is an array whose element type cannot be mapped: `CompressedTextureMipmap` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface",
+      "reason": "required parameter 'format' cannot be mapped: `CompressedPixelFormat` cannot become a C# enum: constant `RGB_BPTC_SIGNED_Format` has no literal value in the IR (declared type `<none>`)",
+      "category": "UnmappedTypeAlias",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -550,23 +550,87 @@
     {
       "name": "CompressedCubeTexture",
       "file": "src/textures/CompressedCubeTexture.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "required parameter 'images' cannot be mapped: `CompressedTextureImageData[]` is an array whose element type cannot be mapped: `CompressedTextureImageData` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface",
-      "constructorParameterCount": 0,
-      "droppedConstructorParameters": [],
+      "constructorParameterCount": 1,
+      "droppedConstructorParameters": [
+        {
+          "name": "format",
+          "type": "CompressedPixelFormat",
+          "reason": "`CompressedPixelFormat` cannot become a C# enum: constant `RGB_BPTC_SIGNED_Format` has no literal value in the IR (declared type `<none>`)",
+          "category": "UnmappedTypeAlias"
+        },
+        {
+          "name": "type",
+          "type": "TextureDataType",
+          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
+          "category": "RequiredAfterOptional"
+        }
+      ],
       "middlePositionUnspecifiedParameters": []
     },
     {
       "name": "CompressedTexture",
       "file": "src/textures/CompressedTexture.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "required parameter 'mipmaps' cannot be mapped: `CompressedTextureMipmap[]` is an array whose element type cannot be mapped: `CompressedTextureMipmap` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface",
-      "constructorParameterCount": 0,
-      "droppedConstructorParameters": [],
+      "constructorParameterCount": 3,
+      "droppedConstructorParameters": [
+        {
+          "name": "format",
+          "type": "CompressedPixelFormat",
+          "reason": "`CompressedPixelFormat` cannot become a C# enum: constant `RGB_BPTC_SIGNED_Format` has no literal value in the IR (declared type `<none>`)",
+          "category": "UnmappedTypeAlias"
+        },
+        {
+          "name": "type",
+          "type": "TextureDataType",
+          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
+          "category": "RequiredAfterOptional"
+        },
+        {
+          "name": "mapping",
+          "type": "Mapping",
+          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
+          "category": "RequiredAfterOptional"
+        },
+        {
+          "name": "wrapS",
+          "type": "Wrapping",
+          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
+          "category": "RequiredAfterOptional"
+        },
+        {
+          "name": "wrapT",
+          "type": "Wrapping",
+          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
+          "category": "RequiredAfterOptional"
+        },
+        {
+          "name": "magFilter",
+          "type": "MagnificationTextureFilter",
+          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
+          "category": "RequiredAfterOptional"
+        },
+        {
+          "name": "minFilter",
+          "type": "MinificationTextureFilter",
+          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
+          "category": "RequiredAfterOptional"
+        },
+        {
+          "name": "anisotropy",
+          "type": "number",
+          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
+          "category": "RequiredAfterOptional"
+        },
+        {
+          "name": "colorSpace",
+          "type": "string",
+          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
+          "category": "RequiredAfterOptional"
+        }
+      ],
       "middlePositionUnspecifiedParameters": []
     },
     {
@@ -3856,7 +3920,7 @@
   "memberSkipReasons": [
     {
       "category": "NodeStackType",
-      "members": 382
+      "members": 383
     },
     {
       "category": "CallbackType",
@@ -3876,7 +3940,7 @@
     },
     {
       "category": "OptionsInterface",
-      "members": 72
+      "members": 55
     },
     {
       "category": "UntypedValue",
@@ -3911,6 +3975,10 @@
       "members": 11
     },
     {
+      "category": "NoHandleForResult",
+      "members": 10
+    },
+    {
       "category": "UnerasableTypeParameter",
       "members": 8
     },
@@ -3921,10 +3989,6 @@
     {
       "category": "CollectionType",
       "members": 3
-    },
-    {
-      "category": "NoHandleForResult",
-      "members": 1
     }
   ],
   "generatedEnums": [
@@ -4059,7 +4123,7 @@
       "source": "ConstantGroup",
       "members": 3,
       "backingType": "ushort",
-      "isReferenced": false
+      "isReferenced": true
     },
     {
       "name": "InterpolationModes",
@@ -5802,8 +5866,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "return type: `BatchedMeshGeometryRange` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "reason": "returns `BatchedMeshGeometryRange`, which is neither a value the read op carries nor a three.js object a handle could name",
+      "category": "NoHandleForResult"
     },
     {
       "class": "BatchedMesh",
@@ -6726,17 +6790,15 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "return type: `Box3JSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "reason": "returns `Box3JSON`, which is neither a value the read op carries nor a three.js object a handle could name",
+      "category": "NoHandleForResult"
     },
     {
       "class": "Box3",
       "member": "fromJSON",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `Box3JSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "Box3Helper",
@@ -7111,8 +7173,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "return type: `BufferAttributeJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "reason": "returns `BufferAttributeJSON`, which is neither a value the read op carries nor a three.js object a handle could name",
+      "category": "NoHandleForResult"
     },
     {
       "class": "BufferAttribute",
@@ -7208,9 +7270,8 @@
       "member": "groups",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`GeometryGroup[]` is an array whose element type cannot be mapped: `GeometryGroup` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "MirroredState",
+      "type": "GeometryGroup[]"
     },
     {
       "class": "BufferGeometry",
@@ -8353,8 +8414,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'target': `HSL` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "reason": "returns `HSL`, which is neither a value the read op carries nor a three.js object a handle could name",
+      "category": "NoHandleForResult"
     },
     {
       "class": "Color",
@@ -8362,8 +8423,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'target': `RGB` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "reason": "returns `RGB`, which is neither a value the read op carries nor a three.js object a handle could name",
+      "category": "NoHandleForResult"
     },
     {
       "class": "Color",
@@ -8704,14 +8765,6 @@
       "bucket": "Command"
     },
     {
-      "class": "CompressedArrayTexture",
-      "member": "isCompressedTexture",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
       "class": "CompressedCubeTexture",
       "member": "isCompressedCubeTexture",
       "kind": "Property",
@@ -8724,14 +8777,6 @@
       "member": "isCubeTexture",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "CompressedCubeTexture",
-      "member": "isCompressedTexture",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
       "bucket": "AsyncQuery",
       "type": "bool"
     },
@@ -9313,18 +9358,16 @@
       "member": "settings",
       "kind": "Property",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`CubicInterpolantSettings` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "MirroredState",
+      "type": "CubicInterpolantSettings"
     },
     {
       "class": "CubicInterpolant",
       "member": "DefaultSettings_",
       "kind": "Property",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`CubicInterpolantSettings` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "MirroredState",
+      "type": "CubicInterpolantSettings"
     },
     {
       "class": "CubicInterpolant",
@@ -10760,8 +10803,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "return type: `FogJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "reason": "returns `FogJSON`, which is neither a value the read op carries nor a three.js object a handle could name",
+      "category": "NoHandleForResult"
     },
     {
       "class": "FogExp2",
@@ -10809,8 +10852,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "return type: `FogExp2JSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "reason": "returns `FogExp2JSON`, which is neither a value the read op carries nor a three.js object a handle could name",
+      "category": "NoHandleForResult"
     },
     {
       "class": "FramebufferTexture",
@@ -26067,8 +26110,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'group': `GeometryGroup` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "reason": "parameter 'lightsNode': `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
+      "category": "NodeStackType"
     },
     {
       "class": "Renderer",
@@ -27299,17 +27342,15 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "return type: `SphereJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "reason": "returns `SphereJSON`, which is neither a value the read op carries nor a three.js object a handle could name",
+      "category": "NoHandleForResult"
     },
     {
       "class": "Sphere",
       "member": "fromJSON",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `SphereJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "SphereGeometry",
@@ -30563,9 +30604,7 @@
       "member": "setFromColor",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'color': `RGB` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "Vector3",
@@ -32562,9 +32601,7 @@
       "member": "renderBufferDirect",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'group': `GeometryGroup` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "WebGLRenderer",
@@ -33518,8 +33555,9 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`XRHandInputState` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "type": "XRHandInputState",
+      "reason": "read-only in three.js and typed `XRHandInputState`, which is neither a value the get op carries nor a three.js object a handle could name",
+      "category": "NoHandleForResult"
     },
     {
       "class": "XRJointSpace",

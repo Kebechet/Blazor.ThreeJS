@@ -324,7 +324,7 @@ var model = await new GLTFLoader(threeContext).LoadAsync(
 `DRACOLoader`. Each flag fetches its own decoder module only on the load that sets it. Leave both at
 their default `false` and nothing changes from before: a compressed file still fails the load with the
 browser's own message rather than quietly arriving without its geometry or textures -
-`demo/Stories/CompressedModel.stories.razor` shows the opt-in that avoids it, and
+`demo/Blazor.ThreeJS.Stories/Stories/CompressedModel.stories.razor` shows the opt-in that avoids it, and
 `tests/wire-format.test.mjs` proves both the failure and the opt-in against the real decoder.
 
 ### Orbiting the camera
@@ -790,6 +790,28 @@ attaches it to the same context before the property write that references it. Wh
 this package cannot do is attach its **own** constructor dependencies - the hook for that is internal -
 so attach them yourself first with `threeContext.Attach(dependency)`, which takes any mirrored object,
 or reach for `Primitive`, which does it for you.
+
+## Running the storybook
+
+Every example above is a story in [the live storybook](https://kebechet.github.io/Blazor.ThreeJS/),
+which is the WebAssembly host published to GitHub Pages:
+
+```powershell
+dotnet run --project demo/Blazor.ThreeJS.Demo
+```
+
+The same stories run over a **Blazor Server** circuit from a second host:
+
+```powershell
+dotnet run --project demo/Blazor.ThreeJS.Demo.Server
+```
+
+Both reference `demo/Blazor.ThreeJS.Stories`, so the stories are one set of files and neither host can
+drift from the other. The Server one is what makes "safe on Server" checkable rather than argued:
+`tests/Blazor.ThreeJS.E2E/ServerCircuitTests.cs` sweeps every story over the circuit, where each op is
+a SignalR message and every pointer callback is a round trip. Its own
+[README](demo/Blazor.ThreeJS.Demo.Server/README.md) records what a Server host has to do differently,
+and the one upstream BlazingStory bug that affects its shell page but not its stories.
 
 ## License
 

@@ -21,7 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Blazor.ThreeJS\Blazor.ThreeJS.csproj" />
+    <ProjectReference Include="..\..\src\Blazor.ThreeJS\Blazor.ThreeJS.csproj" />
+    <ProjectReference Include="..\Blazor.ThreeJS.Stories\Blazor.ThreeJS.Stories.csproj" />
   </ItemGroup>
 
 </Project>

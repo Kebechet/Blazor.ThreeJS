@@ -17,10 +17,24 @@ public sealed class DemoCollectionDefinition : ICollectionFixture<DemoFixture>
 }
 
 /// <summary>
+/// The same storybook again, hosted over a Blazor Server circuit instead of compiled to WebAssembly.
+/// <para>
+/// Its own collection, so it gets its own demo process and its own browser: the two hosts cannot share
+/// a port, and the tests in either one run against a rendering surface they do not share with anything.
+/// </para>
+/// </summary>
+[CollectionDefinition(Name)]
+public sealed class ServerDemoCollectionDefinition : ICollectionFixture<ServerDemoFixture>
+{
+	/// <summary>Name shared by the collection definition and every <c>[Collection]</c> attribute.</summary>
+	public const string Name = "Demo storybook over a Blazor Server circuit";
+}
+
+/// <summary>
 /// Owns the demo storybook process and the browser that drives it, and hands each test a freshly
 /// isolated page.
 /// </summary>
-public sealed class DemoFixture : IAsyncLifetime
+public class DemoFixture : IAsyncLifetime
 {
 	/// <summary>
 	/// Flags that pin WebGL to SwiftShader, ANGLE's software rasteriser, rather than whatever GPU
@@ -45,9 +59,22 @@ public sealed class DemoFixture : IAsyncLifetime
 
 	private static readonly ViewportSize DefaultViewport = new() { Width = 1280, Height = 900 };
 
-	private readonly DemoServer _demoServer = new();
+	private readonly DemoServer _demoServer;
 	private IPlaywright? _playwright;
 	private IBrowser? _browser;
+
+	/// <summary>Runs the WebAssembly host, which is what the deployed storybook is.</summary>
+	public DemoFixture()
+		: this(DemoServer.WebAssemblyHost)
+	{
+	}
+
+	/// <summary>Runs one of the two demo hosts.</summary>
+	/// <param name="projectPath">Project file, as path segments below the repository root.</param>
+	private protected DemoFixture(string[] projectPath)
+	{
+		_demoServer = new DemoServer(projectPath);
+	}
 
 	/// <summary>Root URL the demo storybook is served from.</summary>
 	public string BaseUrl
@@ -162,5 +189,26 @@ public sealed class DemoFixture : IAsyncLifetime
 		_playwright = null;
 
 		await _demoServer.DisposeAsync();
+	}
+}
+
+/// <summary>
+/// The demo storybook served from a Blazor Server host: the same stories, from the same
+/// <c>Blazor.ThreeJS.Stories</c> library, rendered by a circuit over SignalR rather than by a runtime
+/// in the browser.
+/// <para>
+/// It exists because Server is the harder of the two hosts to be right on and the one nothing else
+/// here exercises. Every op crosses a real network boundary, every callback into C# is a SignalR
+/// message, and a batch that is merely correct in WebAssembly can still be too chatty to use over a
+/// circuit. What the tests in this collection check is that it works at all, and that the interop
+/// count per frame is the same as it is in the browser.
+/// </para>
+/// </summary>
+public sealed class ServerDemoFixture : DemoFixture
+{
+	/// <summary>Runs the Blazor Server host.</summary>
+	public ServerDemoFixture()
+		: base(DemoServer.ServerHost)
+	{
 	}
 }

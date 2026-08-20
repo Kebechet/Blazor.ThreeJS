@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <IsPackable>false</IsPackable>
+    <MD2RazorDefaultBaseClass>global::BlazingStory.Internals.Pages.MarkdownPageBase</MD2RazorDefaultBaseClass>
+    <!-- The stories moved out of the WebAssembly host into this library so a second host could show
+         the same ones over a Blazor Server circuit. Their namespace did not move with them: keeping it
+         is what stops every `@using` from changing over a refactor that is only about where the files
+         live, and what keeps the two hosts publishing the same BlazingStory ids. -->
+    <RootNamespace>Blazor.ThreeJS.Demo</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BlazingStory" Version="1.0.0-preview.91" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.5" />
+    <PackageReference Include="MD2RazorGenerator" Version="1.2.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Blazor.ThreeJS\Blazor.ThreeJS.csproj" />
+  </ItemGroup>
+
+</Project>

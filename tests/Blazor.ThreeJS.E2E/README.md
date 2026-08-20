@@ -1,8 +1,21 @@
 # Real browser suite
 
 Everything else in this repository is verified either in C# against a mocked interop module, or in
-Node against the vendored three.js. Neither runs a WebGL context. This suite does: it starts the
-demo storybook in `demo/`, drives it with Playwright, and asserts on what the browser actually did.
+Node against the vendored three.js. Neither runs a WebGL context. This suite does: it starts a demo
+storybook, drives it with Playwright, and asserts on what the browser actually did.
+
+It runs the same stories against **both hosting models**, from two collections that each own their own
+demo process and browser:
+
+| collection | host | what only it can show |
+|---|---|---|
+| `DemoCollectionDefinition` | `demo/Blazor.ThreeJS.Demo` (WebAssembly) | the deployed storybook, including the shell page and its sub-path assets |
+| `ServerDemoCollectionDefinition` | `demo/Blazor.ThreeJS.Demo.Server` (Blazor Server) | every op as a SignalR message, every pointer callback as a round trip |
+
+Both reference `demo/Blazor.ThreeJS.Stories`, so the stories are the same files and a story that behaves
+differently in one of them is a hosting-model difference and nothing else. See
+`demo/Blazor.ThreeJS.Demo.Server/README.md` for what the Server host does differently, and for the one
+upstream BlazingStory bug that affects its shell page but not its stories.
 
 Run it from the repository root:
 
@@ -43,9 +56,11 @@ after the interop module's own render callback for that frame and before the fra
 
 ## The demo process
 
-`DemoServer` starts `dotnet run` on the demo, on a port the OS picks, and stops the whole process
-tree in `DisposeAsync` — `dotnet run` is a launcher, so killing it alone would leave the app holding
-the port. A start that fails partway tears down what it managed to create before rethrowing.
+`DemoServer` starts `dotnet run` on one of the two demo hosts, on a port the OS picks, and stops the
+whole process tree in `DisposeAsync` — `dotnet run` is a launcher, so killing it alone would leave the
+app holding the port. A start that fails partway tears down what it managed to create before
+rethrowing. Which host it runs is the project path the fixture hands it, `DemoServer.WebAssemblyHost`
+or `DemoServer.ServerHost`.
 
 ## Browser
 

@@ -12,6 +12,21 @@ namespace Blazor.ThreeJS.E2E;
 /// </summary>
 internal sealed class DemoServer : IAsyncDisposable
 {
+	/// <summary>Project file of the WebAssembly host, relative to the repository root.</summary>
+	public static readonly string[] WebAssemblyHost = ["demo", "Blazor.ThreeJS.Demo", "Blazor.ThreeJS.Demo.csproj"];
+
+	/// <summary>Project file of the Blazor Server host, relative to the repository root.</summary>
+	public static readonly string[] ServerHost = ["demo", "Blazor.ThreeJS.Demo.Server", "Blazor.ThreeJS.Demo.Server.csproj"];
+
+	private readonly string[] _projectPath;
+
+	/// <summary>Builds a runner for one of the two demo hosts.</summary>
+	/// <param name="projectPath">Project file, as path segments below the repository root.</param>
+	public DemoServer(string[] projectPath)
+	{
+		_projectPath = projectPath;
+	}
+
 	/// <summary>
 	/// How long the demo is given to build and start listening. It is built from source on a cold
 	/// checkout, which on a CI runner is minutes rather than seconds.
@@ -49,7 +64,7 @@ internal sealed class DemoServer : IAsyncDisposable
 		};
 		startInfo.ArgumentList.Add("run");
 		startInfo.ArgumentList.Add("--project");
-		startInfo.ArgumentList.Add(Path.Combine(repositoryRoot, "demo", "Blazor.ThreeJS.Demo.csproj"));
+		startInfo.ArgumentList.Add(Path.Combine([repositoryRoot, .. _projectPath]));
 		startInfo.ArgumentList.Add("--configuration");
 		startInfo.ArgumentList.Add("Release");
 		startInfo.ArgumentList.Add("--no-launch-profile");
@@ -175,7 +190,7 @@ internal sealed class DemoServer : IAsyncDisposable
 		var directory = new DirectoryInfo(AppContext.BaseDirectory);
 		while (directory is not null)
 		{
-			if (File.Exists(Path.Combine(directory.FullName, "demo", "Blazor.ThreeJS.Demo.csproj")) &&
+			if (File.Exists(Path.Combine([directory.FullName, .. WebAssemblyHost])) &&
 				File.Exists(Path.Combine(directory.FullName, "src", "Blazor.ThreeJS.slnx")))
 			{
 				return directory.FullName;

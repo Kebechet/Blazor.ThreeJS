@@ -17,12 +17,15 @@ env:
   DOTNET_VERSION: '10.0.x'
   BUILD_CONFIGURATION: Release
   E2E_PROJECT: tests/Blazor.ThreeJS.E2E/Blazor.ThreeJS.E2E.csproj
-  DEMO_PROJECT: demo/Blazor.ThreeJS.Demo.csproj
+  DEMO_PROJECT: demo/Blazor.ThreeJS.Demo/Blazor.ThreeJS.Demo.csproj
+  SERVER_DEMO_PROJECT: demo/Blazor.ThreeJS.Demo.Server/Blazor.ThreeJS.Demo.Server.csproj
 
 jobs:
   browser-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Two demo hosts now, each built from source and each sweeping the same 30 stories on a software
+    # rasteriser. The local run is about 2.5 minutes; a cold CI runner builds both first.
+    timeout-minutes: 35
 
     steps:
     - uses: actions/checkout@v7
@@ -32,12 +35,14 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    # The demo as well as the suite: the test fixture starts it with `dotnet run`, and restoring it
-    # up front keeps that out of the first test's start timeout.
-    - name: Restore the suite and the demo
+    # Both demo hosts as well as the suite: the test fixtures start them with `dotnet run`, and
+    # restoring up front keeps that out of the first test's start timeout. The Server host is the
+    # second one - same stories, over a SignalR circuit.
+    - name: Restore the suite and both demo hosts
       run: |
         dotnet restore ${{ env.E2E_PROJECT }}
         dotnet restore ${{ env.DEMO_PROJECT }}
+        dotnet restore ${{ env.SERVER_DEMO_PROJECT }}
 
     # No Playwright browser download: the suite drives the Google Chrome already on the runner image
     # through Playwright's `chrome` channel, and pins rendering to SwiftShader with launch flags

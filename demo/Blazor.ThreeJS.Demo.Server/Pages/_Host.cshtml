@@ -1,0 +1,58 @@
+@page "/"
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blazor.ThreeJS.Demo (Server)</title>
+    <base href="~/" />
+    @* Same stylesheet the WebAssembly shell loads, from the library both hosts share. *@
+    <link rel="stylesheet" href="_content/Blazor.ThreeJS.Stories/css/blazor-ui.css" />
+    @* The scoped-CSS bundle, which is also how BlazingStory's own component styles arrive. The
+       WebAssembly host gets it from the SDK's placeholder rewriting of index.html; a Razor Page has
+       no such placeholder, so it is linked by name. *@
+    <link rel="stylesheet" href="Blazor.ThreeJS.Demo.Server.styles.css" />
+    <script>
+        // BlazingStory exposes no parameter for the addon panel's default position - it only
+        // persists whatever the user last toggled. Seeding the same storage key before boot
+        // makes "right" the default, while an existing value (the user's own choice) is kept.
+        // SplitterOrientation: 0 = bottom, 1 = right.
+        (function () {
+            var key = 'CanvasPage._AddonPanelLayout';
+            if (localStorage.getItem(key) === null) {
+                localStorage.setItem(key, JSON.stringify({
+                    SplitterOrientation: 1,
+                    HorizontalProportion: 50,
+                    VerticalProportion: 50
+                }));
+            }
+        })();
+    </script>
+
+    @* BlazingStory links its own stylesheet and fonts through <HeadContent>, which reaches the
+       document only if something renders the outlet. The WebAssembly host registers it as a root
+       component in Program.cs; a Razor Page renders it here. Without it the storybook boots, works,
+       and has no styling at all. *@
+    <component type="typeof(HeadOutlet)" render-mode="Server" />
+</head>
+
+<body>
+    @* Server, not ServerPrerendered. A prerender pass runs the component tree with no JavaScript
+       available, so a canvas would be described once into HTML that the circuit then replaces -
+       twice the work for a document whose whole content is a WebGL surface. *@
+    <component type="typeof(App)" render-mode="Server" />
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.server.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,37 @@
+@page
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blazor.ThreeJS.Demo (Server)</title>
+    <base href="~/" />
+    @* The story canvas, composited over the shell. Loads the preview stylesheet the shell does not. *@
+    <link rel="stylesheet" href="_content/Blazor.ThreeJS.Stories/css/blazor-ui.css" />
+    <link rel="stylesheet" href="_content/Blazor.ThreeJS.Stories/css/story-preview.css" />
+    <link rel="stylesheet" href="Blazor.ThreeJS.Demo.Server.styles.css" />
+
+    @* BlazingStory links its own stylesheet and fonts through <HeadContent>, which reaches the
+       document only if something renders the outlet. The WebAssembly host registers it as a root
+       component in Program.cs; a Razor Page renders it here. Without it the storybook boots, works,
+       and has no styling at all. *@
+    <component type="typeof(HeadOutlet)" render-mode="Server" />
+</head>
+
+<body>
+    <component type="typeof(App)" render-mode="Server" />
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.server.js"></script>
+</body>
+
+</html>

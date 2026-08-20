@@ -14,7 +14,12 @@ import {
     uv
 // Relative, not root-absolute: the demo is served from the root by `dotnet run` and from
 // /Blazor.ThreeJS/ on GitHub Pages, and only a relative specifier resolves correctly in both.
-} from '../_content/Kebechet.Blazor.ThreeJS/three.tsl.min.js';
+//
+// ⚠️ Two levels, and the count is the whole correctness of this line. This file is served from
+// `_content/Blazor.ThreeJS.Stories/js/`, so `..` reaches the library's own static-asset root and the
+// second one reaches `_content/`, beside which the package's assets sit. A wrong count 404s only when
+// deployed, never in a unit test - `tests/demo-base-path.test.mjs` is what fails instead.
+} from '../../Kebechet.Blazor.ThreeJS/three.tsl.min.js';
 
 // A uniform is a node whose `value` stays writable after the shader is built, which is what lets C#
 // drive a live shader without recompiling it or paying interop per frame.

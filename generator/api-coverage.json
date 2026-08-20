@@ -3,19 +3,19 @@
   "typesVersion": "0.185.3",
   "totals": {
     "classes": 309,
-    "emittableClasses": 216,
+    "emittableClasses": 224,
     "outOfSurfaceClasses": 53,
-    "blockedClasses": 40,
+    "blockedClasses": 32,
     "reachableClasses": 264,
-    "members": 3804,
-    "mirroredState": 1158,
-    "commands": 761,
-    "asyncQueries": 853,
+    "members": 3650,
+    "mirroredState": 1129,
+    "commands": 743,
+    "asyncQueries": 804,
     "untypedObjectQueries": 11,
-    "skippedMembers": 1032,
-    "reachableMembers": 2456,
-    "generatedMembers": 1703,
-    "strandedMembers": 1348
+    "skippedMembers": 974,
+    "reachableMembers": 2436,
+    "generatedMembers": 1692,
+    "strandedMembers": 1214
   },
   "classes": [
     {
@@ -199,12 +199,17 @@
     {
       "name": "Backend",
       "file": "src/renderers/common/Backend.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass",
       "constructorParameterCount": 0,
-      "droppedConstructorParameters": [],
+      "droppedConstructorParameters": [
+        {
+          "name": "parameters",
+          "type": "BackendParameters",
+          "reason": "`BackendParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument",
+          "category": "OptionsInterface"
+        }
+      ],
       "middlePositionUnspecifiedParameters": []
     },
     {
@@ -587,7 +592,7 @@
       "file": "src/extras/Controls.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "the class is abstract, so it has no constructor to mirror",
+      "reason": "the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
       "category": "AbstractClass",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -763,7 +768,7 @@
       "file": "src/extras/core/Curve.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "the class is abstract, so it has no constructor to mirror",
+      "reason": "the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
       "category": "AbstractClass",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -842,11 +847,9 @@
     {
       "name": "DataTextureLoader",
       "file": "src/loaders/DataTextureLoader.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass",
-      "constructorParameterCount": 0,
+      "constructorParameterCount": 1,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
     },
@@ -1119,10 +1122,8 @@
     {
       "name": "GLSLNodeBuilder",
       "file": "src/renderers/webgl-fallback/nodes/GLSLNodeBuilder.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "required parameter 'renderer' cannot be mapped: `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass",
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -1424,7 +1425,7 @@
       "file": "src/math/Interpolant.d.ts",
       "status": "blocked",
       "isReachable": true,
-      "reason": "the class is abstract, so it has no constructor to mirror",
+      "reason": "the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
       "category": "AbstractClass",
       "constructorParameterCount": 0,
       "droppedConstructorParameters": [],
@@ -1473,13 +1474,13 @@
     {
       "name": "Light",
       "file": "src/lights/Light.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass",
-      "constructorParameterCount": 0,
+      "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
-      "middlePositionUnspecifiedParameters": []
+      "middlePositionUnspecifiedParameters": [
+        "color"
+      ]
     },
     {
       "name": "LightProbe",
@@ -2362,10 +2363,8 @@
     {
       "name": "PostProcessing",
       "file": "src/renderers/common/PostProcessing.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "required parameter 'renderer' cannot be mapped: `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass",
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [
         {
@@ -2538,10 +2537,8 @@
     {
       "name": "RenderPipeline",
       "file": "src/renderers/common/RenderPipeline.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "required parameter 'renderer' cannot be mapped: `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass",
       "constructorParameterCount": 1,
       "droppedConstructorParameters": [
         {
@@ -2593,12 +2590,17 @@
     {
       "name": "Renderer",
       "file": "src/renderers/common/Renderer.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass",
-      "constructorParameterCount": 0,
-      "droppedConstructorParameters": [],
+      "constructorParameterCount": 1,
+      "droppedConstructorParameters": [
+        {
+          "name": "parameters",
+          "type": "RendererParameters",
+          "reason": "`RendererParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument",
+          "category": "OptionsInterface"
+        }
+      ],
       "middlePositionUnspecifiedParameters": []
     },
     {
@@ -3121,7 +3123,7 @@
         {
           "name": "path",
           "type": "Curve<Vector3>",
-          "reason": "`Curve<Vector3>` is not an emitted class: the class is abstract, so it has no constructor to mirror",
+          "reason": "`Curve<Vector3>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
           "category": "AbstractClass"
         },
         {
@@ -3332,11 +3334,9 @@
     {
       "name": "WGSLNodeBuilder",
       "file": "src/renderers/webgpu/nodes/WGSLNodeBuilder.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "required parameter 'renderer' cannot be mapped: `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass",
-      "constructorParameterCount": 0,
+      "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
     },
@@ -3856,51 +3856,51 @@
   "memberSkipReasons": [
     {
       "category": "NodeStackType",
-      "members": 387
+      "members": 382
     },
     {
       "category": "CallbackType",
-      "members": 103
-    },
-    {
-      "category": "NotInstanceApi",
-      "members": 86
+      "members": 94
     },
     {
       "category": "AnonymousObjectType",
-      "members": 84
+      "members": 82
+    },
+    {
+      "category": "NotInstanceApi",
+      "members": 79
     },
     {
       "category": "DomOrLibType",
-      "members": 83
+      "members": 77
     },
     {
       "category": "OptionsInterface",
-      "members": 73
+      "members": 72
     },
     {
       "category": "UntypedValue",
-      "members": 46
-    },
-    {
-      "category": "AbstractClass",
-      "members": 37
+      "members": 45
     },
     {
       "category": "UnmappedUnion",
-      "members": 37
+      "members": 38
     },
     {
       "category": "NotExported",
-      "members": 22
+      "members": 19
     },
     {
       "category": "UnmappedTypeAlias",
-      "members": 18
+      "members": 17
     },
     {
       "category": "ExternalType",
       "members": 15
+    },
+    {
+      "category": "AbstractClass",
+      "members": 13
     },
     {
       "category": "UnwrappedClass",
@@ -4334,37 +4334,6 @@
       "origin": "Declared",
       "bucket": "AsyncQuery",
       "type": "bool"
-    },
-    {
-      "class": "AmbientLight",
-      "member": "isLight",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "AmbientLight",
-      "member": "color",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "Color"
-    },
-    {
-      "class": "AmbientLight",
-      "member": "intensity",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "float"
-    },
-    {
-      "class": "AmbientLight",
-      "member": "dispose",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
     },
     {
       "class": "AnimationAction",
@@ -5656,9 +5625,8 @@
       "member": "renderer",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "MirroredState",
+      "type": "Renderer"
     },
     {
       "class": "Backend",
@@ -5674,18 +5642,15 @@
       "member": "coordinateSystem",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "abstract, so there is no implementation to mirror",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "CoordinateSystem"
     },
     {
       "class": "Backend",
       "member": "init",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "Backend",
@@ -7954,7 +7919,7 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror",
+      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
       "category": "AbstractClass"
     },
     {
@@ -8912,18 +8877,14 @@
       "member": "fromEquirectangularTexture",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "CubeRenderTarget",
       "member": "clear",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "CubeTexture",
@@ -9100,7 +9061,7 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror",
+      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
       "category": "AbstractClass"
     },
     {
@@ -9279,7 +9240,7 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror",
+      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
       "category": "AbstractClass"
     },
     {
@@ -9506,7 +9467,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "AsyncQuery",
-      "type": "Curve"
+      "isUntypedObject": true
     },
     {
       "class": "Curve",
@@ -9514,7 +9475,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror",
+      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
       "category": "AbstractClass"
     },
     {
@@ -9549,7 +9510,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`Array<Curve<TVector>>` is an array whose element type cannot be mapped: `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror",
+      "reason": "`Array<Curve<TVector>>` is an array whose element type cannot be mapped: `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
       "category": "AbstractClass"
     },
     {
@@ -9566,7 +9527,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'curve': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror",
+      "reason": "parameter 'curve': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
       "category": "AbstractClass"
     },
     {
@@ -9719,7 +9680,7 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror",
+      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
       "category": "AbstractClass"
     },
     {
@@ -9869,8 +9830,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "abstract, so there is no implementation to mirror",
-      "category": "NotInstanceApi"
+      "reason": "parameter 'buffer': `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
+      "category": "DomOrLibType"
     },
     {
       "class": "DataTextureLoader",
@@ -9939,37 +9900,6 @@
       "bucket": "Skipped",
       "reason": "`DirectionalLightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
       "category": "NotExported"
-    },
-    {
-      "class": "DirectionalLight",
-      "member": "isLight",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "DirectionalLight",
-      "member": "color",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "Color"
-    },
-    {
-      "class": "DirectionalLight",
-      "member": "intensity",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "float"
-    },
-    {
-      "class": "DirectionalLight",
-      "member": "dispose",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
     },
     {
       "class": "DirectionalLightHelper",
@@ -10159,9 +10089,7 @@
       "member": "updateMatrices",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'light': `Light` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "DirectionalLightShadow",
@@ -10510,7 +10438,7 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror",
+      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
       "category": "AbstractClass"
     },
     {
@@ -11193,37 +11121,6 @@
       "type": "Color"
     },
     {
-      "class": "HemisphereLight",
-      "member": "isLight",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "HemisphereLight",
-      "member": "color",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "Color"
-    },
-    {
-      "class": "HemisphereLight",
-      "member": "intensity",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "float"
-    },
-    {
-      "class": "HemisphereLight",
-      "member": "dispose",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
       "class": "HemisphereLightHelper",
       "member": "light",
       "kind": "Property",
@@ -11479,9 +11376,7 @@
       "member": "setRenderer",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "InspectorBase",
@@ -11489,7 +11384,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "AsyncQuery",
-      "isUntypedObject": true
+      "type": "Renderer"
     },
     {
       "class": "InspectorBase",
@@ -12165,9 +12060,8 @@
       "member": "interpolate_",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "abstract, so there is no implementation to mirror",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "TypedArray"
     },
     {
       "class": "Interpolant",
@@ -12538,37 +12432,6 @@
       "type": "SphericalHarmonics3"
     },
     {
-      "class": "LightProbe",
-      "member": "isLight",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "LightProbe",
-      "member": "color",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "Color"
-    },
-    {
-      "class": "LightProbe",
-      "member": "intensity",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "float"
-    },
-    {
-      "class": "LightProbe",
-      "member": "dispose",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
       "class": "LightShadow",
       "member": "camera",
       "kind": "Property",
@@ -12702,9 +12565,7 @@
       "member": "updateMatrices",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'light': `Light` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "LightShadow",
@@ -12744,7 +12605,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "AsyncQuery",
-      "type": "LightShadow"
+      "isUntypedObject": true
     },
     {
       "class": "LightShadow",
@@ -12769,8 +12630,8 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take",
-      "category": "AbstractClass"
+      "reason": "return type: `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
+      "category": "NodeStackType"
     },
     {
       "class": "Lighting",
@@ -13570,7 +13431,7 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror",
+      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
       "category": "AbstractClass"
     },
     {
@@ -13733,7 +13594,7 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror",
+      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
       "category": "AbstractClass"
     },
     {
@@ -21368,9 +21229,8 @@
       "member": "needsVelocity",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "NodeMaterialObserver",
@@ -22952,37 +22812,6 @@
       "type": "float"
     },
     {
-      "class": "PointLight",
-      "member": "isLight",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "PointLight",
-      "member": "color",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "Color"
-    },
-    {
-      "class": "PointLight",
-      "member": "intensity",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "float"
-    },
-    {
-      "class": "PointLight",
-      "member": "dispose",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
       "class": "PointLightHelper",
       "member": "light",
       "kind": "Property",
@@ -23154,9 +22983,7 @@
       "member": "updateMatrices",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'light': `Light` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "PointLightShadow",
@@ -23681,61 +23508,6 @@
       "bucket": "Command"
     },
     {
-      "class": "PostProcessing",
-      "member": "renderer",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
-    },
-    {
-      "class": "PostProcessing",
-      "member": "outputNode",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
-      "category": "NodeStackType"
-    },
-    {
-      "class": "PostProcessing",
-      "member": "outputColorTransform",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "PostProcessing",
-      "member": "needsUpdate",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "PostProcessing",
-      "member": "render",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "PostProcessing",
-      "member": "dispose",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "PostProcessing",
-      "member": "renderAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery"
-    },
-    {
       "class": "ProjectorLight",
       "member": "aspect",
       "kind": "Property",
@@ -23940,18 +23712,14 @@
       "member": "renderAsync",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "AsyncQuery"
     },
     {
       "class": "QuadMesh",
       "member": "render",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "QuadraticBezierCurve",
@@ -24103,7 +23871,7 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror",
+      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
       "category": "AbstractClass"
     },
     {
@@ -24274,7 +24042,7 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror",
+      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
       "category": "AbstractClass"
     },
     {
@@ -25216,44 +24984,12 @@
       "type": "float"
     },
     {
-      "class": "RectAreaLight",
-      "member": "isLight",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "RectAreaLight",
-      "member": "color",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "Color"
-    },
-    {
-      "class": "RectAreaLight",
-      "member": "intensity",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "float"
-    },
-    {
-      "class": "RectAreaLight",
-      "member": "dispose",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
       "class": "RenderPipeline",
       "member": "renderer",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "MirroredState",
+      "type": "Renderer"
     },
     {
       "class": "RenderPipeline",
@@ -25487,9 +25223,8 @@
       "member": "backend",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "MirroredState",
+      "type": "Backend"
     },
     {
       "class": "Renderer",
@@ -27918,7 +27653,7 @@
       "kind": "Method",
       "origin": "FlattenedAncestor",
       "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract, so it has no constructor to mirror",
+      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
       "category": "AbstractClass"
     },
     {
@@ -28011,37 +27746,6 @@
       "origin": "Declared",
       "bucket": "MirroredState",
       "type": "float"
-    },
-    {
-      "class": "SpotLight",
-      "member": "isLight",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "SpotLight",
-      "member": "color",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "Color"
-    },
-    {
-      "class": "SpotLight",
-      "member": "intensity",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "float"
-    },
-    {
-      "class": "SpotLight",
-      "member": "dispose",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
     },
     {
       "class": "SpotLightHelper",
@@ -28248,9 +27952,7 @@
       "member": "updateMatrices",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'light': `Light` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "SpotLightShadow",
@@ -29568,9 +29270,8 @@
       "member": "allocateQueriesForContext",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "abstract, so there is no implementation to mirror",
-      "category": "NotInstanceApi"
+      "bucket": "AsyncQuery",
+      "type": "float"
     },
     {
       "class": "TimestampQueryPool",
@@ -29578,17 +29279,15 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "abstract, so there is no implementation to mirror",
-      "category": "NotInstanceApi"
+      "reason": "return type: `Promise<number> | number` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
+      "category": "UnmappedUnion"
     },
     {
       "class": "TimestampQueryPool",
       "member": "dispose",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "abstract, so there is no implementation to mirror",
-      "category": "NotInstanceApi"
+      "bucket": "Command"
     },
     {
       "class": "TorusGeometry",
@@ -31648,55 +31347,11 @@
     },
     {
       "class": "WebGLBackend",
-      "member": "coordinateSystem",
-      "kind": "Property",
-      "origin": "Declared",
-      "bucket": "AsyncQuery",
-      "type": "CoordinateSystem"
-    },
-    {
-      "class": "WebGLBackend",
       "member": "getMaxAnisotropy",
       "kind": "Method",
       "origin": "Declared",
       "bucket": "AsyncQuery",
       "type": "float"
-    },
-    {
-      "class": "WebGLBackend",
-      "member": "renderer",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
-    },
-    {
-      "class": "WebGLBackend",
-      "member": "domElement",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`HTMLCanvasElement | OffscreenCanvas | null` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGLBackend",
-      "member": "init",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
-    },
-    {
-      "class": "WebGLBackend",
-      "member": "getDomElement",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
     },
     {
       "class": "WebGLBindingStates",
@@ -32174,18 +31829,14 @@
       "member": "setup",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'lights': `Light[]` is an array whose element type cannot be mapped: `Light` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "WebGLLights",
       "member": "setupView",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'lights': `Light[]` is an array whose element type cannot be mapped: `Light` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "WebGLObjects",
@@ -33049,9 +32700,7 @@
       "member": "render",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'shadowsArray': `Light[]` is an array whose element type cannot be mapped: `Light` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "WebGLState",
@@ -33443,930 +33092,17 @@
     },
     {
       "class": "WebGPUBackend",
-      "member": "coordinateSystem",
-      "kind": "Property",
-      "origin": "Declared",
-      "bucket": "AsyncQuery",
-      "type": "CoordinateSystem"
-    },
-    {
-      "class": "WebGPUBackend",
       "member": "getMaxAnisotropy",
       "kind": "Method",
       "origin": "Declared",
       "bucket": "AsyncQuery",
       "type": "float"
-    },
-    {
-      "class": "WebGPUBackend",
-      "member": "renderer",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
-    },
-    {
-      "class": "WebGPUBackend",
-      "member": "domElement",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`HTMLCanvasElement | OffscreenCanvas | null` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPUBackend",
-      "member": "init",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'renderer': `Renderer` is not an emitted class: required parameter 'backend' cannot be mapped: `Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
-    },
-    {
-      "class": "WebGPUBackend",
-      "member": "getDomElement",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
     },
     {
       "class": "WebGPURenderer",
       "member": "isWebGPURenderer",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "isRenderer",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "backend",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`Backend` is not an emitted class: the class is abstract, so it has no constructor to mirror",
-      "category": "AbstractClass"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "autoClear",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "autoClearColor",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "autoClearDepth",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "autoClearStencil",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "alpha",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "logarithmicDepthBuffer",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "reversedDepthBuffer",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "outputColorSpace",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "string"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "toneMapping",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "ToneMapping"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "toneMappingExposure",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "sortObjects",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "depth",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "stencil",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "info",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`Info` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
-      "category": "NotExported"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "contextNode",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
-      "category": "NodeStackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "library",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`NodeLibrary` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
-      "category": "NotExported"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "lighting",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "Lighting"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "onDeviceLost",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`(info: DeviceLostInfo) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "onError",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`(errorMessage: string) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "_currentSourceMaterial",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "declared `private`, so it is not part of the public API",
-      "category": "NotInstanceApi"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "transparent",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "opaque",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "shadowMap",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`{ /** * - Whether to globally enable shadows or not. */ enabled: boolean; /** * - Whether to enable light transmission through non-opaque materials. */ transmitted: boolean; /** * - The shadow map type. */ type: ShadowMapType; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "xr",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`XRManager` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
-      "category": "NotExported"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "debug",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`{ /** * - Whether shader errors should be checked or not. */ checkShaderErrors: boolean; /** * - A callback function that is executed when a shader error happens. Only supported with WebGL 2 right now. */ onShaderError: | (( gl: WebGL2RenderingContext, programGPU: WebGLProgram, glVertexShader: WebGLShader, glFragmentShader: WebGLShader, ) => void) | null; /** * - Allows the get the raw shader code for the given scene, camera and 3D object. */ getShaderAsync: (scene: Scene, camera: Camera, object: Object3D) => Promise<{ fragmentShader: string | null; vertexShader: string | null; }>; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "domElement",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "coordinateSystem",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "CoordinateSystem"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "inspector",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "InspectorBase"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "highPrecision",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "MirroredState",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "initialized",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "needsFrameBufferTarget",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "samples",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "currentSamples",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "currentToneMapping",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "ToneMapping"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "currentColorSpace",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "string"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "isOutputTarget",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "compile",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "`(scene: Object3D, camera: Camera, targetScene?: Scene | null) => Promise<void>` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "init",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "WebGPURenderer"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "compileAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "renderAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "waitForGPU",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setMRT",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'mrt': `MRTNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
-      "category": "NodeStackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getMRT",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `MRTNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
-      "category": "NodeStackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getOutputBufferType",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "TextureDataType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getColorBufferType",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "TextureDataType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "render",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getMaxAnisotropy",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getActiveCubeFace",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getActiveMipmapLevel",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setAnimationLoop",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'callback': `(time: DOMHighResTimeStamp, frame?: XRFrame) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getAnimationLoop",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `(time: DOMHighResTimeStamp, xrFrame?: XRFrame) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getArrayBufferAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getContext",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `unknown` carries no type information a C# signature could express",
-      "category": "UntypedValue"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getPixelRatio",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getDrawingBufferSize",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "Vector2"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getSize",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "Vector2"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setPixelRatio",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setDrawingBufferSize",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setSize",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setOpaqueSort",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'method': `(a: RenderItem, b: RenderItem) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setTransparentSort",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'method': `(a: RenderItem, b: RenderItem) => number` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getScissor",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "Vector4"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setScissor",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getScissorTest",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setScissorTest",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getViewport",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "Vector4"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setViewport",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getClearColor",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "Color"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setClearColor",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getClearAlpha",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setClearAlpha",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getClearDepth",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setClearDepth",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getClearStencil",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "float"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setClearStencil",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "isOccluded",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "clear",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "clearColor",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "clearDepth",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "clearStencil",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "clearAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "clearColorAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "clearDepthAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "clearStencilAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "dispose",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setRenderTarget",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getRenderTarget",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "RenderTarget"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setOutputRenderTarget",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getOutputRenderTarget",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "RenderTarget"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setCanvasTarget",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'canvasTarget': `CanvasTarget` is not an emitted class: required parameter 'domElement' cannot be mapped: `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-      "category": "DomOrLibType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getCanvasTarget",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "isUntypedObject": true
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "setRenderObjectFunction",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'renderObjectFunction': `( object: Object3D, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: GeometryGroup | null, lightsNode: LightsNode, clippingContext: ClippingContext, passId?: string | null | undefined, ) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "getRenderObjectFunction",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `( object: Object3D, scene: Scene, camera: Camera, geometry: BufferGeometry, material: Material, group: GeometryGroup | null, lightsNode: LightsNode, clippingContext: ClippingContext, passId?: string | null | undefined, ) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#",
-      "category": "CallbackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "compute",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'computeNodes': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
-      "category": "NodeStackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "computeAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'computeNodes': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
-      "category": "NodeStackType"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "hasFeatureAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "resolveTimestampsAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take",
-      "category": "UnmappedTypeAlias"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "hasFeature",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "hasInitialized",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "initTextureAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "initTexture",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "initRenderTarget",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "copyFramebufferToTexture",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "copyTextureToTexture",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Command"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "readRenderTargetPixelsAsync",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "AsyncQuery",
-      "type": "TypedArray"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "renderObject",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'group': `GeometryGroup` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
-    },
-    {
-      "class": "WebGPURenderer",
-      "member": "hasCompatibility",
-      "kind": "Method",
-      "origin": "FlattenedAncestor",
       "bucket": "AsyncQuery",
       "type": "bool"
     },

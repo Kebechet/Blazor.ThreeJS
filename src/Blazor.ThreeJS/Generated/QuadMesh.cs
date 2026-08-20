@@ -73,6 +73,13 @@ public sealed class QuadMesh : Mesh
 		}
 	}
 
+	/// <summary>Records a call to <c>render</c> on the JavaScript-side object.</summary>
+	/// <param name="renderer">Value forwarded to the <c>renderer</c> argument.</param>
+	public void Render(Renderer renderer)
+	{
+		RecordCall("render", renderer);
+	}
+
 	/// <summary>
 	/// Reads <c>isQuadMesh</c> back from the JavaScript-side object. Read-only in three.js, so it is
 	/// read on demand rather than mirrored: records a get op, sends it behind every write already
@@ -82,6 +89,18 @@ public sealed class QuadMesh : Mesh
 	public Task<bool> IsQuadMeshAsync()
 	{
 		return GetAsync<bool>("isQuadMesh");
+	}
+
+	/// <summary>
+	/// Reads <c>renderAsync</c> back from the JavaScript-side object. Answers nothing, and is awaited
+	/// for when rather than for what: records a read op, sends it behind every write already pending,
+	/// and completes once the promise <c>renderAsync</c> returned has settled.
+	/// </summary>
+	/// <param name="renderer">Value forwarded to the <c>renderer</c> argument.</param>
+	/// <returns>A task that completes once <c>renderAsync</c> has finished.</returns>
+	public Task RenderAsync(Renderer renderer)
+	{
+		return RecordRead<object?>("renderAsync", renderer);
 	}
 
 	/// <summary>

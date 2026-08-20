@@ -47,6 +47,24 @@ public sealed class CubeRenderTarget : RenderTarget
 		get { return [_size]; }
 	}
 
+	/// <summary>Converts the given equirectangular texture to a cube map.</summary>
+	/// <param name="renderer">The renderer.</param>
+	/// <param name="texture">The equirectangular texture.</param>
+	public void FromEquirectangularTexture(Renderer renderer, Texture texture)
+	{
+		RecordCall("fromEquirectangularTexture", renderer, texture);
+	}
+
+	/// <summary>Clears this cube render target.</summary>
+	/// <param name="renderer">The renderer.</param>
+	/// <param name="color">Whether the color buffer should be cleared or not.</param>
+	/// <param name="depth">Whether the depth buffer should be cleared or not.</param>
+	/// <param name="stencil">Whether the stencil buffer should be cleared or not.</param>
+	public void Clear(Renderer renderer, bool color = true, bool depth = true, bool stencil = true)
+	{
+		RecordCall("clear", renderer, color, depth, stencil);
+	}
+
 	/// <summary>
 	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
 	/// than mirrored: records a get op, sends it behind every write already pending, and completes with

@@ -29,6 +29,18 @@ internal sealed class ClassSurfaceResolver
 	private readonly Dictionary<string, ClassSurface> _surfacesByName = new(StringComparer.Ordinal);
 	private readonly Dictionary<string, IReadOnlySet<string>> _fullMemberNamesByClassName = new(StringComparer.Ordinal);
 
+	/// <summary>
+	/// Whether a class three.js declares is abstract. An abstract class is emitted - it is a real base
+	/// and a real parameter type - but it cannot be instantiated, so a read that answers with one has
+	/// nothing to build.
+	/// </summary>
+	/// <param name="name">Class name.</param>
+	/// <returns><see langword="true"/> when three.js declares it abstract.</returns>
+	public bool IsAbstractClass(string name)
+	{
+		return _classesByName.TryGetValue(name, out var irClass) && irClass.IsAbstract;
+	}
+
 	/// <summary>Builds a resolver over one IR snapshot.</summary>
 	/// <param name="ir">The parsed IR.</param>
 	/// <param name="isMirrored">Whether a class name has a C# type of its own — generated or hand-written.</param>

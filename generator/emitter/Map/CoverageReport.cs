@@ -297,6 +297,12 @@ internal sealed class CoverageReport
 		AppendLine(builder, "| | classes |");
 		AppendLine(builder, "|---|---|");
 		AppendLine(builder, $"| **generated** | **{byStatus.GetValueOrDefault(ClassScopeStatus.Emittable)}** |");
+		var abstractCount = EmittableClasses.Count(x => x.Class.IsAbstract);
+		if (abstractCount > 0)
+		{
+			AppendLine(builder, $"| — of which abstract, so a base and a parameter type rather than something to construct | {abstractCount} |");
+		}
+
 		AppendLine(builder, $"| blocked on something the mirror cannot express yet | {byStatus.GetValueOrDefault(ClassScopeStatus.Blocked)} |");
 		AppendLine(builder, $"| deliberately out of the mirrored surface | {byStatus.GetValueOrDefault(ClassScopeStatus.OutOfSurface)} |");
 		AppendLine(builder, $"| **three.js core total** | **{_scope.Results.Count}** |");
@@ -705,9 +711,11 @@ internal sealed class CoverageReport
 		AppendLine(builder, $"  directories above, extracted into `generator/three-api.json`. three.js also exports {functionCount} top-level");
 		AppendLine(builder, "  functions, which are not classes, are not counted in the total, and are not wrapped either.");
 		AppendLine(builder, $"  `npm run extract:check` fails if that snapshot differs from what `{_ir.Meta?.TypesPackage}` says today.");
-		AppendLine(builder, $"- **Generated is a class you can construct**: every one of them is a constructor on the `{_ir.Meta?.PublicSurface?.RuntimeBundle}`");
+		AppendLine(builder, $"- **Generated is a class the bundle carries**: every one of them is a constructor on the `{_ir.Meta?.PublicSurface?.RuntimeBundle}`");
 		AppendLine(builder, "  bundle that ships in this package, which `tests/wire-format.test.mjs` asserts name by name. A class");
-		AppendLine(builder, "  three.js declares in its types but does not put on `THREE` is **blocked**, not counted.");
+		AppendLine(builder, "  three.js declares in its types but does not put on `THREE` is **blocked**, not counted. Most of them");
+		AppendLine(builder, "  are also a class *you* can construct; the abstract ones counted above are not, and are emitted as");
+		AppendLine(builder, "  abstract C# classes because a base and a parameter type is what they are for.");
 		AppendLine(builder, "- **Generated**: the files in `src/Blazor.ThreeJS/Generated/`, one per class or enum. `npm run emit:check`");
 		AppendLine(builder, "  fails if any of them differs from what the generator produces today, or if one is left behind.");
 		AppendLine(builder, $"- **Reachable is a name the bundle exports**: the extractor imports `{_ir.Meta?.PublicSurface?.RuntimeBundle}`");

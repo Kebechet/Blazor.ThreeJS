@@ -218,22 +218,23 @@ public class ObjectChannelTests
 	}
 
 	[Fact]
-	public async Task InspectorBase_GetRendererRead_AnswersWithAPrimitiveCarryingThreeJsOwnTypeName()
+	public async Task WebGPURenderer_GetCanvasTargetRead_AnswersWithAPrimitiveCarryingThreeJsOwnTypeName()
 	{
-		// Arrange: a read whose declared type no generated class mirrors still answers, as the untyped
-		// wrapper the escape hatch hands out, tagged with the name three.js registered it under.
-		var module = AnswerEveryQueryWith(AnsweredHandle, "WebGPURenderer");
+		// Arrange: `CanvasTarget` is blocked - it takes an `HTMLCanvasElement | OffscreenCanvas`, which
+		// C# never holds - so a read declared to answer with one has no generated type to build. The
+		// untyped wrapper carries the handle instead, tagged with the name three.js registered it under.
+		var module = AnswerEveryQueryWith(AnsweredHandle, "CanvasTarget");
 		var context = new ThreeContext(module, contextId: 1);
-		var inspector = new InspectorBase();
-		context.Attach(inspector);
+		var renderer = new WebGPURenderer();
+		context.Attach(renderer);
 
 		// Act
-		var renderer = await inspector.GetRendererAsync();
+		var canvasTarget = await renderer.GetCanvasTargetAsync();
 
 		// Assert
-		renderer.ShouldNotBeNull();
-		renderer.Handle.ShouldBe(AnsweredHandle);
-		renderer.ThreeType.ShouldBe("WebGPURenderer");
+		canvasTarget.ShouldNotBeNull();
+		canvasTarget.Handle.ShouldBe(AnsweredHandle);
+		canvasTarget.ThreeType.ShouldBe("CanvasTarget");
 	}
 
 	[Fact]

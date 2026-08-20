@@ -224,6 +224,13 @@ internal sealed class MemberClassifier
 			// returns the receiver, and both say `this`. An object the applier already has a handle for
 			// answers with that handle, and only a genuinely new one is registered - so a
 			// receiver-returning method costs no second mirror of one object.
+			if (_surfaces.IsAbstractClass(irClass.Name))
+			{
+				row.IsUntypedObjectResult = true;
+				row.Bucket = MemberBucket.AsyncQuery;
+				return row;
+			}
+
 			row.CSharpTypeName = irClass.Name;
 			row.IsAdoptedResult = true;
 			row.Bucket = MemberBucket.AsyncQuery;
@@ -273,6 +280,18 @@ internal sealed class MemberClassifier
 			}
 
 			row.IsAdoptedResult = true;
+		}
+
+		// An abstract class is a type a read can be *declared* to answer with and not a type it can
+		// build. The untyped wrapper is what carries the handle instead - the same answer a read of a
+		// class the mirror does not wrap gets, and for the same reason: there is a real object on the
+		// other side and no C# instance to put it in.
+		if (row.IsAdoptedResult && _surfaces.IsAbstractClass(returnMapping.CSharpTypeName!))
+		{
+			row.IsAdoptedResult = false;
+			row.IsUntypedObjectResult = true;
+			row.Bucket = MemberBucket.AsyncQuery;
+			return row;
 		}
 
 		row.CSharpTypeName = returnMapping.CSharpTypeName;
@@ -464,10 +483,12 @@ internal sealed class MemberClassifier
 			return $"declared `{visibility}`, so it is not part of the public API";
 		}
 
-		if (isAbstract)
-		{
-			return "abstract, so there is no implementation to mirror";
-		}
+		// An abstract member is deliberately *not* skipped. "No implementation to mirror" is true of the
+		// declaration and false of every object that reaches the wire: the applier reads
+		// `backend.coordinateSystem` off a concrete backend, which has one. Skipping it lost the member
+		// on each concrete subclass the moment the abstract base started being emitted, since the base's
+		// declaration is what the surface resolver then subtracts.
+
 
 		if (doc?.IsInternal == true)
 		{

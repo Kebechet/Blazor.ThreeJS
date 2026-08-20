@@ -6,7 +6,7 @@ using Kebechet.Blazor.ThreeJS.Core;
 namespace Kebechet.Blazor.ThreeJS.Objects;
 
 /// <summary>The JavaScript-side <c>THREE.WebGPUBackend</c>.</summary>
-public sealed class WebGPUBackend : ThreeObject
+public sealed class WebGPUBackend : Backend
 {
 	/// <summary>Initializes a new <see cref="WebGPUBackend"/>.</summary>
 	public WebGPUBackend()
@@ -20,7 +20,7 @@ public sealed class WebGPUBackend : ThreeObject
 	/// <param name="batch">Batch this object's writes record into.</param>
 	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
 	internal WebGPUBackend(ThreeBatch batch, int handle)
-		: base(handle)
+		: base(batch, handle)
 	{
 		Batch = batch;
 	}
@@ -40,17 +40,6 @@ public sealed class WebGPUBackend : ThreeObject
 	public Task<bool> IsWebGPUBackendAsync()
 	{
 		return GetAsync<bool>("isWebGPUBackend");
-	}
-
-	/// <summary>
-	/// Reads <c>coordinateSystem</c> back from the JavaScript-side object. Read-only in three.js, so it
-	/// is read on demand rather than mirrored: records a get op, sends it behind every write already
-	/// pending, and completes with the value <c>coordinateSystem</c> held.
-	/// </summary>
-	/// <returns>The value <c>coordinateSystem</c> held, once the JavaScript side has answered.</returns>
-	public Task<CoordinateSystem> CoordinateSystemAsync()
-	{
-		return GetAsync<CoordinateSystem>("coordinateSystem");
 	}
 
 	/// <summary>

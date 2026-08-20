@@ -10,16 +10,16 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// This light globally illuminates all objects in the scene equally. It cannot be used to cast
 /// shadows as it does not have a direction. The JavaScript-side <c>THREE.AmbientLight</c>.
 /// </summary>
-public sealed class AmbientLight : Object3D
+public sealed class AmbientLight : Light
 {
 	private readonly Color? _color;
-	private float _intensity;
-	private bool _isIntensityWritten;
+	private readonly float _intensity;
 
 	/// <summary>Constructs a new ambient light.</summary>
 	/// <param name="color">The light's color.</param>
 	/// <param name="intensity">The light's strength/intensity.</param>
 	public AmbientLight(Color? color = null, float intensity = 1f)
+		: base(color: color, intensity: intensity)
 	{
 		_color = color;
 		_intensity = intensity;
@@ -32,7 +32,7 @@ public sealed class AmbientLight : Object3D
 	/// <param name="batch">Batch this object's writes record into.</param>
 	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
 	internal AmbientLight(ThreeBatch batch, int handle)
-		: base(handle)
+		: base(batch, handle)
 	{
 		_intensity = default!;
 
@@ -56,35 +56,6 @@ public sealed class AmbientLight : Object3D
 	}
 
 	/// <summary>
-	/// The light's intensity. Writing it records a <c>intensity</c> property write once this object is
-	/// attached; writing the value already held records nothing.
-	/// </summary>
-	public float Intensity
-	{
-		get { return _intensity; }
-		set
-		{
-			if (_intensity == value)
-			{
-				return;
-			}
-
-			_intensity = value;
-			_isIntensityWritten = true;
-			RecordSet("intensity", value);
-		}
-	}
-
-	/// <summary>
-	/// Frees the GPU-related resources allocated by this instance. Call this method whenever this
-	/// instance is no longer used in your app.
-	/// </summary>
-	public void Dispose()
-	{
-		RecordCall("dispose");
-	}
-
-	/// <summary>
 	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
 	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
 	/// the value <c>isAmbientLight</c> held.
@@ -93,32 +64,5 @@ public sealed class AmbientLight : Object3D
 	public Task<bool> IsAmbientLightAsync()
 	{
 		return GetAsync<bool>("isAmbientLight");
-	}
-
-	/// <summary>
-	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
-	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
-	/// the value <c>isLight</c> held.
-	/// </summary>
-	/// <returns>The value <c>isLight</c> held, once the JavaScript side has answered.</returns>
-	public Task<bool> IsLightAsync()
-	{
-		return GetAsync<bool>("isLight");
-	}
-
-	/// <summary>
-	/// Replays every property written before this object was attached, so construction order never
-	/// matters to the caller. A property the caller never wrote is left alone: three.js's own default
-	/// is the truth for it, and the mirror has never read anything back to improve on that.
-	/// </summary>
-	/// <param name="batch">Batch to record the property writes into.</param>
-	internal override void EmitState(ThreeBatch batch)
-	{
-		base.EmitState(batch);
-
-		if (_isIntensityWritten)
-		{
-			batch.Set(Handle, "intensity", ThreeValue.Encode(_intensity));
-		}
 	}
 }

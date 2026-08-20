@@ -11,17 +11,16 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// to replicate the light emitted from a bare lightbulb. This light can cast shadows - see the
 /// <c>PointLightShadow</c> for details. The JavaScript-side <c>THREE.PointLight</c>.
 /// </summary>
-public sealed class PointLight : Object3D
+public sealed class PointLight : Light
 {
 	private readonly Color? _color;
-	private float _intensity;
+	private readonly float _intensity;
 	private float _distance;
 	private float _decay;
 	private float _power;
 	private bool _isDistanceWritten;
 	private bool _isDecayWritten;
 	private bool _isPowerWritten;
-	private bool _isIntensityWritten;
 
 	/// <summary>Constructs a new point light.</summary>
 	/// <param name="color">The light's color.</param>
@@ -29,6 +28,7 @@ public sealed class PointLight : Object3D
 	/// <param name="distance">Maximum range of the light. <c>0</c> means no limit.</param>
 	/// <param name="decay">The amount the light dims along the distance of the light.</param>
 	public PointLight(Color? color = null, float intensity = 1f, float distance = 0f, float decay = 2f)
+		: base(color: color, intensity: intensity)
 	{
 		_color = color;
 		_intensity = intensity;
@@ -43,7 +43,7 @@ public sealed class PointLight : Object3D
 	/// <param name="batch">Batch this object's writes record into.</param>
 	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
 	internal PointLight(ThreeBatch batch, int handle)
-		: base(handle)
+		: base(batch, handle)
 	{
 		_intensity = default!;
 		_distance = default!;
@@ -142,35 +142,6 @@ public sealed class PointLight : Object3D
 	}
 
 	/// <summary>
-	/// The light's intensity. Writing it records a <c>intensity</c> property write once this object is
-	/// attached; writing the value already held records nothing.
-	/// </summary>
-	public float Intensity
-	{
-		get { return _intensity; }
-		set
-		{
-			if (_intensity == value)
-			{
-				return;
-			}
-
-			_intensity = value;
-			_isIntensityWritten = true;
-			RecordSet("intensity", value);
-		}
-	}
-
-	/// <summary>
-	/// Frees the GPU-related resources allocated by this instance. Call this method whenever this
-	/// instance is no longer used in your app.
-	/// </summary>
-	public void Dispose()
-	{
-		RecordCall("dispose");
-	}
-
-	/// <summary>
 	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
 	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
 	/// the value <c>isPointLight</c> held.
@@ -179,17 +150,6 @@ public sealed class PointLight : Object3D
 	public Task<bool> IsPointLightAsync()
 	{
 		return GetAsync<bool>("isPointLight");
-	}
-
-	/// <summary>
-	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
-	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
-	/// the value <c>isLight</c> held.
-	/// </summary>
-	/// <returns>The value <c>isLight</c> held, once the JavaScript side has answered.</returns>
-	public Task<bool> IsLightAsync()
-	{
-		return GetAsync<bool>("isLight");
 	}
 
 	/// <summary>
@@ -215,11 +175,6 @@ public sealed class PointLight : Object3D
 		if (_isPowerWritten)
 		{
 			batch.Set(Handle, "power", ThreeValue.Encode(_power));
-		}
-
-		if (_isIntensityWritten)
-		{
-			batch.Set(Handle, "intensity", ThreeValue.Encode(_intensity));
 		}
 	}
 }

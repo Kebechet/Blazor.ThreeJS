@@ -11,36 +11,22 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// ground color. This light cannot be used to cast shadows. The JavaScript-side
 /// <c>THREE.HemisphereLight</c>.
 /// </summary>
-public sealed class HemisphereLight : Object3D
+public sealed class HemisphereLight : Light
 {
 	private readonly Color? _skyColor;
 	private readonly Color? _groundColor;
-	private float _intensity;
-	private bool _isColorWritten;
-	private bool _isIntensityWritten;
-
-	/// <summary>
-	/// The light's color. Mirrored as an instance this object owns: mutating it records a write of
-	/// <c>color</c>.
-	/// </summary>
-	public Color Color { get; }
+	private readonly float _intensity;
 
 	/// <summary>Constructs a new hemisphere light.</summary>
 	/// <param name="skyColor">The light's sky color.</param>
 	/// <param name="groundColor">The light's ground color.</param>
 	/// <param name="intensity">The light's strength/intensity.</param>
 	public HemisphereLight(Color? skyColor = null, Color? groundColor = null, float intensity = 1f)
+		: base(intensity: intensity)
 	{
 		_skyColor = skyColor;
 		_groundColor = groundColor;
 		_intensity = intensity;
-
-		Color = new Color();
-		Color.OnChange = () =>
-		{
-			_isColorWritten = true;
-			RecordSet("color", Color);
-		};
 	}
 
 	/// <summary>
@@ -50,16 +36,9 @@ public sealed class HemisphereLight : Object3D
 	/// <param name="batch">Batch this object's writes record into.</param>
 	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
 	internal HemisphereLight(ThreeBatch batch, int handle)
-		: base(handle)
+		: base(batch, handle)
 	{
 		_intensity = default!;
-
-		Color = new Color();
-		Color.OnChange = () =>
-		{
-			_isColorWritten = true;
-			RecordSet("color", Color);
-		};
 
 		Batch = batch;
 	}
@@ -89,35 +68,6 @@ public sealed class HemisphereLight : Object3D
 	}
 
 	/// <summary>
-	/// The light's intensity. Writing it records a <c>intensity</c> property write once this object is
-	/// attached; writing the value already held records nothing.
-	/// </summary>
-	public float Intensity
-	{
-		get { return _intensity; }
-		set
-		{
-			if (_intensity == value)
-			{
-				return;
-			}
-
-			_intensity = value;
-			_isIntensityWritten = true;
-			RecordSet("intensity", value);
-		}
-	}
-
-	/// <summary>
-	/// Frees the GPU-related resources allocated by this instance. Call this method whenever this
-	/// instance is no longer used in your app.
-	/// </summary>
-	public void Dispose()
-	{
-		RecordCall("dispose");
-	}
-
-	/// <summary>
 	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
 	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
 	/// the value <c>isHemisphereLight</c> held.
@@ -126,37 +76,5 @@ public sealed class HemisphereLight : Object3D
 	public Task<bool> IsHemisphereLightAsync()
 	{
 		return GetAsync<bool>("isHemisphereLight");
-	}
-
-	/// <summary>
-	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
-	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
-	/// the value <c>isLight</c> held.
-	/// </summary>
-	/// <returns>The value <c>isLight</c> held, once the JavaScript side has answered.</returns>
-	public Task<bool> IsLightAsync()
-	{
-		return GetAsync<bool>("isLight");
-	}
-
-	/// <summary>
-	/// Replays every property written before this object was attached, so construction order never
-	/// matters to the caller. A property the caller never wrote is left alone: three.js's own default
-	/// is the truth for it, and the mirror has never read anything back to improve on that.
-	/// </summary>
-	/// <param name="batch">Batch to record the property writes into.</param>
-	internal override void EmitState(ThreeBatch batch)
-	{
-		base.EmitState(batch);
-
-		if (_isColorWritten)
-		{
-			batch.Set(Handle, "color", ThreeValue.Encode(Color));
-		}
-
-		if (_isIntensityWritten)
-		{
-			batch.Set(Handle, "intensity", ThreeValue.Encode(_intensity));
-		}
 	}
 }

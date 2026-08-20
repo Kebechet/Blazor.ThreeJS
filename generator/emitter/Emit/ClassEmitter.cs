@@ -108,17 +108,21 @@ internal sealed class ClassEmitter
 
 		WriteClassDocumentation(writer, irClass, threeTypeName, audit);
 
-		var sealedModifier = _baseClassNames.Contains(irClass.Name)
-			? string.Empty
-			: "sealed ";
+		// Abstract wins over sealed: an abstract class three.js declares is a base by definition, whether
+		// or not the snapshot happens to contain a subclass of it.
+		var classModifier = irClass.IsAbstract
+			? "abstract "
+			: _baseClassNames.Contains(irClass.Name)
+				? string.Empty
+				: "sealed ";
 
-		writer.WriteLine($"public {sealedModifier}class {threeTypeName} : {baseTypeName}");
+		writer.WriteLine($"public {classModifier}class {threeTypeName} : {baseTypeName}");
 		writer.WriteLine("{");
 		writer.Indent();
 
 		WriteFields(writer, fields, surface.Properties);
 		WriteOwnedMathProperties(writer, surface.Properties);
-		WriteConstructor(writer, irClass, threeTypeName, baseTypeName, constructor, surface.Properties, _scope.BaseChainsFor(irClass.Name));
+		WriteConstructor(writer, irClass, threeTypeName, baseTypeName, constructor, surface.Properties, _scope.BaseChainsFor(irClass.Name), irClass.IsAbstract, _scope.NeedsUninformedConstructor(irClass.Name));
 		writer.WriteLine();
 		WriteThreeTypeName(writer, threeTypeName);
 
@@ -146,7 +150,7 @@ internal sealed class ClassEmitter
 			WriteQuery(writer, query);
 		}
 
-		WriteAttachmentAndReplay(writer, irClass, threeTypeName, constructorParameters, surface.Properties);
+		WriteAttachmentAndReplay(writer, irClass, threeTypeName, constructorParameters, surface.Properties, _scope.NeedsUninformedConstructor(irClass.Name));
 
 		writer.Outdent();
 		writer.WriteLine("}");
@@ -483,10 +487,6 @@ internal sealed class ClassEmitter
 			throw UnsupportedMemberException.For(threeTypeName, "the export name is not a usable C# identifier");
 		}
 
-		if (irClass.IsAbstract)
-		{
-			throw UnsupportedMemberException.For(threeTypeName, "the class is abstract, so it has no constructor to mirror");
-		}
 
 		// The scope's own answer first. Mapping again would rebuild the full overload set and lose the
 		// declarations base-constructor chaining dropped, which is exactly the disagreement the scope
@@ -991,8 +991,14 @@ internal sealed class ClassEmitter
 		string baseTypeName,
 		MappedConstructor constructor,
 		IReadOnlyList<EmittedProperty> properties,
-		IReadOnlyList<IReadOnlyList<BaseChainArgument>> baseChains)
+		IReadOnlyList<IReadOnlyList<BaseChainArgument>> baseChains,
+		bool isAbstract,
+		bool needsUninformedConstructor)
 	{
+		// `protected` on an abstract class, because nothing constructs one: the accessibility is what
+		// makes that a fact the compiler holds rather than a sentence in the documentation. A subclass
+		// still reaches it, which is the whole reason the constructor is mapped at all.
+		var accessibility = isAbstract ? "protected" : "public";
 		var constructorSummary = irClass.Constructors.FirstOrDefault()?.Doc?.Summary is { Length: > 0 } rawSummary
 			? DocCommentEmitter.EnsureSentenceEnd(DocCommentEmitter.RenderInline(rawSummary))
 			: $"Initializes a new <see cref=\"{threeTypeName}\"/>.";
@@ -1015,7 +1021,7 @@ internal sealed class ClassEmitter
 				DocCommentEmitter.WriteParam(writer, parameter.Name, text);
 			}
 
-			WriteDeclaration(writer, $"public {threeTypeName}", parameters);
+			WriteDeclaration(writer, $"{accessibility} {threeTypeName}", parameters);
 			WriteBaseChain(writer, index < baseChains.Count ? baseChains[index] : []);
 
 			writer.WriteLine("{");
@@ -1029,6 +1035,11 @@ internal sealed class ClassEmitter
 
 			writer.Outdent();
 			writer.WriteLine("}");
+		}
+
+		if (needsUninformedConstructor && constructor.Parameters.Count > 0)
+		{
+			WriteUninformedConstructor(writer, threeTypeName, constructor.Parameters);
 		}
 
 		WriteAdoptionConstructor(writer, threeTypeName, baseTypeName, constructor.Parameters, properties);
@@ -1081,6 +1092,47 @@ internal sealed class ClassEmitter
 		}
 
 		return resolved;
+	}
+
+	/// <summary>
+	/// Writes the no-argument constructor a subclass chains to when it has nothing to give this one.
+	/// <para>
+	/// Only on an abstract class, and only because an abstract class is never constructed: this is a
+	/// chaining target rather than a way to build anything. <c>WebGPURenderer</c> builds its own backend
+	/// inside <c>super(new WebGPUBackend(parameters), parameters)</c> - a value that exists on the
+	/// JavaScript side and nowhere else - so requiring it here would block the renderer this package
+	/// ships over an argument C# could never hold.
+	/// </para>
+	/// <para>
+	/// The fields are written as unknown rather than left unassigned, which is honest as well as
+	/// necessary: the mirror was not told what three.js put there, and the alternative to saying so is
+	/// a compiler warning about a field the other constructors do fill.
+	/// </para>
+	/// </summary>
+	/// <param name="writer">Destination.</param>
+	/// <param name="threeTypeName">Export name.</param>
+	/// <param name="parameters">Constructor parameters, whose fields need a value.</param>
+	private static void WriteUninformedConstructor(
+		CSharpWriter writer,
+		string threeTypeName,
+		IReadOnlyList<MappedParameter> parameters)
+	{
+		writer.WriteLine();
+		DocCommentEmitter.WriteSummary(
+			writer,
+			$"Initializes a <c>{threeTypeName}</c> whose subclass supplies its constructor arguments on the JavaScript side. " +
+			$"The arguments this class declares are left unknown, because that is what they are: three.js was given them and C# was not.");
+
+		writer.WriteLine($"protected {threeTypeName}()");
+		writer.WriteLine("{");
+		writer.Indent();
+		foreach (var parameter in parameters)
+		{
+			writer.WriteLine($"{parameter.FieldName} = default!;");
+		}
+
+		writer.Outdent();
+		writer.WriteLine("}");
 	}
 
 	/// <summary>
@@ -1682,7 +1734,8 @@ internal sealed class ClassEmitter
 		IrClass irClass,
 		string threeTypeName,
 		IReadOnlyList<MappedParameter> constructorParameters,
-		IReadOnlyList<EmittedProperty> properties)
+		IReadOnlyList<EmittedProperty> properties,
+		bool hasUninformedConstructor)
 	{
 		var dependencies = constructorParameters
 			.Where(x => x.Alternatives.Any(alternative =>
@@ -1730,7 +1783,11 @@ internal sealed class ClassEmitter
 					continue;
 				}
 
-				writer.WriteLine(dependency.CSharpTypeName.EndsWith('?')
+				// ⚠️ Null-conditional whenever this class has the no-argument constructor, whatever the
+				// declared nullability says. That constructor leaves every argument unknown, because a
+				// subclass supplied them on the JavaScript side - so the field really can be null here,
+				// and a subclass reaching this through `base.EmitCreate` would otherwise dereference it.
+				writer.WriteLine(hasUninformedConstructor || dependency.CSharpTypeName.EndsWith('?')
 					? $"{dependency.FieldName}?.AttachTo(batch);"
 					: $"{dependency.FieldName}.AttachTo(batch);");
 			}

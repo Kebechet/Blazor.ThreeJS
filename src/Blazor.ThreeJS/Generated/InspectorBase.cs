@@ -34,6 +34,13 @@ public sealed class InspectorBase : EventDispatcher
 		get { return "InspectorBase"; }
 	}
 
+	/// <summary>Sets the renderer for this inspector.</summary>
+	/// <param name="renderer">The renderer to associate with this inspector.</param>
+	public void SetRenderer(Renderer renderer)
+	{
+		RecordCall("setRenderer", renderer);
+	}
+
 	/// <summary>Initializes the inspector.</summary>
 	public void Init()
 	{
@@ -92,18 +99,12 @@ public sealed class InspectorBase : EventDispatcher
 	}
 
 	/// <summary>
-	/// Returns the renderer associated with this inspector. Answers with a three.js object no generated
-	/// class mirrors: records a read op, sends it behind every write already pending, and completes
-	/// with what <c>getRenderer</c> returned, under its own handle, as an untyped
-	/// <see cref="Primitive"/>. The mirror learns nothing from it — its members are reached by their
-	/// three.js names, and nothing here checks them.
+	/// Returns the renderer associated with this inspector. Records a read op, sends it behind every
+	/// write already pending, and completes with what <c>getRenderer</c> returned.
 	/// </summary>
-	/// <returns>
-	/// The object <c>getRenderer</c> returned, under its own handle, or <see langword="null"/> when it
-	/// returned none.
-	/// </returns>
-	public Task<Primitive?> GetRendererAsync()
+	/// <returns>The value <c>getRenderer</c> returned, once the JavaScript side has answered.</returns>
+	public Task<Renderer?> GetRendererAsync()
 	{
-		return CallObjectAsync("getRenderer");
+		return RecordReadObject<Renderer>("getRenderer", (adoptedBatch, adoptedHandle) => new Renderer(adoptedBatch, adoptedHandle));
 	}
 }

@@ -18,18 +18,18 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// Direct Light' that just has a rotation component). This light can cast shadows - see the
 /// <c>DirectionalLightShadow</c> for details. The JavaScript-side <c>THREE.DirectionalLight</c>.
 /// </summary>
-public sealed class DirectionalLight : Object3D
+public sealed class DirectionalLight : Light
 {
 	private readonly Color? _color;
-	private float _intensity;
+	private readonly float _intensity;
 	private Object3D? _target;
 	private bool _isTargetWritten;
-	private bool _isIntensityWritten;
 
 	/// <summary>Constructs a new directional light.</summary>
 	/// <param name="color">The light's color.</param>
 	/// <param name="intensity">The light's strength/intensity.</param>
 	public DirectionalLight(Color? color = null, float intensity = 1f)
+		: base(color: color, intensity: intensity)
 	{
 		_color = color;
 		_intensity = intensity;
@@ -42,7 +42,7 @@ public sealed class DirectionalLight : Object3D
 	/// <param name="batch">Batch this object's writes record into.</param>
 	/// <param name="handle">Negative handle the JavaScript side registered the object under.</param>
 	internal DirectionalLight(ThreeBatch batch, int handle)
-		: base(handle)
+		: base(batch, handle)
 	{
 		_intensity = default!;
 
@@ -94,35 +94,6 @@ public sealed class DirectionalLight : Object3D
 	}
 
 	/// <summary>
-	/// The light's intensity. Writing it records a <c>intensity</c> property write once this object is
-	/// attached; writing the value already held records nothing.
-	/// </summary>
-	public float Intensity
-	{
-		get { return _intensity; }
-		set
-		{
-			if (_intensity == value)
-			{
-				return;
-			}
-
-			_intensity = value;
-			_isIntensityWritten = true;
-			RecordSet("intensity", value);
-		}
-	}
-
-	/// <summary>
-	/// Frees the GPU-related resources allocated by this instance. Call this method whenever this
-	/// instance is no longer used in your app.
-	/// </summary>
-	public void Dispose()
-	{
-		RecordCall("dispose");
-	}
-
-	/// <summary>
 	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
 	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
 	/// the value <c>isDirectionalLight</c> held.
@@ -131,17 +102,6 @@ public sealed class DirectionalLight : Object3D
 	public Task<bool> IsDirectionalLightAsync()
 	{
 		return GetAsync<bool>("isDirectionalLight");
-	}
-
-	/// <summary>
-	/// This flag can be used for type testing. Read-only in three.js, so it is read on demand rather
-	/// than mirrored: records a get op, sends it behind every write already pending, and completes with
-	/// the value <c>isLight</c> held.
-	/// </summary>
-	/// <returns>The value <c>isLight</c> held, once the JavaScript side has answered.</returns>
-	public Task<bool> IsLightAsync()
-	{
-		return GetAsync<bool>("isLight");
 	}
 
 	/// <summary>
@@ -160,11 +120,6 @@ public sealed class DirectionalLight : Object3D
 		{
 			_target?.AttachTo(batch);
 			batch.Set(Handle, "target", ThreeValue.Encode(_target));
-		}
-
-		if (_isIntensityWritten)
-		{
-			batch.Set(Handle, "intensity", ThreeValue.Encode(_intensity));
 		}
 	}
 }

@@ -206,8 +206,8 @@ internal sealed class EmissionScope
 				// the class. `Float32BufferAttribute` takes either a sequence or a length, and only the
 				// sequence has something to give `BufferAttribute`'s `array` - so the class exists with the
 				// constructor that works instead of not existing at all. Reported, because a caller who
-				// wanted the other one has to find out from the coverage table rather than from a
-				// compiler error with no explanation.
+				// wanted the other one has to find out from the coverage table rather than from a compiler
+				// error with no explanation.
 				droppedOverloads.Add($"({string.Join(", ", overload.Select(x => $"{x.CSharpTypeName} {x.Name}"))})");
 				continue;
 			}
@@ -216,10 +216,21 @@ internal sealed class EmissionScope
 			chains.Add(chained);
 		}
 
-		// Every declaration failed, so the obstacle really is the class's and not one arm's.
+		// Every declaration failed. The base's constructor arguments are therefore ones three.js supplies
+		// on its own side and C# never sees - `WebGPURenderer` builds its own backend inside
+		// `super(new WebGPUBackend(parameters), parameters)` - so the class chains to the base's
+		// no-argument form, which says the mirror was not told rather than pretending it was.
+		//
+		// ⚠️ Safe only because the base call feeds the mirror and nothing else. What reaches the browser
+		// is this class's own `ConstructorArgs` under its own `ThreeTypeName`, and a required argument of
+		// *its* that could not be mapped has already blocked it before this point. So an object built
+		// this way is complete on the JavaScript side; what is unknown is only what C# can say about the
+		// half of it the base declares.
 		if (kept.Count == 0)
 		{
-			return obstacle;
+			result.BaseChains = (result.Constructor?.Overloads ?? []).Select(_ => (IReadOnlyList<BaseChainArgument>) []).ToList();
+			result.UninformedBaseChain = true;
+			return null;
 		}
 
 		if (droppedOverloads.Count > 0 && result.Constructor is { } constructor)
@@ -346,6 +357,49 @@ internal sealed class EmissionScope
 			&& string.Equals(baseParameter.CSharpTypeName, EmitterConfig.TypedArrayBaseTypeName, StringComparison.Ordinal))
 		{
 			return ownParameter.DeclarationName;
+		}
+
+		return null;
+	}
+
+	/// <summary>
+	/// Whether some emitted class chains to this one with nothing to give it, so it needs a no-argument
+	/// constructor for that subclass to call.
+	/// <para>
+	/// Emitted only where a subclass actually needs it, rather than on every class that has one: an
+	/// extra way to build an object with its own declared arguments left unknown is not something to
+	/// offer unasked.
+	/// </para>
+	/// </summary>
+	/// <param name="name">Class name.</param>
+	/// <returns>Whether the no-argument constructor has to be written.</returns>
+	public bool NeedsUninformedConstructor(string name)
+	{
+		return _results.Any(x =>
+			x.Status == ClassScopeStatus.Emittable
+			&& x.UninformedBaseChain
+			&& NearestGeneratedBaseName(x.Class) == name);
+	}
+
+	/// <summary>The nearest ancestor this scope emits, which is the C# base a class chains to.</summary>
+	/// <param name="irClass">Class to walk up from.</param>
+	/// <returns>That ancestor's name, or <see langword="null"/> when the C# base is hand-written.</returns>
+	private string? NearestGeneratedBaseName(IrClass irClass)
+	{
+		var baseName = irClass.Extends?.Name;
+		while (baseName is not null)
+		{
+			if (EmitterConfig.HandWrittenClassNames.Contains(baseName))
+			{
+				return null;
+			}
+
+			if (_resultsByName.TryGetValue(baseName, out var baseResult) && baseResult.Status == ClassScopeStatus.Emittable)
+			{
+				return baseName;
+			}
+
+			baseName = _classesByName.TryGetValue(baseName, out var baseClass) ? baseClass.Extends?.Name : null;
 		}
 
 		return null;
@@ -481,10 +535,25 @@ internal sealed class EmissionScope
 			return;
 		}
 
-		if (irClass.IsAbstract)
+		// Abstract classes are emitted, as abstract C# classes. They are never constructed - the applier
+		// is never asked to `new THREE.Light()` and could not - but they are named: every concrete light
+		// is a `Light`, and without the type the hierarchy is a row of unrelated leaves hanging off
+		// ThreeObject. Their constructor is still mapped, because a subclass chains to it, and is emitted
+		// `protected`, which makes "cannot be constructed" a fact the compiler holds.
+		//
+		// ⚠️ Except a *generic* one, which stays blocked. A type parameter erases to its default or its
+		// constraint, and on an abstract base that is weaker than what each concrete subclass erases it
+		// to: `Curve<TVector>.getPoint` returns `TVector`, which is `Vector2 | Vector3` on the base and
+		// plainly `Vector3` on `CatmullRomCurve3`. Emitting the base moves the member onto it, where it
+		// no longer maps - and the ten concrete curves lose six methods each that flattening was giving
+		// them. Measured: 67 members across 17 classes. Until the erasure follows the subclass, the base
+		// is worth less than the flattening it replaces.
+		if (irClass.IsAbstract && irClass.TypeParameters is { Count: > 0 })
 		{
-			Block(result, "the class is abstract, so it has no constructor to mirror", SkipCategory.AbstractClass);
-			return;
+			Block(
+				result,
+				"the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
+				SkipCategory.AbstractClass);
 		}
 	}
 
@@ -528,6 +597,13 @@ internal sealed class ClassScopeResult
 	/// all, and the emitted constructors therefore chain implicitly.
 	/// </summary>
 	public IReadOnlyList<IReadOnlyList<BaseChainArgument>>? BaseChains { get; set; }
+
+	/// <summary>
+	/// Whether this class has nothing at all to give its generated base, and chains to the base's
+	/// no-argument form. The base needs that form to exist, which is what
+	/// <see cref="EmissionScope.NeedsUninformedConstructor"/> answers for the base.
+	/// </summary>
+	public bool UninformedBaseChain { get; set; }
 }
 
 /// <summary>

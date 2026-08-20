@@ -36,8 +36,8 @@ not after.
 
 | basis | generated | projected |
 |---|---|---|
-| documented `Float` | 40 | 0 |
-| documented `Integer` | 30 | 0 |
+| documented `Float` | 41 | 0 |
+| documented `Integer` | 32 | 0 |
 | **heuristic override to `int`** | 7 | 0 |
 | **defaulted to `float`** | 138 | 0 |
 
@@ -193,7 +193,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `WebGLRenderTarget` | `height` | `float` | **defaulted to `float`** | generated | `src/renderers/WebGLRenderTarget.d.ts` |
 | `WebGLRenderTarget` | `width` | `float` | **defaulted to `float`** | generated | `src/renderers/WebGLRenderTarget.d.ts` |
 
-### Documented upstream — taken as written (70)
+### Documented upstream — taken as written (73)
 
 | class | member | C# type | basis | scope | file |
 |---|---|---|---|---|---|
@@ -267,6 +267,9 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `TorusKnotGeometry` | `radialSegments` | `int` | documented `Integer` | generated | `src/geometries/TorusKnotGeometry.d.ts` |
 | `TorusKnotGeometry` | `tube` | `float` | documented `Float` | generated | `src/geometries/TorusKnotGeometry.d.ts` |
 | `TorusKnotGeometry` | `tubularSegments` | `int` | documented `Integer` | generated | `src/geometries/TorusKnotGeometry.d.ts` |
+| `TubeGeometry` | `radialSegments` | `int` | documented `Integer` | generated | `src/geometries/TubeGeometry.d.ts` |
+| `TubeGeometry` | `radius` | `float` | documented `Float` | generated | `src/geometries/TubeGeometry.d.ts` |
+| `TubeGeometry` | `tubularSegments` | `int` | documented `Integer` | generated | `src/geometries/TubeGeometry.d.ts` |
 
 ## Members present in three.js but absent from the generated class
 
@@ -360,7 +363,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CapsuleGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `CapsuleGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `CatmullRomCurve3` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `CatmullRomCurve3` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `CircleGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `CircleGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `ColorKeyframeTrack` | `method toJSON` | parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -397,20 +399,16 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CubeTexture` | `constructor parameter wrapT` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `CubeTexture` | `property images` | `TImage[]` is an array whose element type cannot be mapped: `unknown` carries no type information a C# signature could express |
 | `CubicBezierCurve` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `CubicBezierCurve` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `CubicBezierCurve` | `property v0` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `CubicBezierCurve` | `property v1` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `CubicBezierCurve` | `property v2` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `CubicBezierCurve` | `property v3` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `CubicBezierCurve3` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `CubicBezierCurve3` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `CubicBezierCurve3` | `property v0` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `CubicBezierCurve3` | `property v1` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `CubicBezierCurve3` | `property v2` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `CubicBezierCurve3` | `property v3` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `CubicInterpolant` | `method getSettings_` | return type: `unknown` carries no type information a C# signature could express |
-| `CurvePath` | `method add` | parameter 'curve': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `CurvePath` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `CurvePath` | `method fromJSON` | parameter 'json': `CurvePathJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CurvePath` | `method getPoint` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getPointAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -419,7 +417,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `CurvePath` | `method getTangent` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getTangentAt` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method toJSON` | return type: `CurvePathJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `CurvePath` | `property curves` | `Array<Curve<TVector>>` is an array whose element type cannot be mapped: `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `CylinderGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `CylinderGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `Data3DTexture` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
@@ -438,7 +435,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `EdgesGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `EdgesGeometry` | `property parameters` | `{ readonly geometry: TBufferGeometry | null; readonly thresholdAngle: number; }` is an anonymous object literal type with no named C# equivalent |
 | `EllipseCurve` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `EllipseCurve` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `EventDispatcher` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `EventDispatcher` | `method addEventListener` | parameter 'type': type parameter `T` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `EventDispatcher` | `method dispatchEvent` | parameter 'event': `BaseEvent<T> & TEventMap[T]` is a TypeScript `intersection` type, which has no C# equivalent |
@@ -529,10 +525,8 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `LineBasicMaterial` | `property receivedShadowPositionNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property vertexNode` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicNodeMaterial` | `constructor parameter parameters` | `LineBasicNodeMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
-| `LineCurve` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `LineCurve` | `property v1` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `LineCurve` | `property v2` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
-| `LineCurve3` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `LineCurve3` | `property v1` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `LineCurve3` | `property v2` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `LineDashedMaterial` | `constructor parameter parameters` | `LineDashedMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
@@ -926,12 +920,10 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `PropertyBinding` | `property parsedPath` | `object` carries no type information a C# signature could express |
 | `PropertyMixer` | `property buffer` | `Float64Array | unknown[]` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `QuadraticBezierCurve` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `QuadraticBezierCurve` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `QuadraticBezierCurve` | `property v0` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `QuadraticBezierCurve` | `property v1` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `QuadraticBezierCurve` | `property v2` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `QuadraticBezierCurve3` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `QuadraticBezierCurve3` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `QuadraticBezierCurve3` | `property v0` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `QuadraticBezierCurve3` | `property v1` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
 | `QuadraticBezierCurve3` | `property v2` | the constructor already takes it, and a math value is mirrored as an instance this object owns rather than as a settable field |
@@ -1029,7 +1021,6 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `SphereGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `SphereGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `SplineCurve` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `SplineCurve` | `method copy` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `SpotLight` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `SpotLight` | `property shadow` | `SpotLightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `SpotLightHelper` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
@@ -1096,13 +1087,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `TorusKnotGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `TorusKnotGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
 | `TubeGeometry` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
-| `TubeGeometry` | `constructor parameter closed` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
-| `TubeGeometry` | `constructor parameter path` | `Curve<Vector3>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `TubeGeometry` | `constructor parameter radialSegments` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
-| `TubeGeometry` | `constructor parameter radius` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
-| `TubeGeometry` | `constructor parameter tubularSegments` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `TubeGeometry` | `method fromJSON` | marked `@internal` upstream, so it is not public API |
-| `TubeGeometry` | `property parameters` | `{ readonly path: Curve<Vector3>; readonly tubularSegments: number; readonly radius: number; readonly radialSegments: number; readonly closed: boolean; }` is an anonymous object literal type with no named C# equivalent |
 | `Uint16BufferAttribute` | `constructor parameter array, arm Iterable<number> | ArrayLike<number> | ArrayBuffer | number` | one arm of `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` that no emitted overload takes: three.js converts this argument to a `Uint16Array` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose |
 | `Uint32BufferAttribute` | `constructor parameter array, arm Iterable<number> | ArrayLike<number> | ArrayBuffer | number` | one arm of `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` that no emitted overload takes: three.js converts this argument to a `Uint32Array` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose |
 | `Uint8BufferAttribute` | `constructor parameter array, arm Iterable<number> | ArrayLike<number> | ArrayBuffer | number` | one arm of `Iterable<number> | ArrayLike<number> | ArrayBuffer | number` that no emitted overload takes: three.js converts this argument to a `Uint8Array` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose |

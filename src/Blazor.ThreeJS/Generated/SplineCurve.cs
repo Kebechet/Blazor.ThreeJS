@@ -103,6 +103,13 @@ public sealed class SplineCurve : ThreeObject
 		RecordCall("updateArcLengths");
 	}
 
+	/// <summary>Copies another <c>Curve</c> object to this instance.</summary>
+	/// <param name="source">Value forwarded to the <c>source</c> argument.</param>
+	public void Copy(ThreeObject source)
+	{
+		RecordCall("copy", source);
+	}
+
 	/// <summary>Copies the data from the given JSON object to this instance.</summary>
 	/// <param name="json">Value forwarded to the <c>json</c> argument.</param>
 	public void FromJSON(CurveJSON json)

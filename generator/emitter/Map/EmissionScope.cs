@@ -424,6 +424,20 @@ internal sealed class EmissionScope
 			: [];
 	}
 
+	/// <summary>
+	/// Whether a class three.js declares in scope is abstract. An abstract class the generator does not
+	/// emit is still a real place in the hierarchy, and a member typed by one takes a handle like any
+	/// other - so the mapper resolves it to the mirror's root rather than refusing it.
+	/// </summary>
+	/// <param name="name">Class name.</param>
+	/// <returns><see langword="true"/> when three.js declares it abstract and it is not emitted.</returns>
+	public bool IsAbstractInScope(string name)
+	{
+		return _classesByName.TryGetValue(name, out var irClass)
+			&& irClass.IsAbstract
+			&& !IsEmittable(name);
+	}
+
 	/// <summary>Whether a class is emitted, and therefore usable as a C# type in another signature.</summary>
 	/// <param name="name">Class name.</param>
 	/// <returns><see langword="true"/> when the class is in the emitted set.</returns>

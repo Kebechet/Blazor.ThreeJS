@@ -11,6 +11,11 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// <seealso href="https://github.com/mrdoob/three.js/blob/master/src/geometries/TubeGeometry.js">Source</seealso>
 public sealed class TubeGeometry : BufferGeometry
 {
+	private readonly ThreeObject? _path;
+	private readonly int _tubularSegments;
+	private readonly float _radius;
+	private readonly int _radialSegments;
+	private readonly bool _closed;
 	private Vector3[] _tangents = [];
 	private Vector3[] _normals = [];
 	private Vector3[] _binormals = [];
@@ -19,8 +24,27 @@ public sealed class TubeGeometry : BufferGeometry
 	private bool _isBinormalsWritten;
 
 	/// <summary>Create a new instance of <see cref="TubeGeometry"/>.</summary>
-	public TubeGeometry()
+	/// <param name="path">
+	/// A 3D path that inherits from the <c>Curve</c> base class. Default <c>new
+	/// THREE.QuadraticBezierCurve3(new Vector3(-1, -1, 0 ), new Vector3(-1, 1, 0), new Vector3(1, 1,
+	/// 0))</c>.
+	/// </param>
+	/// <param name="tubularSegments">The number of segments that make up the tube.</param>
+	/// <param name="radius">The radius of the tube.</param>
+	/// <param name="radialSegments">The number of segments that make up the cross-section.</param>
+	/// <param name="closed">Is the tube open or closed.</param>
+	public TubeGeometry(
+		ThreeObject? path = null,
+		int tubularSegments = 64,
+		float radius = 1f,
+		int radialSegments = 8,
+		bool closed = false)
 	{
+		_path = path;
+		_tubularSegments = tubularSegments;
+		_radius = radius;
+		_radialSegments = radialSegments;
+		_closed = closed;
 	}
 
 	/// <summary>
@@ -32,6 +56,11 @@ public sealed class TubeGeometry : BufferGeometry
 	internal TubeGeometry(ThreeBatch batch, int handle)
 		: base(batch, handle)
 	{
+		_tubularSegments = default!;
+		_radius = default!;
+		_radialSegments = default!;
+		_closed = default!;
+
 		Batch = batch;
 	}
 
@@ -39,6 +68,27 @@ public sealed class TubeGeometry : BufferGeometry
 	protected override string ThreeTypeName
 	{
 		get { return "TubeGeometry"; }
+	}
+
+	/// <summary>
+	/// Constructor arguments forwarded to <c>THREE.TubeGeometry</c>: path, tubularSegments, radius,
+	/// radialSegments, closed. An argument the caller left unspecified travels as the wire's
+	/// not-supplied sentinel, or is trimmed when nothing supplied follows it, so three.js applies its
+	/// own default.
+	/// </summary>
+	protected override object?[] ConstructorArgs
+	{
+		get
+		{
+			return ThreeValue.TrimUnspecifiedTail(
+			[
+				ThreeValue.OrUnspecified(_path),
+				_tubularSegments,
+				_radius,
+				_radialSegments,
+				_closed
+			]);
+		}
 	}
 
 	/// <summary>
@@ -102,12 +152,25 @@ public sealed class TubeGeometry : BufferGeometry
 	}
 
 	/// <summary>
-	/// Emits the create op for <c>THREE.TubeGeometry</c>, then replays every property written before
-	/// this object was attached.
+	/// An object with a property for each of the constructor parameters. Read-only in three.js, so it
+	/// is read on demand rather than mirrored: records a get op, sends it behind every write already
+	/// pending, and completes with the value <c>parameters</c> held.
+	/// </summary>
+	/// <returns>The value <c>parameters</c> held, once the JavaScript side has answered.</returns>
+	public Task<TubeGeometryParameters> ParametersAsync()
+	{
+		return GetAsync<TubeGeometryParameters>("parameters");
+	}
+
+	/// <summary>
+	/// Attaches the objects <c>THREE.TubeGeometry</c> is constructed from, so their create ops reach
+	/// the batch before the one that references them by handle, then emits this object's own.
 	/// </summary>
 	/// <param name="batch">Batch to record the ops into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
 	{
+		_path?.AttachTo(batch);
+
 		base.EmitCreate(batch);
 
 		if (_isTangentsWritten)

@@ -8,13 +8,13 @@
     "blockedClasses": 30,
     "reachableClasses": 264,
     "members": 3648,
-    "mirroredState": 1162,
-    "commands": 781,
-    "asyncQueries": 888,
+    "mirroredState": 1163,
+    "commands": 796,
+    "asyncQueries": 889,
     "untypedObjectQueries": 11,
-    "skippedMembers": 817,
+    "skippedMembers": 800,
     "reachableMembers": 2439,
-    "generatedMembers": 1824,
+    "generatedMembers": 1837,
     "strandedMembers": 1209
   },
   "classes": [
@@ -3182,40 +3182,11 @@
       "file": "src/geometries/TubeGeometry.d.ts",
       "status": "emittable",
       "isReachable": true,
-      "constructorParameterCount": 0,
-      "droppedConstructorParameters": [
-        {
-          "name": "path",
-          "type": "Curve<Vector3>",
-          "reason": "`Curve<Vector3>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
-          "category": "AbstractClass"
-        },
-        {
-          "name": "tubularSegments",
-          "type": "number",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "radius",
-          "type": "number",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "radialSegments",
-          "type": "number",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        },
-        {
-          "name": "closed",
-          "type": "boolean",
-          "reason": "an earlier optional parameter was dropped, so this one can no longer be passed in its own position",
-          "category": "RequiredAfterOptional"
-        }
-      ],
-      "middlePositionUnspecifiedParameters": []
+      "constructorParameterCount": 5,
+      "droppedConstructorParameters": [],
+      "middlePositionUnspecifiedParameters": [
+        "path"
+      ]
     },
     {
       "name": "Uint16BufferAttribute",
@@ -3939,12 +3910,12 @@
       "members": 38
     },
     {
-      "category": "AnonymousObjectType",
+      "category": "OptionsInterface",
       "members": 32
     },
     {
-      "category": "OptionsInterface",
-      "members": 32
+      "category": "AnonymousObjectType",
+      "members": 31
     },
     {
       "category": "UntypedValue",
@@ -3952,15 +3923,11 @@
     },
     {
       "category": "NotExported",
-      "members": 19
+      "members": 16
     },
     {
       "category": "ExternalType",
       "members": 15
-    },
-    {
-      "category": "AbstractClass",
-      "members": 13
     },
     {
       "category": "UnmappedTypeAlias",
@@ -7969,9 +7936,7 @@
       "member": "copy",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "CatmullRomCurve3",
@@ -9088,9 +9053,7 @@
       "member": "copy",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "CubicBezierCurve",
@@ -9263,9 +9226,7 @@
       "member": "copy",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "CubicBezierCurve3",
@@ -9492,9 +9453,7 @@
       "member": "copy",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "Curve",
@@ -9524,9 +9483,8 @@
       "member": "curves",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`Array<Curve<TVector>>` is an array whose element type cannot be mapped: `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
-      "category": "AbstractClass"
+      "bucket": "MirroredState",
+      "type": "ThreeObject?[]"
     },
     {
       "class": "CurvePath",
@@ -9541,9 +9499,7 @@
       "member": "add",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'curve': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "CurvePath",
@@ -9693,9 +9649,7 @@
       "member": "copy",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "CylinderGeometry",
@@ -10130,9 +10084,7 @@
       "member": "copy",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'source': `LightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
-      "category": "NotExported"
+      "bucket": "Command"
     },
     {
       "class": "DirectionalLightShadow",
@@ -10446,9 +10398,7 @@
       "member": "copy",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "EllipseCurve",
@@ -12593,9 +12543,7 @@
       "member": "copy",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'source': `LightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
-      "category": "NotExported"
+      "bucket": "Command"
     },
     {
       "class": "LightShadow",
@@ -13426,9 +13374,7 @@
       "member": "copy",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "LineCurve",
@@ -13585,9 +13531,7 @@
       "member": "copy",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "LineCurve3",
@@ -22961,9 +22905,7 @@
       "member": "copy",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'source': `LightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on",
-      "category": "NotExported"
+      "bucket": "Command"
     },
     {
       "class": "PointLightShadow",
@@ -23812,9 +23754,7 @@
       "member": "copy",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "QuadraticBezierCurve",
@@ -23979,9 +23919,7 @@
       "member": "copy",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "QuadraticBezierCurve3",
@@ -27564,9 +27502,7 @@
       "member": "copy",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead",
-      "category": "AbstractClass"
+      "bucket": "Command"
     },
     {
       "class": "SplineCurve",
@@ -29387,9 +29323,8 @@
       "member": "parameters",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ readonly path: Curve<Vector3>; readonly tubularSegments: number; readonly radius: number; readonly radialSegments: number; readonly closed: boolean; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "TubeGeometryParameters"
     },
     {
       "class": "TubeGeometry",

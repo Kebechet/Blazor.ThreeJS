@@ -352,6 +352,21 @@ internal sealed class TypeMapper
 			return TypeMapping.Mapped(name, TypeMappingKind.GeneratedWrapperClass);
 		}
 
+		// An *abstract* class the generator does not emit is still a real place in three.js's hierarchy,
+		// and on the wire an instance of one is just a handle. `Curve.copy(source)` takes any curve, and
+		// `Curve<TVector>` is generic so the base itself is not emitted - refusing it left `copy` off
+		// every concrete curve. Resolving to the mirror's root says what the wire says: some mirrored
+		// object.
+		//
+		// ⚠️ Weaker than the declaration, and recorded as a narrowing for that reason - nothing stops a
+		// caller passing a Mesh where a Curve was asked for, and three.js is what rejects it. The same
+		// trade `Scene.fog` already makes for a union of mirrored classes.
+		if (_scope?.IsAbstractInScope(name) == true)
+		{
+			MultiValueNarrowings.Add(type.Text);
+			return TypeMapping.Mapped(EmitterConfig.RootBaseTypeName, TypeMappingKind.GeneratedWrapperClass);
+		}
+
 		var exclusion = _scope?.DescribeExclusion(name) ?? "the emission scope has not been built";
 		var category = _scope?.DescribeExclusionCategory(name) ?? SkipCategory.UnwrappedClass;
 		return TypeMapping.Skipped(category, $"`{type.Text}` is not an emitted class: {exclusion}");

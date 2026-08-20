@@ -17,8 +17,10 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 /// <seealso href="https://github.com/mrdoob/three.js/blob/master/src/extras/core/CurvePath.js">Source</seealso>
 public class CurvePath : ThreeObject
 {
+	private ThreeObject?[] _curves = [];
 	private bool _autoClose = false;
 	private int _arcLengthDivisions = 200;
+	private bool _isCurvesWritten;
 	private bool _isAutoCloseWritten;
 	private bool _isArcLengthDivisionsWritten;
 
@@ -43,6 +45,28 @@ public class CurvePath : ThreeObject
 	protected override string ThreeTypeName
 	{
 		get { return "CurvePath"; }
+	}
+
+	/// <summary>
+	/// The array of <c>Curves</c>. Writing it records a <c>curves</c> property write once this object
+	/// is attached; writing the value already held records nothing.
+	/// </summary>
+	public ThreeObject?[] Curves
+	{
+		get { return _curves; }
+		set
+		{
+			if (_curves == value)
+			{
+				return;
+			}
+
+			_curves = value;
+			_isCurvesWritten = true;
+			AttachEach(Batch, value);
+
+			RecordSet("curves", value);
+		}
 	}
 
 	/// <summary>
@@ -88,10 +112,24 @@ public class CurvePath : ThreeObject
 		}
 	}
 
+	/// <summary>Add a curve to the <c>.curves</c> array.</summary>
+	/// <param name="curve">Value forwarded to the <c>curve</c> argument.</param>
+	public void Add(ThreeObject curve)
+	{
+		RecordCall("add", curve);
+	}
+
 	/// <summary>Update the cumulative segment distance cache.</summary>
 	public void UpdateArcLengths()
 	{
 		RecordCall("updateArcLengths");
+	}
+
+	/// <summary>Copies another <c>Curve</c> object to this instance.</summary>
+	/// <param name="source">Value forwarded to the <c>source</c> argument.</param>
+	public void Copy(ThreeObject source)
+	{
+		RecordCall("copy", source);
 	}
 
 	/// <summary>
@@ -183,12 +221,19 @@ public class CurvePath : ThreeObject
 
 	/// <summary>
 	/// Emits the create op for <c>THREE.CurvePath</c>, then replays every property written before this
-	/// object was attached.
+	/// object was attached. A replayed value that is itself a mirrored object is attached first, so its
+	/// create op reaches the batch before the write that references it by handle.
 	/// </summary>
 	/// <param name="batch">Batch to record the ops into.</param>
 	internal override void EmitCreate(ThreeBatch batch)
 	{
 		base.EmitCreate(batch);
+
+		if (_isCurvesWritten)
+		{
+			AttachEach(batch, _curves);
+			batch.Set(Handle, "curves", ThreeValue.Encode(_curves));
+		}
 
 		if (_isAutoCloseWritten)
 		{

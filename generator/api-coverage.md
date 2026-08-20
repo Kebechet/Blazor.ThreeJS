@@ -62,8 +62,11 @@ Declared types narrowed by rule 5, each of which lost its multi-value form:
 
 - `BufferAttribute | InterleavedBufferAttribute`
 - `ComputeNode | ComputeNode[]`
+- `Curve<TVector>`
+- `Curve<Vector3>`
 - `Fog | FogExp2`
 - `InstancedBufferGeometry | BufferGeometry`
+- `LightShadow`
 - `Material | Material[]`
 - `Object3D | AnimationObjectGroup`
 - `Object3D | Skeleton`
@@ -479,7 +482,7 @@ The consumer-facing renderer types are checked against the exclusion rather than
 | `Timer` | 0 | — | `src/core/Timer.d.ts` |
 | `TorusGeometry` | 7 | — | `src/geometries/TorusGeometry.d.ts` |
 | `TorusKnotGeometry` | 6 | — | `src/geometries/TorusKnotGeometry.d.ts` |
-| `TubeGeometry` | 0 | `path`, `tubularSegments`, `radius`, `radialSegments`, `closed` | `src/geometries/TubeGeometry.d.ts` |
+| `TubeGeometry` | 5 | — | `src/geometries/TubeGeometry.d.ts` |
 | `Uint16BufferAttribute` | 3 | — | `src/core/BufferAttribute.d.ts` |
 | `Uint32BufferAttribute` | 3 | — | `src/core/BufferAttribute.d.ts` |
 | `Uint8BufferAttribute` | 3 | — | `src/core/BufferAttribute.d.ts` |
@@ -508,14 +511,14 @@ three.js is reachable at all" and "how much of what we mirror is state".
 
 | bucket | what it means | all classes | emittable classes |
 |---|---|---|---|
-| MirroredState | state C# holds and writes through on change | 1162 | 945 |
-| Command | a method recorded as a call op, returning nothing or `this` | 781 | 331 |
-| AsyncQuery | a method whose result the caller needs back | 888 | 548 |
-| Skipped | not mirrored; see the skip list below | 817 | 615 |
+| MirroredState | state C# holds and writes through on change | 1163 | 946 |
+| Command | a method recorded as a call op, returning nothing or `this` | 796 | 342 |
+| AsyncQuery | a method whose result the caller needs back | 889 | 549 |
+| Skipped | not mirrored; see the skip list below | 800 | 602 |
 | **total** | | **3648** | **2439** |
 
 Two op kinds answer: **read**, which invokes a method, and **get**, which reads a property.
-548 of the async queries above sit on an emitted class and are generated as `…Async` methods, 186 of
+549 of the async queries above sit on an emitted class and are generated as `…Async` methods, 187 of
 them over the get op rather than the read op. Both kinds answer with a value where one can travel, and
 with a handle to an object where it cannot.
 
@@ -550,19 +553,18 @@ the README's coverage table.
 | `DomOrLibType` | 78 | a TypeScript lib or DOM type; C# holds no browser object and the wire has no encoding for one |
 | `UnmappedUnion` | 42 | a union of several real alternatives in a position that holds one type — a property or a return type, since a required parameter becomes one overload per arm |
 | `NotInstanceApi` | 38 | static, non-public or `@internal` — not part of the mirrored instance API |
-| `AnonymousObjectType` | 32 | an anonymous object literal type with no name to give a C# type |
 | `OptionsInterface` | 32 | a structural interface — an options bag or an event map — with no C# type to be |
+| `AnonymousObjectType` | 31 | an anonymous object literal type with no name to give a C# type |
 | `UntypedValue` | 31 | declared `any` / `unknown`, or with no type at all |
-| `NotExported` | 19 | three.js's public barrel does not re-export it as a value, so the applier cannot reach it on `THREE` |
+| `NotExported` | 16 | three.js's public barrel does not re-export it as a value, so the applier cannot reach it on `THREE` |
 | `ExternalType` | 15 | declared outside the scanned `src/` surface |
-| `AbstractClass` | 13 | the class is abstract, so it has no constructor to mirror |
 | `UnmappedTypeAlias` | 13 | a type alias that is neither a constant group nor a rename of a mapped type |
 | `UnwrappedClass` | 12 | an in-scope class that is itself not emitted |
 | `UnerasableTypeParameter` | 8 | a type parameter with neither a default nor a constraint to erase to |
 | `UnmappedTypeSyntax` | 4 | a TypeScript type form with no C# equivalent |
 | `RestParameter` | 1 | a rest parameter, including the rest-union-tuple pseudo-overload form |
 
-<details><summary>Every skipped member (817)</summary>
+<details><summary>Every skipped member (800)</summary>
 
 | class | member | obstacle | why |
 |---|---|---|---|
@@ -625,7 +627,6 @@ the README's coverage table.
 | `BufferGeometry` | `method toJSON` | `OptionsInterface` | return type: `BufferGeometryJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CanvasTarget` | `property domElement` | `DomOrLibType` | `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `CapsuleGeometry` | `method fromJSON` | `NotInstanceApi` | marked `@internal` upstream, so it is not public API |
-| `CatmullRomCurve3` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `CircleGeometry` | `method fromJSON` | `NotInstanceApi` | marked `@internal` upstream, so it is not public API |
 | `ClippingContext` | `property clippingGroupContexts` | `DomOrLibType` | `WeakMap<ClippingGroup, ClippingContext>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `ClippingContext` | `method update` | `NotExported` | parameter 'parentContext': `ClippingContext` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
@@ -642,8 +643,6 @@ the README's coverage table.
 | `CubeCamera` | `method update` | `OptionsInterface` | parameter 'renderer': `CubeCameraRenderer` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CubeDepthTexture` | `property images` | `UnmappedTypeAlias` | `CubeDepthTextureImageData` aliases `[ DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, ]`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `CubeTexture` | `property images` | `UntypedValue` | `TImage[]` is an array whose element type cannot be mapped: `unknown` carries no type information a C# signature could express |
-| `CubicBezierCurve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `CubicBezierCurve3` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `CubicInterpolant` | `method getSettings_` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
 | `Curve` | `method getPoint` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Curve` | `method getPointAt` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -651,9 +650,6 @@ the README's coverage table.
 | `Curve` | `method getSpacedPoints` | `UnmappedUnion` | return type: `TVector[]` is an array whose element type cannot be mapped: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Curve` | `method getTangent` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Curve` | `method getTangentAt` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `Curve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `CurvePath` | `property curves` | `AbstractClass` | `Array<Curve<TVector>>` is an array whose element type cannot be mapped: `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `CurvePath` | `method add` | `AbstractClass` | parameter 'curve': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `CurvePath` | `method getPoint` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getPoints` | `UnmappedUnion` | return type: `TVector[]` is an array whose element type cannot be mapped: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getSpacedPoints` | `UnmappedUnion` | return type: `TVector[]` is an array whose element type cannot be mapped: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -662,20 +658,17 @@ the README's coverage table.
 | `CurvePath` | `method getPointAt` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getTangent` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getTangentAt` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `CurvePath` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `CylinderGeometry` | `method fromJSON` | `NotInstanceApi` | marked `@internal` upstream, so it is not public API |
 | `DataArrayTexture` | `property layerUpdates` | `DomOrLibType` | `Set<number>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `DataTextureLoader` | `method parse` | `DomOrLibType` | parameter 'buffer': `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `DataTextureLoader` | `method createDataTexture` | `DomOrLibType` | parameter 'buffer': `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `DirectionalLight` | `property shadow` | `NotExported` | `DirectionalLightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `DirectionalLightShadow` | `property biasNode` | `NodeStackType` | `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `DirectionalLightShadow` | `method copy` | `NotExported` | parameter 'source': `LightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `DirectionalLightShadow` | `method toJSON` | `OptionsInterface` | return type: `LightShadowJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `DiscreteInterpolant` | `property settings` | `AnonymousObjectType` | `{}` is an anonymous object literal type with no named C# equivalent |
 | `DiscreteInterpolant` | `property DefaultSettings_` | `AnonymousObjectType` | `{}` is an anonymous object literal type with no named C# equivalent |
 | `DiscreteInterpolant` | `method getSettings_` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
 | `EdgesGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly geometry: TBufferGeometry | null; readonly thresholdAngle: number; }` is an anonymous object literal type with no named C# equivalent |
-| `EllipseCurve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `Euler` | `property order` | `UnmappedTypeAlias` | `EulerOrder` cannot become a C# enum: already hand-written as `Kebechet.Blazor.ThreeJS.Math.EulerOrder`, because `Euler` is a hand-written math value rather than a generated class. Its rotation order crosses inside the tagged Euler value as an index the applier maps through `EULER_ORDERS`, so a second enum here would be a duplicate name carrying a different wire form |
 | `Euler` | `property _onChangeCallback` | `CallbackType` | `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Euler` | `property DEFAULT_ORDER` | `NotInstanceApi` | a static property; the mirror models instances, and a static write has no handle to address |
@@ -717,7 +710,6 @@ the README's coverage table.
 | `KeyframeTrack` | `method toJSON` | `UnmappedUnion` | parameter 'track': `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `LatheGeometry` | `method fromJSON` | `NotInstanceApi` | marked `@internal` upstream, so it is not public API |
 | `LightShadow` | `property biasNode` | `NodeStackType` | `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `LightShadow` | `method copy` | `NotExported` | parameter 'source': `LightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `LightShadow` | `method toJSON` | `OptionsInterface` | return type: `LightShadowJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Lighting` | `method createNode` | `NodeStackType` | return type: `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Lighting` | `method getNode` | `NodeStackType` | return type: `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -749,8 +741,6 @@ the README's coverage table.
 | `LineBasicMaterial` | `property fragmentNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property vertexNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `LineCurve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `LineCurve3` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `LineDashedMaterial` | `property offsetNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineDashedMaterial` | `property dashScaleNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineDashedMaterial` | `property dashSizeNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1083,7 +1073,6 @@ the README's coverage table.
 | `PlaneGeometry` | `method fromJSON` | `NotInstanceApi` | marked `@internal` upstream, so it is not public API |
 | `PointLight` | `property shadow` | `NotExported` | `PointLightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `PointLightShadow` | `property biasNode` | `NodeStackType` | `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `PointLightShadow` | `method copy` | `NotExported` | parameter 'source': `LightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `PointLightShadow` | `method toJSON` | `OptionsInterface` | return type: `LightShadowJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `PointsMaterial` | `property sizeNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property rotationNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1119,8 +1108,6 @@ the README's coverage table.
 | `PropertyBinding` | `method create` | `UntypedValue` | parameter 'root': `object` carries no type information a C# signature could express |
 | `PropertyBinding` | `method findNode` | `UntypedValue` | parameter 'root': `object` carries no type information a C# signature could express |
 | `PropertyMixer` | `property buffer` | `UnmappedUnion` | `Float64Array | unknown[]` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `QuadraticBezierCurve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `QuadraticBezierCurve3` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `Quaternion` | `property _onChangeCallback` | `CallbackType` | `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Quaternion` | `method _onChange` | `CallbackType` | parameter 'callback': `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Quaternion` | `method [Symbol.iterator]` | `NotInstanceApi` | the member name is not a usable C# identifier |
@@ -1201,7 +1188,6 @@ the README's coverage table.
 | `SourceJSON` | `property url` | `UnmappedTypeAlias` | `SerializedImage` aliases `| string | { data: number[]; width: number; height: number; type: string; }`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Sphere` | `method empty` | `UntypedValue` | return type: `any` carries no type information a C# signature could express |
 | `SphereGeometry` | `method fromJSON` | `NotInstanceApi` | marked `@internal` upstream, so it is not public API |
-| `SplineCurve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `SpotLight` | `property shadow` | `NotExported` | `SpotLightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `SpotLightShadow` | `method copy` | `NotExported` | parameter 'source': `SpotLightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `SpotLightShadow` | `property biasNode` | `NodeStackType` | `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1252,7 +1238,6 @@ the README's coverage table.
 | `TimestampQueryPool` | `property timestamps` | `DomOrLibType` | `Map<string, number>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `TimestampQueryPool` | `method resolveQueriesAsync` | `UnmappedUnion` | return type: `Promise<number> | number` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `TorusKnotGeometry` | `method fromJSON` | `NotInstanceApi` | marked `@internal` upstream, so it is not public API |
-| `TubeGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly path: Curve<Vector3>; readonly tubularSegments: number; readonly radius: number; readonly radialSegments: number; readonly closed: boolean; }` is an anonymous object literal type with no named C# equivalent |
 | `TubeGeometry` | `method fromJSON` | `NotInstanceApi` | marked `@internal` upstream, so it is not public API |
 | `Uniform` | `property value` | `UntypedValue` | `any` carries no type information a C# signature could express |
 | `UniformsGroup` | `property uniforms` | `UntypedValue` | `Array<Uniform | Uniform[]>` is an array whose element type cannot be mapped: `Uniform` is not an emitted class: required parameter 'value' cannot be mapped: `any` carries no type information a C# signature could express |
@@ -1548,7 +1533,7 @@ cannot be trimmed and must not be sent as null either — it travels as the `$un
 (`ThreeWireFormat.UndefinedKey`), which `three-interop.js` decodes to a real `undefined`. The
 round trip is pinned end to end by `tests/wire-format.test.mjs` against the vendored three.js.
 
-50 emittable classes carry 98 such parameters. They are the measure of how much
+51 emittable classes carry 99 such parameters. They are the measure of how much
 of the emitted surface that one wire feature holds up.
 
 <details><summary>Every affected class</summary>
@@ -1603,6 +1588,7 @@ of the emitted surface that one wire feature holds up.
 | `SpotLight` | `color`, `angle` |
 | `StorageTexture` | `width` |
 | `TorusGeometry` | `arc` |
+| `TubeGeometry` | `path` |
 | `VideoFrameTexture` | `mapping`, `wrapS`, `wrapT`, `magFilter`, `minFilter`, `format`, `type` |
 | `WebGLRenderTarget` | `width` |
 

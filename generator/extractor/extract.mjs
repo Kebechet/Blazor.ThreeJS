@@ -523,11 +523,48 @@ async function main() {
 		}
 		assignIfDefined(ir, "visibility", visibilityOf(node));
 		const typeNode = ts.isSetAccessorDeclaration(node) ? node.parameters[0]?.type : node.type;
-		assignIfDefined(ir, "type", typeToIr(typeNode));
+		assignIfDefined(ir, "type", typeToIr(typeNode) ?? literalInitializerType(node));
 		assignNumericKind(ir, "numericKind", numericKindFrom(memberDocText(doc)));
 		assignIfDefined(ir, "defaultValue", doc?.defaultValue);
 		assignIfDefined(ir, "doc", doc);
 		return ir;
+	}
+
+	/**
+	 * The type of a property that carries no annotation but is initialized to a literal, as the
+	 * equivalent literal type node would have produced.
+	 *
+	 * three.js writes its type tags both ways - `readonly isAmbientLight: boolean;` on most classes and
+	 * `readonly isArcCurve = true;` on the curves - and TypeScript gives the second one the type
+	 * `true` just as surely as if it had been written out. Recording nothing for it made ten tags on
+	 * the curve classes look like properties with no type at all, which the mapper then refused.
+	 *
+	 * Literals only, and only these three. An initializer that is a call or a reference has a type
+	 * that comes from somewhere else in the program, and reading it would mean type-checking rather
+	 * than reading a declaration.
+	 */
+	function literalInitializerType(node) {
+		const initializer = node.initializer;
+		if (initializer === undefined) {
+			return undefined;
+		}
+
+		if (initializer.kind === ts.SyntaxKind.TrueKeyword || initializer.kind === ts.SyntaxKind.FalseKeyword) {
+			return {
+				kind: "literal",
+				literalKind: "boolean",
+				value: initializer.kind === ts.SyntaxKind.TrueKeyword,
+				text: initializer.getText(),
+			};
+		}
+		if (ts.isStringLiteral(initializer)) {
+			return { kind: "literal", literalKind: "string", value: initializer.text, text: initializer.getText() };
+		}
+		if (ts.isNumericLiteral(initializer)) {
+			return { kind: "literal", literalKind: "number", value: Number(initializer.text), text: initializer.getText() };
+		}
+
+		return undefined;
 	}
 
 	/** Class and interface members share a shape; overloads are grouped under one entry. */

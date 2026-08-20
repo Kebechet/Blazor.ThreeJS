@@ -6,7 +6,7 @@ using Kebechet.Blazor.ThreeJS.Core;
 namespace Kebechet.Blazor.ThreeJS.Objects;
 
 /// <summary>The JavaScript-side <c>THREE.IndirectStorageBufferAttribute</c>.</summary>
-public sealed class IndirectStorageBufferAttribute : BufferAttribute
+public sealed class IndirectStorageBufferAttribute : StorageBufferAttribute
 {
 	private readonly TypedArray _array;
 	private readonly float _itemSize;
@@ -65,16 +65,5 @@ public sealed class IndirectStorageBufferAttribute : BufferAttribute
 	public Task<bool> IsIndirectStorageBufferAttributeAsync()
 	{
 		return GetAsync<bool>("isIndirectStorageBufferAttribute");
-	}
-
-	/// <summary>
-	/// Reads <c>isStorageBufferAttribute</c> back from the JavaScript-side object. Read-only in
-	/// three.js, so it is read on demand rather than mirrored: records a get op, sends it behind every
-	/// write already pending, and completes with the value <c>isStorageBufferAttribute</c> held.
-	/// </summary>
-	/// <returns>The value <c>isStorageBufferAttribute</c> held, once the JavaScript side has answered.</returns>
-	public Task<bool> IsStorageBufferAttributeAsync()
-	{
-		return GetAsync<bool>("isStorageBufferAttribute");
 	}
 }

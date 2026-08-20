@@ -74,6 +74,25 @@ public class AwaitedQueryTests
 			.ShouldBe(["hasFeature", "hasFeatureAsync"]);
 	}
 
+	[Fact]
+	public async Task ArcCurve_TypeTag_ReadsBackEvenThoughUpstreamDeclaresItWithAnInitializer()
+	{
+		// Arrange: three.js writes `readonly isArcCurve = true;` on the curves and
+		// `readonly isX: boolean;` everywhere else. Both are a boolean to TypeScript; only one of them
+		// used to carry a type into the IR, so ten tags on the curve classes were refused as untyped.
+		var module = AnswerEveryQueryWith("true");
+		var context = new ThreeContext(module, contextId: 1);
+		var curve = new ArcCurve();
+		context.Attach(curve);
+
+		// Act
+		var isArcCurve = await curve.IsArcCurveAsync();
+
+		// Assert
+		isArcCurve.ShouldBeTrue();
+		SentOps(module).Single(x => x.Kind == ThreeOpKind.Get).Member.ShouldBe("isArcCurve");
+	}
+
 	/// <summary>
 	/// A module that answers every read with one literal. <c>null</c> is what an awaited void actually
 	/// sends: three.js resolves the promise with <c>undefined</c>, and the applier encodes that as null.

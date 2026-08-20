@@ -104,6 +104,17 @@ public sealed class SplineCurve : ThreeObject
 	}
 
 	/// <summary>
+	/// Read-only flag to check if a given object is of type <see cref="SplineCurve"/>. Read-only in
+	/// three.js, so it is read on demand rather than mirrored: records a get op, sends it behind every
+	/// write already pending, and completes with the value <c>isSplineCurve</c> held.
+	/// </summary>
+	/// <returns>The value <c>isSplineCurve</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsSplineCurveAsync()
+	{
+		return GetAsync<bool>("isSplineCurve");
+	}
+
+	/// <summary>
 	/// A Read-only _string_ to check if <c>this</c> object type. Read-only in three.js, so it is read
 	/// on demand rather than mirrored: records a get op, sends it behind every write already pending,
 	/// and completes with the value <c>type</c> held.

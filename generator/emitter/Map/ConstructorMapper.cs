@@ -196,10 +196,66 @@ internal sealed class ConstructorMapper
 	/// <returns>The emitted arms and the ones left out, never empty of arms.</returns>
 	public static TypeAlternatives ResolveAlternatives(TypeMapper mapper, IrParameter irParameter, TypeMappingContext context)
 	{
+		if (DocumentedTypedArray(irParameter) is { } typedArrayName)
+		{
+			return new TypeAlternatives
+			{
+				Arms = [TypeMapping.Mapped(typedArrayName, TypeMappingKind.HandWrittenTypedArray)],
+				DroppedArms =
+				[
+					new DroppedAlternative
+					{
+						TypeText = irParameter.Type?.Text ?? "<none>",
+						Reason = $"three.js converts this argument to a `{typedArrayName}` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose",
+						Category = SkipCategory.MathValueType
+					}
+				]
+			};
+		}
+
 		return irParameter.IsOptional
 			? new TypeAlternatives { Arms = [mapper.Map(irParameter.Type, context)] }
 			: mapper.MapAlternatives(irParameter.Type, context);
 	}
+
+	/// <summary>
+	/// The typed array three.js says it will build out of this argument, whatever it is handed.
+	/// <para>
+	/// <c>Int16BufferAttribute</c> declares <c>array</c> as a number sequence and documents that "an
+	/// array value will be converted to <c>Int16Array</c>". Both halves are true, and only the second
+	/// says what the object ends up holding - so the mirror asks for the <c>Int16Array</c>. Taking a
+	/// <c>float[]</c> instead would mean converting it in C# to reach the base, at a precision the
+	/// caller never chose and with out-of-range behaviour that is C#'s rather than JavaScript's.
+	/// </para>
+	/// <para>
+	/// Read from the declaration rather than derived from the class name, which would have been wrong
+	/// exactly once: <c>Float16BufferAttribute</c> converts to a <c>Uint16Array</c>. It is also what
+	/// makes this self-correcting - if upstream stops documenting the conversion, the parameter goes
+	/// back to its declared union and the class back to blocked, which is visible in the coverage table.
+	/// </para>
+	/// <para>
+	/// ⚠️ A narrowing: three.js also accepts a plain array and an integer length here, and neither is
+	/// emitted. Recorded as a dropped alternative so it reaches the coverage report.
+	/// </para>
+	/// </summary>
+	/// <param name="irParameter">The three.js parameter.</param>
+	/// <returns>The C# typed-array type name, or <see langword="null"/> when nothing documents one.</returns>
+	private static string? DocumentedTypedArray(IrParameter irParameter)
+	{
+		if (irParameter.Doc is not { Length: > 0 } summary)
+		{
+			return null;
+		}
+
+		var match = TypedArrayConversionPattern.Match(summary);
+		return match.Success && EmitterConfig.TypedArrayTypeNames.Contains(match.Groups[1].Value)
+			? match.Groups[1].Value
+			: null;
+	}
+
+	/// <summary>three.js's own wording for the array it builds out of whatever this argument is.</summary>
+	private static readonly System.Text.RegularExpressions.Regex TypedArrayConversionPattern =
+		new(@"will be converted to `(\w+)`", System.Text.RegularExpressions.RegexOptions.Compiled);
 
 	/// <summary>
 	/// Builds one C# parameter for one arm of its declared type.
@@ -467,6 +523,35 @@ internal sealed class MappedConstructor
 
 	/// <summary>Parameters left out, each with the reason, so the narrowing is visible.</summary>
 	public IReadOnlyList<DroppedParameter> DroppedParameters { get; init; } = [];
+
+	/// <summary>
+	/// Whole declarations left out, described as they would have been written. A union-armed parameter
+	/// produces one constructor per arm, and where the class chains to a base only some of those arms
+	/// can satisfy it - so the arms that cannot are dropped rather than blocking the class, and are
+	/// named here so the narrowing reaches the coverage report instead of only the diff.
+	/// </summary>
+	public IReadOnlyList<string> DroppedOverloads { get; init; } = [];
+
+	/// <summary>Builds a copy carrying a narrowed overload set.</summary>
+	/// <param name="overloads">The declarations that survive.</param>
+	/// <param name="droppedOverloads">The ones that do not, described.</param>
+	/// <returns>The narrowed mapping.</returns>
+	public MappedConstructor WithOverloads(
+		IReadOnlyList<IReadOnlyList<MappedParameter>> overloads,
+		IReadOnlyList<string> droppedOverloads)
+	{
+		return new MappedConstructor
+		{
+			IsMapped = IsMapped,
+			Parameters = Parameters,
+			Overloads = overloads,
+			DroppedParameters = DroppedParameters,
+			DroppedOverloads = droppedOverloads,
+			MiddlePositionUnspecifiedParameters = MiddlePositionUnspecifiedParameters,
+			RefusalReason = RefusalReason,
+			RefusalCategory = RefusalCategory
+		};
+	}
 
 	/// <summary>
 	/// Names of unspecified-nullable parameters that are not last, so trimming cannot reach them and

@@ -90,4 +90,15 @@ public sealed class ArcCurve : EllipseCurve
 			]);
 		}
 	}
+
+	/// <summary>
+	/// Read-only flag to check if a given object is of type <see cref="ArcCurve"/>. Read-only in
+	/// three.js, so it is read on demand rather than mirrored: records a get op, sends it behind every
+	/// write already pending, and completes with the value <c>isArcCurve</c> held.
+	/// </summary>
+	/// <returns>The value <c>isArcCurve</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsArcCurveAsync()
+	{
+		return GetAsync<bool>("isArcCurve");
+	}
 }

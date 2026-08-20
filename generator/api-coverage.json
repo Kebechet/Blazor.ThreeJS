@@ -3,19 +3,19 @@
   "typesVersion": "0.185.3",
   "totals": {
     "classes": 309,
-    "emittableClasses": 198,
+    "emittableClasses": 209,
     "outOfSurfaceClasses": 60,
-    "blockedClasses": 51,
+    "blockedClasses": 40,
     "reachableClasses": 264,
-    "members": 3805,
+    "members": 3804,
     "mirroredState": 1158,
     "commands": 760,
-    "asyncQueries": 816,
+    "asyncQueries": 825,
     "untypedObjectQueries": 11,
-    "skippedMembers": 1071,
-    "reachableMembers": 2390,
-    "generatedMembers": 1618,
-    "strandedMembers": 1415
+    "skippedMembers": 1061,
+    "reachableMembers": 2391,
+    "generatedMembers": 1629,
+    "strandedMembers": 1413
   },
   "classes": [
     {
@@ -1031,10 +1031,8 @@
     {
       "name": "Float16BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
-      "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [],
@@ -1042,19 +1040,17 @@
         {
           "parameter": "array",
           "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
-          "arm": "ArrayBuffer",
-          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-          "category": "DomOrLibType"
+          "arm": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "reason": "three.js converts this argument to a `Uint16Array` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose",
+          "category": "MathValueType"
         }
       ]
     },
     {
       "name": "Float32BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
-      "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [],
@@ -1062,9 +1058,9 @@
         {
           "parameter": "array",
           "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
-          "arm": "ArrayBuffer",
-          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-          "category": "DomOrLibType"
+          "arm": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "reason": "three.js converts this argument to a `Float32Array` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose",
+          "category": "MathValueType"
         }
       ]
     },
@@ -1364,10 +1360,8 @@
     {
       "name": "Int16BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
-      "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [],
@@ -1375,19 +1369,17 @@
         {
           "parameter": "array",
           "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
-          "arm": "ArrayBuffer",
-          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-          "category": "DomOrLibType"
+          "arm": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "reason": "three.js converts this argument to a `Int16Array` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose",
+          "category": "MathValueType"
         }
       ]
     },
     {
       "name": "Int32BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
-      "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [],
@@ -1395,19 +1387,17 @@
         {
           "parameter": "array",
           "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
-          "arm": "ArrayBuffer",
-          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-          "category": "DomOrLibType"
+          "arm": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "reason": "three.js converts this argument to a `Int32Array` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose",
+          "category": "MathValueType"
         }
       ]
     },
     {
       "name": "Int8BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
-      "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [],
@@ -1415,9 +1405,9 @@
         {
           "parameter": "array",
           "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
-          "arm": "ArrayBuffer",
-          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-          "category": "DomOrLibType"
+          "arm": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "reason": "three.js converts this argument to a `Int8Array` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose",
+          "category": "MathValueType"
         }
       ]
     },
@@ -2961,10 +2951,8 @@
     {
       "name": "StorageBufferAttribute",
       "file": "src/renderers/common/StorageBufferAttribute.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float`, so the value it holds cannot stand in for the base's",
-      "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -2972,10 +2960,8 @@
     {
       "name": "StorageInstancedBufferAttribute",
       "file": "src/renderers/common/StorageInstancedBufferAttribute.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "its C# base `InstancedBufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float`, so the value it holds cannot stand in for the base's",
-      "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 2,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": []
@@ -3182,10 +3168,8 @@
     {
       "name": "Uint16BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
-      "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [],
@@ -3193,19 +3177,17 @@
         {
           "parameter": "array",
           "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
-          "arm": "ArrayBuffer",
-          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-          "category": "DomOrLibType"
+          "arm": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "reason": "three.js converts this argument to a `Uint16Array` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose",
+          "category": "MathValueType"
         }
       ]
     },
     {
       "name": "Uint32BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
-      "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [],
@@ -3213,19 +3195,17 @@
         {
           "parameter": "array",
           "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
-          "arm": "ArrayBuffer",
-          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-          "category": "DomOrLibType"
+          "arm": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "reason": "three.js converts this argument to a `Uint32Array` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose",
+          "category": "MathValueType"
         }
       ]
     },
     {
       "name": "Uint8BufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
-      "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [],
@@ -3233,19 +3213,17 @@
         {
           "parameter": "array",
           "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
-          "arm": "ArrayBuffer",
-          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-          "category": "DomOrLibType"
+          "arm": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "reason": "three.js converts this argument to a `Uint8Array` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose",
+          "category": "MathValueType"
         }
       ]
     },
     {
       "name": "Uint8ClampedBufferAttribute",
       "file": "src/core/BufferAttribute.d.ts",
-      "status": "blocked",
+      "status": "emittable",
       "isReachable": true,
-      "reason": "its C# base `BufferAttribute` requires `array` as `TypedArray`, and this class declares it as `float[]`, so the value it holds cannot stand in for the base's",
-      "category": "UnreachableBaseConstructor",
       "constructorParameterCount": 3,
       "droppedConstructorParameters": [],
       "middlePositionUnspecifiedParameters": [],
@@ -3253,9 +3231,9 @@
         {
           "parameter": "array",
           "declaredType": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
-          "arm": "ArrayBuffer",
-          "reason": "`ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one",
-          "category": "DomOrLibType"
+          "arm": "Iterable<number> | ArrayLike<number> | ArrayBuffer | number",
+          "reason": "three.js converts this argument to a `Uint8ClampedArray` whatever it is given, so the mirror asks for one rather than for a shape it would then have to convert with a precision the caller never chose",
+          "category": "MathValueType"
         }
       ]
     },
@@ -3916,7 +3894,7 @@
     },
     {
       "category": "UntypedValue",
-      "members": 56
+      "members": 46
     },
     {
       "category": "AbstractClass",
@@ -5118,9 +5096,8 @@
       "member": "isArcCurve",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "the declaration carries no type",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "ArrayCamera",
@@ -7846,9 +7823,8 @@
       "member": "isCatmullRomCurve3",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "the declaration carries no type",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "CatmullRomCurve3",
@@ -8997,9 +8973,8 @@
       "member": "isCubicBezierCurve",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "the declaration carries no type",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "CubicBezierCurve",
@@ -9177,9 +9152,8 @@
       "member": "isCubicBezierCurve3",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "the declaration carries no type",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "CubicBezierCurve3",
@@ -10377,9 +10351,8 @@
       "member": "isEllipseCurve",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "the declaration carries no type",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "EllipseCurve",
@@ -11373,14 +11346,6 @@
       "member": "isIndirectStorageBufferAttribute",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "AsyncQuery",
-      "type": "bool"
-    },
-    {
-      "class": "IndirectStorageBufferAttribute",
-      "member": "isStorageBufferAttribute",
-      "kind": "Property",
-      "origin": "FlattenedAncestor",
       "bucket": "AsyncQuery",
       "type": "bool"
     },
@@ -13500,9 +13465,8 @@
       "member": "isLineCurve",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "the declaration carries no type",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "LineCurve",
@@ -13664,9 +13628,8 @@
       "member": "isLineCurve3",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "the declaration carries no type",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "LineCurve3",
@@ -24031,9 +23994,8 @@
       "member": "isQuadraticBezierCurve",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "the declaration carries no type",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "QuadraticBezierCurve",
@@ -24203,9 +24165,8 @@
       "member": "isQuadraticBezierCurve3",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "the declaration carries no type",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "QuadraticBezierCurve3",
@@ -27868,9 +27829,8 @@
       "member": "isSplineCurve",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "the declaration carries no type",
-      "category": "UntypedValue"
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "SplineCurve",

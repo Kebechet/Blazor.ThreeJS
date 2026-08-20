@@ -83,6 +83,17 @@ public sealed class LineCurve3 : ThreeObject
 	}
 
 	/// <summary>
+	/// Read-only flag to check if a given object is of type <see cref="LineCurve3"/>. Read-only in
+	/// three.js, so it is read on demand rather than mirrored: records a get op, sends it behind every
+	/// write already pending, and completes with the value <c>isLineCurve3</c> held.
+	/// </summary>
+	/// <returns>The value <c>isLineCurve3</c> held, once the JavaScript side has answered.</returns>
+	public Task<bool> IsLineCurve3Async()
+	{
+		return GetAsync<bool>("isLineCurve3");
+	}
+
+	/// <summary>
 	/// A Read-only _string_ to check if <c>this</c> object type. Read-only in three.js, so it is read
 	/// on demand rather than mirrored: records a get op, sends it behind every write already pending,
 	/// and completes with the value <c>type</c> held.

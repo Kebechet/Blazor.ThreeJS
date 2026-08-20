@@ -85,4 +85,42 @@ public class InheritedConstructorStateTests
 		attribute.ItemSize.ShouldBe(3f);
 		attribute.Normalized.ShouldBeTrue();
 	}
+
+	[Fact]
+	public void Float32BufferAttribute_ConstructedWithItsArray_SendsThatArrayAndReportsItThroughTheBase()
+	{
+		// Arrange: the nine typed-attribute subclasses exist because three.js documents which array it
+		// builds - "an array value will be converted to `Float32Array`" - so the mirror asks for one
+		// rather than converting a float[] at a precision the caller never chose.
+		var batch = new ThreeBatch();
+		var attribute = new Float32BufferAttribute(new Float32Array(1f, 2f, 3f), itemSize: 3f);
+
+		// Act
+		attribute.AttachTo(batch);
+		var ops = batch.Drain().ToList();
+
+		// Assert
+		var create = ops.Single(x => x.Kind == ThreeOpKind.Create && x.Handle == attribute.Handle);
+		create.Type.ShouldBe("Float32BufferAttribute");
+		create.Args.ShouldNotBeNull();
+		create.Args[0].ShouldBeOfType<ThreeValue.TypedArrayValue>().ConstructorName.ShouldBe("Float32Array");
+		attribute.ItemSize.ShouldBe(3f);
+	}
+
+	[Fact]
+	public void Float16BufferAttribute_TakesTheArrayThreeJsDocuments_RatherThanTheOneItsNameSuggests()
+	{
+		// three.js converts Float16BufferAttribute's argument to a Uint16Array, not to any Float array.
+		// Reading the documented conversion rather than deriving one from the class name is what gets
+		// this right, and it is the only one of the nine where the two answers differ.
+		var batch = new ThreeBatch();
+		var attribute = new Float16BufferAttribute(new Uint16Array(1, 2, 3), itemSize: 3f);
+
+		attribute.AttachTo(batch);
+		var create = batch.Drain().Single(x => x.Kind == ThreeOpKind.Create && x.Handle == attribute.Handle);
+
+		create.Args.ShouldNotBeNull();
+		create.Args[0].ShouldBeOfType<ThreeValue.TypedArrayValue>().ConstructorName.ShouldBe("Uint16Array");
+	}
+
 }

@@ -118,7 +118,7 @@ internal sealed class ClassEmitter
 
 		WriteFields(writer, fields, surface.Properties);
 		WriteOwnedMathProperties(writer, surface.Properties);
-		WriteConstructor(writer, irClass, threeTypeName, baseTypeName, constructor, surface.Properties, _scope.BaseChainFor(irClass.Name));
+		WriteConstructor(writer, irClass, threeTypeName, baseTypeName, constructor, surface.Properties, _scope.BaseChainsFor(irClass.Name));
 		writer.WriteLine();
 		WriteThreeTypeName(writer, threeTypeName);
 
@@ -488,7 +488,10 @@ internal sealed class ClassEmitter
 			throw UnsupportedMemberException.For(threeTypeName, "the class is abstract, so it has no constructor to mirror");
 		}
 
-		var constructor = _constructorMapper.Map(irClass, _mapper);
+		// The scope's own answer first. Mapping again would rebuild the full overload set and lose the
+		// declarations base-constructor chaining dropped, which is exactly the disagreement the scope
+		// exists to prevent.
+		var constructor = _scope.ConstructorFor(irClass.Name) ?? _constructorMapper.Map(irClass, _mapper);
 		if (!constructor.IsMapped)
 		{
 			throw UnsupportedMemberException.For(threeTypeName, constructor.RefusalReason!);
@@ -988,7 +991,7 @@ internal sealed class ClassEmitter
 		string baseTypeName,
 		MappedConstructor constructor,
 		IReadOnlyList<EmittedProperty> properties,
-		IReadOnlyList<BaseChainArgument> baseChain)
+		IReadOnlyList<IReadOnlyList<BaseChainArgument>> baseChains)
 	{
 		var constructorSummary = irClass.Constructors.FirstOrDefault()?.Doc?.Summary is { Length: > 0 } rawSummary
 			? DocCommentEmitter.EnsureSentenceEnd(DocCommentEmitter.RenderInline(rawSummary))
@@ -1013,7 +1016,7 @@ internal sealed class ClassEmitter
 			}
 
 			WriteDeclaration(writer, $"public {threeTypeName}", parameters);
-			WriteBaseChain(writer, baseChain, parameters);
+			WriteBaseChain(writer, index < baseChains.Count ? baseChains[index] : []);
 
 			writer.WriteLine("{");
 			writer.Indent();
@@ -1095,23 +1098,12 @@ internal sealed class ClassEmitter
 	/// </para>
 	/// </summary>
 	/// <param name="writer">Destination.</param>
-	/// <param name="baseChain">Arguments to forward, in the base's parameter order.</param>
-	/// <param name="parameters">Parameters of the overload being written.</param>
-	private static void WriteBaseChain(
-		CSharpWriter writer,
-		IReadOnlyList<BaseChainArgument> baseChain,
-		IReadOnlyList<MappedParameter> parameters)
+	/// <param name="baseChain">This declaration's own arguments, in the base's parameter order.</param>
+	private static void WriteBaseChain(CSharpWriter writer, IReadOnlyList<BaseChainArgument> baseChain)
 	{
-		// An overload's arms carry the same three.js names as the storage view the chain was computed
-		// against, but not necessarily the same C# types — a widened arm cannot stand in for a base
-		// parameter that wanted the narrow one. Chaining only what this overload actually declares keeps
-		// the emitted call to the base honest per overload rather than per class.
-		var declared = parameters
-			.Select(x => x.DeclarationName)
-			.ToHashSet(StringComparer.Ordinal);
-
+		// This overload's own chain, not the class's. Two declarations of one constructor can need
+		// different expressions for the same base parameter — see EmissionScope.DescribeChainToBase.
 		var arguments = baseChain
-			.Where(x => declared.Contains(x.ArgumentName))
 			.Select(x => $"{x.ParameterName}: {x.Expression}")
 			.ToList();
 

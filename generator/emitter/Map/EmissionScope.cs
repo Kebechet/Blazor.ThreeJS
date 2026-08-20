@@ -178,12 +178,14 @@ internal sealed class EmissionScope
 		var baseOverloads = baseResult.Constructor?.Overloads ?? [];
 		if (baseOverloads.All(x => x.Count == 0))
 		{
-			result.BaseChain = [];
+			result.BaseChains = [];
 			return null;
 		}
 
-		IReadOnlyList<BaseChainArgument>? longest = null;
 		string? obstacle = null;
+		var kept = new List<IReadOnlyList<MappedParameter>>();
+		var chains = new List<IReadOnlyList<BaseChainArgument>>();
+		var droppedOverloads = new List<string>();
 		foreach (var overload in result.Constructor?.Overloads ?? [])
 		{
 			IReadOnlyList<BaseChainArgument>? chained = null;
@@ -200,18 +202,37 @@ internal sealed class EmissionScope
 
 			if (chained is null)
 			{
-				return obstacle;
+				// A declaration that cannot satisfy the base is dropped rather than taken as a verdict on
+				// the class. `Float32BufferAttribute` takes either a sequence or a length, and only the
+				// sequence has something to give `BufferAttribute`'s `array` - so the class exists with the
+				// constructor that works instead of not existing at all. Reported, because a caller who
+				// wanted the other one has to find out from the coverage table rather than from a
+				// compiler error with no explanation.
+				droppedOverloads.Add($"({string.Join(", ", overload.Select(x => $"{x.CSharpTypeName} {x.Name}"))})");
+				continue;
 			}
 
-			// The emitter picks the arguments each overload actually declares out of this list, so the
-			// longest one covers every overload and no overload is described by a shorter one's chain.
-			if (longest is null || chained.Count > longest.Count)
-			{
-				longest = chained;
-			}
+			kept.Add(overload);
+			chains.Add(chained);
 		}
 
-		result.BaseChain = longest ?? [];
+		// Every declaration failed, so the obstacle really is the class's and not one arm's.
+		if (kept.Count == 0)
+		{
+			return obstacle;
+		}
+
+		if (droppedOverloads.Count > 0 && result.Constructor is { } constructor)
+		{
+			result.Constructor = constructor.WithOverloads(kept, droppedOverloads);
+		}
+
+		// One chain per surviving declaration, in the same order. ⚠️ Not one chain for the class: two
+		// declarations of the same constructor can need different arguments for the same base parameter.
+		// `Float32BufferAttribute` takes a sequence or a length, and `new Float32Array(sequence)` is what
+		// three.js builds from the first - while the same expression applied to the second would wrap the
+		// length itself as a one-element array, which is a value three.js never holds.
+		result.BaseChains = chains;
 		return null;
 	}
 
@@ -316,19 +337,36 @@ internal sealed class EmissionScope
 			return $"{ownParameter.DeclarationName} ?? {literal}";
 		}
 
+		// A concrete typed array where the base holds the abstract one. Identity is the rule because a
+		// widened or narrowed *value* would misreport what three.js holds; this is neither. The object
+		// handed up is the same object, under the base type it already derives from, and it is exactly
+		// what `BufferAttribute.array` will contain.
+		if (ownParameter.Mapping.Kind == TypeMappingKind.HandWrittenTypedArray
+			&& baseParameter.Mapping.Kind == TypeMappingKind.HandWrittenTypedArray
+			&& string.Equals(baseParameter.CSharpTypeName, EmitterConfig.TypedArrayBaseTypeName, StringComparison.Ordinal))
+		{
+			return ownParameter.DeclarationName;
+		}
+
 		return null;
 	}
 
 	/// <summary>
-	/// What a class passes to its generated base's constructor. Read by the emitter so the declaration
-	/// it writes and the verdict the scope reached come from one computation rather than two.
+	/// The constructor this scope settled on, which is not always what mapping the class again would
+	/// produce: chaining to a base can drop a declaration the mapper had no reason to. Read by the
+	/// emitter so the two agree, which is what this type's own summary promises.
 	/// </summary>
 	/// <param name="name">Class name.</param>
-	/// <returns>The chained arguments, empty when there are none, and <see langword="null"/> when the class is not emitted.</returns>
-	public IReadOnlyList<BaseChainArgument> BaseChainFor(string name)
+	/// <returns>The resolved constructor, or <see langword="null"/> when the class is not emitted.</returns>
+	public MappedConstructor? ConstructorFor(string name)
+	{
+		return _resultsByName.TryGetValue(name, out var result) ? result.Constructor : null;
+	}
+
+	public IReadOnlyList<IReadOnlyList<BaseChainArgument>> BaseChainsFor(string name)
 	{
 		return _resultsByName.TryGetValue(name, out var result)
-			? result.BaseChain ?? []
+			? result.BaseChains ?? []
 			: [];
 	}
 
@@ -483,11 +521,12 @@ internal sealed class ClassScopeResult
 	public MappedConstructor? Constructor { get; set; }
 
 	/// <summary>
-	/// What this class passes to its generated base's constructor, in the base's parameter order.
-	/// Empty when the base takes no arguments; <see langword="null"/> when the base is hand-written or
-	/// there is no generated base at all, and the emitted constructor therefore chains implicitly.
+	/// What each of this class's constructor declarations passes to its generated base, in the base's
+	/// parameter order, one entry per surviving overload. Empty entries where the base takes no
+	/// arguments; <see langword="null"/> when the base is hand-written or there is no generated base at
+	/// all, and the emitted constructors therefore chain implicitly.
 	/// </summary>
-	public IReadOnlyList<BaseChainArgument>? BaseChain { get; set; }
+	public IReadOnlyList<IReadOnlyList<BaseChainArgument>>? BaseChains { get; set; }
 }
 
 /// <summary>

@@ -582,6 +582,26 @@ internal sealed class CoverageReport
 			AppendLine(builder, "  signature is emitted.** Unrelated to the arm overloads below, which come from one signature.");
 		}
 
+		var chainDropped = EmittableClasses
+			.Where(x => x.Constructor is { DroppedOverloads.Count: > 0 })
+			.ToList();
+
+		if (chainDropped.Count > 0)
+		{
+			var chainDroppedCount = chainDropped.Sum(x => x.Constructor!.DroppedOverloads.Count);
+			AppendLine(builder, $"- **{Pluralize(chainDroppedCount, "constructor declaration", "constructor declarations")} on {Pluralize(chainDropped.Count, "class", "classes")} could not chain to a generated base and");
+			AppendLine(builder, "  are not emitted.** A union-armed parameter becomes one declaration per arm, and where the class");
+			AppendLine(builder, "  passes that parameter up to a base, only the arms the base can hold survive. The class is emitted");
+			AppendLine(builder, "  with the declarations that work rather than blocked over the ones that do not:");
+			foreach (var result in chainDropped.OrderBy(x => x.Class.Name, StringComparer.Ordinal))
+			{
+				foreach (var signature in result.Constructor!.DroppedOverloads)
+				{
+					AppendLine(builder, $"  - `{result.Class.Name}{signature}`");
+				}
+			}
+		}
+
 		AppendLine(builder, "- **A colour is a `Color`.** three.js also accepts a CSS string or a hex number wherever a colour is");
 		AppendLine(builder, "  taken; the hex form is covered by `Color.FromHex`, the string form is not exposed.");
 		if (_mapper.MultiValueNarrowings.Count > 0)

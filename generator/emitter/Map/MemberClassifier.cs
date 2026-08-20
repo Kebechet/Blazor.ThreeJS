@@ -74,6 +74,7 @@ internal sealed class MemberClassifier
 		{
 			MemberName = property.Name,
 			NumericKind = property.NumericKind,
+			DeclaringClassName = irClass.Name,
 			TypeParameters = member.TypeParameters
 		});
 
@@ -240,6 +241,7 @@ internal sealed class MemberClassifier
 		var returnMapping = _mapper.Map(returnType, new TypeMappingContext
 		{
 			MemberName = method.Name,
+			DeclaringClassName = irClass.Name,
 			NumericKind = signature.ReturnNumericKind,
 			TypeParameters = member.TypeParameters
 		});

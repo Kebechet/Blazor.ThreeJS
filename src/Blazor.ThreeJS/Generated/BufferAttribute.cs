@@ -27,6 +27,7 @@ public class BufferAttribute : EventDispatcher
 	private string _name = string.Empty;
 	private Usage _usage;
 	private AttributeGPUType _gpuType;
+	private BufferAttributeUpdateRanges[] _updateRanges = [];
 	private int _version = 0;
 	private bool _needsUpdate;
 	private bool _isNameWritten;
@@ -34,6 +35,7 @@ public class BufferAttribute : EventDispatcher
 	private bool _isItemSizeWritten;
 	private bool _isUsageWritten;
 	private bool _isGpuTypeWritten;
+	private bool _isUpdateRangesWritten;
 	private bool _isVersionWritten;
 	private bool _isNormalizedWritten;
 	private bool _isNeedsUpdateWritten;
@@ -201,6 +203,28 @@ public class BufferAttribute : EventDispatcher
 			_gpuType = value;
 			_isGpuTypeWritten = true;
 			RecordSet("gpuType", value);
+		}
+	}
+
+	/// <summary>
+	/// This can be used to only update some components of stored vectors (for example, just the
+	/// component related to color). Use the <c>.addUpdateRange</c> function to add ranges to this
+	/// array. Writing it records a <c>updateRanges</c> property write once this object is attached;
+	/// writing the value already held records nothing.
+	/// </summary>
+	public BufferAttributeUpdateRanges[] UpdateRanges
+	{
+		get { return _updateRanges; }
+		set
+		{
+			if (_updateRanges == value)
+			{
+				return;
+			}
+
+			_updateRanges = value;
+			_isUpdateRangesWritten = true;
+			RecordSet("updateRanges", value);
 		}
 	}
 
@@ -596,6 +620,11 @@ public class BufferAttribute : EventDispatcher
 		if (_isGpuTypeWritten)
 		{
 			batch.Set(Handle, "gpuType", ThreeValue.Encode(_gpuType));
+		}
+
+		if (_isUpdateRangesWritten)
+		{
+			batch.Set(Handle, "updateRanges", ThreeValue.Encode(_updateRanges));
 		}
 
 		if (_isVersionWritten)

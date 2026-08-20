@@ -13,11 +13,13 @@ public class Loader : ThreeObject
 	private bool _withCredentials = false;
 	private string _path = string.Empty;
 	private string _resourcePath = string.Empty;
+	private Dictionary<string, string> _requestHeader;
 	private bool _isCrossOriginWritten;
 	private bool _isWithCredentialsWritten;
 	private bool _isPathWritten;
 	private bool _isResourcePathWritten;
 	private bool _isManagerWritten;
+	private bool _isRequestHeaderWritten;
 
 	/// <summary>Initializes a new <see cref="Loader"/>.</summary>
 	/// <param name="manager">Value forwarded to the <c>manager</c> constructor argument.</param>
@@ -163,6 +165,27 @@ public class Loader : ThreeObject
 	}
 
 	/// <summary>
+	/// The <c>requestHeader</c> property of the JavaScript-side object. Writing it records a
+	/// <c>requestHeader</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public Dictionary<string, string> RequestHeader
+	{
+		get { return _requestHeader; }
+		set
+		{
+			if (_requestHeader == value)
+			{
+				return;
+			}
+
+			_requestHeader = value;
+			_isRequestHeaderWritten = true;
+			RecordSet("requestHeader", value);
+		}
+	}
+
+	/// <summary>
 	/// Records a call to <c>setCrossOrigin</c> on the JavaScript-side object. This writes the same
 	/// three.js state as <see cref="CrossOrigin"/> and the mirror does not learn from it: afterwards
 	/// <c>CrossOrigin</c> still reports its previous value, and writing that value back records nothing
@@ -208,6 +231,18 @@ public class Loader : ThreeObject
 	public void SetResourcePath(string resourcePath)
 	{
 		RecordCall("setResourcePath", resourcePath);
+	}
+
+	/// <summary>
+	/// Records a call to <c>setRequestHeader</c> on the JavaScript-side object. This writes the same
+	/// three.js state as <see cref="RequestHeader"/> and the mirror does not learn from it: afterwards
+	/// <c>RequestHeader</c> still reports its previous value, and writing that value back records
+	/// nothing at all. Where the property exists, write the property.
+	/// </summary>
+	/// <param name="requestHeader">Value forwarded to the <c>requestHeader</c> argument.</param>
+	public void SetRequestHeader(Dictionary<string, string> requestHeader)
+	{
+		RecordCall("setRequestHeader", requestHeader);
 	}
 
 	/// <summary>
@@ -257,6 +292,11 @@ public class Loader : ThreeObject
 		{
 			_manager?.AttachTo(batch);
 			batch.Set(Handle, "manager", ThreeValue.Encode(_manager));
+		}
+
+		if (_isRequestHeaderWritten)
+		{
+			batch.Set(Handle, "requestHeader", ThreeValue.Encode(_requestHeader));
 		}
 	}
 }

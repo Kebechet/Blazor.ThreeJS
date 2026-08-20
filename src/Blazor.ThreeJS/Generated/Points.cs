@@ -17,7 +17,9 @@ public sealed class Points : Object3D
 	private BufferGeometry? _geometry;
 	private Material? _material;
 	private float[]? _morphTargetInfluences;
+	private Dictionary<string, float>? _morphTargetDictionary;
 	private bool _isMorphTargetInfluencesWritten;
+	private bool _isMorphTargetDictionaryWritten;
 	private bool _isGeometryWritten;
 	private bool _isMaterialWritten;
 
@@ -87,6 +89,27 @@ public sealed class Points : Object3D
 			_morphTargetInfluences = value;
 			_isMorphTargetInfluencesWritten = true;
 			RecordSet("morphTargetInfluences", value);
+		}
+	}
+
+	/// <summary>
+	/// A dictionary of morphTargets based on the <c>morphTarget.name</c> property. Writing it records a
+	/// <c>morphTargetDictionary</c> property write once this object is attached; writing the value
+	/// already held records nothing.
+	/// </summary>
+	public Dictionary<string, float>? MorphTargetDictionary
+	{
+		get { return _morphTargetDictionary; }
+		set
+		{
+			if (_morphTargetDictionary == value)
+			{
+				return;
+			}
+
+			_morphTargetDictionary = value;
+			_isMorphTargetDictionaryWritten = true;
+			RecordSet("morphTargetDictionary", value);
 		}
 	}
 
@@ -187,6 +210,11 @@ public sealed class Points : Object3D
 		if (_isMorphTargetInfluencesWritten)
 		{
 			batch.Set(Handle, "morphTargetInfluences", ThreeValue.Encode(_morphTargetInfluences));
+		}
+
+		if (_isMorphTargetDictionaryWritten)
+		{
+			batch.Set(Handle, "morphTargetDictionary", ThreeValue.Encode(_morphTargetDictionary));
 		}
 
 		if (_isGeometryWritten)

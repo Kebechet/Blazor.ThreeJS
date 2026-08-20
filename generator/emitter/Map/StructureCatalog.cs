@@ -23,6 +23,7 @@ internal sealed class StructureCatalog
 	private readonly IReadOnlyDictionary<string, IrInterface> _interfacesByName;
 	private readonly Dictionary<string, bool> _qualifies = new(StringComparer.Ordinal);
 	private readonly HashSet<string> _used = new(StringComparer.Ordinal);
+	private readonly Dictionary<string, AnonymousStructure> _anonymousByShape = new(StringComparer.Ordinal);
 
 	/// <summary>Builds a catalogue over one IR snapshot.</summary>
 	/// <param name="ir">The parsed IR.</param>
@@ -88,6 +89,140 @@ internal sealed class StructureCatalog
 		return answer;
 	}
 
+	/// <summary>Every anonymous shape some emitted member named, in name order.</summary>
+	public IReadOnlyList<AnonymousStructure> UsedAnonymous
+	{
+		get
+		{
+			return _anonymousByShape.Values
+				.OrderBy(x => x.Name, StringComparer.Ordinal)
+				.ToList();
+		}
+	}
+
+	/// <summary>
+	/// The C# name for an inline object shape, registering it so it gets emitted, or
+	/// <see langword="null"/> when the shape is not one a record can stand for.
+	/// <para>
+	/// three.js writes a good deal of its surface as shapes with no name -
+	/// <c>Curve.computeFrenetFrames</c> returns <c>{ tangents, normals, binormals }</c>, every geometry
+	/// echoes its constructor arguments back as <c>parameters</c>. Refusing them for want of a name left
+	/// forty-one members unreachable, which is a worse answer than a name chosen by rule.
+	/// </para>
+	/// <para>
+	/// ⚠️ Keyed by the <em>shape</em>, not by the member. Ten curve classes return the same frenet-frame
+	/// shape, and they share one record rather than getting ten identical ones - which is also what makes
+	/// the name stable: it is settled by the first declarer in ordinal order, and ordinal order does not
+	/// depend on which member the mapper happened to reach first.
+	/// </para>
+	/// </summary>
+	/// <param name="type">The inline object node.</param>
+	/// <param name="context">Declaring member and class, which the name is built from.</param>
+	/// <param name="mapper">Type mapper, used to test each member.</param>
+	/// <returns>The record's name, or <see langword="null"/>.</returns>
+	public string? TryUseAnonymous(IrType type, TypeMappingContext context, TypeMapper mapper)
+	{
+		var members = type.Members.Where(x => x.MemberKind == "property").ToList();
+		if (members.Count == 0 || members.Count != type.Members.Count)
+		{
+			return null;
+		}
+
+		// Named before its members are mapped, so a shape nested inside this one is named after it:
+		// `AnimationMixerStats.actions` is `{ total, inUse }`, which on its own would be `Actions` - a
+		// word too generic to put in a namespace beside three.js's own types.
+		var name = BuildName(context);
+
+		var resolved = new List<AnonymousStructureMember>();
+		foreach (var member in members)
+		{
+			if (member.Name is not { Length: > 0 } memberName)
+			{
+				return null;
+			}
+
+			var mapping = mapper.Map(member.Type, new TypeMappingContext
+			{
+				MemberName = memberName,
+				NumericKind = member.NumericKind,
+				DeclaringClassName = name
+			});
+
+			if (!mapping.IsMapped || !TypeMapper.IsWireValue(mapping))
+			{
+				return null;
+			}
+
+			resolved.Add(new AnonymousStructureMember(memberName, mapping, member.IsOptional, member.Doc));
+		}
+
+		var shapeKey = string.Join(
+			";",
+			resolved.Select(x => $"{x.Name}:{x.Mapping.CSharpTypeName}{(x.IsOptional ? "?" : string.Empty)}"));
+
+		if (_anonymousByShape.TryGetValue(shapeKey, out var existing))
+		{
+			return existing.Name;
+		}
+
+		var structure = new AnonymousStructure
+		{
+			Name = name,
+			Members = resolved
+		};
+
+		_anonymousByShape[shapeKey] = structure;
+		return structure.Name;
+	}
+
+	/// <summary>
+	/// The name for a shape, built from the member that declares it.
+	/// <para>
+	/// <c>BoxGeometry.parameters</c> becomes <c>BoxGeometryParameters</c>: the class as well as the
+	/// member, because sixteen geometries each call their own distinct shape <c>parameters</c> and the
+	/// member alone would collide sixteen ways. Where a member's own name already reads as the thing -
+	/// <c>computeFrenetFrames</c> - the verb is dropped and the class is not needed, since the shape is
+	/// shared by every class that returns it.
+	/// </para>
+	/// </summary>
+	/// <param name="context">Declaring member and class.</param>
+	/// <returns>The C# type name.</returns>
+	private static string BuildName(TypeMappingContext context)
+	{
+		var member = context.MemberName ?? "Structure";
+		foreach (var verb in EmitterConfig.StructureNameVerbPrefixes)
+		{
+			if (!member.StartsWith(verb, StringComparison.Ordinal) || member.Length <= verb.Length)
+			{
+				continue;
+			}
+
+			// ⚠️ Class-free only where the member's own name is already a compound. `computeFrenetFrames`
+			// gives `FrenetFrames`, which says what the shape is and is right for all ten curves that
+			// return it. `getActions` would give `Actions`, which says nothing - so that one keeps its
+			// class and becomes `AnimationMixerStatsActions`. The test is an internal capital, which is
+			// what a compound has and a bare noun does not.
+			var stripped = member[verb.Length..];
+			if (stripped.Skip(1).Any(char.IsUpper))
+			{
+				return Pascal(stripped);
+			}
+
+			member = stripped;
+			break;
+		}
+
+		return Pascal(context.DeclaringClassName ?? string.Empty) + Pascal(member);
+	}
+
+	/// <summary>Upper-cases the first character, leaving an empty string alone.</summary>
+	/// <param name="value">The name to case.</param>
+	/// <returns>The PascalCased name.</returns>
+	private static string Pascal(string value)
+	{
+		return value.Length == 0 ? value : char.ToUpperInvariant(value[0]) + value[1..];
+	}
+
 	/// <summary>The properties of a qualifying interface, in declaration order.</summary>
 	/// <param name="name">Interface name.</param>
 	/// <returns>The properties.</returns>
@@ -125,14 +260,19 @@ internal sealed class StructureCatalog
 			var mapping = mapper.Map(property.Type, new TypeMappingContext
 			{
 				MemberName = property.Name,
-				NumericKind = property.NumericKind
+				NumericKind = property.NumericKind,
+
+				// The interface names anything nested inside it. `AnimationMixerStats.actions` is
+				// `{ total, inUse }`, which alone would be `Actions` - a word too generic to sit in a
+				// namespace beside three.js's own types.
+				DeclaringClassName = name
 			});
 
 			// ⚠️ Values only. A member that is itself a mirrored class would need a handle, and a handle
 			// inside a structure means the applier has to mint one while encoding a read result - which
 			// it cannot do today. `Raycaster.intersectObject` is the member that wants this, and it stays
 			// refused rather than half-answered.
-			if (!mapping.IsMapped || !IsValue(mapping))
+			if (!mapping.IsMapped || !TypeMapper.IsWireValue(mapping))
 			{
 				return false;
 			}
@@ -141,19 +281,21 @@ internal sealed class StructureCatalog
 		return true;
 	}
 
-	/// <summary>Whether a mapping travels as a value, which is all a structure's members may do.</summary>
-	/// <param name="mapping">The resolved member type.</param>
-	/// <returns><see langword="true"/> when the wire carries it without a handle.</returns>
-	private static bool IsValue(TypeMapping mapping)
-	{
-		return mapping.Kind switch
-		{
-			TypeMappingKind.Primitive => true,
-			TypeMappingKind.GeneratedEnum => true,
-			TypeMappingKind.HandWrittenMathType => true,
-			TypeMappingKind.HandWrittenTypedArray => true,
-			TypeMappingKind.Sequence => mapping.ElementMapping is { } element && IsValue(element),
-			_ => false
-		};
-	}
 }
+
+/// <summary>An inline object shape the mirror stands for with a generated record.</summary>
+internal sealed class AnonymousStructure
+{
+	/// <summary>C# name for the record.</summary>
+	public required string Name { get; init; }
+
+	/// <summary>Its members, in declaration order.</summary>
+	public required IReadOnlyList<AnonymousStructureMember> Members { get; init; }
+}
+
+/// <summary>One member of an inline object shape, with its type resolved.</summary>
+/// <param name="Name">three.js's own name for it.</param>
+/// <param name="Mapping">Its resolved C# type.</param>
+/// <param name="IsOptional">Whether three.js declares it optional.</param>
+/// <param name="Doc">JSDoc attached to it, which the inline shapes do carry.</param>
+internal sealed record AnonymousStructureMember(string Name, TypeMapping Mapping, bool IsOptional, IrDoc? Doc);

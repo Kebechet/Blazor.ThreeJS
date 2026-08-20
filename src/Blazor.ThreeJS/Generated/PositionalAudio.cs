@@ -78,7 +78,7 @@ public sealed class PositionalAudio : Audio
 	/// more details.
 	/// </summary>
 	/// <param name="value">The distance model to set.</param>
-	public void SetDistanceModel(string value)
+	public void SetDistanceModel(DistanceModel value)
 	{
 		RecordCall("setDistanceModel", value);
 	}
@@ -128,6 +128,16 @@ public sealed class PositionalAudio : Audio
 	public Task<float> GetRolloffFactorAsync()
 	{
 		return RecordRead<float>("getRolloffFactor");
+	}
+
+	/// <summary>
+	/// Returns the current distance model. Records a read op, sends it behind every write already
+	/// pending, and completes with what <c>getDistanceModel</c> returned.
+	/// </summary>
+	/// <returns>The value <c>getDistanceModel</c> returned, once the JavaScript side has answered.</returns>
+	public Task<DistanceModel> GetDistanceModelAsync()
+	{
+		return RecordRead<DistanceModel>("getDistanceModel");
 	}
 
 	/// <summary>

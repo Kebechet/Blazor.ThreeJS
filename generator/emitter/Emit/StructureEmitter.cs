@@ -32,18 +32,41 @@ internal sealed class StructureEmitter
 		_mapper = mapper;
 	}
 
-	/// <summary>Emits the C# source for one structure.</summary>
+	/// <summary>Emits the C# source for a shape three.js named with an interface.</summary>
 	/// <param name="irInterface">The interface to stand for.</param>
 	/// <returns>The generated file.</returns>
 	public EmittedFile Emit(IrInterface irInterface)
 	{
-		var members = irInterface.Properties
-			.Select(x => new StructureMember(x, _mapper.Map(x.Type, new TypeMappingContext
-			{
-				MemberName = x.Name,
-				NumericKind = x.NumericKind
-			})))
-			.ToList();
+		return Emit(irInterface.Name, irInterface.Properties
+			.Select(x => new StructureMember(
+				x.Name,
+				_mapper.Map(x.Type, new TypeMappingContext
+				{
+					MemberName = x.Name,
+					NumericKind = x.NumericKind,
+					DeclaringClassName = irInterface.Name
+				}),
+				x.IsOptional,
+				x.Doc))
+			.ToList());
+	}
+
+	/// <summary>Emits the C# source for a shape three.js wrote without a name.</summary>
+	/// <param name="structure">The shape, already named and resolved by the catalogue.</param>
+	/// <returns>The generated file.</returns>
+	public EmittedFile Emit(AnonymousStructure structure)
+	{
+		return Emit(structure.Name, structure.Members
+			.Select(x => new StructureMember(x.Name, x.Mapping, x.IsOptional, x.Doc))
+			.ToList());
+	}
+
+	/// <summary>Emits one record, whichever kind of shape it stands for.</summary>
+	/// <param name="typeName">C# name for the record.</param>
+	/// <param name="members">Its members, already resolved.</param>
+	/// <returns>The generated file.</returns>
+	private EmittedFile Emit(string typeName, IReadOnlyList<StructureMember> members)
+	{
 
 		var writer = new CSharpWriter();
 		writer.WriteLine($"// Generated from {_ir.Meta?.TypesPackage ?? "@types/three"}@{_ir.Meta?.TypesVersion ?? "unknown"} by generator/emitter. Do not edit by hand.");
@@ -60,7 +83,7 @@ internal sealed class StructureEmitter
 		writer.WriteLine($"namespace {EmitterConfig.GeneratedNamespace};");
 		writer.WriteLine();
 
-		var summary = $"The shape three.js calls <c>{irInterface.Name}</c>.";
+		var summary = $"The shape three.js calls <c>{typeName}</c>.";
 
 		DocCommentEmitter.WriteSummary(
 			writer,
@@ -68,7 +91,7 @@ internal sealed class StructureEmitter
 			" A plain value rather than a handle-backed object: three.js declares it as a shape, and nothing on either side keeps a reference to one. " +
 			"It travels as its own members, under three.js's names for them.");
 
-		writer.WriteLine($"public sealed record {irInterface.Name} : IThreeStructure");
+		writer.WriteLine($"public sealed record {typeName} : IThreeStructure");
 		writer.WriteLine("{");
 		writer.Indent();
 
@@ -79,23 +102,23 @@ internal sealed class StructureEmitter
 				writer.WriteLine();
 			}
 
-			var memberSummary = member.Property.Doc?.Summary is { Length: > 0 } rawMember
+			var memberSummary = member.Doc?.Summary is { Length: > 0 } rawMember
 				? DocCommentEmitter.EnsureSentenceEnd(DocCommentEmitter.RenderInline(rawMember))
-				: $"three.js's <c>{member.Property.Name}</c>.";
+				: $"three.js's <c>{member.Name}</c>.";
 
 			DocCommentEmitter.WriteSummary(writer, memberSummary);
 			writer.WriteLine($"public {member.CSharpTypeName} {member.CSharpName} {{ get; init; }}");
 		}
 
 		WriteToWireMembers(writer, members);
-		WriteFromWireMembers(writer, irInterface.Name, members);
+		WriteFromWireMembers(writer, typeName, members);
 
 		writer.Outdent();
 		writer.WriteLine("}");
 
 		return new EmittedFile
 		{
-			RelativePath = $"src/Blazor.ThreeJS/Generated/{irInterface.Name}.cs",
+			RelativePath = $"src/Blazor.ThreeJS/Generated/{typeName}.cs",
 			Contents = writer.ToSource()
 		};
 	}
@@ -120,7 +143,7 @@ internal sealed class StructureEmitter
 		{
 			if (!member.IsOptional)
 			{
-				writer.WriteLine($"members[\"{member.Property.Name}\"] = {member.CSharpName};");
+				writer.WriteLine($"members[\"{member.Name}\"] = {member.CSharpName};");
 				continue;
 			}
 
@@ -132,7 +155,7 @@ internal sealed class StructureEmitter
 			writer.WriteLine($"if ({member.CSharpName} is not null)");
 			writer.WriteLine("{");
 			writer.Indent();
-			writer.WriteLine($"members[\"{member.Property.Name}\"] = {member.CSharpName};");
+			writer.WriteLine($"members[\"{member.Name}\"] = {member.CSharpName};");
 			writer.Outdent();
 			writer.WriteLine("}");
 		}
@@ -167,7 +190,7 @@ internal sealed class StructureEmitter
 		{
 			var comma = index == members.Count - 1 ? string.Empty : ",";
 			writer.WriteLine(
-				$"{member.CSharpName} = members.TryGetValue(\"{member.Property.Name}\", out var {member.LocalName})" +
+				$"{member.CSharpName} = members.TryGetValue(\"{member.Name}\", out var {member.LocalName})" +
 				$" ? ThreeValue.Decode<{member.CSharpTypeName}>({member.LocalName})" +
 				$" : {member.CSharpName}{comma}");
 		}
@@ -180,14 +203,16 @@ internal sealed class StructureEmitter
 }
 
 /// <summary>One member of a structure, with its type resolved.</summary>
-/// <param name="Property">The three.js declaration.</param>
+/// <param name="Name">three.js's own name for it, which both wire directions use.</param>
 /// <param name="Mapping">Its resolved C# type.</param>
-internal sealed record StructureMember(IrProperty Property, TypeMapping Mapping)
+/// <param name="DeclaredOptional">Whether three.js declares it optional.</param>
+/// <param name="Doc">JSDoc attached to it.</param>
+internal sealed record StructureMember(string Name, TypeMapping Mapping, bool DeclaredOptional, IrDoc? Doc)
 {
-	/// <summary>Whether three.js declares the member optional, so it may be omitted in both directions.</summary>
+	/// <summary>Whether the member may be absent in either direction.</summary>
 	public bool IsOptional
 	{
-		get { return Property.IsOptional || Mapping.IsExplicitlyNullable; }
+		get { return DeclaredOptional || Mapping.IsExplicitlyNullable; }
 	}
 
 	/// <summary>The C# type as written, nullable when three.js allows the member to be absent.</summary>
@@ -196,7 +221,7 @@ internal sealed record StructureMember(IrProperty Property, TypeMapping Mapping)
 		get { return IsOptional ? Mapping.CSharpTypeName + "?" : Mapping.CSharpTypeName!; }
 	}
 
-	/// <summary>The type without its nullable annotation, for deciding which usings are needed.</summary>
+	/// <summary>The type without its annotations, for deciding which usings are needed.</summary>
 	public string BareTypeName
 	{
 		get { return Mapping.CSharpTypeName!.TrimEnd('?').TrimEnd('[', ']'); }
@@ -205,12 +230,12 @@ internal sealed record StructureMember(IrProperty Property, TypeMapping Mapping)
 	/// <summary>PascalCased member name.</summary>
 	public string CSharpName
 	{
-		get { return char.ToUpperInvariant(Property.Name[0]) + Property.Name[1..]; }
+		get { return char.ToUpperInvariant(Name[0]) + Name[1..]; }
 	}
 
-	/// <summary>Name of the local the decode block binds the raw element to.</summary>
+	/// <summary>Name of the local the decode expression binds the raw element to.</summary>
 	public string LocalName
 	{
-		get { return char.ToLowerInvariant(Property.Name[0]) + Property.Name[1..] + "Element"; }
+		get { return char.ToLowerInvariant(Name[0]) + Name[1..] + "Element"; }
 	}
 }

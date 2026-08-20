@@ -287,6 +287,46 @@ internal sealed class IrType
 
 	/// <summary>What a <c>reference</c> name resolves to, and where it lives.</summary>
 	public IrTypeTarget? Target { get; set; }
+
+	/// <summary>
+	/// Members of an <c>object</c> node - the inline shapes three.js writes without a name, like
+	/// <c>PerspectiveCamera.view</c> and every geometry's <c>parameters</c>.
+	/// </summary>
+	public List<IrObjectMember> Members { get; set; } = [];
+}
+
+/// <summary>
+/// One member of an inline object type. The shape is the same whichever kind it is, so the kind is
+/// read off <see cref="MemberKind"/> rather than off which fields happen to be populated.
+/// </summary>
+internal sealed class IrObjectMember
+{
+	/// <summary><c>property</c>, <c>method</c>, <c>index</c>, <c>call</c>, <c>construct</c> or <c>other</c>.</summary>
+	public string? MemberKind { get; set; }
+
+	/// <summary>Member name, on a <c>property</c> or a <c>method</c>.</summary>
+	public string? Name { get; set; }
+
+	/// <summary>The member's type, or a signature's return type.</summary>
+	public IrType? Type { get; set; }
+
+	/// <summary>An index signature's or a signature's parameters.</summary>
+	public List<IrParameter> Parameters { get; set; } = [];
+
+	/// <summary>Return type of a <c>method</c>, <c>index</c>, <c>call</c> or <c>construct</c> member.</summary>
+	public IrType? ReturnType { get; set; }
+
+	/// <summary>Whether three.js declares the member optional.</summary>
+	public bool IsOptional { get; set; }
+
+	/// <summary>Whether three.js declares the member readonly.</summary>
+	public bool IsReadonly { get; set; }
+
+	/// <summary><c>float</c> or <c>integer</c> when the JSDoc says so.</summary>
+	public string? NumericKind { get; set; }
+
+	/// <summary>JSDoc attached to the member, which the inline shapes do carry.</summary>
+	public IrDoc? Doc { get; set; }
 }
 
 /// <summary>One declared type parameter of a class, interface or signature.</summary>

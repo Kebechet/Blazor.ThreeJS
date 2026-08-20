@@ -30,6 +30,7 @@ public class BufferGeometry : EventDispatcher
 	private float _indirectOffset;
 	private bool _morphTargetsRelative = false;
 	private GeometryGroup[] _groups = [];
+	private BufferAttributeUpdateRanges _drawRange;
 	private bool _isIdWritten;
 	private bool _isUuidWritten;
 	private bool _isNameWritten;
@@ -40,6 +41,7 @@ public class BufferGeometry : EventDispatcher
 	private bool _isGroupsWritten;
 	private bool _isBoundingBoxWritten;
 	private bool _isBoundingSphereWritten;
+	private bool _isDrawRangeWritten;
 
 	/// <summary>
 	/// Bounding box for the <c>BufferGeometry</c>, which can be calculated with
@@ -286,6 +288,27 @@ public class BufferGeometry : EventDispatcher
 	}
 
 	/// <summary>
+	/// Determines the part of the geometry to render. This should not be set directly, instead use
+	/// <c>.setDrawRange(...)</c>. Writing it records a <c>drawRange</c> property write once this object
+	/// is attached; writing the value already held records nothing.
+	/// </summary>
+	public BufferAttributeUpdateRanges DrawRange
+	{
+		get { return _drawRange; }
+		set
+		{
+			if (_drawRange == value)
+			{
+				return;
+			}
+
+			_drawRange = value;
+			_isDrawRangeWritten = true;
+			RecordSet("drawRange", value);
+		}
+	}
+
+	/// <summary>
 	/// Set the <c>.index</c> buffer. This writes the same three.js state as <see cref="Index"/> and the
 	/// mirror does not learn from it: afterwards <c>Index</c> still reports its previous value, and
 	/// writing that value back records nothing at all. Where the property exists, write the property.
@@ -339,7 +362,12 @@ public class BufferGeometry : EventDispatcher
 		RecordCall("clearGroups");
 	}
 
-	/// <summary>Set the <c>.drawRange</c> property.</summary>
+	/// <summary>
+	/// Set the <c>.drawRange</c> property. This writes the same three.js state as
+	/// <see cref="DrawRange"/> and the mirror does not learn from it: afterwards <c>DrawRange</c> still
+	/// reports its previous value, and writing that value back records nothing at all. Where the
+	/// property exists, write the property.
+	/// </summary>
 	/// <param name="start">Value forwarded to the <c>start</c> argument.</param>
 	/// <param name="count">is the number of vertices or indices to render.</param>
 	public void SetDrawRange(float start, int count)
@@ -630,6 +658,11 @@ public class BufferGeometry : EventDispatcher
 		if (_isBoundingSphereWritten)
 		{
 			batch.Set(Handle, "boundingSphere", ThreeValue.Encode(BoundingSphere));
+		}
+
+		if (_isDrawRangeWritten)
+		{
+			batch.Set(Handle, "drawRange", ThreeValue.Encode(_drawRange));
 		}
 	}
 }

@@ -121,8 +121,9 @@ public class StringEnumWireFormatTests
 			.Select(x => x.Name)
 			.OrderBy(x => x, StringComparer.Ordinal)
 			.ShouldBe([
-				"BindMode", "ColorSpace", "ColorSpaceTransfer", "CurveType", "GLSLVersion",
-				"LineCap", "LineJoin", "NormalPacking", "PixelFormatGPU"
+				"AudioSourceType", "BindMode", "ColorSpace", "ColorSpaceTransfer", "CurveType",
+				"DistanceModel", "GLSLVersion", "LineCap", "LineJoin", "NormalPacking",
+				"PixelFormatGPU", "ShaderPrecision"
 			]);
 
 		foreach (var enumType in stringValuedEnumTypes)

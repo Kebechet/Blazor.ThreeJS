@@ -20,6 +20,7 @@ public class PerspectiveCamera : Camera
 	private float _far;
 	private float _zoom = 1f;
 	private float _focus = 10f;
+	private OrthographicCameraView? _view = null;
 	private float _filmGauge = 35f;
 	private float _filmOffset = 0f;
 	private bool _isFovWritten;
@@ -28,6 +29,7 @@ public class PerspectiveCamera : Camera
 	private bool _isFarWritten;
 	private bool _isFocusWritten;
 	private bool _isAspectWritten;
+	private bool _isViewWritten;
 	private bool _isFilmGaugeWritten;
 	private bool _isFilmOffsetWritten;
 
@@ -199,6 +201,28 @@ public class PerspectiveCamera : Camera
 			_aspect = value;
 			_isAspectWritten = true;
 			RecordSet("aspect", value);
+		}
+	}
+
+	/// <summary>
+	/// Represents the frustum window specification. This property should not be edited directly but via
+	/// <c>PerspectiveCamera#setViewOffset</c> and <c>PerspectiveCamera#clearViewOffset</c>. Writing it
+	/// records a <c>view</c> property write once this object is attached; writing the value already
+	/// held records nothing.
+	/// </summary>
+	public OrthographicCameraView? View
+	{
+		get { return _view; }
+		set
+		{
+			if (_view == value)
+			{
+				return;
+			}
+
+			_view = value;
+			_isViewWritten = true;
+			RecordSet("view", value);
 		}
 	}
 
@@ -410,6 +434,11 @@ public class PerspectiveCamera : Camera
 		if (_isAspectWritten)
 		{
 			batch.Set(Handle, "aspect", ThreeValue.Encode(_aspect));
+		}
+
+		if (_isViewWritten)
+		{
+			batch.Set(Handle, "view", ThreeValue.Encode(_view));
 		}
 
 		if (_isFilmGaugeWritten)

@@ -40,6 +40,7 @@ public class Texture : EventDispatcher
 	private string _colorSpace = string.Empty;
 	private bool _isRenderTargetTexture = false;
 	private bool _isArrayTexture = false;
+	private BufferAttributeUpdateRanges[] _updateRanges = [];
 	private int _version = 0;
 	private float _pmremVersion;
 	private bool _normalized = false;
@@ -68,6 +69,7 @@ public class Texture : EventDispatcher
 	private bool _isColorSpaceWritten;
 	private bool _isIsRenderTargetTextureWritten;
 	private bool _isIsArrayTextureWritten;
+	private bool _isUpdateRangesWritten;
 	private bool _isVersionWritten;
 	private bool _isPmremVersionWritten;
 	private bool _isNormalizedWritten;
@@ -557,6 +559,28 @@ public class Texture : EventDispatcher
 	}
 
 	/// <summary>
+	/// This can be used to only update a subregion or specific rows of the texture (for example, just
+	/// the first 3 rows). Use the <c>addUpdateRange()</c> function to add ranges to this array. Writing
+	/// it records a <c>updateRanges</c> property write once this object is attached; writing the value
+	/// already held records nothing.
+	/// </summary>
+	public BufferAttributeUpdateRanges[] UpdateRanges
+	{
+		get { return _updateRanges; }
+		set
+		{
+			if (_updateRanges == value)
+			{
+				return;
+			}
+
+			_updateRanges = value;
+			_isUpdateRangesWritten = true;
+			RecordSet("updateRanges", value);
+		}
+	}
+
+	/// <summary>
 	/// This starts at <c>0</c> and counts how many times <c>.needsUpdate</c> is set to <c>true</c>.
 	/// Writing it records a <c>version</c> property write once this object is attached; writing the
 	/// value already held records nothing.
@@ -919,6 +943,11 @@ public class Texture : EventDispatcher
 		if (_isIsArrayTextureWritten)
 		{
 			batch.Set(Handle, "isArrayTexture", ThreeValue.Encode(_isArrayTexture));
+		}
+
+		if (_isUpdateRangesWritten)
+		{
+			batch.Set(Handle, "updateRanges", ThreeValue.Encode(_updateRanges));
 		}
 
 		if (_isVersionWritten)

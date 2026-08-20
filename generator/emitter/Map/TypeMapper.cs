@@ -79,7 +79,7 @@ internal sealed class TypeMapper
 					SkipCategory.CallbackType,
 					$"`{type.Text}` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C#");
 			case "object":
-				return TypeMapping.Skipped(SkipCategory.AnonymousObjectType, $"`{type.Text}` is an anonymous object literal type with no named C# equivalent");
+				return MapObjectLiteral(type, context);
 			case "literal":
 				return MapLiteral(type, context);
 			default:
@@ -334,6 +334,62 @@ internal sealed class TypeMapper
 		var exclusion = _scope?.DescribeExclusion(name) ?? "the emission scope has not been built";
 		var category = _scope?.DescribeExclusionCategory(name) ?? SkipCategory.UnwrappedClass;
 		return TypeMapping.Skipped(category, $"`{type.Text}` is not an emitted class: {exclusion}");
+	}
+
+	/// <summary>
+	/// Maps an inline object type: a dictionary when it is one index signature, a generated record when
+	/// it is a shape whose every member is a value, and a refusal otherwise.
+	/// </summary>
+	/// <param name="type">The object node.</param>
+	/// <param name="context">Declaring member and class.</param>
+	/// <returns>The mapping, or a refusal naming what stopped it.</returns>
+	private TypeMapping MapObjectLiteral(IrType type, TypeMappingContext context)
+	{
+		// `{ [key: string]: number }` is a dictionary and nothing else: no named members, one index
+		// signature keyed by string. It travels as a plain object, which is what a Dictionary already is
+		// on the wire, so the structure tag carries it with no new form.
+		if (type.Members is [{ MemberKind: "index" } index]
+			&& index.Parameters is [{ Type.Name: "string" }])
+		{
+			var valueMapping = Map(index.ReturnType, context);
+			if (valueMapping.IsMapped && IsWireValue(valueMapping))
+			{
+				return TypeMapping.Mapped(
+					$"Dictionary<string, {valueMapping.CSharpTypeName}>",
+					TypeMappingKind.Dictionary,
+					valueMapping.RequiredGeneratedTypeName,
+					elementMapping: valueMapping);
+			}
+
+			return TypeMapping.Skipped(
+				SkipCategory.AnonymousObjectType,
+				$"`{type.Text}` is a dictionary whose values cannot be mapped: {valueMapping.SkipReason ?? "they are not values the wire carries"}");
+		}
+
+		if (_structures.TryUseAnonymous(type, context, this) is { } structureName)
+		{
+			return TypeMapping.Mapped(structureName, TypeMappingKind.GeneratedStructure, requiredGeneratedTypeName: structureName);
+		}
+
+		return TypeMapping.Skipped(SkipCategory.AnonymousObjectType, $"`{type.Text}` is an anonymous object literal type with no named C# equivalent");
+	}
+
+	/// <summary>Whether a mapping travels as a value rather than behind a handle.</summary>
+	/// <param name="mapping">The resolved type.</param>
+	/// <returns><see langword="true"/> when the wire carries it by value.</returns>
+	internal static bool IsWireValue(TypeMapping mapping)
+	{
+		return mapping.Kind switch
+		{
+			TypeMappingKind.Primitive => true,
+			TypeMappingKind.GeneratedEnum => true,
+			TypeMappingKind.HandWrittenMathType => true,
+			TypeMappingKind.HandWrittenTypedArray => true,
+			TypeMappingKind.GeneratedStructure => true,
+			TypeMappingKind.Dictionary => true,
+			TypeMappingKind.Sequence => mapping.ElementMapping is { } element && IsWireValue(element),
+			_ => false
+		};
 	}
 
 	private TypeMapping MapInterfaceReference(string name, IrType type)
@@ -733,6 +789,13 @@ internal sealed class TypeMappingContext
 
 	/// <summary><c>float</c> / <c>integer</c> from the JSDoc, or <see langword="null"/> when unspecified.</summary>
 	public string? NumericKind { get; init; }
+
+	/// <summary>
+	/// Name of the class the member belongs to, when there is one. Only the anonymous-structure naming
+	/// reads it: sixteen geometries each call their own distinct shape <c>parameters</c>, so the class
+	/// is what tells those sixteen records apart.
+	/// </summary>
+	public string? DeclaringClassName { get; init; }
 
 	/// <summary>Type parameters declared by the enclosing class, used to erase a reference to one.</summary>
 	public IReadOnlyList<IrTypeParameter> TypeParameters { get; init; } = [];

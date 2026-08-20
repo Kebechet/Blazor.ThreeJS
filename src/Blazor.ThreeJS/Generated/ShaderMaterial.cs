@@ -31,6 +31,7 @@ public class ShaderMaterial : Material
 	private bool _fog = false;
 	private bool _lights = false;
 	private bool _clipping = false;
+	private ShaderMaterialExtensions _extensions;
 	private string? _index0AttributeName;
 	private bool _uniformsNeedUpdate = false;
 	private GLSLVersion? _glslVersion = null;
@@ -43,6 +44,7 @@ public class ShaderMaterial : Material
 	private bool _isFogWritten;
 	private bool _isLightsWritten;
 	private bool _isClippingWritten;
+	private bool _isExtensionsWritten;
 	private bool _isIndex0AttributeNameWritten;
 	private bool _isUniformsNeedUpdateWritten;
 	private bool _isGlslVersionWritten;
@@ -263,6 +265,28 @@ public class ShaderMaterial : Material
 	}
 
 	/// <summary>
+	/// This object allows to enable certain WebGL 2 extensions. - clipCullDistance: set to <c>true</c>
+	/// to use vertex shader clipping - multiDraw: set to <c>true</c> to use vertex shader multi_draw /
+	/// enable gl_DrawID. Writing it records a <c>extensions</c> property write once this object is
+	/// attached; writing the value already held records nothing.
+	/// </summary>
+	public ShaderMaterialExtensions Extensions
+	{
+		get { return _extensions; }
+		set
+		{
+			if (_extensions == value)
+			{
+				return;
+			}
+
+			_extensions = value;
+			_isExtensionsWritten = true;
+			RecordSet("extensions", value);
+		}
+	}
+
+	/// <summary>
 	/// If set, this calls
 	/// [gl.bindAttribLocation](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/bindAttribLocation)
 	/// to bind a generic vertex index to an attribute variable. Writing it records a
@@ -391,6 +415,11 @@ public class ShaderMaterial : Material
 		if (_isClippingWritten)
 		{
 			batch.Set(Handle, "clipping", ThreeValue.Encode(_clipping));
+		}
+
+		if (_isExtensionsWritten)
+		{
+			batch.Set(Handle, "extensions", ThreeValue.Encode(_extensions));
 		}
 
 		if (_isIndex0AttributeNameWritten)

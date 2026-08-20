@@ -460,6 +460,17 @@ internal static class EmitterConfig
 	public static readonly IReadOnlyDictionary<string, string> ExcludedEnumNames;
 
 	/// <summary>
+	/// Verbs an anonymous shape's declaring member may start with, stripped when naming the record.
+	/// <para>
+	/// <c>Curve.computeFrenetFrames</c> returns a shape that <em>is</em> the frenet frames, so the record
+	/// is <c>FrenetFrames</c> rather than <c>CurveComputeFrenetFrames</c>. Stripping the verb is also
+	/// what makes the name class-free, which is right for these: the same shape comes back from every
+	/// class that computes it, and one record serves them all.
+	/// </para>
+	/// </summary>
+	public static readonly IReadOnlyList<string> StructureNameVerbPrefixes = ["compute", "get"];
+
+	/// <summary>
 	/// Enums synthesised from the string-literal unions three.js writes inline rather than behind a
 	/// named type, keyed by the token set so every member declaring the same set shares one C# enum.
 	/// <para>
@@ -477,7 +488,14 @@ internal static class EmitterConfig
 	public static readonly IReadOnlyList<(string Name, string[] Tokens)> SynthesisedStringEnums =
 	[
 		("LineJoin", ["round", "bevel", "miter"]),
-		("LineCap", ["butt", "round", "square"])
+		("LineCap", ["butt", "round", "square"]),
+
+		// Named after what the set is, per the rule above. `Material.precision` is GLSL's precision
+		// qualifier, `PositionalAudio`'s distance model is Web Audio's own vocabulary for how gain falls
+		// off with distance, and `Audio.sourceType` says which kind of source the node is fed from.
+		("ShaderPrecision", ["highp", "mediump", "lowp"]),
+		("DistanceModel", ["linear", "inverse", "exponential"]),
+		("AudioSourceType", ["empty", "audioNode", "mediaNode", "mediaStreamNode", "buffer"])
 	];
 
 	/// <summary>

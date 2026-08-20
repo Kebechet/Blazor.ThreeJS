@@ -21,7 +21,9 @@ public sealed class OrthographicCamera : Camera
 	private float _near;
 	private float _far;
 	private float _zoom = 1f;
+	private OrthographicCameraView? _view = null;
 	private bool _isZoomWritten;
+	private bool _isViewWritten;
 	private bool _isLeftWritten;
 	private bool _isRightWritten;
 	private bool _isTopWritten;
@@ -103,6 +105,28 @@ public sealed class OrthographicCamera : Camera
 			_zoom = value;
 			_isZoomWritten = true;
 			RecordSet("zoom", value);
+		}
+	}
+
+	/// <summary>
+	/// Represents the frustum window specification. This property should not be edited directly but via
+	/// <c>PerspectiveCamera#setViewOffset</c> and <c>PerspectiveCamera#clearViewOffset</c>. Writing it
+	/// records a <c>view</c> property write once this object is attached; writing the value already
+	/// held records nothing.
+	/// </summary>
+	public OrthographicCameraView? View
+	{
+		get { return _view; }
+		set
+		{
+			if (_view == value)
+			{
+				return;
+			}
+
+			_view = value;
+			_isViewWritten = true;
+			RecordSet("view", value);
 		}
 	}
 
@@ -283,6 +307,11 @@ public sealed class OrthographicCamera : Camera
 		if (_isZoomWritten)
 		{
 			batch.Set(Handle, "zoom", ThreeValue.Encode(_zoom));
+		}
+
+		if (_isViewWritten)
+		{
+			batch.Set(Handle, "view", ThreeValue.Encode(_view));
 		}
 
 		if (_isLeftWritten)

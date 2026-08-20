@@ -77,4 +77,15 @@ public sealed class BoxGeometry : BufferGeometry
 	{
 		get { return [_width, _height, _depth, _widthSegments, _heightSegments, _depthSegments]; }
 	}
+
+	/// <summary>
+	/// An object with a property for each of the constructor parameters. Read-only in three.js, so it
+	/// is read on demand rather than mirrored: records a get op, sends it behind every write already
+	/// pending, and completes with the value <c>parameters</c> held.
+	/// </summary>
+	/// <returns>The value <c>parameters</c> held, once the JavaScript side has answered.</returns>
+	public Task<BoxGeometryParameters> ParametersAsync()
+	{
+		return GetAsync<BoxGeometryParameters>("parameters");
+	}
 }

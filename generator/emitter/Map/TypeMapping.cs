@@ -152,6 +152,12 @@ internal enum TypeMappingKind : byte
 	/// </summary>
 	GeneratedStructure,
 
+	/// <summary>
+	/// A <c>Dictionary&lt;string, T&gt;</c> standing for an index signature. Travels as a plain object,
+	/// which is what a dictionary already is on the wire.
+	/// </summary>
+	Dictionary,
+
 	/// <summary>Nothing in C# mirrors it; <see cref="TypeMapping.SkipReason"/> says what and why.</summary>
 	Skipped
 }

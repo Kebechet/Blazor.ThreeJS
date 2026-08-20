@@ -274,6 +274,17 @@ public class Audio : Object3D
 	}
 
 	/// <summary>
+	/// Defines the source type. The property is automatically set by one of the <c>set*()</c> methods.
+	/// Read-only in three.js, so it is read on demand rather than mirrored: records a get op, sends it
+	/// behind every write already pending, and completes with the value <c>sourceType</c> held.
+	/// </summary>
+	/// <returns>The value <c>sourceType</c> held, once the JavaScript side has answered.</returns>
+	public Task<AudioSourceType> SourceTypeAsync()
+	{
+		return GetAsync<AudioSourceType>("sourceType");
+	}
+
+	/// <summary>
 	/// Connects to the audio source. This is used internally on initialisation and when setting /
 	/// removing filters. Records a read op, sends it behind every write already pending, and completes
 	/// with what <c>connect</c> returned.

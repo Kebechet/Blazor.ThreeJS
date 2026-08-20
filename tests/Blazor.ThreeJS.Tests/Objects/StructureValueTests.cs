@@ -124,4 +124,64 @@ public class StructureValueTests
 		json.Near.ShouldBe(1f);
 		json.Far.ShouldBe(1000f);
 	}
+
+	[Fact]
+	public void Dictionary_Written_TravelsAsAPlainObjectKeyedByThreeJsOwnKeys()
+	{
+		// An index signature is a dictionary and nothing else, and a dictionary is already what a plain
+		// object is on the wire - so the structure tag carries it with no form of its own.
+		var batch = new ThreeBatch();
+		var loader = new Loader();
+		loader.AttachTo(batch);
+		batch.Drain();
+
+		loader.RequestHeader = new Dictionary<string, string> { ["Accept"] = "model/gltf+json" };
+		var op = batch.Drain().Single(x => x.Kind == ThreeOpKind.Set && x.Member == "requestHeader");
+
+		var members = op.Value.ShouldBeOfType<ThreeValue.StructureValue>().Members;
+		members["Accept"].ShouldBe("model/gltf+json");
+	}
+
+	[Fact]
+	public void Dictionary_ReadBack_BindsEveryKeyTheApplierSent()
+	{
+		var element = JsonDocument.Parse("""{"$o":{"first":0,"second":1}}""").RootElement;
+
+		var decoded = ThreeValue.Decode<Dictionary<string, float>>(element);
+
+		decoded.ShouldNotBeNull();
+		decoded["first"].ShouldBe(0f);
+		decoded["second"].ShouldBe(1f);
+	}
+
+	[Fact]
+	public void FrenetFrames_IsOneRecordSharedByEveryCurveThatComputesIt()
+	{
+		// three.js writes this shape without a name, on ten curve classes. Keyed by the shape rather than
+		// by the member, so they share one record instead of getting ten identical ones - and the name
+		// says what the shape is rather than which class was read first.
+		var element = JsonDocument.Parse(
+			"""{"$o":{"tangents":[{"$t":"Vector3","v":[1,0,0]}],"normals":[],"binormals":[]}}""").RootElement;
+
+		var frames = ThreeValue.Decode<FrenetFrames>(element);
+
+		frames.ShouldNotBeNull();
+		frames.Tangents.ShouldNotBeNull();
+		frames.Tangents!.Single().X.ShouldBe(1f);
+	}
+
+	[Fact]
+	public void BoxGeometryParameters_KeepsItsClassInTheName_BecauseSixteenGeometriesEachHaveTheirOwn()
+	{
+		// `parameters` alone would collide sixteen ways, so the class is part of the name. The shape is
+		// three.js echoing back the arguments the geometry was built from.
+		var element = JsonDocument.Parse(
+			"""{"$o":{"width":2,"height":3,"depth":4,"widthSegments":1,"heightSegments":1,"depthSegments":1}}""").RootElement;
+
+		var parameters = ThreeValue.Decode<BoxGeometryParameters>(element);
+
+		parameters.ShouldNotBeNull();
+		parameters.Width.ShouldBe(2f);
+		parameters.Depth.ShouldBe(4f);
+	}
 }

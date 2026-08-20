@@ -17,7 +17,9 @@ namespace Kebechet.Blazor.ThreeJS.Objects;
 public sealed class CameraHelper : LineSegments
 {
 	private Camera _camera;
+	private Dictionary<string, float[]> _pointMap;
 	private bool _isCameraWritten;
+	private bool _isPointMapWritten;
 
 	/// <summary>Constructs a new arrow helper.</summary>
 	/// <param name="camera">The camera to visualize.</param>
@@ -77,6 +79,26 @@ public sealed class CameraHelper : LineSegments
 		}
 	}
 
+	/// <summary>
+	/// This contains the points used to visualize the camera. Writing it records a <c>pointMap</c>
+	/// property write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public Dictionary<string, float[]> PointMap
+	{
+		get { return _pointMap; }
+		set
+		{
+			if (_pointMap == value)
+			{
+				return;
+			}
+
+			_pointMap = value;
+			_isPointMapWritten = true;
+			RecordSet("pointMap", value);
+		}
+	}
+
 	/// <summary>Defines the colors of the helper.</summary>
 	/// <param name="frustum">The frustum line color.</param>
 	/// <param name="cone">The cone line color.</param>
@@ -131,6 +153,11 @@ public sealed class CameraHelper : LineSegments
 		{
 			_camera.AttachTo(batch);
 			batch.Set(Handle, "camera", ThreeValue.Encode(_camera));
+		}
+
+		if (_isPointMapWritten)
+		{
+			batch.Set(Handle, "pointMap", ThreeValue.Encode(_pointMap));
 		}
 	}
 }

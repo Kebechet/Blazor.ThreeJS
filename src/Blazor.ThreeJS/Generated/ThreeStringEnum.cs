@@ -20,15 +20,18 @@ internal static class ThreeStringEnum
 	{
 		return value switch
 		{
+			AudioSourceType audioSourceType => TokenFor(audioSourceType),
 			BindMode bindMode => TokenFor(bindMode),
 			ColorSpace colorSpace => TokenFor(colorSpace),
 			ColorSpaceTransfer colorSpaceTransfer => TokenFor(colorSpaceTransfer),
 			CurveType curveType => TokenFor(curveType),
+			DistanceModel distanceModel => TokenFor(distanceModel),
 			GLSLVersion gLSLVersion => TokenFor(gLSLVersion),
 			LineCap lineCap => TokenFor(lineCap),
 			LineJoin lineJoin => TokenFor(lineJoin),
 			NormalPacking normalPacking => TokenFor(normalPacking),
 			PixelFormatGPU pixelFormatGPU => TokenFor(pixelFormatGPU),
+			ShaderPrecision shaderPrecision => TokenFor(shaderPrecision),
 			_ => null
 		};
 	}
@@ -39,6 +42,11 @@ internal static class ThreeStringEnum
 	/// <returns>The boxed value, or <see langword="null"/> when the type is not string-valued or the token is unknown.</returns>
 	public static object? FromToken(Type enumType, string token)
 	{
+		if (enumType == typeof(AudioSourceType))
+		{
+			return AudioSourceTypeFromToken(token);
+		}
+
 		if (enumType == typeof(BindMode))
 		{
 			return BindModeFromToken(token);
@@ -57,6 +65,11 @@ internal static class ThreeStringEnum
 		if (enumType == typeof(CurveType))
 		{
 			return CurveTypeFromToken(token);
+		}
+
+		if (enumType == typeof(DistanceModel))
+		{
+			return DistanceModelFromToken(token);
 		}
 
 		if (enumType == typeof(GLSLVersion))
@@ -84,7 +97,44 @@ internal static class ThreeStringEnum
 			return PixelFormatGPUFromToken(token);
 		}
 
+		if (enumType == typeof(ShaderPrecision))
+		{
+			return ShaderPrecisionFromToken(token);
+		}
+
 		return null;
+	}
+
+	/// <summary>The token three.js compares a <see cref="AudioSourceType"/> against.</summary>
+	/// <param name="audioSourceType">The value to send.</param>
+	/// <returns>The token.</returns>
+	private static string TokenFor(AudioSourceType audioSourceType)
+	{
+		return audioSourceType switch
+		{
+			AudioSourceType.Empty => "empty",
+			AudioSourceType.AudioNode => "audioNode",
+			AudioSourceType.MediaNode => "mediaNode",
+			AudioSourceType.MediaStreamNode => "mediaStreamNode",
+			AudioSourceType.Buffer => "buffer",
+			_ => throw new NotImplementedException($"No three.js token is known for AudioSourceType '{audioSourceType}'.")
+		};
+	}
+
+	/// <summary>The <see cref="AudioSourceType"/> a token names.</summary>
+	/// <param name="token">The token the browser sent.</param>
+	/// <returns>The value, or <see langword="null"/> when three.js sent something this build does not know.</returns>
+	private static object? AudioSourceTypeFromToken(string token)
+	{
+		return token switch
+		{
+			"empty" => AudioSourceType.Empty,
+			"audioNode" => AudioSourceType.AudioNode,
+			"mediaNode" => AudioSourceType.MediaNode,
+			"mediaStreamNode" => AudioSourceType.MediaStreamNode,
+			"buffer" => AudioSourceType.Buffer,
+			_ => null
+		};
 	}
 
 	/// <summary>The token three.js compares a <see cref="BindMode"/> against.</summary>
@@ -191,6 +241,34 @@ internal static class ThreeStringEnum
 			"centripetal" => CurveType.Centripetal,
 			"chordal" => CurveType.Chordal,
 			"catmullrom" => CurveType.Catmullrom,
+			_ => null
+		};
+	}
+
+	/// <summary>The token three.js compares a <see cref="DistanceModel"/> against.</summary>
+	/// <param name="distanceModel">The value to send.</param>
+	/// <returns>The token.</returns>
+	private static string TokenFor(DistanceModel distanceModel)
+	{
+		return distanceModel switch
+		{
+			DistanceModel.Linear => "linear",
+			DistanceModel.Inverse => "inverse",
+			DistanceModel.Exponential => "exponential",
+			_ => throw new NotImplementedException($"No three.js token is known for DistanceModel '{distanceModel}'.")
+		};
+	}
+
+	/// <summary>The <see cref="DistanceModel"/> a token names.</summary>
+	/// <param name="token">The token the browser sent.</param>
+	/// <returns>The value, or <see langword="null"/> when three.js sent something this build does not know.</returns>
+	private static object? DistanceModelFromToken(string token)
+	{
+		return token switch
+		{
+			"linear" => DistanceModel.Linear,
+			"inverse" => DistanceModel.Inverse,
+			"exponential" => DistanceModel.Exponential,
 			_ => null
 		};
 	}
@@ -443,6 +521,34 @@ internal static class ThreeStringEnum
 			"DEPTH_COMPONENT32F" => PixelFormatGPU.DEPTH_COMPONENT32F,
 			"DEPTH24_STENCIL8" => PixelFormatGPU.DEPTH24_STENCIL8,
 			"DEPTH32F_STENCIL8" => PixelFormatGPU.DEPTH32F_STENCIL8,
+			_ => null
+		};
+	}
+
+	/// <summary>The token three.js compares a <see cref="ShaderPrecision"/> against.</summary>
+	/// <param name="shaderPrecision">The value to send.</param>
+	/// <returns>The token.</returns>
+	private static string TokenFor(ShaderPrecision shaderPrecision)
+	{
+		return shaderPrecision switch
+		{
+			ShaderPrecision.Highp => "highp",
+			ShaderPrecision.Mediump => "mediump",
+			ShaderPrecision.Lowp => "lowp",
+			_ => throw new NotImplementedException($"No three.js token is known for ShaderPrecision '{shaderPrecision}'.")
+		};
+	}
+
+	/// <summary>The <see cref="ShaderPrecision"/> a token names.</summary>
+	/// <param name="token">The token the browser sent.</param>
+	/// <returns>The value, or <see langword="null"/> when three.js sent something this build does not know.</returns>
+	private static object? ShaderPrecisionFromToken(string token)
+	{
+		return token switch
+		{
+			"highp" => ShaderPrecision.Highp,
+			"mediump" => ShaderPrecision.Mediump,
+			"lowp" => ShaderPrecision.Lowp,
 			_ => null
 		};
 	}

@@ -8,13 +8,13 @@
     "blockedClasses": 30,
     "reachableClasses": 264,
     "members": 3648,
-    "mirroredState": 1132,
-    "commands": 747,
-    "asyncQueries": 811,
+    "mirroredState": 1149,
+    "commands": 758,
+    "asyncQueries": 849,
     "untypedObjectQueries": 11,
-    "skippedMembers": 958,
+    "skippedMembers": 892,
     "reachableMembers": 2439,
-    "generatedMembers": 1702,
+    "generatedMembers": 1760,
     "strandedMembers": 1209
   },
   "classes": [
@@ -3927,10 +3927,6 @@
       "members": 94
     },
     {
-      "category": "AnonymousObjectType",
-      "members": 82
-    },
-    {
       "category": "NotInstanceApi",
       "members": 79
     },
@@ -3939,16 +3935,20 @@
       "members": 77
     },
     {
-      "category": "OptionsInterface",
-      "members": 55
-    },
-    {
       "category": "UntypedValue",
       "members": 45
     },
     {
+      "category": "AnonymousObjectType",
+      "members": 40
+    },
+    {
       "category": "UnmappedUnion",
-      "members": 38
+      "members": 35
+    },
+    {
+      "category": "OptionsInterface",
+      "members": 34
     },
     {
       "category": "NotExported",
@@ -4012,6 +4012,13 @@
       "members": 2,
       "backingType": "ushort",
       "isReferenced": true
+    },
+    {
+      "name": "AudioSourceType",
+      "source": "ConstantGroup",
+      "members": 5,
+      "backingType": "byte",
+      "isReferenced": false
     },
     {
       "name": "BindMode",
@@ -4112,6 +4119,13 @@
       "isReferenced": true
     },
     {
+      "name": "DistanceModel",
+      "source": "ConstantGroup",
+      "members": 3,
+      "backingType": "byte",
+      "isReferenced": false
+    },
+    {
       "name": "GLSLVersion",
       "source": "ConstantGroup",
       "members": 2,
@@ -4201,6 +4215,13 @@
       "members": 60,
       "backingType": "byte",
       "isReferenced": true
+    },
+    {
+      "name": "ShaderPrecision",
+      "source": "ConstantGroup",
+      "members": 3,
+      "backingType": "byte",
+      "isReferenced": false
     },
     {
       "name": "ShadowMapType",
@@ -4929,9 +4950,8 @@
       "member": "stats",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`AnimationMixerStats` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "MirroredState",
+      "type": "AnimationMixerStats"
     },
     {
       "class": "AnimationMixer",
@@ -5311,9 +5331,8 @@
       "member": "sourceType",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`\"empty\" | \"audioNode\" | \"mediaNode\" | \"mediaStreamNode\" | \"buffer\"` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery",
+      "type": "AudioSourceType"
     },
     {
       "class": "Audio",
@@ -6818,9 +6837,8 @@
       "member": "parameters",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ readonly width: number; readonly height: number; readonly depth: number; readonly widthSegments: number; readonly heightSegments: number; readonly depthSegments: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "BoxGeometryParameters"
     },
     {
       "class": "BoxGeometry",
@@ -6913,9 +6931,8 @@
       "member": "updateRanges",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`Array<{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }>` is an array whose element type cannot be mapped: `{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "BufferAttributeUpdateRanges[]"
     },
     {
       "class": "BufferAttribute",
@@ -7291,9 +7308,8 @@
       "member": "drawRange",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ start: number; count: number }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "BufferAttributeUpdateRanges"
     },
     {
       "class": "BufferGeometry",
@@ -7646,9 +7662,8 @@
       "member": "pointMap",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ [x: string]: number[]; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "Dictionary<string, float[]>"
     },
     {
       "class": "CameraHelper",
@@ -7806,9 +7821,8 @@
       "member": "parameters",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ readonly radius: number; readonly height: number; readonly capSegments: number; readonly radialSegments: number; readonly heightSegments: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "CapsuleGeometryParameters"
     },
     {
       "class": "CapsuleGeometry",
@@ -7959,9 +7973,8 @@
       "member": "computeFrenetFrames",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "FrenetFrames"
     },
     {
       "class": "CatmullRomCurve3",
@@ -7985,27 +7998,23 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "AsyncQuery",
+      "type": "CurveJSON"
     },
     {
       "class": "CatmullRomCurve3",
       "member": "fromJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "CircleGeometry",
       "member": "parameters",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ readonly radius: number; readonly segments: number; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "CircleGeometryParameters"
     },
     {
       "class": "CircleGeometry",
@@ -9083,9 +9092,8 @@
       "member": "computeFrenetFrames",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "FrenetFrames"
     },
     {
       "class": "CubicBezierCurve",
@@ -9109,18 +9117,15 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "AsyncQuery",
+      "type": "CurveJSON"
     },
     {
       "class": "CubicBezierCurve",
       "member": "fromJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "CubicBezierCurve3",
@@ -9262,9 +9267,8 @@
       "member": "computeFrenetFrames",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "FrenetFrames"
     },
     {
       "class": "CubicBezierCurve3",
@@ -9288,18 +9292,15 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "AsyncQuery",
+      "type": "CurveJSON"
     },
     {
       "class": "CubicBezierCurve3",
       "member": "fromJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "CubicInterpolant",
@@ -9495,9 +9496,8 @@
       "member": "computeFrenetFrames",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "FrenetFrames"
     },
     {
       "class": "Curve",
@@ -9521,18 +9521,15 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "AsyncQuery",
+      "type": "CurveJSON"
     },
     {
       "class": "Curve",
       "member": "fromJSON",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "CurvePath",
@@ -9700,9 +9697,8 @@
       "member": "computeFrenetFrames",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "FrenetFrames"
     },
     {
       "class": "CurvePath",
@@ -9726,9 +9722,8 @@
       "member": "parameters",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ readonly radiusTop: number; readonly radiusBottom: number; readonly height: number; readonly radialSegments: number; readonly heightSegments: number; readonly openEnded: boolean; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "CylinderGeometryParameters"
     },
     {
       "class": "CylinderGeometry",
@@ -10458,9 +10453,8 @@
       "member": "computeFrenetFrames",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "FrenetFrames"
     },
     {
       "class": "EllipseCurve",
@@ -10484,18 +10478,15 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "AsyncQuery",
+      "type": "CurveJSON"
     },
     {
       "class": "EllipseCurve",
       "member": "fromJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "Euler",
@@ -11283,27 +11274,24 @@
       "member": "render",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ calls: number; frameCalls: number; drawCalls: number; triangles: number; points: number; lines: number; timestamp: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "InfoRender"
     },
     {
       "class": "Info",
       "member": "compute",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ calls: number; frameCalls: number; timestamp: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "InfoCompute"
     },
     {
       "class": "Info",
       "member": "memory",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ attributes: number; attributesSize: number; geometries: number; indexAttributes: number; indexAttributesSize: number; indirectStorageAttributes: number; indirectStorageAttributesSize: number; programs: number; programsSize: number; readbackBuffers: number; readbackBuffersSize: number; renderTargets: number; storageAttributes: number; storageAttributesSize: number; textures: number; texturesSize: number; uniformBuffers: number; uniformBuffersSize: number; total: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "InfoMemory"
     },
     {
       "class": "Info",
@@ -11695,9 +11683,8 @@
       "member": "updateRanges",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`Array<{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }>` is an array whose element type cannot be mapped: `{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "BufferAttributeUpdateRanges[]"
     },
     {
       "class": "InterleavedBuffer",
@@ -12341,9 +12328,8 @@
       "member": "parameters",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ readonly points: Vector2[]; readonly segments: number; readonly phiStart: number; readonly phiLength: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "LatheGeometryParameters"
     },
     {
       "class": "LatheGeometry",
@@ -12729,9 +12715,8 @@
       "member": "morphTargetDictionary",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ [key: string]: number }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "Dictionary<string, float>"
     },
     {
       "class": "Line",
@@ -13449,9 +13434,8 @@
       "member": "computeFrenetFrames",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "FrenetFrames"
     },
     {
       "class": "LineCurve",
@@ -13475,18 +13459,15 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "AsyncQuery",
+      "type": "CurveJSON"
     },
     {
       "class": "LineCurve",
       "member": "fromJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "LineCurve3",
@@ -13612,9 +13593,8 @@
       "member": "computeFrenetFrames",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "FrenetFrames"
     },
     {
       "class": "LineCurve3",
@@ -13638,18 +13618,15 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "AsyncQuery",
+      "type": "CurveJSON"
     },
     {
       "class": "LineCurve3",
       "member": "fromJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "LineDashedMaterial",
@@ -13994,9 +13971,8 @@
       "member": "requestHeader",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ [header: string]: string }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "Dictionary<string, string>"
     },
     {
       "class": "Loader",
@@ -14058,9 +14034,7 @@
       "member": "setRequestHeader",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "parameter 'requestHeader': `{ [header: string]: string }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "Command"
     },
     {
       "class": "Loader",
@@ -14593,9 +14567,8 @@
       "member": "precision",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`\"highp\" | \"mediump\" | \"lowp\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "MirroredState",
+      "type": "ShaderPrecision"
     },
     {
       "class": "Material",
@@ -14700,7 +14673,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`{ [key: string]: Texture }` is an anonymous object literal type with no named C# equivalent",
+      "reason": "`{ [key: string]: Texture }` is a dictionary whose values cannot be mapped: they are not values the wire carries",
       "category": "AnonymousObjectType"
     },
     {
@@ -14718,7 +14691,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'textures': `{ [key: string]: Texture }` is an anonymous object literal type with no named C# equivalent",
+      "reason": "parameter 'textures': `{ [key: string]: Texture }` is a dictionary whose values cannot be mapped: they are not values the wire carries",
       "category": "AnonymousObjectType"
     },
     {
@@ -15292,9 +15265,8 @@
       "member": "morphTargetDictionary",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ [key: string]: number }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "Dictionary<string, float>"
     },
     {
       "class": "Mesh",
@@ -20690,7 +20662,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`{ [key: string]: Texture }` is an anonymous object literal type with no named C# equivalent",
+      "reason": "`{ [key: string]: Texture }` is a dictionary whose values cannot be mapped: they are not values the wire carries",
       "category": "AnonymousObjectType"
     },
     {
@@ -20699,7 +20671,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`{ [type: string]: Node }` is an anonymous object literal type with no named C# equivalent",
+      "reason": "`{ [type: string]: Node }` is a dictionary whose values cannot be mapped: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
       "category": "AnonymousObjectType"
     },
     {
@@ -20726,7 +20698,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'textures': `{ [key: string]: Texture }` is an anonymous object literal type with no named C# equivalent",
+      "reason": "parameter 'textures': `{ [key: string]: Texture }` is a dictionary whose values cannot be mapped: they are not values the wire carries",
       "category": "AnonymousObjectType"
     },
     {
@@ -20735,7 +20707,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'value': `{ [type: string]: Node }` is an anonymous object literal type with no named C# equivalent",
+      "reason": "parameter 'value': `{ [type: string]: Node }` is a dictionary whose values cannot be mapped: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
       "category": "AnonymousObjectType"
     },
     {
@@ -21207,7 +21179,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`{ [type: string]: NodeMaterial }` is an anonymous object literal type with no named C# equivalent",
+      "reason": "`{ [type: string]: NodeMaterial }` is a dictionary whose values cannot be mapped: they are not values the wire carries",
       "category": "AnonymousObjectType"
     },
     {
@@ -21225,7 +21197,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'value': `{ [type: string]: NodeMaterial }` is an anonymous object literal type with no named C# equivalent",
+      "reason": "parameter 'value': `{ [type: string]: NodeMaterial }` is a dictionary whose values cannot be mapped: they are not values the wire carries",
       "category": "AnonymousObjectType"
     },
     {
@@ -21283,7 +21255,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`{ [type: string]: Node }` is an anonymous object literal type with no named C# equivalent",
+      "reason": "`{ [type: string]: Node }` is a dictionary whose values cannot be mapped: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
       "category": "AnonymousObjectType"
     },
     {
@@ -21292,7 +21264,7 @@
       "kind": "Property",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "`{ [type: string]: NodeMaterial }` is an anonymous object literal type with no named C# equivalent",
+      "reason": "`{ [type: string]: NodeMaterial }` is a dictionary whose values cannot be mapped: they are not values the wire carries",
       "category": "AnonymousObjectType"
     },
     {
@@ -21301,7 +21273,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'value': `{ [type: string]: Node }` is an anonymous object literal type with no named C# equivalent",
+      "reason": "parameter 'value': `{ [type: string]: Node }` is a dictionary whose values cannot be mapped: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface",
       "category": "AnonymousObjectType"
     },
     {
@@ -21310,7 +21282,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "parameter 'value': `{ [type: string]: NodeMaterial }` is an anonymous object literal type with no named C# equivalent",
+      "reason": "parameter 'value': `{ [type: string]: NodeMaterial }` is a dictionary whose values cannot be mapped: they are not values the wire carries",
       "category": "AnonymousObjectType"
     },
     {
@@ -22235,9 +22207,8 @@
       "member": "view",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ enabled: boolean; fullWidth: number; fullHeight: number; offsetX: number; offsetY: number; width: number; height: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "OrthographicCameraView"
     },
     {
       "class": "OrthographicCamera",
@@ -22492,9 +22463,8 @@
       "member": "view",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ enabled: boolean; fullWidth: number; fullHeight: number; offsetX: number; offsetY: number; width: number; height: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "OrthographicCameraView"
     },
     {
       "class": "PerspectiveCamera",
@@ -22770,9 +22740,8 @@
       "member": "parameters",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ readonly width: number; readonly height: number; readonly widthSegments: number; readonly heightSegments: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "PlaneGeometryParameters"
     },
     {
       "class": "PlaneGeometry",
@@ -23091,9 +23060,8 @@
       "member": "morphTargetDictionary",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ [key: string]: number }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "Dictionary<string, float>"
     },
     {
       "class": "Points",
@@ -23453,9 +23421,8 @@
       "member": "parameters",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ readonly vertices: number[]; readonly indices: number[]; readonly radius: number; readonly detail: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "PolyhedronGeometryParameters"
     },
     {
       "class": "PolyhedronGeometry",
@@ -23510,9 +23477,8 @@
       "member": "getDistanceModel",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `\"linear\" | \"inverse\" | \"exponential\"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently",
-      "category": "UnmappedUnion"
+      "bucket": "AsyncQuery",
+      "type": "DistanceModel"
     },
     {
       "class": "PositionalAudio",
@@ -23889,9 +23855,8 @@
       "member": "computeFrenetFrames",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "FrenetFrames"
     },
     {
       "class": "QuadraticBezierCurve",
@@ -23915,18 +23880,15 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "AsyncQuery",
+      "type": "CurveJSON"
     },
     {
       "class": "QuadraticBezierCurve",
       "member": "fromJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "QuadraticBezierCurve3",
@@ -24060,9 +24022,8 @@
       "member": "computeFrenetFrames",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "FrenetFrames"
     },
     {
       "class": "QuadraticBezierCurve3",
@@ -24086,18 +24047,15 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "AsyncQuery",
+      "type": "CurveJSON"
     },
     {
       "class": "QuadraticBezierCurve3",
       "member": "fromJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "Quaternion",
@@ -25449,9 +25407,8 @@
       "member": "shadowMap",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ /** * - Whether to globally enable shadows or not. */ enabled: boolean; /** * - Whether to enable light transmission through non-opaque materials. */ transmitted: boolean; /** * - The shadow map type. */ type: ShadowMapType; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "RendererShadowMap"
     },
     {
       "class": "Renderer",
@@ -26119,9 +26076,8 @@
       "member": "parameters",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ readonly innerRadius: number; readonly outerRadius: number; readonly thetaSegments: number; readonly phiSegments: number; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "RingGeometryParameters"
     },
     {
       "class": "RingGeometry",
@@ -26271,7 +26227,7 @@
       "kind": "Property",
       "origin": "InterfaceInheritance",
       "bucket": "Skipped",
-      "reason": "`{ [uniform: string]: IUniform }` is an anonymous object literal type with no named C# equivalent",
+      "reason": "`{ [uniform: string]: IUniform }` is a dictionary whose values cannot be mapped: `IUniform` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
       "category": "AnonymousObjectType"
     },
     {
@@ -26351,9 +26307,8 @@
       "member": "extensions",
       "kind": "Property",
       "origin": "InterfaceInheritance",
-      "bucket": "Skipped",
-      "reason": "`{ clipCullDistance: boolean; multiDraw: boolean; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "ShaderMaterialExtensions"
     },
     {
       "class": "ShaderMaterial",
@@ -26664,9 +26619,8 @@
       "member": "extractPoints",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "return type: `{ shape: Vector2[]; holes: Vector2[][]; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "ShapeExtractPoints"
     },
     {
       "class": "Shape",
@@ -27349,9 +27303,8 @@
       "member": "parameters",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ readonly radius: number; readonly widthSegments: number; readonly heightSegments: number; readonly phiStart: number; readonly phiLength: number; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "SphereGeometryParameters"
     },
     {
       "class": "SphereGeometry",
@@ -27668,9 +27621,8 @@
       "member": "computeFrenetFrames",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "FrenetFrames"
     },
     {
       "class": "SplineCurve",
@@ -27694,18 +27646,15 @@
       "member": "toJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "AsyncQuery",
+      "type": "CurveJSON"
     },
     {
       "class": "SplineCurve",
       "member": "fromJSON",
       "kind": "Method",
       "origin": "FlattenedAncestor",
-      "bucket": "Skipped",
-      "reason": "parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
-      "category": "OptionsInterface"
+      "bucket": "Command"
     },
     {
       "class": "SpotLight",
@@ -28973,9 +28922,8 @@
       "member": "updateRanges",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`Array<{ start: number; count: number }>` is an array whose element type cannot be mapped: `{ start: number; count: number }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "BufferAttributeUpdateRanges[]"
     },
     {
       "class": "Texture",
@@ -29327,9 +29275,8 @@
       "member": "parameters",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ readonly radius: number; readonly tube: number; readonly radialSegments: number; readonly tubularSegments: number; readonly arc: number; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "TorusGeometryParameters"
     },
     {
       "class": "TorusGeometry",
@@ -29345,9 +29292,8 @@
       "member": "parameters",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ readonly radius: number; readonly tube: number; readonly tubularSegments: number; readonly radialSegments: number; readonly p: number; readonly q: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "AsyncQuery",
+      "type": "TorusKnotGeometryParameters"
     },
     {
       "class": "TorusKnotGeometry",
@@ -31810,9 +31756,8 @@
       "member": "memory",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ geometries: number; textures: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "WebGLInfoMemory"
     },
     {
       "class": "WebGLInfo",
@@ -31828,9 +31773,8 @@
       "member": "render",
       "kind": "Property",
       "origin": "Declared",
-      "bucket": "Skipped",
-      "reason": "`{ calls: number; frame: number; lines: number; points: number; triangles: number; }` is an anonymous object literal type with no named C# equivalent",
-      "category": "AnonymousObjectType"
+      "bucket": "MirroredState",
+      "type": "WebGLInfoRender"
     },
     {
       "class": "WebGLInfo",
@@ -32000,7 +31944,7 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Skipped",
-      "reason": "return type: `{ [uniform: string]: IUniform }` is an anonymous object literal type with no named C# equivalent",
+      "reason": "return type: `{ [uniform: string]: IUniform }` is a dictionary whose values cannot be mapped: `IUniform` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle",
       "category": "AnonymousObjectType"
     },
     {

@@ -103,6 +103,13 @@ public sealed class SplineCurve : ThreeObject
 		RecordCall("updateArcLengths");
 	}
 
+	/// <summary>Copies the data from the given JSON object to this instance.</summary>
+	/// <param name="json">Value forwarded to the <c>json</c> argument.</param>
+	public void FromJSON(CurveJSON json)
+	{
+		RecordCall("fromJSON", json);
+	}
+
 	/// <summary>
 	/// Read-only flag to check if a given object is of type <see cref="SplineCurve"/>. Read-only in
 	/// three.js, so it is read on demand rather than mirrored: records a get op, sends it behind every
@@ -250,6 +257,18 @@ public sealed class SplineCurve : ThreeObject
 	}
 
 	/// <summary>
+	/// Generates the Frenet Frames. Records a read op, sends it behind every write already pending, and
+	/// completes with what <c>computeFrenetFrames</c> returned.
+	/// </summary>
+	/// <param name="segments"></param>
+	/// <param name="closed">Value forwarded to the <c>closed</c> argument.</param>
+	/// <returns>The value <c>computeFrenetFrames</c> returned, once the JavaScript side has answered.</returns>
+	public Task<FrenetFrames> ComputeFrenetFramesAsync(int segments, bool closed)
+	{
+		return RecordRead<FrenetFrames>("computeFrenetFrames", segments, closed);
+	}
+
+	/// <summary>
 	/// Creates a clone of this instance. Records a read op, sends it behind every write already
 	/// pending, and completes with what <c>clone</c> returned.
 	/// </summary>
@@ -257,6 +276,16 @@ public sealed class SplineCurve : ThreeObject
 	public Task<SplineCurve?> CloneAsync()
 	{
 		return RecordReadObject<SplineCurve>("clone", (adoptedBatch, adoptedHandle) => new SplineCurve(adoptedBatch, adoptedHandle));
+	}
+
+	/// <summary>
+	/// Returns a JSON object representation of this instance. Records a read op, sends it behind every
+	/// write already pending, and completes with what <c>toJSON</c> returned.
+	/// </summary>
+	/// <returns>The value <c>toJSON</c> returned, once the JavaScript side has answered.</returns>
+	public Task<CurveJSON> ToJSONAsync()
+	{
+		return RecordRead<CurveJSON>("toJSON");
 	}
 
 	/// <summary>

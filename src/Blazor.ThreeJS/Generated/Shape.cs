@@ -108,6 +108,18 @@ public sealed class Shape : Path
 	}
 
 	/// <summary>
+	/// Call <c>getPoints</c> on the <see cref="Shape"/> and the <c>holes</c> array. Records a read op,
+	/// sends it behind every write already pending, and completes with what <c>extractPoints</c>
+	/// returned.
+	/// </summary>
+	/// <param name="divisions">The fineness of the result.</param>
+	/// <returns>The value <c>extractPoints</c> returned, once the JavaScript side has answered.</returns>
+	public Task<ShapeExtractPoints> ExtractPointsAsync(int divisions)
+	{
+		return RecordRead<ShapeExtractPoints>("extractPoints", divisions);
+	}
+
+	/// <summary>
 	/// Get an array of <see cref="Vector2">Vector2's</see> that represent the holes in the shape.
 	/// Records a read op, sends it behind every write already pending, and completes with what
 	/// <c>getPointsHoles</c> returned.

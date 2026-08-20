@@ -42,6 +42,7 @@ public class Material : EventDispatcher
 	private bool _clipShadows = false;
 	private Side? _shadowSide = null;
 	private bool _colorWrite = true;
+	private ShaderPrecision? _precision = null;
 	private bool _polygonOffset = false;
 	private float _polygonOffsetFactor = 0f;
 	private float _polygonOffsetUnits = 0f;
@@ -84,6 +85,7 @@ public class Material : EventDispatcher
 	private bool _isClipShadowsWritten;
 	private bool _isShadowSideWritten;
 	private bool _isColorWriteWritten;
+	private bool _isPrecisionWritten;
 	private bool _isPolygonOffsetWritten;
 	private bool _isPolygonOffsetFactorWritten;
 	private bool _isPolygonOffsetUnitsWritten;
@@ -783,6 +785,27 @@ public class Material : EventDispatcher
 	}
 
 	/// <summary>
+	/// Override the renderer's default precision for this material. Writing it records a
+	/// <c>precision</c> property write once this object is attached; writing the value already held
+	/// records nothing.
+	/// </summary>
+	public ShaderPrecision? Precision
+	{
+		get { return _precision; }
+		set
+		{
+			if (_precision == value)
+			{
+				return;
+			}
+
+			_precision = value;
+			_isPrecisionWritten = true;
+			RecordSet("precision", value);
+		}
+	}
+
+	/// <summary>
 	/// Whether to use polygon offset or not. When enabled, each fragment's depth value will be offset
 	/// after it is interpolated from the depth values of the appropriate vertices. The offset is added
 	/// before the depth test is performed and before the value is written into the depth buffer. Can be
@@ -1258,6 +1281,11 @@ public class Material : EventDispatcher
 		if (_isColorWriteWritten)
 		{
 			batch.Set(Handle, "colorWrite", ThreeValue.Encode(_colorWrite));
+		}
+
+		if (_isPrecisionWritten)
+		{
+			batch.Set(Handle, "precision", ThreeValue.Encode(_precision));
 		}
 
 		if (_isPolygonOffsetWritten)

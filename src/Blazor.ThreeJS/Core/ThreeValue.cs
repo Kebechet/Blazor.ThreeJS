@@ -103,6 +103,11 @@ internal static class ThreeValue
 				{
 					Members = structure.ToWireMembers().ToDictionary(x => x.Key, x => Encode(x.Value))
 				};
+			// Ahead of the sequence arm, which a dictionary would otherwise fall into as a sequence of
+			// key-value pairs. three.js declares these as `{ [key: string]: T }`, which is a plain object
+			// and travels as one.
+			case System.Collections.IDictionary map:
+				return new StructureValue { Members = EncodeDictionary(map) };
 			case UnspecifiedValue unspecified:
 				return unspecified;
 			case Enum enumValue:
@@ -208,6 +213,22 @@ internal static class ThreeValue
 		}
 
 		if (value.TryGetProperty(ThreeWireFormat.StructureKey, out var members)
+			&& typeof(TValue).IsGenericType
+			&& typeof(TValue).GetGenericTypeDefinition() == typeof(Dictionary<,>))
+		{
+			// Entry by entry rather than deserialized whole, so a value that is itself tagged - a math
+			// value, a typed array - is decoded rather than bound to a bag of its wire fields.
+			var valueType = typeof(TValue).GetGenericArguments()[1];
+			var map = (System.Collections.IDictionary) Activator.CreateInstance(typeof(TValue))!;
+			foreach (var entry in members.EnumerateObject())
+			{
+				map[entry.Name] = DecodeMember(valueType, entry.Value);
+			}
+
+			return (TValue) map;
+		}
+
+		if (value.TryGetProperty(ThreeWireFormat.StructureKey, out members)
 			&& typeof(IThreeStructure).IsAssignableFrom(typeof(TValue)))
 		{
 			// Built and filled rather than deserialized, because the generated record knows three.js's
@@ -247,6 +268,30 @@ internal static class ThreeValue
 	/// </summary>
 	/// <param name="sequence">The sequence to encode.</param>
 	/// <returns>The encoded elements, in order.</returns>
+	/// <summary>
+	/// Encodes a dictionary's entries, keyed by the string three.js indexes them by.
+	/// </summary>
+	/// <param name="map">The dictionary to encode.</param>
+	/// <returns>The encoded entries.</returns>
+	/// <exception cref="NotSupportedException">Thrown when a key is not a string, which no three.js index signature declares.</exception>
+	private static IReadOnlyDictionary<string, object?> EncodeDictionary(System.Collections.IDictionary map)
+	{
+		var encoded = new Dictionary<string, object?>(StringComparer.Ordinal);
+		foreach (System.Collections.DictionaryEntry entry in map)
+		{
+			if (entry.Key is not string key)
+			{
+				throw new NotSupportedException(
+					$"A dictionary keyed by '{entry.Key.GetType().FullName}' has no wire encoding. " +
+					$"Every index signature three.js declares is keyed by string, and a JSON object has no other kind of key.");
+			}
+
+			encoded[key] = Encode(entry.Value);
+		}
+
+		return encoded;
+	}
+
 	private static object?[] EncodeSequence(System.Collections.IEnumerable sequence)
 	{
 		var encoded = new List<object?>();
@@ -265,6 +310,21 @@ internal static class ThreeValue
 	/// </summary>
 	/// <param name="value">The argument as the generated class holds it.</param>
 	/// <returns>The value, or the sentinel when it was not supplied.</returns>
+	/// <summary>
+	/// Decodes one value of a runtime-known type, by calling <see cref="Decode{TValue}"/> through it.
+	/// Only the dictionary path needs this: every other decode knows its type at compile time.
+	/// </summary>
+	/// <param name="valueType">The type to decode into.</param>
+	/// <param name="element">The wire value.</param>
+	/// <returns>The decoded value.</returns>
+	private static object? DecodeMember(Type valueType, JsonElement element)
+	{
+		return typeof(ThreeValue)
+			.GetMethod(nameof(Decode), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)!
+			.MakeGenericMethod(valueType)
+			.Invoke(null, [(JsonElement?) element]);
+	}
+
 	public static object? OrUnspecified(object? value)
 	{
 		return value ?? Unspecified;

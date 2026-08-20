@@ -160,6 +160,18 @@ public class CurvePath : ThreeObject
 	}
 
 	/// <summary>
+	/// Generates the Frenet Frames. Records a read op, sends it behind every write already pending, and
+	/// completes with what <c>computeFrenetFrames</c> returned.
+	/// </summary>
+	/// <param name="segments"></param>
+	/// <param name="closed">Value forwarded to the <c>closed</c> argument.</param>
+	/// <returns>The value <c>computeFrenetFrames</c> returned, once the JavaScript side has answered.</returns>
+	public Task<FrenetFrames> ComputeFrenetFramesAsync(int segments, bool closed)
+	{
+		return RecordRead<FrenetFrames>("computeFrenetFrames", segments, closed);
+	}
+
+	/// <summary>
 	/// Creates a clone of this instance. Records a read op, sends it behind every write already
 	/// pending, and completes with what <c>clone</c> returned.
 	/// </summary>

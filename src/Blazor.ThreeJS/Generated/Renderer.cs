@@ -24,6 +24,7 @@ public class Renderer : ThreeObject
 	private Lighting? _lighting;
 	private bool _transparent = true;
 	private bool _opaque = true;
+	private RendererShadowMap _shadowMap;
 	private InspectorBase? _inspector;
 	private bool _highPrecision;
 	private bool _isBackendWritten;
@@ -41,6 +42,7 @@ public class Renderer : ThreeObject
 	private bool _isLightingWritten;
 	private bool _isTransparentWritten;
 	private bool _isOpaqueWritten;
+	private bool _isShadowMapWritten;
 	private bool _isInspectorWritten;
 	private bool _isHighPrecisionWritten;
 
@@ -408,6 +410,26 @@ public class Renderer : ThreeObject
 			_opaque = value;
 			_isOpaqueWritten = true;
 			RecordSet("opaque", value);
+		}
+	}
+
+	/// <summary>
+	/// The renderer's shadow configuration. Writing it records a <c>shadowMap</c> property write once
+	/// this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public RendererShadowMap ShadowMap
+	{
+		get { return _shadowMap; }
+		set
+		{
+			if (_shadowMap == value)
+			{
+				return;
+			}
+
+			_shadowMap = value;
+			_isShadowMapWritten = true;
+			RecordSet("shadowMap", value);
 		}
 	}
 
@@ -1260,6 +1282,11 @@ public class Renderer : ThreeObject
 		if (_isOpaqueWritten)
 		{
 			batch.Set(Handle, "opaque", ThreeValue.Encode(_opaque));
+		}
+
+		if (_isShadowMapWritten)
+		{
+			batch.Set(Handle, "shadowMap", ThreeValue.Encode(_shadowMap));
 		}
 
 		if (_isInspectorWritten)

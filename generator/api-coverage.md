@@ -506,14 +506,14 @@ three.js is reachable at all" and "how much of what we mirror is state".
 
 | bucket | what it means | all classes | emittable classes |
 |---|---|---|---|
-| MirroredState | state C# holds and writes through on change | 1132 | 917 |
-| Command | a method recorded as a call op, returning nothing or `this` | 747 | 303 |
-| AsyncQuery | a method whose result the caller needs back | 811 | 482 |
-| Skipped | not mirrored; see the skip list below | 958 | 737 |
+| MirroredState | state C# holds and writes through on change | 1149 | 932 |
+| Command | a method recorded as a call op, returning nothing or `this` | 758 | 313 |
+| AsyncQuery | a method whose result the caller needs back | 849 | 515 |
+| Skipped | not mirrored; see the skip list below | 892 | 679 |
 | **total** | | **3648** | **2439** |
 
 Two op kinds answer: **read**, which invokes a method, and **get**, which reads a property.
-482 of the async queries above sit on an emitted class and are generated as `…Async` methods, 172 of
+515 of the async queries above sit on an emitted class and are generated as `…Async` methods, 184 of
 them over the get op rather than the read op. Both kinds answer with a value where one can travel, and
 with a handle to an object where it cannot.
 
@@ -545,12 +545,12 @@ the README's coverage table.
 |---|---|---|
 | `NodeStackType` | 383 | declared under `src/nodes/**`, the TSL / WebGPU node stack outside the extracted surface |
 | `CallbackType` | 94 | a JavaScript callback; the wire format carries ops in one direction only |
-| `AnonymousObjectType` | 82 | an anonymous object literal type with no name to give a C# type |
 | `NotInstanceApi` | 79 | static, non-public or `@internal` — not part of the mirrored instance API |
 | `DomOrLibType` | 77 | a TypeScript lib or DOM type; C# holds no browser object and the wire has no encoding for one |
-| `OptionsInterface` | 55 | a structural interface — an options bag or an event map — with no C# type to be |
 | `UntypedValue` | 45 | declared `any` / `unknown`, or with no type at all |
-| `UnmappedUnion` | 38 | a union of several real alternatives in a position that holds one type — a property or a return type, since a required parameter becomes one overload per arm |
+| `AnonymousObjectType` | 40 | an anonymous object literal type with no name to give a C# type |
+| `UnmappedUnion` | 35 | a union of several real alternatives in a position that holds one type — a property or a return type, since a required parameter becomes one overload per arm |
+| `OptionsInterface` | 34 | a structural interface — an options bag or an event map — with no C# type to be |
 | `NotExported` | 19 | three.js's public barrel does not re-export it as a value, so the applier cannot reach it on `THREE` |
 | `UnmappedTypeAlias` | 17 | a type alias that is neither a constant group nor a rename of a mapped type |
 | `ExternalType` | 15 | declared outside the scanned `src/` surface |
@@ -562,7 +562,7 @@ the README's coverage table.
 | `CollectionType` | 3 | a tuple, which has no wire encoding, or an array whose elements have none — `ThreeValue.Encode` does walk a sequence element by element, so an array is exactly as encodable as what is in it |
 | `NoHandleForResult` | 1 | its result is neither a value the read op carries nor one object a handle could name — an array of objects needs a handle per element, not one for the result |
 
-<details><summary>Every skipped member (958)</summary>
+<details><summary>Every skipped member (892)</summary>
 
 | class | member | obstacle | why |
 |---|---|---|---|
@@ -584,7 +584,6 @@ the README's coverage table.
 | `AnimationMixer` | `property _bindingsByRootAndName` | `NotInstanceApi` | declared `protected`, so it is not part of the public API |
 | `AnimationMixer` | `property _actionsByClip` | `NotInstanceApi` | declared `protected`, so it is not part of the public API |
 | `AnimationMixer` | `property _accuIndex` | `NotInstanceApi` | declared `protected`, so it is not part of the public API |
-| `AnimationMixer` | `property stats` | `OptionsInterface` | `AnimationMixerStats` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `AnimationObjectGroup` | `method add` | `RestParameter` | parameter 'args' is a rest parameter (`Object3D[]`) |
 | `AnimationObjectGroup` | `method remove` | `RestParameter` | parameter 'args' is a rest parameter (`Object3D[]`) |
 | `AnimationObjectGroup` | `method uncache` | `RestParameter` | parameter 'args' is a rest parameter (`Object3D[]`) |
@@ -599,7 +598,6 @@ the README's coverage table.
 | `Audio` | `property gain` | `DomOrLibType` | `GainNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `property buffer` | `DomOrLibType` | `AudioBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `property source` | `DomOrLibType` | `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Audio` | `property sourceType` | `UnmappedUnion` | `"empty" | "audioNode" | "mediaNode" | "mediaStreamNode" | "buffer"` unions 5 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Audio` | `property filters` | `DomOrLibType` | `AudioNode[]` is an array whose element type cannot be mapped: `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `method getOutput` | `DomOrLibType` | return type: `GainNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Audio` | `method setNodeSource` | `DomOrLibType` | parameter 'audioNode': `AudioNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -639,14 +637,11 @@ the README's coverage table.
 | `BooleanKeyframeTrack` | `method toJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `Box2` | `method empty` | `UntypedValue` | return type: `any` carries no type information a C# signature could express |
 | `Box2` | `method isIntersectionBox` | `UntypedValue` | parameter 'b': `any` carries no type information a C# signature could express |
-| `BoxGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly width: number; readonly height: number; readonly depth: number; readonly widthSegments: number; readonly heightSegments: number; readonly depthSegments: number; }` is an anonymous object literal type with no named C# equivalent |
 | `BoxGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
-| `BufferAttribute` | `property updateRanges` | `AnonymousObjectType` | `Array<{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }>` is an array whose element type cannot be mapped: `{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }` is an anonymous object literal type with no named C# equivalent |
 | `BufferAttribute` | `property onUploadCallback` | `CallbackType` | `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BufferAttribute` | `method onUpload` | `CallbackType` | parameter 'callback': `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `BufferGeometry` | `property attributes` | `DomOrLibType` | `Record<string, BufferAttribute | InterleavedBufferAttribute>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `BufferGeometry` | `property morphAttributes` | `AnonymousObjectType` | `{ position?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; normal?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; color?: Array<BufferAttribute | InterleavedBufferAttribute> | undefined; }` is an anonymous object literal type with no named C# equivalent |
-| `BufferGeometry` | `property drawRange` | `AnonymousObjectType` | `{ start: number; count: number }` is an anonymous object literal type with no named C# equivalent |
 | `BufferGeometry` | `property userData` | `DomOrLibType` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `BufferGeometry` | `method setAttribute` | `UnerasableTypeParameter` | parameter 'name': type parameter `K` has neither a default nor a constraint, so erasing it leaves nothing to map to |
 | `BufferGeometry` | `method getAttribute` | `UnerasableTypeParameter` | parameter 'name': type parameter `K` has neither a default nor a constraint, so erasing it leaves nothing to map to |
@@ -654,15 +649,9 @@ the README's coverage table.
 | `BufferGeometry` | `method hasAttribute` | `UnmappedTypeSyntax` | parameter 'name': `keyof Attributes` is a TypeScript `typeOperator` type, which has no C# equivalent |
 | `BufferGeometry` | `method toJSON` | `OptionsInterface` | return type: `BufferGeometryJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `BufferGeometryLoader` | `method parse` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
-| `CameraHelper` | `property pointMap` | `AnonymousObjectType` | `{ [x: string]: number[]; }` is an anonymous object literal type with no named C# equivalent |
 | `CanvasTarget` | `property domElement` | `DomOrLibType` | `HTMLCanvasElement | OffscreenCanvas` unions 2 types, and every one of them is refused for the same reason: `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `CapsuleGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly radius: number; readonly height: number; readonly capSegments: number; readonly radialSegments: number; readonly heightSegments: number; }` is an anonymous object literal type with no named C# equivalent |
 | `CapsuleGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
-| `CatmullRomCurve3` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `CatmullRomCurve3` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `CatmullRomCurve3` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `CatmullRomCurve3` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `CircleGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly radius: number; readonly segments: number; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent |
 | `CircleGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `ClippingContext` | `property clippingGroupContexts` | `DomOrLibType` | `WeakMap<ClippingGroup, ClippingContext>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `ClippingContext` | `method update` | `NotExported` | parameter 'parentContext': `ClippingContext` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
@@ -679,14 +668,8 @@ the README's coverage table.
 | `CubeCamera` | `method update` | `OptionsInterface` | parameter 'renderer': `CubeCameraRenderer` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CubeDepthTexture` | `property images` | `UnmappedTypeAlias` | `CubeDepthTextureImageData` aliases `[ DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, DepthTextureImageData, ]`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `CubeTexture` | `property images` | `UntypedValue` | `TImage[]` is an array whose element type cannot be mapped: `unknown` carries no type information a C# signature could express |
-| `CubicBezierCurve` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `CubicBezierCurve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `CubicBezierCurve` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `CubicBezierCurve` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `CubicBezierCurve3` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `CubicBezierCurve3` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `CubicBezierCurve3` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `CubicBezierCurve3` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CubicInterpolant` | `method getSettings_` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
 | `Curve` | `method getPoint` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Curve` | `method getPointAt` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -694,10 +677,7 @@ the README's coverage table.
 | `Curve` | `method getSpacedPoints` | `UnmappedUnion` | return type: `TVector[]` is an array whose element type cannot be mapped: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Curve` | `method getTangent` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Curve` | `method getTangentAt` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `Curve` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `Curve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `Curve` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `Curve` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `CurvePath` | `property curves` | `AbstractClass` | `Array<Curve<TVector>>` is an array whose element type cannot be mapped: `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `CurvePath` | `method add` | `AbstractClass` | parameter 'curve': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
 | `CurvePath` | `method getPoint` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -708,9 +688,7 @@ the README's coverage table.
 | `CurvePath` | `method getPointAt` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getTangent` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `CurvePath` | `method getTangentAt` | `UnmappedUnion` | return type: `Vector2 | Vector3` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `CurvePath` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `CurvePath` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `CylinderGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly radiusTop: number; readonly radiusBottom: number; readonly height: number; readonly radialSegments: number; readonly heightSegments: number; readonly openEnded: boolean; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent |
 | `CylinderGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `DataArrayTexture` | `property layerUpdates` | `DomOrLibType` | `Set<number>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `DataTextureLoader` | `method parse` | `DomOrLibType` | parameter 'buffer': `ArrayBuffer` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -726,10 +704,7 @@ the README's coverage table.
 | `DiscreteInterpolant` | `method getSettings_` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
 | `Earcut` | `method triangulate` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `EdgesGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly geometry: TBufferGeometry | null; readonly thresholdAngle: number; }` is an anonymous object literal type with no named C# equivalent |
-| `EllipseCurve` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `EllipseCurve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `EllipseCurve` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `EllipseCurve` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Euler` | `property order` | `UnmappedTypeAlias` | `EulerOrder` cannot become a C# enum: already hand-written as `Kebechet.Blazor.ThreeJS.Math.EulerOrder`, because `Euler` is a hand-written math value rather than a generated class. Its rotation order crosses inside the tagged Euler value as an index the applier maps through `EULER_ORDERS`, so a second enum here would be a duplicate name carrying a different wire form |
 | `Euler` | `property _onChangeCallback` | `CallbackType` | `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Euler` | `property DEFAULT_ORDER` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
@@ -752,15 +727,11 @@ the README's coverage table.
 | `ImageBitmapLoader` | `method setOptions` | `DomOrLibType` | parameter 'options': `ImageBitmapOptions` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `ImageUtils` | `method getDataURL` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `ImageUtils` | `method sRGBToLinear` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
-| `Info` | `property render` | `AnonymousObjectType` | `{ calls: number; frameCalls: number; drawCalls: number; triangles: number; points: number; lines: number; timestamp: number; }` is an anonymous object literal type with no named C# equivalent |
-| `Info` | `property compute` | `AnonymousObjectType` | `{ calls: number; frameCalls: number; timestamp: number; }` is an anonymous object literal type with no named C# equivalent |
-| `Info` | `property memory` | `AnonymousObjectType` | `{ attributes: number; attributesSize: number; geometries: number; indexAttributes: number; indexAttributesSize: number; indirectStorageAttributes: number; indirectStorageAttributesSize: number; programs: number; programsSize: number; readbackBuffers: number; readbackBuffersSize: number; renderTargets: number; storageAttributes: number; storageAttributesSize: number; textures: number; texturesSize: number; uniformBuffers: number; uniformBuffersSize: number; total: number; }` is an anonymous object literal type with no named C# equivalent |
 | `InspectorBase` | `property currentFrame` | `UntypedValue` | `unknown` carries no type information a C# signature could express |
 | `InspectorBase` | `property nodeFrame` | `NodeStackType` | `NodeFrame` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `InspectorBase` | `method inspect` | `NodeStackType` | parameter 'node': `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `InspectorBase` | `method computeAsync` | `NodeStackType` | parameter 'computeNode': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `InspectorBase` | `method beginCompute` | `NodeStackType` | parameter 'computeNode': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `InterleavedBuffer` | `property updateRanges` | `AnonymousObjectType` | `Array<{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }>` is an array whose element type cannot be mapped: `{ /** * Position at which to start update. */ start: number; /** * The number of components to update. */ count: number; }` is an anonymous object literal type with no named C# equivalent |
 | `InterleavedBuffer` | `property onUploadCallback` | `CallbackType` | `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `InterleavedBuffer` | `method onUpload` | `CallbackType` | parameter 'callback': `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `InterleavedBuffer` | `method clone` | `AnonymousObjectType` | parameter 'data': `{}` is an anonymous object literal type with no named C# equivalent |
@@ -774,14 +745,12 @@ the README's coverage table.
 | `KeyframeTrack` | `property ValueBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `KeyframeTrack` | `method toJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `LOD` | `property levels` | `AnonymousObjectType` | `Array<{ /** The Object3D to display at this level. */ object: Object3D; /** The distance at which to display this level of detail. Expects a `Float`. */ distance: number; /** Threshold used to avoid flickering at LOD boundaries, as a fraction of distance. Expects a `Float`. */ hysteresis: number; }>` is an array whose element type cannot be mapped: `{ /** The Object3D to display at this level. */ object: Object3D; /** The distance at which to display this level of detail. Expects a `Float`. */ distance: number; /** Threshold used to avoid flickering at LOD boundaries, as a fraction of distance. Expects a `Float`. */ hysteresis: number; }` is an anonymous object literal type with no named C# equivalent |
-| `LatheGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly points: Vector2[]; readonly segments: number; readonly phiStart: number; readonly phiLength: number; }` is an anonymous object literal type with no named C# equivalent |
 | `LatheGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `LightShadow` | `property biasNode` | `NodeStackType` | `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LightShadow` | `method copy` | `NotExported` | parameter 'source': `LightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `LightShadow` | `method toJSON` | `OptionsInterface` | return type: `LightShadowJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Lighting` | `method createNode` | `NodeStackType` | return type: `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Lighting` | `method getNode` | `NodeStackType` | return type: `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `Line` | `property morphTargetDictionary` | `AnonymousObjectType` | `{ [key: string]: number }` is an anonymous object literal type with no named C# equivalent |
 | `Line2NodeMaterial` | `property offsetNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Line2NodeMaterial` | `property dashScaleNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Line2NodeMaterial` | `property dashSizeNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -810,14 +779,8 @@ the README's coverage table.
 | `LineBasicMaterial` | `property fragmentNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property vertexNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineBasicMaterial` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `LineCurve` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `LineCurve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `LineCurve` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `LineCurve` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `LineCurve3` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `LineCurve3` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `LineCurve3` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `LineCurve3` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `LineDashedMaterial` | `property offsetNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineDashedMaterial` | `property dashScaleNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `LineDashedMaterial` | `property dashSizeNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -829,11 +792,9 @@ the README's coverage table.
 | `LinearInterpolant` | `property settings` | `AnonymousObjectType` | `{}` is an anonymous object literal type with no named C# equivalent |
 | `LinearInterpolant` | `property DefaultSettings_` | `AnonymousObjectType` | `{}` is an anonymous object literal type with no named C# equivalent |
 | `LinearInterpolant` | `method getSettings_` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
-| `Loader` | `property requestHeader` | `AnonymousObjectType` | `{ [header: string]: string }` is an anonymous object literal type with no named C# equivalent |
 | `Loader` | `property DEFAULT_MATERIAL_NAME` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `Loader` | `method load` | `CallbackType` | parameter 'onLoad': `(data: TData) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Loader` | `method loadAsync` | `UntypedValue` | return type: `unknown` carries no type information a C# signature could express |
-| `Loader` | `method setRequestHeader` | `AnonymousObjectType` | parameter 'requestHeader': `{ [header: string]: string }` is an anonymous object literal type with no named C# equivalent |
 | `LoaderUtils` | `method extractUrlBase` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `LoaderUtils` | `method resolveURL` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `LoadingManager` | `property onStart` | `CallbackType` | `(url: string, loaded: number, total: number) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
@@ -858,18 +819,16 @@ the README's coverage table.
 | `Material` | `method fromJSON` | `OptionsInterface` | parameter 'json': `MaterialJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Material` | `property blendSrc` | `UnmappedTypeAlias` | `BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Material` | `property blendSrcAlpha` | `UnmappedTypeAlias` | `BlendingSrcFactor` aliases `BlendingDstFactor | typeof SrcAlphaSaturateFactor`, which is neither a group of numeric constants nor a type the mirror expresses |
-| `Material` | `property precision` | `UnmappedUnion` | `"highp" | "mediump" | "lowp"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Material` | `property userData` | `DomOrLibType` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `MaterialLoader` | `property textures` | `AnonymousObjectType` | `{ [key: string]: Texture }` is an anonymous object literal type with no named C# equivalent |
+| `MaterialLoader` | `property textures` | `AnonymousObjectType` | `{ [key: string]: Texture }` is a dictionary whose values cannot be mapped: they are not values the wire carries |
 | `MaterialLoader` | `method parse` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
-| `MaterialLoader` | `method setTextures` | `AnonymousObjectType` | parameter 'textures': `{ [key: string]: Texture }` is an anonymous object literal type with no named C# equivalent |
+| `MaterialLoader` | `method setTextures` | `AnonymousObjectType` | parameter 'textures': `{ [key: string]: Texture }` is a dictionary whose values cannot be mapped: they are not values the wire carries |
 | `MaterialLoader` | `method registerMaterial` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `Matrix2` | `property elements` | `UnmappedTypeAlias` | `Matrix2Tuple` aliases `[ n11: number, n12: number, n21: number, n22: number, ]`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Matrix3` | `property elements` | `UnmappedTypeAlias` | `Matrix3Tuple` aliases `[ n11: number, n12: number, n13: number, n21: number, n22: number, n23: number, n31: number, n32: number, n33: number, ]`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Matrix3` | `method toArray` | `UnmappedTypeAlias` | return type: `Matrix3Tuple` aliases `[ n11: number, n12: number, n13: number, n21: number, n22: number, n23: number, n31: number, n32: number, n33: number, ]`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Matrix4` | `property elements` | `UnmappedTypeAlias` | `Matrix4Tuple` aliases `[ n11: number, n12: number, n13: number, n14: number, n21: number, n22: number, n23: number, n24: number, n31: number, n32: number, n33: number, n34: number, n41: number, n42: number, n43: number, n44: number, ]`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Matrix4` | `method toArray` | `UnerasableTypeParameter` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
-| `Mesh` | `property morphTargetDictionary` | `AnonymousObjectType` | `{ [key: string]: number }` is an anonymous object literal type with no named C# equivalent |
 | `MeshBasicMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshBasicMaterial` | `property aoNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1084,12 +1043,12 @@ the README's coverage table.
 | `MeshToonMaterial` | `property fragmentNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property vertexNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `MeshToonMaterial` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `NodeLoader` | `property textures` | `AnonymousObjectType` | `{ [key: string]: Texture }` is an anonymous object literal type with no named C# equivalent |
-| `NodeLoader` | `property nodes` | `AnonymousObjectType` | `{ [type: string]: Node }` is an anonymous object literal type with no named C# equivalent |
+| `NodeLoader` | `property textures` | `AnonymousObjectType` | `{ [key: string]: Texture }` is a dictionary whose values cannot be mapped: they are not values the wire carries |
+| `NodeLoader` | `property nodes` | `AnonymousObjectType` | `{ [type: string]: Node }` is a dictionary whose values cannot be mapped: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeLoader` | `method parseNodes` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
 | `NodeLoader` | `method parse` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
-| `NodeLoader` | `method setTextures` | `AnonymousObjectType` | parameter 'textures': `{ [key: string]: Texture }` is an anonymous object literal type with no named C# equivalent |
-| `NodeLoader` | `method setNodes` | `AnonymousObjectType` | parameter 'value': `{ [type: string]: Node }` is an anonymous object literal type with no named C# equivalent |
+| `NodeLoader` | `method setTextures` | `AnonymousObjectType` | parameter 'textures': `{ [key: string]: Texture }` is a dictionary whose values cannot be mapped: they are not values the wire carries |
+| `NodeLoader` | `method setNodes` | `AnonymousObjectType` | parameter 'value': `{ [type: string]: Node }` is a dictionary whose values cannot be mapped: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeLoader` | `method createNodeFromType` | `NodeStackType` | return type: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeMaterial` | `method build` | `NodeStackType` | parameter 'builder': `NodeBuilder` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeMaterial` | `method setupObserver` | `NodeStackType` | parameter 'builder': `NodeBuilder` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1138,14 +1097,14 @@ the README's coverage table.
 | `NodeMaterial` | `property vertexNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeMaterial` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `NodeMaterialLoader` | `property nodes` | `OptionsInterface` | `NodeLoaderResult` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `NodeMaterialLoader` | `property nodeMaterials` | `AnonymousObjectType` | `{ [type: string]: NodeMaterial }` is an anonymous object literal type with no named C# equivalent |
+| `NodeMaterialLoader` | `property nodeMaterials` | `AnonymousObjectType` | `{ [type: string]: NodeMaterial }` is a dictionary whose values cannot be mapped: they are not values the wire carries |
 | `NodeMaterialLoader` | `method setNodes` | `OptionsInterface` | parameter 'value': `NodeLoaderResult` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `NodeMaterialLoader` | `method setNodeMaterials` | `AnonymousObjectType` | parameter 'value': `{ [type: string]: NodeMaterial }` is an anonymous object literal type with no named C# equivalent |
+| `NodeMaterialLoader` | `method setNodeMaterials` | `AnonymousObjectType` | parameter 'value': `{ [type: string]: NodeMaterial }` is a dictionary whose values cannot be mapped: they are not values the wire carries |
 | `NodeMaterialObserver` | `method containsNode` | `NodeStackType` | parameter 'builder': `NodeBuilder` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `NodeObjectLoader` | `property nodes` | `AnonymousObjectType` | `{ [type: string]: Node }` is an anonymous object literal type with no named C# equivalent |
-| `NodeObjectLoader` | `property nodeMaterials` | `AnonymousObjectType` | `{ [type: string]: NodeMaterial }` is an anonymous object literal type with no named C# equivalent |
-| `NodeObjectLoader` | `method setNodes` | `AnonymousObjectType` | parameter 'value': `{ [type: string]: Node }` is an anonymous object literal type with no named C# equivalent |
-| `NodeObjectLoader` | `method setNodeMaterials` | `AnonymousObjectType` | parameter 'value': `{ [type: string]: NodeMaterial }` is an anonymous object literal type with no named C# equivalent |
+| `NodeObjectLoader` | `property nodes` | `AnonymousObjectType` | `{ [type: string]: Node }` is a dictionary whose values cannot be mapped: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
+| `NodeObjectLoader` | `property nodeMaterials` | `AnonymousObjectType` | `{ [type: string]: NodeMaterial }` is a dictionary whose values cannot be mapped: they are not values the wire carries |
+| `NodeObjectLoader` | `method setNodes` | `AnonymousObjectType` | parameter 'value': `{ [type: string]: Node }` is a dictionary whose values cannot be mapped: `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
+| `NodeObjectLoader` | `method setNodeMaterials` | `AnonymousObjectType` | parameter 'value': `{ [type: string]: NodeMaterial }` is a dictionary whose values cannot be mapped: they are not values the wire carries |
 | `NodeObjectLoader` | `method parseNodes` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
 | `NumberKeyframeTrack` | `property TimeBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `NumberKeyframeTrack` | `property ValueBufferType` | `UnmappedUnion` | `TypedArrayConstructor | ArrayConstructor` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
@@ -1176,16 +1135,12 @@ the README's coverage table.
 | `ObjectLoader` | `method parseImagesAsync` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
 | `ObjectLoader` | `method parseTextures` | `UntypedValue` | parameter 'json': `unknown` carries no type information a C# signature could express |
 | `ObjectLoader` | `method parseObject` | `UntypedValue` | parameter 'data': `unknown` carries no type information a C# signature could express |
-| `OrthographicCamera` | `property view` | `AnonymousObjectType` | `{ enabled: boolean; fullWidth: number; fullHeight: number; offsetX: number; offsetY: number; width: number; height: number; }` is an anonymous object literal type with no named C# equivalent |
-| `PerspectiveCamera` | `property view` | `AnonymousObjectType` | `{ enabled: boolean; fullWidth: number; fullHeight: number; offsetX: number; offsetY: number; width: number; height: number; }` is an anonymous object literal type with no named C# equivalent |
 | `Plane` | `method isIntersectionLine` | `UntypedValue` | parameter 'l': `any` carries no type information a C# signature could express |
-| `PlaneGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly width: number; readonly height: number; readonly widthSegments: number; readonly heightSegments: number; }` is an anonymous object literal type with no named C# equivalent |
 | `PlaneGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `PointLight` | `property shadow` | `NotExported` | `PointLightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `PointLightShadow` | `property biasNode` | `NodeStackType` | `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointLightShadow` | `method copy` | `NotExported` | parameter 'source': `LightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `PointLightShadow` | `method toJSON` | `OptionsInterface` | return type: `LightShadowJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `Points` | `property morphTargetDictionary` | `AnonymousObjectType` | `{ [key: string]: number }` is an anonymous object literal type with no named C# equivalent |
 | `PointsMaterial` | `property sizeNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property rotationNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property scaleNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1213,10 +1168,8 @@ the README's coverage table.
 | `PointsMaterial` | `property vertexNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsMaterial` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `PointsNodeMaterial` | `property sizeNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `PolyhedronGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly vertices: number[]; readonly indices: number[]; readonly radius: number; readonly detail: number; }` is an anonymous object literal type with no named C# equivalent |
 | `PolyhedronGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `PositionalAudio` | `property panner` | `DomOrLibType` | `PannerNode` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `PositionalAudio` | `method getDistanceModel` | `UnmappedUnion` | return type: `"linear" | "inverse" | "exponential"` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `PropertyBinding` | `property parsedPath` | `UntypedValue` | `object` carries no type information a C# signature could express |
 | `PropertyBinding` | `property node` | `UntypedValue` | `object` carries no type information a C# signature could express |
 | `PropertyBinding` | `method create` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
@@ -1224,14 +1177,8 @@ the README's coverage table.
 | `PropertyBinding` | `method parseTrackName` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `PropertyBinding` | `method findNode` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `PropertyMixer` | `property buffer` | `UnmappedUnion` | `Float64Array | unknown[]` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `QuadraticBezierCurve` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `QuadraticBezierCurve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `QuadraticBezierCurve` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `QuadraticBezierCurve` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `QuadraticBezierCurve3` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `QuadraticBezierCurve3` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `QuadraticBezierCurve3` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `QuadraticBezierCurve3` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `Quaternion` | `property _onChangeCallback` | `CallbackType` | `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Quaternion` | `method toJSON` | `CollectionType` | return type: `[number, number, number, number]` is a tuple, which has no wire encoding |
 | `Quaternion` | `method _onChange` | `CallbackType` | parameter 'callback': `() => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
@@ -1259,7 +1206,6 @@ the README's coverage table.
 | `Renderer` | `property onDeviceLost` | `CallbackType` | `(info: DeviceLostInfo) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Renderer` | `property onError` | `CallbackType` | `(errorMessage: string) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Renderer` | `property _currentSourceMaterial` | `NotInstanceApi` | declared `private`, so it is not part of the public API |
-| `Renderer` | `property shadowMap` | `AnonymousObjectType` | `{ /** * - Whether to globally enable shadows or not. */ enabled: boolean; /** * - Whether to enable light transmission through non-opaque materials. */ transmitted: boolean; /** * - The shadow map type. */ type: ShadowMapType; }` is an anonymous object literal type with no named C# equivalent |
 | `Renderer` | `property xr` | `NotExported` | `XRManager` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `Renderer` | `property debug` | `AnonymousObjectType` | `{ /** * - Whether shader errors should be checked or not. */ checkShaderErrors: boolean; /** * - A callback function that is executed when a shader error happens. Only supported with WebGL 2 right now. */ onShaderError: | (( gl: WebGL2RenderingContext, programGPU: WebGLProgram, glVertexShader: WebGLShader, glFragmentShader: WebGLShader, ) => void) | null; /** * - Allows the get the raw shader code for the given scene, camera and 3D object. */ getShaderAsync: (scene: Scene, camera: Camera, object: Object3D) => Promise<{ fragmentShader: string | null; vertexShader: string | null; }>; }` is an anonymous object literal type with no named C# equivalent |
 | `Renderer` | `property domElement` | `DomOrLibType` | `HTMLCanvasElement` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -1279,15 +1225,13 @@ the README's coverage table.
 | `Renderer` | `method computeAsync` | `NodeStackType` | parameter 'computeNodes': `ComputeNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Renderer` | `method resolveTimestampsAsync` | `UnmappedTypeAlias` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
 | `Renderer` | `method renderObject` | `NodeStackType` | parameter 'lightsNode': `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `RingGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly innerRadius: number; readonly outerRadius: number; readonly thetaSegments: number; readonly phiSegments: number; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent |
 | `RingGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `SSSLightingModel` | `method direct` | `NodeStackType` | parameter 'input': `LightingModelDirectInput` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Scene` | `property background` | `UnmappedUnion` | `Color | Texture` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `Scene` | `property environmentNode` | `NodeStackType` | `Node<"vec3">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Scene` | `property backgroundNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `Scene` | `property fogNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `ShaderMaterial` | `property uniforms` | `AnonymousObjectType` | `{ [uniform: string]: IUniform }` is an anonymous object literal type with no named C# equivalent |
-| `ShaderMaterial` | `property extensions` | `AnonymousObjectType` | `{ clipCullDistance: boolean; multiDraw: boolean; }` is an anonymous object literal type with no named C# equivalent |
+| `ShaderMaterial` | `property uniforms` | `AnonymousObjectType` | `{ [uniform: string]: IUniform }` is a dictionary whose values cannot be mapped: `IUniform` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `ShaderMaterial` | `property defaultAttributeValues` | `AnonymousObjectType` | `{ color: [number, number, number]; uv: [number, number]; uv1: [number, number]; }` is an anonymous object literal type with no named C# equivalent |
 | `ShadowMaterial` | `property lightsNode` | `NodeStackType` | `LightsNode` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property envNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1312,7 +1256,6 @@ the README's coverage table.
 | `ShadowMaterial` | `property fragmentNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property vertexNode` | `NodeStackType` | `Node` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
 | `ShadowMaterial` | `property contextNode` | `NodeStackType` | `ContextNode<unknown>` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
-| `Shape` | `method extractPoints` | `AnonymousObjectType` | return type: `{ shape: Vector2[]; holes: Vector2[][]; }` is an anonymous object literal type with no named C# equivalent |
 | `ShapeGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly shapes: Shape | Shape[]; readonly curveSegments: number; }` is an anonymous object literal type with no named C# equivalent |
 | `ShapeGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `ShapePath` | `property userData` | `DomOrLibType` | `Record<string, unknown>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -1326,13 +1269,9 @@ the README's coverage table.
 | `Source` | `method toJSON` | `UnmappedUnion` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
 | `SourceJSON` | `property url` | `UnmappedTypeAlias` | `SerializedImage` aliases `| string | { data: number[]; width: number; height: number; type: string; }`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Sphere` | `method empty` | `UntypedValue` | return type: `any` carries no type information a C# signature could express |
-| `SphereGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly radius: number; readonly widthSegments: number; readonly heightSegments: number; readonly phiStart: number; readonly phiLength: number; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent |
 | `SphereGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `SphericalHarmonics3` | `method getBasisAt` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
-| `SplineCurve` | `method computeFrenetFrames` | `AnonymousObjectType` | return type: `{ tangents: Vector3[]; normals: Vector3[]; binormals: Vector3[]; }` is an anonymous object literal type with no named C# equivalent |
 | `SplineCurve` | `method copy` | `AbstractClass` | parameter 'source': `Curve<TVector>` is not an emitted class: the class is abstract and generic, so emitting it would move its members onto a type parameter erased more weakly than each concrete subclass erases it - the subclasses carry them instead |
-| `SplineCurve` | `method toJSON` | `OptionsInterface` | return type: `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
-| `SplineCurve` | `method fromJSON` | `OptionsInterface` | parameter 'json': `CurveJSON` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `SpotLight` | `property shadow` | `NotExported` | `SpotLightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `SpotLightShadow` | `method copy` | `NotExported` | parameter 'source': `SpotLightShadow` is not an emitted class: three.js's public barrel does not re-export it as a value — either nothing re-exports it, or it is exported `type`-only — so it is not reachable on the `THREE` namespace the applier looks names up on |
 | `SpotLightShadow` | `property biasNode` | `NodeStackType` | `Node<"float">` is declared under `src/nodes/**`, the TSL / WebGPU node stack that is outside the extracted API surface |
@@ -1373,7 +1312,6 @@ the README's coverage table.
 | `Texture` | `property mapping` | `UnmappedTypeAlias` | `AnyMapping` aliases `Mapping | CubeTextureMapping`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Texture` | `property format` | `UnmappedTypeAlias` | `AnyPixelFormat` aliases `PixelFormat | DepthTexturePixelFormat | CompressedPixelFormat`, which is neither a group of numeric constants nor a type the mirror expresses |
 | `Texture` | `property userData` | `DomOrLibType` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
-| `Texture` | `property updateRanges` | `AnonymousObjectType` | `Array<{ start: number; count: number }>` is an array whose element type cannot be mapped: `{ start: number; count: number }` is an anonymous object literal type with no named C# equivalent |
 | `Texture` | `property DEFAULT_ANISOTROPY` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `Texture` | `property DEFAULT_IMAGE` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `Texture` | `property DEFAULT_MAPPING` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
@@ -1385,9 +1323,7 @@ the README's coverage table.
 | `TimestampQueryPool` | `property pendingResolve` | `UnmappedUnion` | `boolean | Promise<number>` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `TimestampQueryPool` | `property timestamps` | `DomOrLibType` | `Map<string, number>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `TimestampQueryPool` | `method resolveQueriesAsync` | `UnmappedUnion` | return type: `Promise<number> | number` unions 2 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
-| `TorusGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly radius: number; readonly tube: number; readonly radialSegments: number; readonly tubularSegments: number; readonly arc: number; readonly thetaStart: number; readonly thetaLength: number; }` is an anonymous object literal type with no named C# equivalent |
 | `TorusGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
-| `TorusKnotGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly radius: number; readonly tube: number; readonly tubularSegments: number; readonly radialSegments: number; readonly p: number; readonly q: number; }` is an anonymous object literal type with no named C# equivalent |
 | `TorusKnotGeometry` | `method fromJSON` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `Triangle` | `method getInterpolatedAttribute` | `NotInstanceApi` | static; the mirror models instances, and a static write has no handle to address |
 | `TubeGeometry` | `property parameters` | `AnonymousObjectType` | `{ readonly path: Curve<Vector3>; readonly tubularSegments: number; readonly radius: number; readonly radialSegments: number; readonly closed: boolean; }` is an anonymous object literal type with no named C# equivalent |
@@ -1421,9 +1357,7 @@ the README's coverage table.
 | `WebGLIndexedBufferRenderer` | `property render` | `CallbackType` | `(start: number, count: number) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGLIndexedBufferRenderer` | `property renderInstances` | `CallbackType` | `(start: number, count: number, primcount: number) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `WebGLIndexedBufferRenderer` | `property renderMultiDraw` | `CallbackType` | `(starts: Int32Array, counts: Int32Array, drawCount: number) => void` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
-| `WebGLInfo` | `property memory` | `AnonymousObjectType` | `{ geometries: number; textures: number; }` is an anonymous object literal type with no named C# equivalent |
 | `WebGLInfo` | `property programs` | `UnwrappedClass` | `WebGLProgram[]` is an array whose element type cannot be mapped: `WebGLProgram` is not an emitted class: renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table |
-| `WebGLInfo` | `property render` | `AnonymousObjectType` | `{ calls: number; frame: number; lines: number; points: number; triangles: number; }` is an anonymous object literal type with no named C# equivalent |
 | `WebGLLights` | `property state` | `OptionsInterface` | `WebGLLightsState` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `WebGLProgram` | `property program` | `UntypedValue` | `unknown` carries no type information a C# signature could express |
 | `WebGLProgram` | `property vertexShader` | `DomOrLibType` | `WebGLShader` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
@@ -1432,7 +1366,7 @@ the README's coverage table.
 | `WebGLPrograms` | `property programs` | `UnwrappedClass` | `WebGLProgram[]` is an array whose element type cannot be mapped: `WebGLProgram` is not an emitted class: renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table |
 | `WebGLPrograms` | `method getParameters` | `OptionsInterface` | parameter 'lights': `WebGLLightsState` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `WebGLPrograms` | `method getProgramCacheKey` | `OptionsInterface` | parameter 'parameters': `WebGLProgramParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |
-| `WebGLPrograms` | `method getUniforms` | `AnonymousObjectType` | return type: `{ [uniform: string]: IUniform }` is an anonymous object literal type with no named C# equivalent |
+| `WebGLPrograms` | `method getUniforms` | `AnonymousObjectType` | return type: `{ [uniform: string]: IUniform }` is a dictionary whose values cannot be mapped: `IUniform` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `WebGLPrograms` | `method acquireProgram` | `OptionsInterface` | parameter 'parameters': `WebGLProgramParametersWithUniforms` is an interface, and the mirror has no representation for a structural type — only for classes it constructs by handle |
 | `WebGLPrograms` | `method releaseProgram` | `UnwrappedClass` | parameter 'program': `WebGLProgram` is not an emitted class: renderer internals under `src/renderers/webgl/**`; no consumer instantiates them and emitting them would inflate the coverage table |
 | `WebGLProperties` | `property has` | `CallbackType` | `(object: unknown) => boolean` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
@@ -1542,7 +1476,7 @@ as its numeric backing value — a string-valued group would arrive as a number 
 the string. The backing type is the narrowest that holds every value, so three.js's small flag sets stay
 `byte` and its WebGL constants land on `ushort`.
 
-**41 generated**: 39 inferred from a constant group, 2 from a real TypeScript `enum`.
+**44 generated**: 42 inferred from a constant group, 2 from a real TypeScript `enum`.
 33 are referenced by a mapped member today; the rest are emitted anyway, because an enum is a
 leaf type whose availability should not move with the class surface.
 
@@ -1551,6 +1485,7 @@ leaf type whose availability should not move with the class surface.
 | `AnimationActionLoopStyles` | constant group | 3 | 0 | `ushort` | yes |
 | `AnimationBlendMode` | constant group | 2 | 0 | `ushort` | yes |
 | `AttributeGPUType` | constant group | 2 | 0 | `ushort` | yes |
+| `AudioSourceType` | constant group | 5 | 0 | `byte` | no |
 | `BindMode` | constant group | 2 | 0 | `byte` | yes |
 | `Blending` | constant group | 7 | 0 | `byte` | yes |
 | `BlendingDstFactor` | constant group | 14 | 0 | `byte` | yes |
@@ -1565,6 +1500,7 @@ leaf type whose availability should not move with the class surface.
 | `DepthModes` | constant group | 8 | 0 | `byte` | yes |
 | `DepthPackingStrategies` | constant group | 4 | 0 | `ushort` | yes |
 | `DepthTexturePixelFormat` | constant group | 2 | 0 | `ushort` | yes |
+| `DistanceModel` | constant group | 3 | 0 | `byte` | no |
 | `GLSLVersion` | constant group | 2 | 0 | `byte` | yes |
 | `InterpolationEndingModes` | constant group | 3 | 0 | `ushort` | yes |
 | `InterpolationModes` | constant group | 4 | 0 | `ushort` | yes |
@@ -1578,6 +1514,7 @@ leaf type whose availability should not move with the class surface.
 | `NormalPacking` | constant group | 3 | 0 | `byte` | no |
 | `PixelFormat` | constant group | 11 | 0 | `ushort` | yes |
 | `PixelFormatGPU` | constant group | 60 | 0 | `byte` | yes |
+| `ShaderPrecision` | constant group | 3 | 0 | `byte` | no |
 | `ShadowMapType` | constant group | 4 | 0 | `byte` | yes |
 | `Side` | constant group | 3 | 0 | `byte` | yes |
 | `StencilFunc` | constant group | 8 | 0 | `ushort` | yes |

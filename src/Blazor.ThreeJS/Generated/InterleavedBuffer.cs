@@ -20,6 +20,7 @@ public class InterleavedBuffer : ThreeObject
 	private TypedArray _array;
 	private int _stride;
 	private Usage _usage;
+	private BufferAttributeUpdateRanges[] _updateRanges = [];
 	private int _version = 0;
 	private int _count = 0;
 	private bool _needsUpdate;
@@ -27,6 +28,7 @@ public class InterleavedBuffer : ThreeObject
 	private bool _isArrayWritten;
 	private bool _isStrideWritten;
 	private bool _isUsageWritten;
+	private bool _isUpdateRangesWritten;
 	private bool _isVersionWritten;
 	private bool _isCountWritten;
 	private bool _isNeedsUpdateWritten;
@@ -136,6 +138,27 @@ public class InterleavedBuffer : ThreeObject
 			_usage = value;
 			_isUsageWritten = true;
 			RecordSet("usage", value);
+		}
+	}
+
+	/// <summary>
+	/// This can be used to only update some components of stored data. Use the <c>.addUpdateRange</c>
+	/// function to add ranges to this array. Writing it records a <c>updateRanges</c> property write
+	/// once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public BufferAttributeUpdateRanges[] UpdateRanges
+	{
+		get { return _updateRanges; }
+		set
+		{
+			if (_updateRanges == value)
+			{
+				return;
+			}
+
+			_updateRanges = value;
+			_isUpdateRangesWritten = true;
+			RecordSet("updateRanges", value);
 		}
 	}
 
@@ -316,6 +339,11 @@ public class InterleavedBuffer : ThreeObject
 		if (_isUsageWritten)
 		{
 			batch.Set(Handle, "usage", ThreeValue.Encode(_usage));
+		}
+
+		if (_isUpdateRangesWritten)
+		{
+			batch.Set(Handle, "updateRanges", ThreeValue.Encode(_updateRanges));
 		}
 
 		if (_isVersionWritten)

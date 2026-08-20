@@ -15,8 +15,10 @@ public sealed class AnimationMixer : EventDispatcher
 	private readonly ThreeObject _root;
 	private float _time = 0f;
 	private float _timeScale = 1f;
+	private AnimationMixerStats _stats;
 	private bool _isTimeWritten;
 	private bool _isTimeScaleWritten;
+	private bool _isStatsWritten;
 
 	/// <summary>Constructs a new animation mixer.</summary>
 	/// <param name="root">The object whose animations shall be played by this mixer.</param>
@@ -91,6 +93,26 @@ public sealed class AnimationMixer : EventDispatcher
 			_timeScale = value;
 			_isTimeScaleWritten = true;
 			RecordSet("timeScale", value);
+		}
+	}
+
+	/// <summary>
+	/// The AnimationMixer stats track the actions of the mixer. Writing it records a <c>stats</c>
+	/// property write once this object is attached; writing the value already held records nothing.
+	/// </summary>
+	public AnimationMixerStats Stats
+	{
+		get { return _stats; }
+		set
+		{
+			if (_stats == value)
+			{
+				return;
+			}
+
+			_stats = value;
+			_isStatsWritten = true;
+			RecordSet("stats", value);
 		}
 	}
 
@@ -249,6 +271,11 @@ public sealed class AnimationMixer : EventDispatcher
 		if (_isTimeScaleWritten)
 		{
 			batch.Set(Handle, "timeScale", ThreeValue.Encode(_timeScale));
+		}
+
+		if (_isStatsWritten)
+		{
+			batch.Set(Handle, "stats", ThreeValue.Encode(_stats));
 		}
 	}
 }

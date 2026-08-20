@@ -85,6 +85,11 @@ foreach (var structure in structures.Used)
 	emittedFiles.Add(structureEmitter.Emit(structure));
 }
 
+foreach (var anonymous in structures.UsedAnonymous)
+{
+	emittedFiles.Add(structureEmitter.Emit(anonymous));
+}
+
 var stringValuedEnums = enums.Generatable
 	.Where(x => x.IsStringValued)
 	.ToList();

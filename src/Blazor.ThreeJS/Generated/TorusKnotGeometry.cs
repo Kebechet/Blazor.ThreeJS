@@ -82,4 +82,15 @@ public sealed class TorusKnotGeometry : BufferGeometry
 	{
 		get { return [_radius, _tube, _tubularSegments, _radialSegments, _p, _q]; }
 	}
+
+	/// <summary>
+	/// An object with a property for each of the constructor parameters. Read-only in three.js, so it
+	/// is read on demand rather than mirrored: records a get op, sends it behind every write already
+	/// pending, and completes with the value <c>parameters</c> held.
+	/// </summary>
+	/// <returns>The value <c>parameters</c> held, once the JavaScript side has answered.</returns>
+	public Task<TorusKnotGeometryParameters> ParametersAsync()
+	{
+		return GetAsync<TorusKnotGeometryParameters>("parameters");
+	}
 }

@@ -13,7 +13,7 @@ namespace Blazor.ThreeJS.E2E;
 internal sealed class DemoServer : IAsyncDisposable
 {
 	/// <summary>Project file of the WebAssembly host, relative to the repository root.</summary>
-	public static readonly string[] WebAssemblyHost = ["demo", "Blazor.ThreeJS.Demo", "Blazor.ThreeJS.Demo.csproj"];
+	public static readonly string[] WebAssemblyHost = ["demo", "Blazor.ThreeJS.Demo.Wasm", "Blazor.ThreeJS.Demo.Wasm.csproj"];
 
 	/// <summary>Project file of the Blazor Server host, relative to the repository root.</summary>
 	public static readonly string[] ServerHost = ["demo", "Blazor.ThreeJS.Demo.Server", "Blazor.ThreeJS.Demo.Server.csproj"];

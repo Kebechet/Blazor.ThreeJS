@@ -31,7 +31,7 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
  * relative specifier is resolved against.
  */
 const webRoots = [
-	{ directory: path.join(repositoryRoot, 'demo', 'Blazor.ThreeJS.Demo', 'wwwroot'), urlPrefix: '' },
+	{ directory: path.join(repositoryRoot, 'demo', 'Blazor.ThreeJS.Demo.Wasm', 'wwwroot'), urlPrefix: '' },
 	{
 		directory: path.join(repositoryRoot, 'demo', 'Blazor.ThreeJS.Stories', 'wwwroot'),
 		urlPrefix: '_content/Blazor.ThreeJS.Stories/'

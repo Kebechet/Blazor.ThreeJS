@@ -790,7 +790,7 @@ Every example above is a story in [the live storybook](https://kebechet.github.i
 which is the WebAssembly host published to GitHub Pages:
 
 ```powershell
-dotnet run --project demo/Blazor.ThreeJS.Demo
+dotnet run --project demo/Blazor.ThreeJS.Demo.Wasm
 ```
 
 The same stories run over a **Blazor Server** circuit from a second host:

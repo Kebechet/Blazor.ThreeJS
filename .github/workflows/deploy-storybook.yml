@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  DEMO_PATH: demo/Blazor.ThreeJS.Demo/Blazor.ThreeJS.Demo.csproj
+  DEMO_PATH: demo/Blazor.ThreeJS.Demo.Wasm/Blazor.ThreeJS.Demo.Wasm.csproj
   DOTNET_VERSION: '10.0.x'
   BUILD_CONFIGURATION: Release
   # Site is served from https://<owner>.github.io/<repo>/, so the app's base href must match.

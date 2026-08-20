@@ -9,7 +9,7 @@ demo process and browser:
 
 | collection | host | what only it can show |
 |---|---|---|
-| `DemoCollectionDefinition` | `demo/Blazor.ThreeJS.Demo` (WebAssembly) | the deployed storybook, including the shell page and its sub-path assets |
+| `DemoCollectionDefinition` | `demo/Blazor.ThreeJS.Demo.Wasm` (WebAssembly) | the deployed storybook, including the shell page and its sub-path assets |
 | `ServerDemoCollectionDefinition` | `demo/Blazor.ThreeJS.Demo.Server` (Blazor Server) | every op as a SignalR message, every pointer callback as a round trip |
 
 Both reference `demo/Blazor.ThreeJS.Stories`, so the stories are the same files and a story that behaves

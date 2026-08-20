@@ -8,6 +8,10 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <MD2RazorDefaultBaseClass>global::BlazingStory.Internals.Pages.MarkdownPageBase</MD2RazorDefaultBaseClass>
     <IsPackable>false</IsPackable>
+    <!-- The project gained a `.Wasm` suffix when a Server host joined it; the namespace did not.
+         Keeping it is what stops every `@using` and every file in the host from churning over a rename
+         that is about telling two hosts apart. Same reason `Blazor.ThreeJS.Stories` pins its own. -->
+    <RootNamespace>Blazor.ThreeJS.Demo</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

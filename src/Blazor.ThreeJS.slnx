@@ -1,7 +1,7 @@
 <Solution>
   <Project Path="Blazor.ThreeJS\Blazor.ThreeJS.csproj" />
   <Folder Name="/demo/">
-    <Project Path="..\demo\Blazor.ThreeJS.Demo\Blazor.ThreeJS.Demo.csproj" />
+    <Project Path="..\demo\Blazor.ThreeJS.Demo.Wasm\Blazor.ThreeJS.Demo.Wasm.csproj" />
     <Project Path="..\demo\Blazor.ThreeJS.Stories\Blazor.ThreeJS.Stories.csproj" />
     <Project Path="..\demo\Blazor.ThreeJS.Demo.Server\Blazor.ThreeJS.Demo.Server.csproj" />
   </Folder>

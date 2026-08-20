@@ -17,7 +17,7 @@ env:
   DOTNET_VERSION: '10.0.x'
   BUILD_CONFIGURATION: Release
   E2E_PROJECT: tests/Blazor.ThreeJS.E2E/Blazor.ThreeJS.E2E.csproj
-  DEMO_PROJECT: demo/Blazor.ThreeJS.Demo/Blazor.ThreeJS.Demo.csproj
+  DEMO_PROJECT: demo/Blazor.ThreeJS.Demo.Wasm/Blazor.ThreeJS.Demo.Wasm.csproj
   SERVER_DEMO_PROJECT: demo/Blazor.ThreeJS.Demo.Server/Blazor.ThreeJS.Demo.Server.csproj
 
 jobs:

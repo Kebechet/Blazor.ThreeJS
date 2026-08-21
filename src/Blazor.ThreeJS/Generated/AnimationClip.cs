@@ -126,27 +126,6 @@ public sealed class AnimationClip : ThreeObject
 		}
 	}
 
-	/// <summary>Factory method for creating an animation clip from the given JSON.</summary>
-	/// <param name="json">The serialized animation clip.</param>
-	public void Parse(AnimationClipJSON json)
-	{
-		RecordCall("parse", json);
-	}
-
-	/// <summary>
-	/// Returns a new animation clip from the passed morph targets array of a geometry, taking a name
-	/// and the number of frames per second. Note: The fps parameter is required, but the animation
-	/// speed can be overridden via <c>AnimationAction#setDuration</c>.
-	/// </summary>
-	/// <param name="name">The name of the animation clip.</param>
-	/// <param name="morphTargetSequence">A sequence of morph targets.</param>
-	/// <param name="fps">The Frames-Per-Second value.</param>
-	/// <param name="noLoop">Whether the clip should be no loop or not.</param>
-	public void CreateFromMorphTargetSequence(string name, MorphTarget[] morphTargetSequence, float fps, bool noLoop)
-	{
-		RecordCall("CreateFromMorphTargetSequence", name, morphTargetSequence, fps, noLoop);
-	}
-
 	/// <summary>
 	/// The UUID of the animation clip. Read-only in three.js, so it is read on demand rather than
 	/// mirrored: records a get op, sends it behind every write already pending, and completes with the
@@ -156,6 +135,20 @@ public sealed class AnimationClip : ThreeObject
 	public Task<string> UuidAsync()
 	{
 		return GetAsync<string>("uuid");
+	}
+
+	/// <summary>
+	/// Factory method for creating an animation clip from the given JSON. Records a read op, sends it
+	/// behind every write already pending, and completes with what <c>parse</c> returned.
+	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
+	/// <param name="json">The serialized animation clip.</param>
+	/// <returns>The value <c>parse</c> returned, once the JavaScript side has answered.</returns>
+	public static Task<AnimationClip?> ParseAsync(ThreeContext context, AnimationClipJSON json)
+	{
+		return context.CallStaticObjectAsync<AnimationClip>("AnimationClip", "parse", (adoptedBatch, adoptedHandle) => new AnimationClip(adoptedBatch, adoptedHandle), json);
 	}
 
 	/// <summary>
@@ -170,6 +163,33 @@ public sealed class AnimationClip : ThreeObject
 	public static Task<AnimationClipJSON> ToJSONAsync(ThreeContext context, AnimationClip clip)
 	{
 		return context.CallStaticAsync<AnimationClipJSON>("AnimationClip", "toJSON", clip);
+	}
+
+	/// <summary>
+	/// Returns a new animation clip from the passed morph targets array of a geometry, taking a name
+	/// and the number of frames per second. Note: The fps parameter is required, but the animation
+	/// speed can be overridden via <c>AnimationAction#setDuration</c>. Records a read op, sends it
+	/// behind every write already pending, and completes with what <c>CreateFromMorphTargetSequence</c>
+	/// returned.
+	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
+	/// <param name="name">The name of the animation clip.</param>
+	/// <param name="morphTargetSequence">A sequence of morph targets.</param>
+	/// <param name="fps">The Frames-Per-Second value.</param>
+	/// <param name="noLoop">Whether the clip should be no loop or not.</param>
+	/// <returns>
+	/// The value <c>CreateFromMorphTargetSequence</c> returned, once the JavaScript side has answered.
+	/// </returns>
+	public static Task<AnimationClip?> CreateFromMorphTargetSequenceAsync(
+		ThreeContext context,
+		string name,
+		MorphTarget[] morphTargetSequence,
+		float fps,
+		bool noLoop)
+	{
+		return context.CallStaticObjectAsync<AnimationClip>("AnimationClip", "CreateFromMorphTargetSequence", (adoptedBatch, adoptedHandle) => new AnimationClip(adoptedBatch, adoptedHandle), name, morphTargetSequence, fps, noLoop);
 	}
 
 	/// <summary>
@@ -190,7 +210,7 @@ public sealed class AnimationClip : ThreeObject
 		AnimationClip?[] objectOrClipArray,
 		string name)
 	{
-		return context.CallStaticAsync<AnimationClip>("AnimationClip", "findByName", objectOrClipArray, name);
+		return context.CallStaticObjectAsync<AnimationClip>("AnimationClip", "findByName", (adoptedBatch, adoptedHandle) => new AnimationClip(adoptedBatch, adoptedHandle), objectOrClipArray, name);
 	}
 
 	/// <summary>
@@ -208,7 +228,7 @@ public sealed class AnimationClip : ThreeObject
 	/// <returns>The value <c>findByName</c> returned, once the JavaScript side has answered.</returns>
 	public static Task<AnimationClip?> FindByNameAsync(ThreeContext context, Object3D objectOrClipArray, string name)
 	{
-		return context.CallStaticAsync<AnimationClip>("AnimationClip", "findByName", objectOrClipArray, name);
+		return context.CallStaticObjectAsync<AnimationClip>("AnimationClip", "findByName", (adoptedBatch, adoptedHandle) => new AnimationClip(adoptedBatch, adoptedHandle), objectOrClipArray, name);
 	}
 
 	/// <summary>
@@ -234,7 +254,7 @@ public sealed class AnimationClip : ThreeObject
 		float fps,
 		bool noLoop)
 	{
-		return context.CallStaticAsync<AnimationClip?[]>("AnimationClip", "CreateClipsFromMorphTargetSequences", morphTargets, fps, noLoop);
+		return context.CallStaticHandlesAsync<AnimationClip?[]>("AnimationClip", "CreateClipsFromMorphTargetSequences", morphTargets, fps, noLoop);
 	}
 
 	/// <summary>

@@ -34,10 +34,13 @@ public sealed class AudioContext : ThreeObject
 	}
 
 	/// <summary>Allows to set the global native audio context from outside.</summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="value">The native context to set.</param>
-	public void SetContext(AudioContext value)
+	public static void SetContext(ThreeContext context, AudioContext value)
 	{
-		RecordCall("setContext", value);
+		context.CallStatic("AudioContext", "setContext", value);
 	}
 
 	/// <summary>
@@ -50,6 +53,6 @@ public sealed class AudioContext : ThreeObject
 	/// <returns>The value <c>getContext</c> returned, once the JavaScript side has answered.</returns>
 	public static Task<AudioContext?> GetContextAsync(ThreeContext context)
 	{
-		return context.CallStaticAsync<AudioContext>("AudioContext", "getContext");
+		return context.CallStaticObjectAsync<AudioContext>("AudioContext", "getContext", (adoptedBatch, adoptedHandle) => new AudioContext(adoptedBatch, adoptedHandle));
 	}
 }

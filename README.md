@@ -452,14 +452,14 @@ serializing one would hand C# a plausible bag of numbers instead of a value. So 
 under a handle of its own and answers with a reference to that handle instead, which is what makes
 `renderer.shadowMap` and `mesh.CloneAsync()` reachable at all.
 
-On the generated classes that reaches **552 members**:
+On the generated classes that reaches **557 members**:
 
-- **436 answer with a value** - 250 methods (focal length and effective field of view, elapsed time,
+- **437 answer with a value** - 251 methods (focal length and effective field of view, elapsed time,
   curve lengths, instance matrices and colours, vertex positions, layer tests) and 186 read-only
   properties (`uuid`, `instanceCount`, and three.js's own `isMesh`-style type tags). A read-only property
   is read on demand rather than mirrored, because three.js is the only side that ever assigns it: a C#
   property would imply the mirror knew the value without asking.
-- **105 answer with a mirrored object** - `Task<T?>` over the generated type, adopted under the handle the
+- **109 answer with a mirrored object** - `Task<T?>` over the generated type, adopted under the handle the
   applier registered it beneath. A handle this context already mirrors resolves back to that same C#
   object rather than to a second wrapper of it - which is what makes a method returning its own
   receiver safe - and `null` means the member genuinely held none.

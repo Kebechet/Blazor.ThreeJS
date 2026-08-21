@@ -167,17 +167,6 @@ public partial class ThreeCanvas
 	}
 
 	/// <summary>
-	/// Imports the interop module and creates the JavaScript-side context, assigning
-	/// <see cref="_threeContext"/> once <c>createContext</c> returns. Deliberately does not check for
-	/// a disposal racing it and does not touch <see cref="OnReady"/> — both belong to
-	/// <see cref="OnAfterRenderAsync"/>'s continuation, which resumes after this task completes. That
-	/// split is what lets <see cref="DisposeAsync"/> await this task unconditionally: every step in it
-	/// is framework JS interop, so a dead circuit faults it rather than hanging it. The module
-	/// reference is stored before <c>createContext</c> runs so it is still releasable if that call
-	/// throws — it does when WebGL is unavailable or the browser's live-context limit is reached. The
-	/// reference to this component is stored before the call for the same reason.
-	/// </summary>
-	/// <summary>
 	/// The first line of a failure message, which for a JavaScript exception is the sentence naming the
 	/// cause — everything after it is the browser's stack, addressed to whoever opens the console rather
 	/// than to whoever is looking at the page. The whole exception still reaches
@@ -222,6 +211,17 @@ public partial class ThreeCanvas
 		await OnInitializationFailed.InvokeAsync(exception);
 	}
 
+	/// <summary>
+	/// Imports the interop module and creates the JavaScript-side context, assigning
+	/// <see cref="_threeContext"/> once <c>createContext</c> returns. Deliberately does not check for
+	/// a disposal racing it and does not touch <see cref="OnReady"/> — both belong to
+	/// <see cref="OnAfterRenderAsync"/>'s continuation, which resumes after this task completes. That
+	/// split is what lets <see cref="DisposeAsync"/> await this task unconditionally: every step in it
+	/// is framework JS interop, so a dead circuit faults it rather than hanging it. The module
+	/// reference is stored before <c>createContext</c> runs so it is still releasable if that call
+	/// throws — it does when WebGL is unavailable or the browser's live-context limit is reached. The
+	/// reference to this component is stored before the call for the same reason.
+	/// </summary>
 	private async Task CreateContextAsync()
 	{
 		var module = await _jsRuntime.InvokeAsync<IJSObjectReference>("import", ModulePath);

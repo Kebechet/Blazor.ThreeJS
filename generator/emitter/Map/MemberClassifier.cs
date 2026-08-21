@@ -209,12 +209,16 @@ internal sealed class MemberClassifier
 			// recording it as a call op is exact. A `this`-returning method with none has nothing to
 			// mutate itself with, so the return value is the whole point of calling it.
 			//
+			// A static has no `this` to mutate at all, so a static whose return type names its own class
+			// is a factory (`AnimationClip.parse`), and dropping its return value would discard the very
+			// object it exists to build. Only instance methods can be fluent.
+			//
 			// Except `clone`, which takes an argument and still allocates: `Object3D.clone(recursive)` is
 			// the one signature in the snapshot where both are true. Recording it as a call op would build
 			// a three.js object and drop the only reference to it, behind a C# method whose own upstream
 			// documentation promises a return value. The parameter count cannot tell the two apart, so the
 			// name is what does — see IsAllocatingSelfReturn.
-			if (signature.Parameters.Count > 0 && !IsAllocatingSelfReturn(method.Name))
+			if (!method.IsStatic && signature.Parameters.Count > 0 && !IsAllocatingSelfReturn(method.Name))
 			{
 				row.Bucket = MemberBucket.Command;
 				return row;
@@ -298,8 +302,12 @@ internal sealed class MemberClassifier
 
 		row.CSharpTypeName = returnMapping.CSharpTypeName;
 		row.ReturnMapping = returnMapping;
-		row.AnswersWithHandles = returnMapping.Kind is TypeMappingKind.Sequence or TypeMappingKind.Dictionary
-			&& returnMapping.ElementMapping?.Kind == TypeMappingKind.GeneratedWrapperClass;
+
+		// Asked transitively rather than only of a collection's direct element: `Intersection[]` is an
+		// array of plain records, but each record's `object` member is the mesh that was hit, and the
+		// encoder refuses a mesh on the value channel — the read has to ask for handles for the whole
+		// result to come back at all.
+		row.AnswersWithHandles = _mapper.AnswersWithHandles(returnMapping);
 		row.Bucket = MemberBucket.AsyncQuery;
 		return row;
 	}

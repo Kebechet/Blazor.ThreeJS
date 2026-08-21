@@ -7,6 +7,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <LangVersion>latest</LangVersion>
+    <!-- The doc file above ships in the package; doc-comment warnings are kept fatal so a
+         misplaced, duplicate, or missing doc block cannot ship silently again. -->
+    <WarningsAsErrors>$(WarningsAsErrors);CS1571;CS1572;CS1573;CS1574;CS1587;CS1591;CS1592;CS1710;CS1723;CS1734</WarningsAsErrors>
   </PropertyGroup>
 
   <PropertyGroup Label="NugetProperties">
@@ -22,7 +25,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageIcon>icon.png</PackageIcon>
     <PackageTags>blazor;threejs;three;3d;webgl;graphics;scene;rendering</PackageTags>
-    <Version>0.185.1</Version>
+    <Version>0.185.1.1</Version>
     <!-- First release, so nothing here describes a change: a break against a version nobody could
          have installed is noise on the package page. Breaks belong here from the second release on. -->
     <PackageReleaseNotes>First release, wrapping three.js r185. A typed C# scene graph generated from @types/three, with batched interop: a frame costs one call however many properties it changed, which is what makes it usable over a Blazor Server circuit. Includes glTF loading with the animation clips a file brings along, optional DRACO and KTX2 decoding, OrbitControls, pointer picking, and TSL shading on the WebGPU renderer. The three.js bundle ships with the package - no npm, no CDN, no script tags.</PackageReleaseNotes>

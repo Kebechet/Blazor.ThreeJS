@@ -324,7 +324,10 @@ internal sealed class ClassSurfaceResolver
 	{
 		foreach (var property in properties)
 		{
-			if (!takenNames.Add(property.Name))
+			// Statics and instance members live in separate TypeScript namespaces, so a name is only
+			// taken within its own namespace: `AnimationClip` declares both a static and an instance
+			// `toJSON`, and keying on the bare name silently dropped whichever came second.
+			if (!takenNames.Add(TakenNameKey(property.Name, property.IsStatic)))
 			{
 				continue;
 			}
@@ -341,7 +344,7 @@ internal sealed class ClassSurfaceResolver
 
 		foreach (var method in methods)
 		{
-			if (!takenNames.Add(method.Name))
+			if (!takenNames.Add(TakenNameKey(method.Name, method.IsStatic)))
 			{
 				continue;
 			}
@@ -355,6 +358,18 @@ internal sealed class ClassSurfaceResolver
 				TypeParameters = typeParameters
 			});
 		}
+	}
+
+	/// <summary>
+	/// The key a member claims its name under: statics and instance members shadow within their own
+	/// namespace, never across, exactly as TypeScript resolves them.
+	/// </summary>
+	/// <param name="name">Member name.</param>
+	/// <param name="isStatic">Whether the member is static.</param>
+	/// <returns>The claim key.</returns>
+	private static string TakenNameKey(string name, bool isStatic)
+	{
+		return isStatic ? "static " + name : name;
 	}
 }
 

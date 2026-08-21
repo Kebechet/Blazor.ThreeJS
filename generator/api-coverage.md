@@ -130,7 +130,7 @@ Three things are resolved, in this order:
 
 | where the member came from | members |
 |---|---|
-| declared on the class itself | 2365 |
+| declared on the class itself | 2372 |
 | reached through the interface three.js merges into the class | 878 |
 | folded in from an ancestor with no C# type of its own | 400 |
 | merged in by a `declare module` block | 5 |
@@ -511,17 +511,17 @@ three.js is reachable at all" and "how much of what we mirror is state".
 | bucket | what it means | all classes | emittable classes |
 |---|---|---|---|
 | MirroredState | state C# holds and writes through on change | 1164 | 947 |
-| Command | a method recorded as a call op, returning nothing or `this` | 799 | 345 |
-| AsyncQuery | a method whose result the caller needs back | 892 | 552 |
+| Command | a method recorded as a call op, returning nothing or `this` | 796 | 342 |
+| AsyncQuery | a method whose result the caller needs back | 902 | 557 |
 | Skipped | not mirrored; see the skip list below | 793 | 597 |
-| **total** | | **3648** | **2441** |
+| **total** | | **3655** | **2443** |
 
 Two op kinds answer: **read**, which invokes a method, and **get**, which reads a property.
-552 of the async queries above sit on an emitted class and are generated as `…Async` methods, 187 of
+557 of the async queries above sit on an emitted class and are generated as `…Async` methods, 187 of
 them over the get op rather than the read op. Both kinds answer with a value where one can travel, and
 with a handle to an object where it cannot.
 
-⚠️ **30 methods declare more than one TypeScript overload, and only the first is classified.** Each
+⚠️ **31 methods declare more than one TypeScript overload, and only the first is classified.** Each
 stands for several C# overloads; the classification says what the first signature is, not how many methods
 a full run would emit. Rule 7's arm overloads are a different thing — those come from one signature whose
 parameter unions several types, and are emitted in full.

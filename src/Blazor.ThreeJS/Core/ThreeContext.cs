@@ -21,6 +21,7 @@ public sealed class ThreeContext : IAsyncDisposable
 
 	private readonly IJSObjectReference _module;
 	private readonly int _contextId;
+	private ThreeObject? _activeOrbitControls;
 
 	/// <summary>
 	/// Objects that have a pointer-event subscriber, keyed by the handle the browser names in a
@@ -242,6 +243,66 @@ public sealed class ThreeContext : IAsyncDisposable
 		var encodedArgs = args.Select(ThreeValue.Encode).ToArray();
 		ThreeObject.AttachMirroredArguments(Batch, args);
 		return AwaitValueAsync<TValue>(Batch.ReadStatic(typeName, member, encodedArgs), 0, $"{typeName}.{member}");
+	}
+
+	/// <summary>
+	/// Invokes a static method whose result carries mirrored objects — as elements, or inside a
+	/// structure's members — and so has to ask the applier for handles. The static counterpart of
+	/// <c>ThreeObject.RecordReadHandles</c>; see that for why such a result has no value encoding.
+	/// </summary>
+	/// <typeparam name="TValue">The collection or structure type the query declares it returns.</typeparam>
+	/// <param name="typeName">three.js name of the class.</param>
+	/// <param name="member">Name of the static method.</param>
+	/// <param name="args">Positional arguments, encoded here rather than by the caller.</param>
+	/// <returns>The decoded result.</returns>
+	public Task<TValue> CallStaticHandlesAsync<TValue>(string typeName, string member, params object?[] args)
+	{
+		var encodedArgs = args.Select(ThreeValue.Encode).ToArray();
+		ThreeObject.AttachMirroredArguments(Batch, args);
+		return AwaitValueAsync<TValue>(Batch.ReadStatic(typeName, member, encodedArgs, mintsHandle: true), 0, $"{typeName}.{member}");
+	}
+
+	/// <summary>
+	/// Invokes a static method whose return value is a mirrored three.js object, and hands back the C#
+	/// type the generated signature declares. The static counterpart of
+	/// <c>ThreeObject.RecordReadObject</c>: a static factory (`AnimationClip.parse`) answers with an
+	/// object the applier registers under a fresh handle, which this adopts.
+	/// </summary>
+	/// <typeparam name="TValue">Mirrored type the method returns.</typeparam>
+	/// <param name="typeName">three.js name of the class.</param>
+	/// <param name="member">Name of the static method.</param>
+	/// <param name="adopt">Builds the wrapper for a handle this context does not already mirror.</param>
+	/// <param name="args">Positional arguments, encoded here rather than by the caller.</param>
+	/// <returns>The returned object, or <see langword="null"/> when the method returned none.</returns>
+	internal async Task<TValue?> CallStaticObjectAsync<TValue>(
+		string typeName,
+		string member,
+		Func<ThreeBatch, int, TValue> adopt,
+		params object?[] args)
+		where TValue : ThreeObject
+	{
+		var encodedArgs = args.Select(ThreeValue.Encode).ToArray();
+		ThreeObject.AttachMirroredArguments(Batch, args);
+		var reference = await AwaitValueAsync<ThreeObjectReference?>(
+			Batch.ReadStatic(typeName, member, encodedArgs, mintsHandle: true), 0, $"{typeName}.{member}").ConfigureAwait(false);
+		return ThreeObject.AdoptTyped(this, $"{typeName}.{member}", reference, adopt);
+	}
+
+	/// <summary>
+	/// Invokes a static method whose return value is a three.js object no mirrored class describes, and
+	/// hands back the untyped wrapper. The static counterpart of <c>ThreeObject.CallObjectAsync</c>.
+	/// </summary>
+	/// <param name="typeName">three.js name of the class.</param>
+	/// <param name="member">Name of the static method.</param>
+	/// <param name="args">Positional arguments, encoded here rather than by the caller.</param>
+	/// <returns>The returned object under its own handle, or <see langword="null"/> when it returned none.</returns>
+	public async Task<Primitive?> CallStaticObjectAsync(string typeName, string member, params object?[] args)
+	{
+		var encodedArgs = args.Select(ThreeValue.Encode).ToArray();
+		ThreeObject.AttachMirroredArguments(Batch, args);
+		var reference = await AwaitValueAsync<ThreeObjectReference?>(
+			Batch.ReadStatic(typeName, member, encodedArgs, mintsHandle: true), 0, $"{typeName}.{member}").ConfigureAwait(false);
+		return ThreeObject.Adopt(this, $"{typeName}.{member}", reference);
 	}
 
 	/// <summary>
@@ -506,6 +567,41 @@ public sealed class ThreeContext : IAsyncDisposable
 	internal async Task<int> AttachOrbitControlsAsync(int cameraHandle)
 	{
 		return await _module.InvokeAsync<int>("attachOrbitControls", _contextId, cameraHandle);
+	}
+
+	/// <summary>
+	/// Records <paramref name="controls"/> as the one attached set, spending the mirror of any set it
+	/// replaced. The browser holds a single controls slot per canvas and attaching detaches the
+	/// previous occupant there; without this, the old C# wrapper would go on recording writes against
+	/// the handle the browser just retired.
+	/// </summary>
+	/// <param name="controls">The freshly attached controls.</param>
+	internal void ReplaceActiveOrbitControls(ThreeObject controls)
+	{
+		if (_activeOrbitControls is { } replaced)
+		{
+			replaced.Batch = null;
+		}
+
+		_activeOrbitControls = controls;
+	}
+
+	/// <summary>Whether <paramref name="controls"/> is the set currently occupying the browser's slot.</summary>
+	/// <param name="controls">The controls asking.</param>
+	/// <returns><see langword="true"/> when it is the attached set.</returns>
+	internal bool IsActiveOrbitControls(ThreeObject controls)
+	{
+		return ReferenceEquals(_activeOrbitControls, controls);
+	}
+
+	/// <summary>Forgets <paramref name="controls"/> as the attached set, if it still is.</summary>
+	/// <param name="controls">The controls detaching.</param>
+	internal void ClearActiveOrbitControls(ThreeObject controls)
+	{
+		if (ReferenceEquals(_activeOrbitControls, controls))
+		{
+			_activeOrbitControls = null;
+		}
 	}
 
 	/// <summary>

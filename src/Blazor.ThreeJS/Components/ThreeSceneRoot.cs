@@ -22,7 +22,8 @@ internal sealed class ThreeSceneRoot : ComponentBase, IThreeSlot
 	[Parameter] public RenderFragment? ChildContent { get; set; }
 
 	private readonly Scene _scene = new();
-	private Camera? _activeCamera;
+	private readonly List<Camera> _cameras = [];
+	private Camera? _renderedCamera;
 	private bool _isActive;
 
 	/// <summary>
@@ -71,14 +72,31 @@ internal sealed class ThreeSceneRoot : ComponentBase, IThreeSlot
 	}
 
 	/// <summary>
-	/// Records the camera the scene is rendered through. The first one wins: a scene has exactly one
-	/// active camera, and quietly switching to whichever camera component happened to initialize last
-	/// would make the rendered view depend on markup order in a way nothing announces.
+	/// Records a camera the scene could be rendered through. The first registered one wins: a scene has
+	/// exactly one active camera, and quietly switching to whichever camera component happened to
+	/// initialize last would make the rendered view depend on markup order in a way nothing announces.
+	/// The rest wait in registration order, so that removing the active camera promotes the next one
+	/// rather than freezing the canvas on a handle the browser has retired.
 	/// </summary>
 	/// <param name="camera">A camera component's mirrored camera.</param>
 	public void RegisterCamera(Camera camera)
 	{
-		_activeCamera ??= camera;
+		if (!_cameras.Contains(camera))
+		{
+			_cameras.Add(camera);
+		}
+	}
+
+	/// <summary>
+	/// Takes a disposed camera component's camera out of the running. When it was the active one, the
+	/// next render's activation pass re-points the renderer at the next registered camera — see
+	/// <see cref="ActivateWhenReadyAsync"/> — and with no camera left, rendering pauses until one
+	/// appears, which is also what an empty scene does.
+	/// </summary>
+	/// <param name="camera">The camera being removed.</param>
+	public void UnregisterCamera(Camera camera)
+	{
+		_cameras.Remove(camera);
 	}
 
 	/// <summary>
@@ -120,36 +138,56 @@ internal sealed class ThreeSceneRoot : ComponentBase, IThreeSlot
 	}
 
 	/// <summary>
-	/// Attaches the scene and the camera and tells the renderer to draw them, once and only once.
+	/// Attaches the scene and the camera and tells the renderer to draw them, then keeps the renderer
+	/// pointed at a live camera on every render after that.
 	/// <para>
 	/// A scene with objects in it and no camera is a mistake and says so; a scene with nothing in it at
 	/// all is markup that has not produced its content yet, and simply waits.
 	/// </para>
+	/// <para>
+	/// Once active, this watches for the active camera changing under it: conditional markup that swaps
+	/// one camera component for another disposes the camera the renderer draws through, and without
+	/// re-pointing the renderer here the canvas would freeze on the retired handle with no error
+	/// anywhere. A swap that leaves no camera at all pauses rendering — the browser-side loop skips a
+	/// frame whose camera handle resolves to nothing — until a camera component appears again.
+	/// </para>
 	/// </summary>
-	/// <returns>A task that completes once the scene is being rendered, or immediately if it is not ready.</returns>
+	/// <returns>A task that completes once the renderer points at the current camera, or immediately if the scene is not ready.</returns>
 	/// <exception cref="InvalidOperationException">Thrown when the scene has objects in it but no camera.</exception>
 	private async Task ActivateWhenReadyAsync()
 	{
-		if (_isActive || Context is not { } threeContext)
+		if (Context is not { } threeContext)
 		{
 			return;
 		}
 
-		if (_activeCamera is null)
+		var activeCamera = _cameras.FirstOrDefault();
+		if (!_isActive)
 		{
-			if (_scene.Children.Any())
+			if (activeCamera is null)
 			{
-				throw new InvalidOperationException(
-					$"The scene written inside this '{nameof(ThreeCanvas)}' has objects in it but no camera, so there is no point of view to " +
-					$"render it from. Add a camera component — '{nameof(ThreePerspectiveCamera)}' or '{nameof(ThreeOrthographicCamera)}' — to " +
-					$"the markup.");
+				if (_scene.Children.Any())
+				{
+					throw new InvalidOperationException(
+						$"The scene written inside this '{nameof(ThreeCanvas)}' has objects in it but no camera, so there is no point of view to " +
+						$"render it from. Add a camera component — '{nameof(ThreePerspectiveCamera)}' or '{nameof(ThreeOrthographicCamera)}' — to " +
+						$"the markup.");
+				}
+
+				return;
 			}
 
+			_isActive = true;
+			_renderedCamera = activeCamera;
+			await threeContext.SetActiveSceneAsync(_scene, activeCamera);
 			return;
 		}
 
-		_isActive = true;
-		await threeContext.SetActiveSceneAsync(_scene, _activeCamera);
+		if (activeCamera is not null && !ReferenceEquals(activeCamera, _renderedCamera))
+		{
+			_renderedCamera = activeCamera;
+			await threeContext.SetActiveSceneAsync(_scene, activeCamera);
+		}
 	}
 
 	/// <summary>

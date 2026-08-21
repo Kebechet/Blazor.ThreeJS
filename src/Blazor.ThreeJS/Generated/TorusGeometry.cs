@@ -91,13 +91,6 @@ public sealed class TorusGeometry : BufferGeometry
 		}
 	}
 
-	/// <summary>Records a call to <c>fromJSON</c> on the JavaScript-side object.</summary>
-	/// <param name="data">Value forwarded to the <c>data</c> argument.</param>
-	public void FromJSON(TorusGeometryJSON data)
-	{
-		RecordCall("fromJSON", data);
-	}
-
 	/// <summary>
 	/// An object with a property for each of the constructor parameters. Read-only in three.js, so it
 	/// is read on demand rather than mirrored: records a get op, sends it behind every write already
@@ -107,5 +100,19 @@ public sealed class TorusGeometry : BufferGeometry
 	public Task<TorusGeometryParameters> ParametersAsync()
 	{
 		return GetAsync<TorusGeometryParameters>("parameters");
+	}
+
+	/// <summary>
+	/// Reads <c>fromJSON</c> back from the JavaScript-side object. Records a read op, sends it behind
+	/// every write already pending, and completes with what <c>fromJSON</c> returned.
+	/// </summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
+	/// <param name="data">Value forwarded to the <c>data</c> argument.</param>
+	/// <returns>The value <c>fromJSON</c> returned, once the JavaScript side has answered.</returns>
+	public static Task<TorusGeometry?> FromJSONAsync(ThreeContext context, TorusGeometryJSON data)
+	{
+		return context.CallStaticObjectAsync<TorusGeometry>("TorusGeometry", "fromJSON", (adoptedBatch, adoptedHandle) => new TorusGeometry(adoptedBatch, adoptedHandle), data);
 	}
 }

@@ -116,7 +116,7 @@ internal sealed class ThreeBatch
 	/// </summary>
 	/// <param name="handle">Handle of the object to invoke the method on.</param>
 	/// <param name="member">Name of the method to invoke.</param>
-	/// <param name="args">Positional arguments to pass to the method.</param>
+	/// <param name="args">Positional arguments, already in wire form.</param>
 	public void Call(int handle, string member, object?[] args)
 	{
 		InvalidateSetCoalescing(handle);
@@ -140,8 +140,9 @@ internal sealed class ThreeBatch
 	/// <param name="typeName">three.js name of the class, resolved on <c>THREE</c> by the applier.</param>
 	/// <param name="member">Name of the static method to invoke.</param>
 	/// <param name="args">Positional arguments, already in wire form.</param>
+	/// <param name="mintsHandle">Whether the applier should answer with a handle instead of a value.</param>
 	/// <returns>The request id the result row will carry.</returns>
-	public int ReadStatic(string typeName, string member, object?[] args)
+	public int ReadStatic(string typeName, string member, object?[] args, bool mintsHandle = false)
 	{
 		// No handle, so nothing to invalidate: a static belongs to the class rather than to any object,
 		// and no pending write to any object can be observed by it.
@@ -152,7 +153,8 @@ internal sealed class ThreeBatch
 			Type = typeName,
 			Member = member,
 			Args = args,
-			RequestId = _nextRequestId
+			RequestId = _nextRequestId,
+			MintsHandle = mintsHandle
 		});
 
 		return _nextRequestId;
@@ -189,7 +191,7 @@ internal sealed class ThreeBatch
 	/// </summary>
 	/// <param name="handle">Handle of the object to invoke the method on.</param>
 	/// <param name="member">Name of the method to invoke.</param>
-	/// <param name="args">Positional arguments to pass to the method.</param>
+	/// <param name="args">Positional arguments, already in wire form.</param>
 	/// <param name="mintsHandle">Whether the applier should answer with a handle instead of a value.</param>
 	/// <returns>The request id identifying this read in the applier's response.</returns>
 	public int Read(int handle, string member, object?[] args, bool mintsHandle = false)

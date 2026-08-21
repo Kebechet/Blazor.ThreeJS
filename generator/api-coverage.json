@@ -7,15 +7,15 @@
     "outOfSurfaceClasses": 53,
     "blockedClasses": 29,
     "reachableClasses": 264,
-    "members": 3648,
+    "members": 3655,
     "mirroredState": 1164,
-    "commands": 799,
-    "asyncQueries": 892,
+    "commands": 796,
+    "asyncQueries": 902,
     "untypedObjectQueries": 11,
     "skippedMembers": 793,
-    "reachableMembers": 2441,
-    "generatedMembers": 1844,
-    "strandedMembers": 1207
+    "reachableMembers": 2443,
+    "generatedMembers": 1846,
+    "strandedMembers": 1212
   },
   "classes": [
     {
@@ -4591,7 +4591,8 @@
       "member": "parse",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Command"
+      "bucket": "AsyncQuery",
+      "type": "AnimationClip"
     },
     {
       "class": "AnimationClip",
@@ -4606,7 +4607,8 @@
       "member": "CreateFromMorphTargetSequence",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Command"
+      "bucket": "AsyncQuery",
+      "type": "AnimationClip"
     },
     {
       "class": "AnimationClip",
@@ -4663,6 +4665,14 @@
       "origin": "Declared",
       "bucket": "AsyncQuery",
       "type": "AnimationClip"
+    },
+    {
+      "class": "AnimationClip",
+      "member": "toJSON",
+      "kind": "Method",
+      "origin": "Declared",
+      "bucket": "AsyncQuery",
+      "type": "AnimationClipJSON"
     },
     {
       "class": "AnimationLoader",
@@ -14458,6 +14468,14 @@
       "kind": "Method",
       "origin": "Declared",
       "bucket": "Command"
+    },
+    {
+      "class": "MaterialLoader",
+      "member": "createMaterialFromType",
+      "kind": "Method",
+      "origin": "Declared",
+      "bucket": "AsyncQuery",
+      "type": "Material"
     },
     {
       "class": "MaterialLoader",
@@ -28996,7 +29014,8 @@
       "member": "fromJSON",
       "kind": "Method",
       "origin": "Declared",
-      "bucket": "Command"
+      "bucket": "AsyncQuery",
+      "type": "TorusGeometry"
     },
     {
       "class": "TorusKnotGeometry",
@@ -29165,11 +29184,51 @@
     },
     {
       "class": "Triangle",
+      "member": "getNormal",
+      "kind": "Method",
+      "origin": "Declared",
+      "bucket": "AsyncQuery",
+      "type": "Vector3"
+    },
+    {
+      "class": "Triangle",
+      "member": "getBarycoord",
+      "kind": "Method",
+      "origin": "Declared",
+      "bucket": "AsyncQuery",
+      "type": "Vector3"
+    },
+    {
+      "class": "Triangle",
+      "member": "containsPoint",
+      "kind": "Method",
+      "origin": "Declared",
+      "bucket": "AsyncQuery",
+      "type": "bool"
+    },
+    {
+      "class": "Triangle",
+      "member": "getInterpolation",
+      "kind": "Method",
+      "origin": "Declared",
+      "bucket": "AsyncQuery",
+      "type": "Vector2"
+    },
+    {
+      "class": "Triangle",
       "member": "getInterpolatedAttribute",
       "kind": "Method",
       "origin": "Declared",
       "bucket": "AsyncQuery",
       "type": "Vector2"
+    },
+    {
+      "class": "Triangle",
+      "member": "isFrontFacing",
+      "kind": "Method",
+      "origin": "Declared",
+      "bucket": "AsyncQuery",
+      "type": "bool"
     },
     {
       "class": "TubeGeometry",

@@ -96,15 +96,15 @@ public sealed class OrbitControls : ThreeObject
 				return;
 			}
 
-			_minDistance = ThrowIfNotFinite(value, nameof(MinDistance));
+			_minDistance = ThrowIfNaN(value, nameof(MinDistance));
 			RecordSet("minDistance", value);
 		}
 	}
 
 	/// <summary>
 	/// How far the camera may be dollied out. Defaults to <see cref="float.PositiveInfinity"/>, as
-	/// three.js's does — which is a value that cannot be written back once you have moved away from
-	/// it, since JSON has no way to spell infinity.
+	/// three.js's does, and writing infinity back restores that unbounded default: the wire carries it
+	/// as a tagged token, so it survives the trip JSON alone could not spell.
 	/// </summary>
 	public float MaxDistance
 	{
@@ -116,7 +116,7 @@ public sealed class OrbitControls : ThreeObject
 				return;
 			}
 
-			_maxDistance = ThrowIfNotFinite(value, nameof(MaxDistance));
+			_maxDistance = ThrowIfNaN(value, nameof(MaxDistance));
 			RecordSet("maxDistance", value);
 		}
 	}
@@ -132,7 +132,7 @@ public sealed class OrbitControls : ThreeObject
 				return;
 			}
 
-			_minPolarAngle = ThrowIfNotFinite(value, nameof(MinPolarAngle));
+			_minPolarAngle = ThrowIfNaN(value, nameof(MinPolarAngle));
 			RecordSet("minPolarAngle", value);
 		}
 	}
@@ -148,7 +148,7 @@ public sealed class OrbitControls : ThreeObject
 				return;
 			}
 
-			_maxPolarAngle = ThrowIfNotFinite(value, nameof(MaxPolarAngle));
+			_maxPolarAngle = ThrowIfNaN(value, nameof(MaxPolarAngle));
 			RecordSet("maxPolarAngle", value);
 		}
 	}
@@ -183,7 +183,7 @@ public sealed class OrbitControls : ThreeObject
 				return;
 			}
 
-			_dampingFactor = ThrowIfNotFinite(value, nameof(DampingFactor));
+			_dampingFactor = ThrowIfNaN(value, nameof(DampingFactor));
 			RecordSet("dampingFactor", value);
 		}
 	}
@@ -215,7 +215,7 @@ public sealed class OrbitControls : ThreeObject
 				return;
 			}
 
-			_zoomSpeed = ThrowIfNotFinite(value, nameof(ZoomSpeed));
+			_zoomSpeed = ThrowIfNaN(value, nameof(ZoomSpeed));
 			RecordSet("zoomSpeed", value);
 		}
 	}
@@ -247,7 +247,7 @@ public sealed class OrbitControls : ThreeObject
 				return;
 			}
 
-			_rotateSpeed = ThrowIfNotFinite(value, nameof(RotateSpeed));
+			_rotateSpeed = ThrowIfNaN(value, nameof(RotateSpeed));
 			RecordSet("rotateSpeed", value);
 		}
 	}
@@ -279,7 +279,7 @@ public sealed class OrbitControls : ThreeObject
 				return;
 			}
 
-			_panSpeed = ThrowIfNotFinite(value, nameof(PanSpeed));
+			_panSpeed = ThrowIfNaN(value, nameof(PanSpeed));
 			RecordSet("panSpeed", value);
 		}
 	}
@@ -314,7 +314,7 @@ public sealed class OrbitControls : ThreeObject
 				return;
 			}
 
-			_autoRotateSpeed = ThrowIfNotFinite(value, nameof(AutoRotateSpeed));
+			_autoRotateSpeed = ThrowIfNaN(value, nameof(AutoRotateSpeed));
 			RecordSet("autoRotateSpeed", value);
 		}
 	}
@@ -375,7 +375,13 @@ public sealed class OrbitControls : ThreeObject
 		await context.FlushAsync();
 
 		var handle = await context.AttachOrbitControlsAsync(camera.Handle);
-		return new OrbitControls(handle, context, camera);
+		var controls = new OrbitControls(handle, context, camera);
+
+		// The browser holds one controls slot per canvas, and attaching evicted whatever occupied it.
+		// Spending the evicted mirror here is what keeps its writes from addressing the handle the
+		// browser just retired.
+		context.ReplaceActiveOrbitControls(controls);
+		return controls;
 	}
 
 	/// <summary>
@@ -390,10 +396,21 @@ public sealed class OrbitControls : ThreeObject
 	/// Disposing the context detaches too, so this is only needed to stop orbiting while the canvas
 	/// lives on.
 	/// </para>
+	/// <para>
+	/// A set that a later <see cref="AttachAsync"/> already replaced only spends itself here: the
+	/// browser detached it at the moment of the replacement, and reaching for the canvas now would
+	/// take the replacement's listeners off instead.
+	/// </para>
 	/// </summary>
 	public async Task DetachAsync()
 	{
 		Batch = null;
+		if (!_context.IsActiveOrbitControls(this))
+		{
+			return;
+		}
+
+		_context.ClearActiveOrbitControls(this);
 		await _context.DetachOrbitControlsAsync();
 	}
 
@@ -464,18 +481,18 @@ public sealed class OrbitControls : ThreeObject
 	}
 
 	/// <summary>
-	/// Rejects a value the wire cannot carry. System.Text.Json writes no infinity and no NaN, so one
-	/// reaching a flush would fail the whole batch with a message naming neither this property nor this
-	/// object. three.js's own default for <see cref="MaxDistance"/> is infinity, which is why the
-	/// getters may return it even though the setters will not take it.
+	/// Rejects NaN, the one number no bound or speed can mean anything by: three.js compares against
+	/// it and every comparison is false, so the controls would quietly stop clamping with no error
+	/// anywhere. Infinity passes — the wire spells it as a tagged token the applier reads back exactly,
+	/// and it is three.js's own default for <see cref="MaxDistance"/>, so writing it back has to work.
 	/// </summary>
 	/// <param name="value">The value being assigned.</param>
 	/// <param name="member">Name of the property, for the failure message.</param>
-	/// <returns><paramref name="value"/>, when it is finite.</returns>
-	/// <exception cref="ArgumentOutOfRangeException">Thrown when the value is infinite or NaN.</exception>
-	private static float ThrowIfNotFinite(float value, string member)
+	/// <returns><paramref name="value"/>, when it is a number.</returns>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown when the value is NaN.</exception>
+	private static float ThrowIfNaN(float value, string member)
 	{
-		if (!float.IsInfinity(value) && !float.IsNaN(value))
+		if (!float.IsNaN(value))
 		{
 			return value;
 		}
@@ -483,7 +500,7 @@ public sealed class OrbitControls : ThreeObject
 		throw new ArgumentOutOfRangeException(
 			nameof(value),
 			value,
-			$"'{member}' cannot be set to {value}: JSON has no representation for infinity or NaN, so the whole batch carrying it would fail to serialize. " +
-			$"Use a large finite value instead.");
+			$"'{member}' cannot be set to NaN: three.js clamps against this value, every comparison with NaN is false, " +
+			$"and the controls would silently stop honouring the bound.");
 	}
 }

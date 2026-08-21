@@ -84,4 +84,36 @@ public sealed class GLTFModel
 	{
 		return Animations.FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.Ordinal));
 	}
+
+	/// <summary>
+	/// Releases everything this load brought in: the geometries, materials and textures the browser
+	/// retains for the graph, and every handle minted for the file's nodes and clips. Without this, a
+	/// loaded model stays resident for the life of the canvas even after its scene node is removed —
+	/// the browser has no way to know C# is done with it.
+	/// <para>
+	/// Remove <see cref="Scene"/> from whatever it was added to first; the release does not detach it.
+	/// The op travels with the next flush, like every other recorded instruction. Afterwards every
+	/// mirror this model handed out — <see cref="Scene"/>, <see cref="Nodes"/>,
+	/// <see cref="Animations"/> — is spent: a write records nothing and a read fails at the call site.
+	/// Calling this twice is a no-op the second time.
+	/// </para>
+	/// </summary>
+	public void Unload()
+	{
+		// One dispose op, for the root: the applier releases the whole graph off it and retires every
+		// handle it minted for the file. The node and clip mirrors are spent locally rather than each
+		// recording a dispose of their own, which would name handles the applier drops in that same
+		// sweep.
+		Scene.RetireHandle();
+		Scene.RetireLocally();
+		foreach (var node in Nodes)
+		{
+			node.RetireLocally();
+		}
+
+		foreach (var animation in Animations)
+		{
+			animation.Clip.RetireLocally();
+		}
+	}
 }

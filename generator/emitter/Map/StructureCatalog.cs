@@ -240,6 +240,32 @@ internal sealed class StructureCatalog
 	}
 
 	/// <summary>
+	/// The resolved member types of one structure, named interface or anonymous alike, so a caller can
+	/// ask what a structure carries without re-deriving how its members map.
+	/// </summary>
+	/// <param name="name">The structure's C# name.</param>
+	/// <param name="mapper">Type mapper, used to resolve a named interface's members.</param>
+	/// <returns>The member mappings, empty when the name resolves to no structure.</returns>
+	public IReadOnlyList<TypeMapping> MemberMappingsOf(string name, TypeMapper mapper)
+	{
+		if (_interfacesByName.TryGetValue(name, out var irInterface))
+		{
+			return PropertiesOf(irInterface)
+				.Select(x => mapper.Map(x.Type, new TypeMappingContext
+				{
+					MemberName = x.Name,
+					NumericKind = x.NumericKind,
+					TypeParameters = irInterface.TypeParameters,
+					DeclaringClassName = name
+				}))
+				.ToList();
+		}
+
+		return _anonymousByShape.Values.FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.Ordinal))
+			?.Members.Select(x => x.Mapping).ToList() ?? [];
+	}
+
+	/// <summary>
 	/// An interface's own properties plus every one it inherits, base-first.
 	/// <para>
 	/// A record standing for `CurvePathJSON` has to carry `CurveJSON`'s members too - three.js sends one

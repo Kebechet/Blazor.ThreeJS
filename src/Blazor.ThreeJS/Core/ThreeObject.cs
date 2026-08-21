@@ -555,7 +555,7 @@ public abstract class ThreeObject
 	/// an object the declared return type does not describe, which a fresh wrapper would paper over by
 	/// producing a second mirror of one object.
 	/// </exception>
-	private static TValue? AdoptTyped<TValue>(
+	internal static TValue? AdoptTyped<TValue>(
 		ThreeContext context,
 		string member,
 		ThreeObjectReference? reference,
@@ -639,6 +639,23 @@ public abstract class ThreeObject
 		// handle cannot resolve back to a mirror of an object neither side has any more.
 		batch.Context?.Unregister(this);
 		batch.Dispose(Handle);
+	}
+
+	/// <summary>
+	/// Spends this mirror without recording a dispose op: unregisters it from the context and detaches
+	/// it from the batch, so a later write records nothing and a later read fails at the call site.
+	/// For a handle some other op already retires wholesale — a loaded graph's nodes and clips all go
+	/// with the root's dispose — where an op of its own would name a handle the applier has already
+	/// dropped.
+	/// </summary>
+	internal void RetireLocally()
+	{
+		if (Batch is { } batch)
+		{
+			batch.Context?.Unregister(this);
+		}
+
+		Batch = null;
 	}
 
 	/// <summary>

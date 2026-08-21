@@ -171,16 +171,15 @@ function assignIfDefined(target, key, value) {
 }
 
 /**
- * The names the shipped three.js bundle actually puts on `THREE`. Read by importing the vendored
+ * What the shipped three.js bundle actually puts on `THREE`. Read by importing the vendored
  * module, which is the same object `three-interop.js` indexes, so this is the runtime truth rather
- * than a second reading of the types.
+ * than a second reading of the types — for the values as well as the names.
  */
-async function readRuntimeExportNames() {
+async function readRuntimeExports() {
 	if (!fs.existsSync(RUNTIME_BUNDLE_PATH)) {
 		throw new Error(`The vendored three.js bundle is missing at '${toPosix(RUNTIME_BUNDLE_PATH)}'.`);
 	}
-	const bundle = await import(url.pathToFileURL(RUNTIME_BUNDLE_PATH).href);
-	return new Set(Object.keys(bundle));
+	return await import(url.pathToFileURL(RUNTIME_BUNDLE_PATH).href);
 }
 
 async function main() {
@@ -193,7 +192,8 @@ async function main() {
 		process.exit(1);
 	}
 
-	const runtimeExportNames = await readRuntimeExportNames();
+	const runtimeExports = await readRuntimeExports();
+	const runtimeExportNames = new Set(Object.keys(runtimeExports));
 
 	const allFiles = discoverSourceFiles(SOURCE_ROOT).sort(byText);
 	const inScopeFiles = allFiles.filter((x) => !isExcluded(x));
@@ -423,6 +423,7 @@ async function main() {
 	const moduleAugmentations = [];
 	const reExports = [];
 	let constantsSkippedOutOfScope = 0;
+	const constantsCorrectedFromRuntime = [];
 
 	/**
 	 * Whether the public barrel publishes a **value** under this name - the question that decides
@@ -806,10 +807,26 @@ async function main() {
 						constantsSkippedOutOfScope++;
 						continue;
 					}
+					const name = declaration.name.getText();
+
+					// A declared literal is only the typings' claim about the runtime; where the shipped
+					// bundle exports a different primitive under the same name, the bundle wins, because it
+					// is what three-interop.js executes against. @types/three declares
+					// `DecrementStencilOp: 7283` while the runtime exports 7683 — a typo a mirrored enum
+					// must not inherit as a wrong WebGL constant.
+					if (type?.kind === "literal" && (type.literalKind === "number" || type.literalKind === "string")) {
+						const runtimeValue = runtimeExports[name];
+						if ((typeof runtimeValue === "number" || typeof runtimeValue === "string") && runtimeValue !== type.value) {
+							constantsCorrectedFromRuntime.push({ name, declared: type.value, runtime: runtimeValue });
+							type.value = runtimeValue;
+							type.text = JSON.stringify(runtimeValue);
+						}
+					}
+
 					const ir = {
-						name: declaration.name.getText(),
+						name,
 						file,
-						isExported: isPublicValue(declaration.name.getText()),
+						isExported: isPublicValue(name),
 						isConst: (statement.declarationList.flags & ts.NodeFlags.Const) !== 0,
 					};
 					assignIfDefined(ir, "type", type);
@@ -996,6 +1013,7 @@ async function main() {
 				runtimeExports: runtimeExportNames.size,
 				valueExportsAbsentFromRuntime: [...publicSurface.valueExports].filter((x) => !runtimeExportNames.has(x)).sort(byText),
 				runtimeExportsAbsentFromBarrel: [...runtimeExportNames].filter((x) => !publicSurface.valueExports.has(x)).sort(byText),
+				constantsCorrectedFromRuntime: constantsCorrectedFromRuntime.sort((a, b) => byText(a.name, b.name)),
 			},
 			counts: {
 				filesScanned: inScopeFiles.length,

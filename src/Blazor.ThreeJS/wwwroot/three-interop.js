@@ -231,20 +231,32 @@ export function createContextAround(renderer, dotNetRef) {
 // warning saying so. Nothing here has to choose: the scene renders either way.
 export async function createContext(canvas, dotNetRef) {
     const renderer = new THREE.WebGPURenderer({ canvas, antialias: true, alpha: true });
-    renderer.setPixelRatio(globalThis.devicePixelRatio || 1);
-    await renderer.init();
+    let context;
 
-    const context = createContextAround(renderer, dotNetRef);
+    // A failure before the context is registered leaves nothing disposeContext could ever reach — no
+    // context id exists yet — so the renderer has to be released here or it leaks its GPU resources
+    // across every failed mount attempt. init() is the realistic thrower: it is what runs out of live
+    // WebGL contexts when the browser's limit is reached.
+    try {
+        renderer.setPixelRatio(globalThis.devicePixelRatio || 1);
+        await renderer.init();
 
-    applySize(context, canvas.clientWidth, canvas.clientHeight);
+        context = createContextAround(renderer, dotNetRef);
 
-    const resizeObserver = new ResizeObserver(entries => {
-        for (const entry of entries) {
-            applySize(context, entry.contentRect.width, entry.contentRect.height);
-        }
-    });
-    resizeObserver.observe(canvas);
-    context.resizeObserver = resizeObserver;
+        applySize(context, canvas.clientWidth, canvas.clientHeight);
+
+        const resizeObserver = new ResizeObserver(entries => {
+            for (const entry of entries) {
+                applySize(context, entry.contentRect.width, entry.contentRect.height);
+            }
+        });
+        resizeObserver.observe(canvas);
+        context.resizeObserver = resizeObserver;
+    } catch (error) {
+        context?.resizeObserver?.disconnect();
+        renderer.dispose();
+        throw error;
+    }
 
     const contextId = nextContextId++;
     contexts.set(contextId, context);
@@ -409,7 +421,7 @@ export function applyOp(context, op) {
             // whole graph it brought in, and retires every handle minted for it.
             releaseLoadedGraph(context, op.h);
 
-            context.objects.delete(op.h);
+            unregisterObject(context, op.h);
 
             // A disposed object must stop being hit-testable, and the pointer-target map must not go
             // on holding the only reference to it.
@@ -896,6 +908,18 @@ function registerObject(context, handle, object) {
     context.handlesByObject.set(object, handle);
 }
 
+// Takes an object out of both tables at once, the inverse of `registerObject` and one function for
+// the same reason. Deleting only the forward entry leaves the reverse one behind for as long as the
+// object itself stays alive — a disposed mesh still sitting in a group, say — and `handleFor` would
+// then answer with the retired handle, which no forward lookup resolves any more.
+function unregisterObject(context, handle) {
+    const object = context.objects.get(handle);
+    context.objects.delete(handle);
+    if (object !== undefined && context.handlesByObject) {
+        context.handlesByObject.delete(object);
+    }
+}
+
 // Imports a consumer's own JavaScript module and adopts the TSL node one of its exports produces.
 // This is the only route custom shading has under this renderer, which converts every material into a
 // node graph and rejects `ShaderMaterial` outright.
@@ -1219,7 +1243,7 @@ function releaseLoadedGraph(context, handle) {
     });
 
     for (const nodeHandle of graph.handles) {
-        context.objects.delete(nodeHandle);
+        unregisterObject(context, nodeHandle);
         setPointerTarget(context, nodeHandle, null);
     }
 
@@ -1300,7 +1324,7 @@ export function detachControls(context) {
     }
 
     context.controls.dispose();
-    context.objects.delete(context.controlsHandle);
+    unregisterObject(context, context.controlsHandle);
     context.controls = null;
     context.controlsHandle = 0;
 }

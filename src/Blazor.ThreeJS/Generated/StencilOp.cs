@@ -22,7 +22,7 @@ public enum StencilOp : ushort
 	IncrementStencilOp = 7682,
 
 	/// <summary>Matches <c>THREE.DecrementStencilOp</c>.</summary>
-	DecrementStencilOp = 7283,
+	DecrementStencilOp = 7683,
 
 	/// <summary>Matches <c>THREE.IncrementWrapStencilOp</c>.</summary>
 	IncrementWrapStencilOp = 34055,

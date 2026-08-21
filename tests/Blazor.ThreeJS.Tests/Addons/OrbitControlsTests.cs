@@ -140,11 +140,8 @@ public class OrbitControlsTests
 		callOps.ShouldBe(["saveState", "reset"]);
 	}
 
-	[Theory]
-	[InlineData(float.PositiveInfinity)]
-	[InlineData(float.NegativeInfinity)]
-	[InlineData(float.NaN)]
-	public async Task OrbitControls_NonFiniteLimit_ThrowsAtTheAssignment(float value)
+	[Fact]
+	public async Task OrbitControls_NaNLimit_ThrowsAtTheAssignment()
 	{
 		// Arrange
 		var module = new AddonJsObjectReference { OrbitControlsHandle = -9 };
@@ -152,12 +149,39 @@ public class OrbitControlsTests
 		var controls = await OrbitControls.AttachAsync(context, new PerspectiveCamera());
 
 		// Act
-		// JSON writes no infinity and no NaN, so one reaching a flush would fail the whole batch with a
-		// message naming neither this property nor this object.
-		var exception = Record.Exception(() => controls.MinDistance = value);
+		// three.js clamps against these bounds, every comparison with NaN is false, and the controls
+		// would silently stop honouring the bound - so the assignment is where it has to fail.
+		var exception = Record.Exception(() => controls.MinDistance = float.NaN);
 
 		// Assert
 		exception.ShouldBeOfType<ArgumentOutOfRangeException>();
+	}
+
+	[Theory]
+	[InlineData(float.PositiveInfinity)]
+	[InlineData(float.NegativeInfinity)]
+	public async Task OrbitControls_InfiniteLimit_RecordsTheWriteAndSurvivesTheFlush(float value)
+	{
+		// Arrange
+		var module = new AddonJsObjectReference { OrbitControlsHandle = -9 };
+		var context = new ThreeContext(module, contextId: 1);
+		var controls = await OrbitControls.AttachAsync(context, new PerspectiveCamera());
+
+		// Act
+		// Infinity is meaningful to these bounds - it is three.js's own default for maxDistance - and
+		// the wire spells it as a tagged token, so restoring the unbounded default has to work.
+		controls.MaxDistance = 50f;
+		controls.MaxDistance = value;
+		await context.FlushAsync();
+
+		// Assert
+		// One op, not two: consecutive sets of one member coalesce, and the survivor carries the
+		// infinity. That it serializes as the tagged token is pinned by the wire-format tests.
+		controls.MaxDistance.ShouldBe(value);
+		module.AllOps
+			.Where(x => x.Kind == ThreeOpKind.Set && x.Handle == -9 && x.Member == "maxDistance")
+			.Count()
+			.ShouldBe(1);
 	}
 
 	[Fact]
@@ -171,8 +195,8 @@ public class OrbitControlsTests
 
 		// Act
 		// three.js's own default for this one is infinity, so the mirror reports infinity - and the
-		// unchanged-value guard runs before the finite check, which is what keeps "write back what you
-		// read" working on the one property whose default the wire cannot carry.
+		// unchanged-value guard elides the write, exactly as it does for any other value written back
+		// unchanged.
 		var exception = Record.Exception(() => controls.MaxDistance = float.PositiveInfinity);
 		await context.FlushAsync();
 

@@ -245,7 +245,7 @@ public sealed class Raycaster : ThreeObject
 	/// <returns>The value <c>intersectObject</c> returned, once the JavaScript side has answered.</returns>
 	public Task<Intersection[]> IntersectObjectAsync(Object3D @object, bool recursive, Intersection[] optionalTarget)
 	{
-		return RecordRead<Intersection[]>("intersectObject", @object, recursive, optionalTarget);
+		return RecordReadHandles<Intersection[]>("intersectObject", @object, recursive, optionalTarget);
 	}
 
 	/// <summary>
@@ -268,7 +268,7 @@ public sealed class Raycaster : ThreeObject
 		bool recursive,
 		Intersection[] optionalTarget)
 	{
-		return RecordRead<Intersection[]>("intersectObjects", objects, recursive, optionalTarget);
+		return RecordReadHandles<Intersection[]>("intersectObjects", objects, recursive, optionalTarget);
 	}
 
 	/// <summary>

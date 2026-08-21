@@ -398,9 +398,9 @@ public sealed class BatchedMesh : Mesh
 	/// <param name="geometryId">The id of the geometry to get the range of.</param>
 	/// <param name="target">Optional target object to copy the range in to.</param>
 	/// <returns>The value <c>getGeometryRangeAt</c> returned, once the JavaScript side has answered.</returns>
-	public Task<BatchedMeshGeometryRange> GetGeometryRangeAtAsync(float geometryId, BatchedMeshGeometryRange target)
+	public Task<BatchedMeshGeometryRange?> GetGeometryRangeAtAsync(float geometryId, BatchedMeshGeometryRange target)
 	{
-		return RecordRead<BatchedMeshGeometryRange>("getGeometryRangeAt", geometryId, target);
+		return RecordRead<BatchedMeshGeometryRange?>("getGeometryRangeAt", geometryId, target);
 	}
 
 	/// <summary>
@@ -486,9 +486,9 @@ public sealed class BatchedMesh : Mesh
 	/// <param name="geometryId">Value forwarded to the <c>geometryId</c> argument.</param>
 	/// <param name="target">Value forwarded to the <c>target</c> argument.</param>
 	/// <returns>The value <c>getBoundingBoxAt</c> returned, once the JavaScript side has answered.</returns>
-	public Task<Box3> GetBoundingBoxAtAsync(float geometryId, Box3 target)
+	public Task<Box3?> GetBoundingBoxAtAsync(float geometryId, Box3 target)
 	{
-		return RecordRead<Box3>("getBoundingBoxAt", geometryId, target);
+		return RecordRead<Box3?>("getBoundingBoxAt", geometryId, target);
 	}
 
 	/// <summary>
@@ -499,9 +499,9 @@ public sealed class BatchedMesh : Mesh
 	/// <param name="geometryId">Value forwarded to the <c>geometryId</c> argument.</param>
 	/// <param name="target">Value forwarded to the <c>target</c> argument.</param>
 	/// <returns>The value <c>getBoundingSphereAt</c> returned, once the JavaScript side has answered.</returns>
-	public Task<Sphere> GetBoundingSphereAtAsync(float geometryId, Sphere target)
+	public Task<Sphere?> GetBoundingSphereAtAsync(float geometryId, Sphere target)
 	{
-		return RecordRead<Sphere>("getBoundingSphereAt", geometryId, target);
+		return RecordRead<Sphere?>("getBoundingSphereAt", geometryId, target);
 	}
 
 	/// <summary>

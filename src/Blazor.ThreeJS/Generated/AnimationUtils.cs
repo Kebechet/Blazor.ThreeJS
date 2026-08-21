@@ -35,13 +35,21 @@ public sealed class AnimationUtils : ThreeObject
 	}
 
 	/// <summary>Used for parsing AOS keyframe formats.</summary>
+	/// <param name="context">
+	/// Context the call belongs to; a static has no object of its own to record through.
+	/// </param>
 	/// <param name="jsonKeys">A list of JSON keyframes.</param>
 	/// <param name="times">This array will be filled with keyframe times by this method.</param>
 	/// <param name="values">This array will be filled with keyframe values by this method.</param>
 	/// <param name="valuePropertyName">The name of the property to use.</param>
-	public void FlattenJSON(float[] jsonKeys, float[] times, float[] values, string valuePropertyName)
+	public static void FlattenJSON(
+		ThreeContext context,
+		float[] jsonKeys,
+		float[] times,
+		float[] values,
+		string valuePropertyName)
 	{
-		RecordCall("flattenJSON", jsonKeys, times, values, valuePropertyName);
+		context.CallStatic("AnimationUtils", "flattenJSON", jsonKeys, times, values, valuePropertyName);
 	}
 
 	/// <summary>
@@ -111,7 +119,7 @@ public sealed class AnimationUtils : ThreeObject
 		float endFrame,
 		float fps = 30f)
 	{
-		return context.CallStaticAsync<AnimationClip>("AnimationUtils", "subclip", sourceClip, name, startFrame, endFrame, fps);
+		return context.CallStaticObjectAsync<AnimationClip>("AnimationUtils", "subclip", (adoptedBatch, adoptedHandle) => new AnimationClip(adoptedBatch, adoptedHandle), sourceClip, name, startFrame, endFrame, fps);
 	}
 
 	/// <summary>
@@ -134,6 +142,6 @@ public sealed class AnimationUtils : ThreeObject
 		AnimationClip referenceClip,
 		float fps = 30f)
 	{
-		return context.CallStaticAsync<AnimationClip>("AnimationUtils", "makeClipAdditive", targetClip, referenceFrame, referenceClip, fps);
+		return context.CallStaticObjectAsync<AnimationClip>("AnimationUtils", "makeClipAdditive", (adoptedBatch, adoptedHandle) => new AnimationClip(adoptedBatch, adoptedHandle), targetClip, referenceFrame, referenceClip, fps);
 	}
 }

@@ -241,6 +241,9 @@ internal sealed class TypeMapper
 
 		// The element's own nullable annotation is kept: `(Material | null)[]` really can hold nulls,
 		// and dropping it would let a caller pass an array C# thinks is non-null into a slot that is not.
+		// A wrapper-class element is nullable regardless of annotation, for the same reason a wrapper
+		// property is: the mirror has no instances to fill a fresh array with, and an adopted result
+		// resolves each element to a mirror that may not exist.
 		var elementTypeName = element.IsExplicitlyNullable || element.Kind == TypeMappingKind.GeneratedWrapperClass
 			? element.CSharpTypeName + "?"
 			: element.CSharpTypeName;
@@ -383,13 +386,6 @@ internal sealed class TypeMapper
 	}
 
 	/// <summary>
-	/// Maps an inline object type: a dictionary when it is one index signature, a generated record when
-	/// it is a shape whose every member is a value, and a refusal otherwise.
-	/// </summary>
-	/// <param name="type">The object node.</param>
-	/// <param name="context">Declaring member and class.</param>
-	/// <returns>The mapping, or a refusal naming what stopped it.</returns>
-	/// <summary>
 	/// Maps a tuple whose elements are all one type to an array of it, and refuses the rest.
 	/// <para>
 	/// A JavaScript tuple <em>is</em> an array - <c>iridescenceThicknessRange</c> is <c>[100, 400]</c>
@@ -429,6 +425,13 @@ internal sealed class TypeMapper
 			elementMapping: element);
 	}
 
+	/// <summary>
+	/// Maps an inline object type: a dictionary when it is one index signature, a generated record when
+	/// it is a shape whose every member is a value, and a refusal otherwise.
+	/// </summary>
+	/// <param name="type">The object node.</param>
+	/// <param name="context">Declaring member and class.</param>
+	/// <returns>The mapping, or a refusal naming what stopped it.</returns>
 	private TypeMapping MapObjectLiteral(IrType type, TypeMappingContext context)
 	{
 		// `{ [key: string]: number }` is a dictionary and nothing else: no named members, one index
@@ -458,6 +461,48 @@ internal sealed class TypeMapper
 		}
 
 		return TypeMapping.Skipped(SkipCategory.AnonymousObjectType, $"`{type.Text}` is an anonymous object literal type with no named C# equivalent");
+	}
+
+	/// <summary>
+	/// Whether a result of this mapping carries a mirrored object anywhere inside it — as an element,
+	/// or as a structure member however deeply nested. Such a result can only be read back when the
+	/// applier is asked to mint handles (<c>n:true</c>): the object has identity a copy of its fields
+	/// would lose, and the encoder refuses it on the value channel. `Raycaster.intersectObject` is the
+	/// canonical case — `Intersection` is a plain record, but its `object` member is the mesh that was
+	/// hit.
+	/// </summary>
+	/// <param name="mapping">The resolved return type.</param>
+	/// <returns><see langword="true"/> when the read has to ask for handles.</returns>
+	internal bool AnswersWithHandles(TypeMapping mapping)
+	{
+		return ContainsMirroredObject(mapping, new HashSet<string>(StringComparer.Ordinal));
+	}
+
+	/// <summary>The recursion behind <see cref="AnswersWithHandles"/>.</summary>
+	/// <param name="mapping">The mapping being inspected.</param>
+	/// <param name="visitedStructureNames">Structures already inspected, so a self-referential shape terminates.</param>
+	/// <returns><see langword="true"/> when a mirrored object is reachable inside the mapping.</returns>
+	private bool ContainsMirroredObject(TypeMapping mapping, HashSet<string> visitedStructureNames)
+	{
+		if (StructureCatalog.IsMirroredObject(mapping))
+		{
+			return true;
+		}
+
+		if (mapping.Kind is TypeMappingKind.Sequence or TypeMappingKind.Dictionary)
+		{
+			return mapping.ElementMapping is { } element && ContainsMirroredObject(element, visitedStructureNames);
+		}
+
+		if (mapping.Kind == TypeMappingKind.GeneratedStructure
+			&& mapping.RequiredGeneratedTypeName is { } structureName
+			&& visitedStructureNames.Add(structureName))
+		{
+			return _structures.MemberMappingsOf(structureName, this)
+				.Any(x => x.IsMapped && ContainsMirroredObject(x, visitedStructureNames));
+		}
+
+		return false;
 	}
 
 	/// <summary>Whether a mapping travels as a value rather than behind a handle.</summary>

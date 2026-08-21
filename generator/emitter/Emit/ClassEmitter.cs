@@ -694,6 +694,7 @@ internal sealed class ClassEmitter
 			ThreeName = member.MemberName,
 			CSharpName = cSharpName,
 			Overloads = member.Method!.Overloads,
+			IsStatic = member.IsStatic,
 			Documentation = member.Method.Signature?.Doc
 		};
 	}
@@ -741,14 +742,10 @@ internal sealed class ClassEmitter
 	}
 
 	/// <summary>
-	/// C# type of a mirrored property. A reference to another wrapped class is always nullable: the
-	/// mirror has no instance to give it until the caller supplies one, and a non-nullable field with
-	/// nothing to initialise it to is a compile warning that says the same thing less clearly.
-	/// </summary>
-	/// <param name="mapping">The property's resolved type.</param>
-	/// <returns>The C# type as written.</returns>
-	/// <summary>
-	/// Names the C# type of a mirrored property.
+	/// Names the C# type of a mirrored property. A reference to another wrapped class is always
+	/// nullable: the mirror has no instance to give it until the caller supplies one, and a
+	/// non-nullable field with nothing to initialise it to is a compile warning that says the same
+	/// thing less clearly.
 	/// </summary>
 	/// <param name="mapping">The resolved type of the three.js member.</param>
 	/// <param name="isOwnedMathValue">
@@ -1016,14 +1013,7 @@ internal sealed class ClassEmitter
 
 			DocCommentEmitter.WriteSummary(writer, constructorSummary + DescribeArmChoice(parameters));
 
-			foreach (var parameter in parameters)
-			{
-				var text = parameter.Documentation is { Length: > 0 } documentation
-					? DocCommentEmitter.RenderInline(DocCommentEmitter.StripRedundantTail(documentation))
-					: $"Value forwarded to the <c>{parameter.ThreeName}</c> constructor argument.";
-
-				DocCommentEmitter.WriteParam(writer, parameter.Name, text);
-			}
+			WriteParameterDocs(writer, parameters, "constructor argument.");
 
 			WriteDeclaration(writer, $"{accessibility} {threeTypeName}", parameters);
 			WriteBaseChain(writer, index < baseChains.Count ? baseChains[index] : []);
@@ -1115,6 +1105,38 @@ internal sealed class ClassEmitter
 		IsUnspecifiedNullable = false,
 		Documentation = "Context the call belongs to; a static has no object of its own to record through."
 	};
+
+	/// <summary>
+	/// The parameter list a member is declared from: for a static, <see cref="ContextParameter"/>
+	/// prepended to the three.js parameters. Documentation and declaration both draw from this one
+	/// list, so the tags and the signature cannot disagree.
+	/// </summary>
+	/// <param name="isStatic">Whether the member is static.</param>
+	/// <param name="parameters">The three.js parameters of this overload.</param>
+	/// <returns>The parameters as declared, in order.</returns>
+	private static IReadOnlyList<MappedParameter> DeclaredParameters(bool isStatic, IReadOnlyList<MappedParameter> parameters)
+	{
+		return isStatic ? [ContextParameter, .. parameters] : parameters;
+	}
+
+	/// <summary>
+	/// Writes one param tag per parameter, falling back to naming the three.js argument the value is
+	/// forwarded to when the typings document nothing for it.
+	/// </summary>
+	/// <param name="writer">Destination.</param>
+	/// <param name="parameters">The parameters as declared.</param>
+	/// <param name="fallbackSuffix">Tail of the fallback sentence, naming the argument kind.</param>
+	private static void WriteParameterDocs(CSharpWriter writer, IReadOnlyList<MappedParameter> parameters, string fallbackSuffix)
+	{
+		foreach (var parameter in parameters)
+		{
+			var text = parameter.Documentation is { Length: > 0 } documentation
+				? DocCommentEmitter.RenderInline(DocCommentEmitter.StripRedundantTail(documentation))
+				: $"Value forwarded to the <c>{parameter.ThreeName}</c> {fallbackSuffix}";
+
+			DocCommentEmitter.WriteParam(writer, parameter.Name, text);
+		}
+	}
 
 	/// <summary>
 	/// Writes the no-argument constructor a subclass chains to when it has nothing to give this one.
@@ -1575,28 +1597,18 @@ internal sealed class ClassEmitter
 			}
 
 			// A static has no `Batch` of its own to record into, so it takes the context explicitly. Named
-			// `context` rather than `this`-like, because it is an argument the caller supplies. It is
-			// documented from the same list it is declared from, so the tag and the signature agree.
-			var staticParameters = command.IsStatic
-				? (IReadOnlyList<MappedParameter>) [ContextParameter, .. parameters]
-				: parameters;
+			// `context` rather than `this`-like, because it is an argument the caller supplies.
+			var declaredParameters = DeclaredParameters(command.IsStatic, parameters);
 
 			DocCommentEmitter.WriteSummary(writer, summary + DescribeArmChoice(parameters));
-			foreach (var parameter in staticParameters)
-			{
-				var text = parameter.Documentation is { Length: > 0 } documentation
-					? DocCommentEmitter.RenderInline(DocCommentEmitter.StripRedundantTail(documentation))
-					: $"Value forwarded to the <c>{parameter.ThreeName}</c> argument.";
-
-				DocCommentEmitter.WriteParam(writer, parameter.Name, text);
-			}
+			WriteParameterDocs(writer, declaredParameters, "argument.");
 
 			WriteDeclaration(
 				writer,
 				command.IsStatic
 					? $"public static void {command.CSharpName}"
 					: $"public void {command.CSharpName}",
-				staticParameters);
+				declaredParameters);
 
 			writer.WriteLine("{");
 			writer.Indent();
@@ -1673,13 +1685,19 @@ internal sealed class ClassEmitter
 				: $" Records a read op, sends it behind every write already pending, and completes with what <c>{query.ThreeName}</c> returned.";
 		}
 
+		// A value return keeps the nullability three.js declared: `getBoundingBoxAt` answers `Box3 | null`,
+		// and a non-nullable signature would promise an object the decoder hands back as null.
+		var valueTypeName = query.ReturnMapping?.IsExplicitlyNullable == true
+			? query.ReturnTypeName + "?"
+			: query.ReturnTypeName;
+
 		// An object result is nullable: three.js answers with nothing when the member held no object,
 		// and a non-nullable signature would make that indistinguishable from an object at handle zero.
 		var returnTypeName = query switch
 		{
 			{ IsAwaitedVoidResult: true } => "Task",
 			{ IsAdoptedResult: true } or { IsUntypedObjectResult: true } => $"Task<{query.ReturnTypeName}?>",
-			_ => $"Task<{query.ReturnTypeName}>"
+			_ => $"Task<{valueTypeName}>"
 		};
 
 		foreach (var (index, parameters) in query.Overloads.Index())
@@ -1690,20 +1708,10 @@ internal sealed class ClassEmitter
 			}
 
 			// A static reads through the context rather than through a handle, so it takes one explicitly.
-			// Documented from the same list it is declared from, so the tag and the signature agree.
-			var declaredParameters = query.IsStatic
-				? (IReadOnlyList<MappedParameter>) [ContextParameter, .. parameters]
-				: parameters;
+			var declaredParameters = DeclaredParameters(query.IsStatic, parameters);
 
 			DocCommentEmitter.WriteSummary(writer, summary + DescribeArmChoice(parameters));
-			foreach (var parameter in declaredParameters)
-			{
-				var text = parameter.Documentation is { Length: > 0 } documentation
-					? DocCommentEmitter.RenderInline(DocCommentEmitter.StripRedundantTail(documentation))
-					: $"Value forwarded to the <c>{parameter.ThreeName}</c> argument.";
-
-				DocCommentEmitter.WriteParam(writer, parameter.Name, text);
-			}
+			WriteParameterDocs(writer, declaredParameters, "argument.");
 
 			if (query.IsUntypedObjectResult)
 			{
@@ -1734,11 +1742,39 @@ internal sealed class ClassEmitter
 
 			var arguments = RenderRecordedArguments(parameters);
 
-			// A static reads through the context, naming the class rather than a handle. Every other
-			// query shape below records against this object's own batch.
+			// The lambda is what supplies the concrete type: the adoption helpers resolve a handle this
+			// context already mirrors and only call this for one they have never seen.
+			var adopt = query.IsAdoptedResult
+				? EmitterConfig.AdoptionSubstituteTypeNames.TryGetValue(query.ReturnTypeName, out var substitute)
+					? $"(adoptedBatch, adoptedHandle) => new {substitute}(adoptedBatch, adoptedHandle, \"{query.ReturnTypeName}\")"
+					: $"(adoptedBatch, adoptedHandle) => new {query.ReturnTypeName}(adoptedBatch, adoptedHandle)"
+				: null;
+
+			// A static reads through the context, naming the class rather than a handle — but its result
+			// travels exactly as an instance query's does, so each shape routes to the context helper
+			// that mirrors the instance helper below it. One blanket value-channel call here is what
+			// made every object-returning static fault at runtime: the applier has no value encoding
+			// for an object, and only the handle-minting helpers ask it for one.
 			if (query.IsStatic)
 			{
-				writer.WriteLine($"return context.CallStaticAsync<{query.ReturnTypeName}>(\"{threeTypeName}\", \"{query.ThreeName}\"{arguments});");
+				if (query.IsUntypedObjectResult)
+				{
+					writer.WriteLine($"return context.CallStaticObjectAsync(\"{threeTypeName}\", \"{query.ThreeName}\"{arguments});");
+				}
+				else if (query.IsAdoptedResult)
+				{
+					writer.WriteLine($"return context.CallStaticObjectAsync<{query.ReturnTypeName}>(\"{threeTypeName}\", \"{query.ThreeName}\", {adopt}{arguments});");
+				}
+				else if (query.IsAwaitedVoidResult)
+				{
+					writer.WriteLine($"return context.CallStaticAsync<object?>(\"{threeTypeName}\", \"{query.ThreeName}\"{arguments});");
+				}
+				else
+				{
+					writer.WriteLine(query.AnswersWithHandles
+						? $"return context.CallStaticHandlesAsync<{valueTypeName}>(\"{threeTypeName}\", \"{query.ThreeName}\"{arguments});"
+						: $"return context.CallStaticAsync<{valueTypeName}>(\"{threeTypeName}\", \"{query.ThreeName}\"{arguments});");
+				}
 			}
 			else if (query.IsUntypedObjectResult)
 			{
@@ -1750,11 +1786,6 @@ internal sealed class ClassEmitter
 			}
 			else if (query.IsAdoptedResult)
 			{
-				// The lambda is what supplies the concrete type: the helper resolves a handle this context
-				// already mirrors and only calls this for one it has never seen.
-				var adopt = EmitterConfig.AdoptionSubstituteTypeNames.TryGetValue(query.ReturnTypeName, out var substitute)
-					? $"(adoptedBatch, adoptedHandle) => new {substitute}(adoptedBatch, adoptedHandle, \"{query.ReturnTypeName}\")"
-					: $"(adoptedBatch, adoptedHandle) => new {query.ReturnTypeName}(adoptedBatch, adoptedHandle)";
 				// The type argument is spelled out rather than inferred: where the adopter is a substitute
 				// for an abstract declared type, inference would take the substitute and produce a
 				// `Task<PrimitiveObject3D?>` that does not convert to the declared `Task<Object3D?>`.
@@ -1771,18 +1802,19 @@ internal sealed class ClassEmitter
 			}
 			else if (query.IsPropertyRead)
 			{
-				writer.WriteLine($"return GetAsync<{query.ReturnTypeName}>(\"{query.ThreeName}\");");
+				writer.WriteLine($"return GetAsync<{valueTypeName}>(\"{query.ThreeName}\");");
 			}
 			else
 			{
 				// RecordRead owns attaching any argument that is itself a mirrored object, for the same reason
 				// RecordCall does: one owner for the invariant is what keeps the two paths from drifting.
 				//
-				// A collection of mirrored objects asks for handles instead of values: the elements are real
-				// objects with identity, and the applier has no value encoding for one.
+				// A result carrying mirrored objects — as elements, or inside a structure's members — asks
+				// for handles instead of values: the objects are real, with identity, and the applier has
+				// no value encoding for one.
 				writer.WriteLine(query.AnswersWithHandles
-					? $"return RecordReadHandles<{query.ReturnTypeName}>(\"{query.ThreeName}\"{arguments});"
-					: $"return RecordRead<{query.ReturnTypeName}>(\"{query.ThreeName}\"{arguments});");
+					? $"return RecordReadHandles<{valueTypeName}>(\"{query.ThreeName}\"{arguments});"
+					: $"return RecordRead<{valueTypeName}>(\"{query.ThreeName}\"{arguments});");
 			}
 
 			writer.Outdent();

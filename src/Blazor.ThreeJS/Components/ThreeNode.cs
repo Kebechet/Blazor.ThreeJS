@@ -30,6 +30,7 @@ public abstract class ThreeNode : ComponentBase, IDisposable
 	[CascadingParameter] private ThreeSceneRoot? _sceneRoot { get; set; }
 
 	private bool _isRegisteredWithParent;
+	private bool _isCameraRegistered;
 	private bool _isDisposed;
 
 	/// <summary>The mirrored object this component owns.</summary>
@@ -71,6 +72,7 @@ public abstract class ThreeNode : ComponentBase, IDisposable
 		BuildMirroredObject();
 		if (MirroredObject is Camera camera)
 		{
+			_isCameraRegistered = true;
 			_sceneRoot.RegisterCamera(camera);
 		}
 
@@ -139,6 +141,14 @@ public abstract class ThreeNode : ComponentBase, IDisposable
 
 		_isDisposed = true;
 		ReleaseParameterSubscriptions();
+
+		// Guarded by the registration flag rather than re-matching the type, because MirroredObject
+		// throws for a component whose OnInitialized never got as far as building one.
+		if (_isCameraRegistered && MirroredObject is Camera camera)
+		{
+			_sceneRoot?.UnregisterCamera(camera);
+		}
+
 		if (_isRegisteredWithParent)
 		{
 			_parentSlot?.DetachChild(this);

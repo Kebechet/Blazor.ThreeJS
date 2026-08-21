@@ -484,6 +484,10 @@ public abstract partial class Object3D : ThreeObject
 	/// <param name="child">The object to add as a child.</param>
 	public void Add(Object3D child)
 	{
+		// three.js re-homes a child that is already parented: adding it again moves it to the end of
+		// the children rather than growing a second entry. The list mirrors that, or one Remove would
+		// take the only JavaScript-side entry away while this list still claimed a copy was attached.
+		_children.Remove(child);
 		_children.Add(child);
 		if (Batch is not null)
 		{

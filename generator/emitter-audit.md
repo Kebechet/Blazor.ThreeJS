@@ -280,6 +280,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `AmbientLight` | `fenced code in the class summary` | 1 JavaScript block(s) written inline in the prose, which would be misleading in C# documentation |
 | `AnimationClip` | `constructor parameter blendMode` | an earlier optional parameter was dropped, so this one can no longer be passed in its own position |
 | `AnimationClip` | `constructor parameter tracks` | `Array<KeyframeTrack>` is an array whose element type cannot be mapped: `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
+| `AnimationClip` | `method toJSON` | its C# name `ToJSONAsync` is already taken on this type, and C# holds one member of a given name |
 | `AnimationClip` | `property tracks` | `Array<KeyframeTrack>` is an array whose element type cannot be mapped: `KeyframeTrack` is not an emitted class: required parameter 'values' cannot be mapped: `ArrayLike<number | string | boolean>` is an array whose element type cannot be mapped: `number | string | boolean` unions 3 distinct types; C# cannot express that as one parameter and picking one arm would narrow the API silently |
 | `AnimationClip` | `property userData` | `Record<string, unknown>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `AnimationMixer` | `property _accuIndex` | declared `protected`, so it is not part of the public API |
@@ -558,6 +559,7 @@ Every numeric the upstream JSDoc did not type, and what the emitter decided inst
 | `Material` | `method toJSON` | every parameter was dropped, so the emitted call would pass none of the arguments the method exists to take |
 | `Material` | `property defines` | `Record<string, unknown>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
 | `Material` | `property userData` | `Record<string, any>` is a TypeScript lib type; C# holds no browser object and the wire format has no encoding for one |
+| `MaterialLoader` | `method createMaterialFromType` | its C# name `CreateMaterialFromTypeAsync` is already taken on this type, and C# holds one member of a given name |
 | `MaterialLoader` | `method registerMaterial` | parameter 'materialClass': `new() => Material` is a JavaScript callback, and the wire format carries ops in one direction only — there is no channel to call back into C# |
 | `Mesh` | `@example` | 1 TypeScript example block(s), which would be misleading in C# documentation |
 | `MeshBasicMaterial` | `constructor parameter parameters` | `MeshBasicMaterialParameters` is an options bag. Every field it carries is also a settable property on the constructed object, so the mirror expresses them as properties rather than as one anonymous constructor argument |

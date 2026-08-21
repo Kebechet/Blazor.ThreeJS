@@ -26,9 +26,7 @@
     <PackageIcon>icon.png</PackageIcon>
     <PackageTags>blazor;threejs;three;3d;webgl;graphics;scene;rendering</PackageTags>
     <Version>0.185.1.1</Version>
-    <!-- First release, so nothing here describes a change: a break against a version nobody could
-         have installed is noise on the package page. Breaks belong here from the second release on. -->
-    <PackageReleaseNotes>First release, wrapping three.js r185. A typed C# scene graph generated from @types/three, with batched interop: a frame costs one call however many properties it changed, which is what makes it usable over a Blazor Server circuit. Includes glTF loading with the animation clips a file brings along, optional DRACO and KTX2 decoding, OrbitControls, pointer picking, and TSL shading on the WebGPU renderer. The three.js bundle ships with the package - no npm, no CDN, no script tags.</PackageReleaseNotes>
+    <PackageReleaseNotes>Fix release; three.js stays at r185. Statics now behave as three.js declares them: AnimationClip.Parse, CreateFromMorphTargetSequence and TorusGeometry.FromJSON became static factories answering the clip or geometry they build, AudioContext.SetContext and AnimationUtils.FlattenJSON became statics, and every static answering an object - FindByNameAsync, SubclipAsync, GetContextAsync - answers instead of faulting. Raycast hits decode, carrying the mesh that was hit. StencilOp.DecrementStencilOp carries the runtime's 7683 rather than the typings' typo, and BatchedMesh's bounds queries are nullable, as three.js declares them. OrbitControls accepts infinity - three.js's own maxDistance default - and rejects only NaN; attaching a new set spends the replaced wrapper, and detaching the replaced set no longer takes the live set's listeners. A declarative scene survives a conditional camera swap instead of freezing on a retired handle, and the new GLTFModel.Unload() releases everything a load kept resident.</PackageReleaseNotes>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>

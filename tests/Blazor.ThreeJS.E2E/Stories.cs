@@ -98,6 +98,21 @@ internal static class Stories
 	/// <summary>The three ways a mirrored C# value stops matching the browser.</summary>
 	public const string MirrorAuthority = "architecture-mirror-authority--when-the-mirror-is-stale";
 
+	/// <summary>Manual: a declarative camera swapped in place, and rendering pausing with none at all.</summary>
+	public const string CameraSwitching = "components-camera-switching--swap-the-active-camera-in-place";
+
+	/// <summary>Manual: replacing OrbitControls spends the old wrapper, and detaching it spares the live set.</summary>
+	public const string OrbitControlsReplace = "addons-orbitcontrols-lifecycle--replace-a-set-then-detach-the-stale-one";
+
+	/// <summary>Manual: MaxDistance clamped to a finite bound and restored to three.js's infinite default.</summary>
+	public const string OrbitControlsInfinity = "addons-orbitcontrols-lifecycle--clamp-the-zoom-then-restore-infinity";
+
+	/// <summary>Manual: a glTF model loaded and unloaded in cycles, with the browser's memory watched.</summary>
+	public const string ModelUnload = "addons-gltfloader-unload--load-and-unload-a-model";
+
+	/// <summary>Manual: static factories and raycast hits whose answers are objects, end to end.</summary>
+	public const string StaticsAndRaycasts = "architecture-statics-and-raycasts--static-factories-and-raycast-hits";
+
 	/// <summary>Every story the demo publishes.</summary>
 	public static IReadOnlyList<string> All =>
 	[
@@ -130,6 +145,11 @@ internal static class Stories
 		ObjectResults,
 		InteropBudget,
 		EscapeHatch,
-		MirrorAuthority
+		MirrorAuthority,
+		CameraSwitching,
+		OrbitControlsReplace,
+		OrbitControlsInfinity,
+		ModelUnload,
+		StaticsAndRaycasts
 	];
 }

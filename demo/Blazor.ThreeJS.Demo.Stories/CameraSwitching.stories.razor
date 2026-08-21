@@ -1,0 +1,118 @@
+@attribute [Stories("Components/Camera switching")]
+@implements IDisposable
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Swap the active camera in place">
+        <Template>
+            <p>
+                A manual story for what no automated test can watch: the canvas staying <em>live</em>
+                while conditional markup swaps the camera out from under it. The cubes below rotate
+                continuously, which is what makes the three states below tell apart at a glance.
+            </p>
+            <p>
+                <button disabled="@(_cameraChoice == CameraChoice.Perspective)" @onclick="() => _cameraChoice = CameraChoice.Perspective">Perspective</button>
+                <button disabled="@(_cameraChoice == CameraChoice.Orthographic)" @onclick="() => _cameraChoice = CameraChoice.Orthographic">Orthographic</button>
+                <button disabled="@(_cameraChoice == CameraChoice.None)" @onclick="() => _cameraChoice = CameraChoice.None">No camera at all</button>
+                Camera in the markup: <strong>@_cameraChoice</strong>
+            </p>
+            @* A fixed aspect ratio because one of the two cameras is orthographic: its frustum is spelled
+               out in world units and nothing rescales it to the canvas, so a canvas of another shape
+               would render it stretched. See Catalogue/Cameras for the same note. *@
+            <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;">
+                @if (_cameraChoice == CameraChoice.Perspective)
+                {
+                    <ThreePerspectiveCamera Fov="45f" Aspect="16f / 9f" Near="0.1f" Far="100f" Position="new(0f, 1.5f, 9f)" />
+                }
+                else if (_cameraChoice == CameraChoice.Orthographic)
+                {
+                    <ThreeOrthographicCamera Left="-5.3f" Right="5.3f" Top="3f" Bottom="-3f" Near="0.1f" Far="100f" Position="new(0f, 1.5f, 9f)" />
+                }
+
+                <ThreeAmbientLight Color="Color.White" Intensity="0.5f" />
+                <ThreeDirectionalLight Color="Color.White" Intensity="1.6f" Position="new(4f, 6f, 6f)" />
+                <ThreeGroup Rotation="new(0f, _rotationY, 0f)">
+                    <ThreeMesh Position="new(-2.2f, 0f, 0f)">
+                        <ThreeBoxGeometry Width="1.4f" Height="1.4f" Depth="1.4f" />
+                        <ThreeMeshStandardMaterial Color="Color.FromHex(0x5b8dd9)" Roughness="0.4f" />
+                    </ThreeMesh>
+                    <ThreeMesh Position="new(0f, 0f, -2.6f)">
+                        <ThreeBoxGeometry Width="1.4f" Height="1.4f" Depth="1.4f" />
+                        <ThreeMeshStandardMaterial Color="Color.FromHex(0xcc3366)" Roughness="0.4f" />
+                    </ThreeMesh>
+                    <ThreeMesh Position="new(2.2f, 0f, 0f)">
+                        <ThreeBoxGeometry Width="1.4f" Height="1.4f" Depth="1.4f" />
+                        <ThreeMeshStandardMaterial Color="Color.FromHex(0x7fb069)" Roughness="0.4f" />
+                    </ThreeMesh>
+                </ThreeGroup>
+            </ThreeCanvas>
+            <p><strong>What to verify, in order:</strong></p>
+            <ol>
+                <li>
+                    <em>Perspective &rarr; Orthographic and back:</em> the projection changes and the cubes
+                    <em>keep rotating</em>. The canvas itself survives the swap - the camera component is
+                    disposed and another registered inside the same live scene, and the renderer is
+                    re-pointed at the replacement.
+                </li>
+                <li>
+                    <em>No camera at all:</em> the picture freezes on the last drawn frame - the browser-side
+                    loop skips a frame whose camera resolves to nothing - and the console stays free of
+                    errors. Rendering is paused, not broken.
+                </li>
+                <li>
+                    <em>Back to either camera:</em> rotation resumes from wherever the scene has silently
+                    advanced to. No reload, no rebuilt canvas.
+                </li>
+            </ol>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private static readonly TimeSpan FrameInterval = TimeSpan.FromMilliseconds(16);
+    private const float RadiansPerFrame = 0.01f;
+
+    private enum CameraChoice
+    {
+        Perspective,
+        Orthographic,
+        None
+    }
+
+    private readonly CancellationTokenSource _animationCancellation = new();
+    private CameraChoice _cameraChoice = CameraChoice.Perspective;
+    private float _rotationY = 0.6f;
+
+    protected override void OnInitialized()
+    {
+        _ = AnimateAsync();
+    }
+
+    private async Task AnimateAsync()
+    {
+        using var timer = new PeriodicTimer(FrameInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(_animationCancellation.Token))
+            {
+                var nextRotationY = _rotationY + RadiansPerFrame;
+                _rotationY = nextRotationY >= MathF.Tau ? nextRotationY - MathF.Tau : nextRotationY;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+            // BlazingStory keeps this story component alive while swapping the rendered story, so
+            // Dispose() below can run while this loop is mid-flight. See Declarative.stories.razor for
+            // the full account of the window this covers.
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCancellation.Cancel();
+        _animationCancellation.Dispose();
+    }
+}

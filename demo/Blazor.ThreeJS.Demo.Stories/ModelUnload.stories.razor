@@ -1,0 +1,107 @@
+@attribute [Stories("Addons/GLTFLoader unload")]
+@inject NavigationManager _navigationManager
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Load and unload a model">
+        <Template>
+            <p>
+                A manual story for the one thing only the browser's own tooling can confirm: that
+                unloading a model actually gives its GPU memory back. <code>GLTFModel.Unload()</code>
+                records one dispose op for the loaded root; the applier walks the graph off it,
+                disposes every geometry, material and texture the file brought in, and retires every
+                handle minted for its nodes and clips.
+            </p>
+            <ThreeCanvas Style="width: 100%; height: 360px;" OnReady="BuildSceneAsync" />
+            <p>
+                <button disabled="@(!_isSceneReady || _model is not null)" @onclick="LoadAsync">Load the model</button>
+                <button disabled="@(_model is null)" @onclick="UnloadAsync">Unload it</button>
+                Completed load-unload cycles: <strong data-testid="unload-cycles">@_completedCycles</strong>
+            </p>
+            <p><strong>What to verify - the first model is loaded for you:</strong></p>
+            <ol>
+                <li><em>Unload:</em> the figure disappears, and the console stays free of errors.</li>
+                <li><em>Load:</em> it comes back and renders.</li>
+                <li>
+                    <em>The part no test can assert:</em> open the browser's performance monitor (in
+                    Chromium: DevTools &rarr; three-dot menu &rarr; More tools &rarr; Performance monitor,
+                    watching "JS heap size" and "GPU memory" where offered) and run ten or more cycles.
+                    The footprint after each unload must return to roughly where it started. Before
+                    <code>Unload()</code> existed, every cycle stacked another resident copy of the
+                    model's geometry and textures for the life of the canvas.
+                </li>
+            </ol>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    // Public domain (CC0), committed under demo/wwwroot/models. Resolved against the app's base href
+    // so the same story works locally and under the /Blazor.ThreeJS/ path on GitHub Pages.
+    private const string ModelUrl = "_content/Blazor.ThreeJS.Demo.Stories/models/figure.gltf";
+
+    private ThreeContext? _threeContext;
+    private Scene? _scene;
+    private GLTFModel? _model;
+    private int _completedCycles;
+
+    /// <summary>
+    /// Until this is true, a button's handler would find nothing to act on and return without doing
+    /// anything - silently. Set last in the scene-building method, after every await that can throw, so
+    /// a build that fails partway leaves the buttons disabled instead of inert but clickable.
+    /// </summary>
+    private bool _isSceneReady;
+
+    private async Task BuildSceneAsync(ThreeContext threeContext)
+    {
+        _threeContext = threeContext;
+
+        var scene = new Scene();
+        threeContext.Attach(scene);
+        _scene = scene;
+
+        scene.Add(new AmbientLight(Color.White, 0.9f));
+        var keyLight = new DirectionalLight(Color.White, 2f);
+        keyLight.Position.Set(3f, 5f, 4f);
+        scene.Add(keyLight);
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 0.4f, 3.4f);
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        // Loaded up front so the story has something on screen from its first frame - the E2E suite
+        // holds every story to that - and so the manual flow starts at the interesting half: unload.
+        await LoadAsync();
+
+        _isSceneReady = true;
+    }
+
+    private async Task LoadAsync()
+    {
+        if (_threeContext is null || _scene is null)
+        {
+            return;
+        }
+
+        var model = await new GLTFLoader(_threeContext).LoadAsync(_navigationManager.ToAbsoluteUri(ModelUrl).ToString());
+        _scene.Add(model.Scene);
+        await _threeContext.FlushAsync();
+        _model = model;
+    }
+
+    private async Task UnloadAsync()
+    {
+        if (_threeContext is null || _scene is null || _model is null)
+        {
+            return;
+        }
+
+        // Out of the scene first - the release does not detach - then one Unload records the dispose
+        // that takes the whole graph with it.
+        _scene.Remove(_model.Scene);
+        _model.Unload();
+        await _threeContext.FlushAsync();
+
+        _model = null;
+        _completedCycles++;
+    }
+}

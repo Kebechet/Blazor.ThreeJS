@@ -14,13 +14,14 @@
                 <button disabled="@(!_isSceneReady)" @onclick="ToggleCamera">@(_isPerspectiveActive ? "Switch to ThreeOrthographicCamera" : "Switch to ThreePerspectiveCamera")</button>
                 Rendering through: <strong>@(_isPerspectiveActive ? "ThreePerspectiveCamera" : "ThreeOrthographicCamera")</strong>
             </p>
-            @* Keyed on the camera choice so the toggle rebuilds the whole canvas. A declarative scene
-               binds its camera once - see the note under the canvas - so swapping only the camera
-               component inside a surviving canvas would change nothing on screen. *@
+            @* The canvas survives the toggle: disposing one camera component and registering the other
+               re-points the renderer in place, so no @key rebuild - which minted a fresh WebGPU
+               context per click - is needed. The in-place swap itself is what
+               Components/Camera switching exists to exercise. *@
             @* A fixed aspect ratio because one of the two cameras is orthographic: its frustum is spelled
                out in world units and nothing rescales it to the canvas, so a canvas of another shape
                would render it stretched. See Catalogue/Cameras for the same note. *@
-            <ThreeCanvas @key="_isPerspectiveActive" Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="MarkSceneReady">
+            <ThreeCanvas Style="width: 100%; max-width: 900px; aspect-ratio: 16 / 9;" OnReady="MarkSceneReady">
                 @if (_isPerspectiveActive)
                 {
                     <ThreePerspectiveCamera Fov="45f" Aspect="16f / 9f" Near="0.1f" Far="100f" Position="new(0f, 1.5f, 11f)" />

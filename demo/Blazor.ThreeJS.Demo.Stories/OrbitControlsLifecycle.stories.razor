@@ -1,0 +1,198 @@
+@attribute [Stories("Addons/OrbitControls lifecycle")]
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Replace a set then detach the stale one">
+        <Template>
+            <p>
+                A manual story for pointer behaviour no automated test can feel: which set of controls
+                actually owns the canvas after a replacement. The browser holds one controls slot per
+                canvas, so attaching a second set evicts the first - and the evicted C# wrapper must be
+                spent, not left recording writes against a handle the browser retired.
+            </p>
+            <ThreeCanvas Style="width: 100%; height: 360px;" OnReady="BuildReplaceSceneAsync" />
+            <p>
+                <button disabled="@(!_isReplaceSceneReady)" @onclick="AttachReplacementAsync">Attach a replacement set</button>
+                <button disabled="@(_staleControls is null)" @onclick="DetachStaleAsync">Detach the replaced set</button>
+                <button disabled="@(!_isReplaceSceneReady)" @onclick="DetachLiveAsync">Detach the live set</button>
+                Status: <strong>@_replaceStatus</strong>
+            </p>
+            <p><strong>What to verify, in order - drag the cube between every step:</strong></p>
+            <ol>
+                <li><em>Before anything:</em> dragging orbits, scrolling zooms.</li>
+                <li>
+                    <em>Attach a replacement set:</em> dragging still orbits - the new set owns the canvas,
+                    and the replaced wrapper was spent in the same move.
+                </li>
+                <li>
+                    <em>Detach the replaced set:</em> dragging <em>must still orbit</em>. The stale wrapper
+                    only spends itself; it must not reach for the canvas and take the live set's
+                    listeners with it.
+                </li>
+                <li><em>Detach the live set:</em> only now does dragging stop doing anything.</li>
+            </ol>
+        </Template>
+    </Story>
+    <Story Name="Clamp the zoom then restore infinity">
+        <Template>
+            <p>
+                three.js's own default for <code>maxDistance</code> is infinity, and the wire spells
+                infinity as a tagged token - so clamping the zoom and then restoring the unbounded
+                default must both take effect on the real canvas. How far a scroll actually dollies is
+                something only a pointer on a live canvas can show.
+            </p>
+            <ThreeCanvas Style="width: 100%; height: 360px;" OnReady="BuildClampSceneAsync" />
+            <p>
+                <button disabled="@(!_isClampSceneReady)" @onclick="ClampZoomAsync">Clamp MaxDistance to 5</button>
+                <button disabled="@(!_isClampSceneReady)" @onclick="RestoreInfinityAsync">Restore MaxDistance to infinity</button>
+                MaxDistance now: <strong>@_maxDistanceReadout</strong>
+            </p>
+            <p><strong>What to verify:</strong></p>
+            <ol>
+                <li><em>Unclamped:</em> scrolling out dollies the camera as far as you keep scrolling.</li>
+                <li><em>After clamping:</em> scrolling out stops dead at distance 5, however hard you scroll.</li>
+                <li>
+                    <em>After restoring infinity:</em> the clamp is gone again and the readout says
+                    <code>&#8734;</code>. Restoring the default is the half that used to be impossible: the
+                    setter rejected infinity outright, leaving the clamp a one-way door.
+                </li>
+            </ol>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    private ThreeContext? _replaceContext;
+    private PerspectiveCamera? _replaceCamera;
+    private OrbitControls? _liveControls;
+    private OrbitControls? _staleControls;
+    private string _replaceStatus = "building the scene";
+    private bool _isReplaceSceneReady;
+
+    private ThreeContext? _clampContext;
+    private OrbitControls? _clampControls;
+    private string _maxDistanceReadout = "not built yet";
+    private bool _isClampSceneReady;
+
+    private async Task BuildReplaceSceneAsync(ThreeContext threeContext)
+    {
+        _replaceContext = threeContext;
+        _replaceCamera = await BuildOrbitableSceneAsync(threeContext);
+        _liveControls = await OrbitControls.AttachAsync(threeContext, _replaceCamera);
+        await threeContext.FlushAsync();
+
+        _replaceStatus = "first set attached";
+        _isReplaceSceneReady = true;
+    }
+
+    private async Task AttachReplacementAsync()
+    {
+        if (_replaceContext is null || _replaceCamera is null)
+        {
+            return;
+        }
+
+        _staleControls = _liveControls;
+        _liveControls = await OrbitControls.AttachAsync(_replaceContext, _replaceCamera);
+        await _replaceContext.FlushAsync();
+        _replaceStatus = "replacement attached; the first set's wrapper is stale";
+    }
+
+    private async Task DetachStaleAsync()
+    {
+        if (_staleControls is null)
+        {
+            return;
+        }
+
+        await _staleControls.DetachAsync();
+        _staleControls = null;
+        _replaceStatus = "stale set detached - orbiting must still work";
+    }
+
+    private async Task DetachLiveAsync()
+    {
+        if (_liveControls is null)
+        {
+            return;
+        }
+
+        await _liveControls.DetachAsync();
+        _replaceStatus = "live set detached - dragging should now do nothing";
+    }
+
+    private async Task BuildClampSceneAsync(ThreeContext threeContext)
+    {
+        _clampContext = threeContext;
+        var camera = await BuildOrbitableSceneAsync(threeContext);
+        _clampControls = await OrbitControls.AttachAsync(threeContext, camera);
+        await threeContext.FlushAsync();
+
+        _maxDistanceReadout = FormatDistance(_clampControls.MaxDistance);
+        _isClampSceneReady = true;
+    }
+
+    private async Task ClampZoomAsync()
+    {
+        if (_clampControls is null)
+        {
+            return;
+        }
+
+        _clampControls.MaxDistance = 5f;
+        await FlushClampAsync();
+    }
+
+    private async Task RestoreInfinityAsync()
+    {
+        if (_clampControls is null)
+        {
+            return;
+        }
+
+        _clampControls.MaxDistance = float.PositiveInfinity;
+        await FlushClampAsync();
+    }
+
+    private async Task FlushClampAsync()
+    {
+        if (_clampContext is { } context)
+        {
+            await context.FlushAsync();
+        }
+
+        _maxDistanceReadout = FormatDistance(_clampControls!.MaxDistance);
+    }
+
+    /// <param name="value">The distance to render, spelling infinity as its own symbol.</param>
+    private static string FormatDistance(float value)
+    {
+        return float.IsPositiveInfinity(value) ? "∞" : value.ToString("0.#");
+    }
+
+    /// <summary>
+    /// Builds the one scene both stories orbit: a lit cube and a camera looking at it, activated and
+    /// ready for controls to be attached.
+    /// </summary>
+    /// <param name="threeContext">The context the canvas created.</param>
+    /// <returns>The camera the controls should drive.</returns>
+    private static async Task<PerspectiveCamera> BuildOrbitableSceneAsync(ThreeContext threeContext)
+    {
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        scene.Add(new AmbientLight(Color.White, 0.5f));
+        var keyLight = new DirectionalLight(Color.White, 1.8f);
+        keyLight.Position.Set(4f, 6f, 8f);
+        scene.Add(keyLight);
+
+        var cubeMaterial = new MeshStandardMaterial();
+        cubeMaterial.Color.SetHex(0x5b8dd9);
+        cubeMaterial.Roughness = 0.4f;
+        scene.Add(new Mesh(new BoxGeometry(1.5f, 1.5f, 1.5f), cubeMaterial));
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 1.2f, 4f);
+        await threeContext.SetActiveSceneAsync(scene, camera);
+        return camera;
+    }
+}

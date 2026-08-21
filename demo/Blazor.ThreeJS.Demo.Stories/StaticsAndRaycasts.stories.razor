@@ -1,0 +1,129 @@
+@attribute [Stories("Architecture/Statics and raycasts")]
+@inject NavigationManager _navigationManager
+
+<Stories TComponent="ThreeCanvas">
+    <Story Name="Static factories and raycast hits">
+        <Template>
+            <p>
+                Three calls whose answers are <em>objects</em>, driven end to end against the real
+                applier. Each used to cross the value channel, which refuses an object outright - so
+                every one of them faulted on any successful call. This story is their manual
+                regression net until an automated round-trip harness drives the real ops.
+            </p>
+            <ThreeCanvas Style="width: 100%; height: 300px;" OnReady="BuildSceneAsync" />
+            <p>
+                <button disabled="@(!_isSceneReady)" @onclick="SubclipAsync">Subclip the model's clip</button>
+                <button disabled="@(!_isSceneReady)" @onclick="FindClipByNameAsync">Find the clip by name</button>
+                <button disabled="@(!_isSceneReady)" @onclick="RaycastTheBoxAsync">Raycast the box</button>
+            </p>
+            <p>Answer: <strong data-testid="static-answer">@_answer</strong></p>
+            <p><strong>What to verify - each button, one click:</strong></p>
+            <ol>
+                <li>
+                    <em>Subclip:</em> <code>AnimationUtils.SubclipAsync</code> is a static whose answer is
+                    a freshly built <code>AnimationClip</code>. The readout must name a new mirror -
+                    not an error about a value with no wire encoding.
+                </li>
+                <li>
+                    <em>Find by name:</em> <code>AnimationClip.FindByNameAsync</code> answers with the very
+                    clip that was passed in, and the readout must confirm the answer resolved to the
+                    <em>same C# instance</em> - one object, one handle, one mirror.
+                </li>
+                <li>
+                    <em>Raycast:</em> <code>Raycaster.IntersectObjectAsync</code> answers structures that
+                    each carry the hit object by handle. The readout must report one hit whose object is
+                    the same C# mesh the scene holds.
+                </li>
+            </ol>
+        </Template>
+    </Story>
+</Stories>
+
+@code {
+    // Public domain (CC0), committed under demo/wwwroot/models. Resolved against the app's base href
+    // so the same story works locally and under the /Blazor.ThreeJS/ path on GitHub Pages.
+    private const string ModelUrl = "_content/Blazor.ThreeJS.Demo.Stories/models/box-animated.glb";
+
+    private ThreeContext? _threeContext;
+    private Mesh? _box;
+    private LoadedAnimationClip? _loadedClip;
+    private string _answer = "nothing asked yet";
+
+    /// <summary>
+    /// Until this is true, a button's handler would find nothing to act on and return without doing
+    /// anything - silently. Set last in the scene-building method, after every await that can throw, so
+    /// a build that fails partway leaves the buttons disabled instead of inert but clickable.
+    /// </summary>
+    private bool _isSceneReady;
+
+    private async Task BuildSceneAsync(ThreeContext threeContext)
+    {
+        _threeContext = threeContext;
+
+        var scene = new Scene();
+        threeContext.Attach(scene);
+
+        scene.Add(new AmbientLight(Color.White, 0.6f));
+        var keyLight = new DirectionalLight(Color.White, 1.6f);
+        keyLight.Position.Set(4f, 6f, 8f);
+        scene.Add(keyLight);
+
+        var boxMaterial = new MeshStandardMaterial();
+        boxMaterial.Color.SetHex(0x5b8dd9);
+        boxMaterial.Roughness = 0.4f;
+        var box = new Mesh(new BoxGeometry(1.5f, 1.5f, 1.5f), boxMaterial);
+        scene.Add(box);
+        _box = box;
+
+        var camera = new PerspectiveCamera(45f, 16f / 9f, 0.1f, 100f);
+        camera.Position.Set(0f, 1.2f, 4f);
+        await threeContext.SetActiveSceneAsync(scene, camera);
+
+        var model = await new GLTFLoader(threeContext).LoadAsync(_navigationManager.ToAbsoluteUri(ModelUrl).ToString());
+        _loadedClip = model.Animations.FirstOrDefault();
+
+        _isSceneReady = _loadedClip is not null;
+        _answer = _loadedClip is null ? "the model brought no clip - the buttons stay disabled" : "nothing asked yet";
+    }
+
+    private async Task SubclipAsync()
+    {
+        if (_threeContext is null || _loadedClip is null)
+        {
+            return;
+        }
+
+        var subclip = await AnimationUtils.SubclipAsync(_threeContext, _loadedClip.Clip, "manual-subclip", 0f, 10f);
+        _answer = subclip is null
+            ? "subclip answered null - that is a failure"
+            : $"a new mirrored {subclip.GetType().Name}, distinct from the source: {!ReferenceEquals(subclip, _loadedClip.Clip)}";
+    }
+
+    private async Task FindClipByNameAsync()
+    {
+        if (_threeContext is null || _loadedClip is null)
+        {
+            return;
+        }
+
+        var found = await AnimationClip.FindByNameAsync(_threeContext, [_loadedClip.Clip], _loadedClip.Name);
+        _answer = found is null
+            ? $"no clip named '{_loadedClip.Name}' - that is a failure"
+            : $"found '{_loadedClip.Name}', and it is the same C# instance: {ReferenceEquals(found, _loadedClip.Clip)}";
+    }
+
+    private async Task RaycastTheBoxAsync()
+    {
+        if (_threeContext is null || _box is null)
+        {
+            return;
+        }
+
+        var raycaster = new Raycaster(new Vector3(0f, 0f, 5f), new Vector3(0f, 0f, -1f));
+        _threeContext.Attach(raycaster);
+        var hits = await raycaster.IntersectObjectAsync(_box, recursive: false, optionalTarget: []);
+        _answer = hits.Length == 0
+            ? "no hits - that is a failure"
+            : $"{hits.Length} hit(s), and the first hit's object is the same C# mesh: {ReferenceEquals(hits[0].Object, _box)}";
+    }
+}

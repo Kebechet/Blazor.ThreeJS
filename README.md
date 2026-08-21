@@ -12,7 +12,7 @@
 [![codecov](https://codecov.io/gh/Kebechet/Blazor.ThreeJS/graph/badge.svg)](https://codecov.io/gh/Kebechet/Blazor.ThreeJS)
 -->
 
-Blazor wrapper for three.js. Typed C# scene graph with batched interop, safe on WebAssembly, Server, and MAUI Hybrid. Ships the three.js bundle - no npm, no CDN, no manual script tags.
+Blazor wrapper for [three.js](https://www.npmjs.com/package/three). Typed C# scene graph with batched interop, safe on WebAssembly, Server, and MAUI Hybrid. Ships the three.js bundle - no npm, no CDN, no manual script tags.
 
 > **Generated from `@types/three`.** Most of three.js's class surface is wrapped mechanically from the upstream type declarations, so the property names, constructor argument order and documentation are three.js's own rather than a paraphrase. The 19 math types in `Kebechet.Blazor.ThreeJS.Math` (`Vector3`, `Color` and the rest) and the two addon wrappers (`GLTFLoader`, `OrbitControls`) are hand-written; the `Object3D` scene-graph base is hybrid - hand-written for behaviour, with a generated command and query surface beside it. [Coverage](#coverage) is exactly how much is wrapped, what is not, and how those numbers were arrived at; [Reaching a class the mirror does not wrap](#reaching-a-class-the-mirror-does-not-wrap) is how to reach the rest - untyped in three lines, or with a wrapper of your own.
 
